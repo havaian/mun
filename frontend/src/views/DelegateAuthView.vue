@@ -1,48 +1,52 @@
 <template>
     <div
-        class="min-h-[calc(100vh-12rem)] bg-gray-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        class="min-h-[calc(100vh-12rem)] bg-transparent flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div class="w-full max-w-md">
             <div class="text-center">
                 <img src="/logo.svg" alt="UN Logo" class="mx-auto h-12 w-auto" />
                 <h2 class="mt-6 text-3xl font-bold tracking-tight text-gray-900">
                     Delegate Access
                 </h2>
-                <p class="mt-2 text-sm text-gray-600">
+                <p class="mt-2 text-sm glass-text-light">
                     Scan your QR code or enter your token manually
                 </p>
             </div>
 
             <div class="mt-8">
                 <div v-if="!showScanner" class="space-y-6">
-                    <!-- Manual token input -->
-                    <div>
-                        <label for="token" class="form-label">Access Token</label>
-                        <input id="token" v-model="token" type="text" class="form-input"
-                            placeholder="Enter your access token" :disabled="loading" />
-                    </div>
+                    <div class="glass-card">
+                        <!-- Manual token input -->
+                        <div>
+                            <label for="token" class="form-label glass-text">Access Token</label>
+                            <input id="token" v-model="token" type="text" class="form-input"
+                                placeholder="Enter your access token" :disabled="loading" />
+                        </div>
 
-                    <div class="flex flex-col space-y-4">
-                        <button type="button" class="btn btn-primary w-full" @click="handleTokenSubmit"
-                            :disabled="!token || loading">
-                            {{ loading ? 'Authenticating...' : 'Submit Token' }}
-                        </button>
+                        <div class="flex flex-col space-y-4 mt-6">
+                            <button type="button" class="btn btn-primary glass-button w-full" @click="handleTokenSubmit"
+                                :disabled="!token || loading">
+                                {{ loading ? 'Authenticating...' : 'Submit Token' }}
+                            </button>
 
-                        <button type="button" class="btn btn-outline w-full" @click="startScanner" :disabled="loading">
-                            Scan QR Code
-                        </button>
+                            <button type="button" class="btn btn-outline glass-button w-full" @click="startScanner" :disabled="loading">
+                                Scan QR Code
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- QR Scanner -->
                 <div v-else class="space-y-6">
-                    <div class="relative aspect-square w-full max-w-sm mx-auto overflow-hidden rounded-lg bg-gray-100">
-                        <video ref="videoElement" class="h-full w-full object-cover"></video>
-                        <div class="absolute inset-0 border-2 border-blue-500"></div>
-                    </div>
+                    <div class="glass-card">
+                        <div class="relative aspect-square w-full max-w-sm mx-auto overflow-hidden rounded-lg glass-container">
+                            <video ref="videoElement" class="h-full w-full object-cover"></video>
+                            <div class="absolute inset-0 border-2 border-blue-500 rounded-lg"></div>
+                        </div>
 
-                    <button type="button" class="btn btn-outline w-full" @click="stopScanner">
-                        Cancel Scan
-                    </button>
+                        <button type="button" class="btn btn-outline glass-button w-full mt-6" @click="stopScanner">
+                            Cancel Scan
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

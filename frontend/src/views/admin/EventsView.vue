@@ -2,8 +2,8 @@
     <div>
         <header class="mb-8">
             <div class="flex items-center justify-between">
-                <h1 class="text-3xl font-bold text-gray-900">Events</h1>
-                <button @click="showCreateModal = true" class="btn btn-primary">
+                <h1 class="text-3xl font-bold glass-text">Events</h1>
+                <button @click="showCreateModal = true" class="btn btn-primary glass-button">
                     Create Event
                 </button>
             </div>
@@ -16,26 +16,26 @@
             </div>
 
             <div v-else-if="events.length === 0" class="text-center py-12">
-                <p class="text-gray-500">No events found. Create your first event to get started.</p>
+                <p class="glass-text-light">No events found. Create your first event to get started.</p>
             </div>
 
-            <div v-else v-for="event in events" :key="event._id" class="card">
+            <div v-else v-for="event in events" :key="event._id" class="card glass-hover">
                 <div class="flex items-start justify-between">
                     <div>
-                        <h3 class="text-lg font-medium text-gray-900">{{ event.name }}</h3>
-                        <p class="mt-1 text-sm text-gray-500">{{ event.description }}</p>
+                        <h3 class="text-lg font-medium glass-text">{{ event.name }}</h3>
+                        <p class="mt-1 text-sm glass-text-light">{{ event.description }}</p>
                     </div>
                     <span :class="[
                         'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-                        event.status === 'active' ? 'bg-green-100 text-green-800' :
-                            event.status === 'draft' ? 'bg-yellow-100 text-yellow-800' :
+                        event.status === 'active' ? 'glass-success text-green-800' :
+                            event.status === 'draft' ? 'glass-warning text-yellow-800' :
                                 'bg-gray-100 text-gray-800'
                     ]">
                         {{ event.status }}
                     </span>
                 </div>
 
-                <div class="mt-4 grid grid-cols-2 gap-4 text-sm text-gray-500">
+                <div class="mt-4 grid grid-cols-2 gap-4 text-sm glass-text-light">
                     <div>
                         <span class="font-medium">Start Date:</span>
                         {{ formatDate(event.startDate) }}
@@ -62,11 +62,11 @@
                             View Committees
                         </router-link>
                         <button v-if="event.status === 'draft'" @click="() => handleActivateEvent(event)"
-                            class="btn btn-primary btn-sm">
+                            class="btn btn-primary btn-sm glass-button">
                             Activate
                         </button>
                         <button v-else-if="event.status === 'active'" @click="() => handleCompleteEvent(event)"
-                            class="btn btn-secondary btn-sm">
+                            class="btn btn-secondary btn-sm glass-button">
                             Complete
                         </button>
                     </div>
@@ -88,39 +88,39 @@
                             enter-to="opacity-100 scale-100" leave="duration-200 ease-in"
                             leave-from="opacity-100 scale-100" leave-to="opacity-0 scale-95">
                             <DialogPanel
-                                class="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                                <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
+                                class="w-full max-w-2xl transform overflow-hidden glass-modal p-6 text-left align-middle shadow-xl transition-all">
+                                <DialogTitle as="h3" class="text-lg font-medium leading-6 glass-text">
                                     {{ editingEvent ? 'Edit Event' : 'Create Event' }}
                                 </DialogTitle>
 
                                 <form @submit.prevent="handleSubmit" class="mt-4 space-y-4">
                                     <div>
-                                        <label for="name" class="form-label">Event Name</label>
+                                        <label for="name" class="form-label glass-text">Event Name</label>
                                         <input id="name" v-model="form.name" type="text" class="form-input" required />
                                     </div>
 
                                     <div>
-                                        <label for="description" class="form-label">Description</label>
+                                        <label for="description" class="form-label glass-text">Description</label>
                                         <textarea id="description" v-model="form.description" rows="3"
                                             class="form-input" required></textarea>
                                     </div>
 
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label for="startDate" class="form-label">Start Date</label>
+                                            <label for="startDate" class="form-label glass-text">Start Date</label>
                                             <input id="startDate" v-model="form.startDate" type="datetime-local"
                                                 class="form-input" required />
                                         </div>
 
                                         <div>
-                                            <label for="endDate" class="form-label">End Date</label>
+                                            <label for="endDate" class="form-label glass-text">End Date</label>
                                             <input id="endDate" v-model="form.endDate" type="datetime-local"
                                                 class="form-input" required />
                                         </div>
                                     </div>
 
                                     <div v-if="editingEvent">
-                                        <label for="status" class="form-label">Status</label>
+                                        <label for="status" class="form-label glass-text">Status</label>
                                         <select id="status" v-model="form.status" class="form-input">
                                             <option value="draft">Draft</option>
                                             <option value="active">Active</option>
@@ -129,10 +129,10 @@
                                     </div>
 
                                     <div class="mt-6 flex justify-end space-x-3">
-                                        <button type="button" class="btn btn-outline" @click="showCreateModal = false">
+                                        <button type="button" class="btn btn-outline glass-button" @click="showCreateModal = false">
                                             Cancel
                                         </button>
-                                        <button type="submit" class="btn btn-primary" :disabled="formLoading">
+                                        <button type="submit" class="btn btn-primary glass-button" :disabled="formLoading">
                                             {{ formLoading ? 'Saving...' : 'Save Event' }}
                                         </button>
                                     </div>

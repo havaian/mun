@@ -1,49 +1,49 @@
 <template>
     <div>
         <header class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <h1 class="text-3xl font-bold glass-text">Admin Dashboard</h1>
         </header>
 
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-12">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p class="mt-4 text-gray-500">Loading dashboard data...</p>
+            <p class="mt-4 glass-text-light">Loading dashboard data...</p>
         </div>
 
         <div v-else>
             <!-- Quick Stats -->
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                <div class="card">
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">Events</h3>
+                <div class="glass-stat-card">
+                    <h3 class="text-lg font-medium glass-text mb-2">Events</h3>
                     <div class="text-3xl font-bold text-un-blue">{{ stats.totalEvents }}</div>
-                    <p class="text-sm text-gray-500 mt-1">{{ stats.activeEvents }} active</p>
+                    <p class="text-sm glass-text-light mt-1">{{ stats.activeEvents }} active</p>
                 </div>
 
-                <div class="card">
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">Committees</h3>
+                <div class="glass-stat-card">
+                    <h3 class="text-lg font-medium glass-text mb-2">Committees</h3>
                     <div class="text-3xl font-bold text-un-blue">{{ stats.totalCommittees }}</div>
-                    <p class="text-sm text-gray-500 mt-1">{{ stats.activeCommittees }} active</p>
+                    <p class="text-sm glass-text-light mt-1">{{ stats.activeCommittees }} active</p>
                 </div>
 
-                <div class="card">
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">Delegates</h3>
+                <div class="glass-stat-card">
+                    <h3 class="text-lg font-medium glass-text mb-2">Delegates</h3>
                     <div class="text-3xl font-bold text-un-blue">{{ stats.totalDelegates }}</div>
-                    <p class="text-sm text-gray-500 mt-1">{{ stats.activeDelegates }} active</p>
+                    <p class="text-sm glass-text-light mt-1">{{ stats.activeDelegates }} active</p>
                 </div>
 
-                <div class="card">
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">Sessions</h3>
+                <div class="glass-stat-card">
+                    <h3 class="text-lg font-medium glass-text mb-2">Sessions</h3>
                     <div class="text-3xl font-bold text-un-blue">{{ stats.activeSessions }}</div>
-                    <p class="text-sm text-gray-500 mt-1">Currently active</p>
+                    <p class="text-sm glass-text-light mt-1">Currently active</p>
                 </div>
             </div>
 
             <!-- Recent Activity -->
             <div class="card">
-                <h2 class="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h2>
+                <h2 class="text-xl font-semibold glass-text mb-6">Recent Activity</h2>
 
                 <div v-if="recentActivity.length === 0" class="text-center py-8">
-                    <p class="text-gray-500">No recent activity found</p>
+                    <p class="glass-text-light">No recent activity found</p>
                 </div>
 
                 <div v-else class="flow-root">
@@ -51,11 +51,11 @@
                         <li v-for="(activity, index) in recentActivity" :key="activity.id">
                             <div class="relative pb-8">
                                 <span v-if="index !== recentActivity.length - 1"
-                                    class="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true" />
+                                    class="absolute left-4 top-4 -ml-px h-full w-0.5 bg-white/20" aria-hidden="true" />
                                 <div class="relative flex space-x-3">
                                     <div>
                                         <span :class="[
-                                            'h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white',
+                                            'h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white/10',
                                             getActivityColor(activity.type)
                                         ]">
                                             <component :is="getActivityIcon(activity.type)" class="h-5 w-5 text-white"
@@ -64,11 +64,11 @@
                                     </div>
                                     <div class="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
                                         <div>
-                                            <p class="text-sm text-gray-500">
+                                            <p class="text-sm glass-text-light">
                                                 {{ activity.description }}
                                             </p>
                                         </div>
-                                        <div class="whitespace-nowrap text-right text-sm text-gray-500">
+                                        <div class="whitespace-nowrap text-right text-sm glass-text-light">
                                             <time :datetime="activity.date">{{ formatDate(activity.date) }}</time>
                                         </div>
                                     </div>

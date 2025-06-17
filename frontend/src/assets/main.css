@@ -20,11 +20,45 @@
     }
 
     .card {
-        @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+        @apply bg-white/20 backdrop-blur-md rounded-lg shadow-lg border border-white/30 p-6;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    .glass-card {
+        @apply bg-white/10 backdrop-blur-lg rounded-xl shadow-xl border border-white/20 p-6;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+    }
+
+    .glass-container {
+        @apply bg-white/15 backdrop-blur-md rounded-lg shadow-lg border border-white/25;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    .glass-modal {
+        @apply bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/40;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+
+    .glass-header {
+        @apply bg-white/10 backdrop-blur-md shadow-sm border-b border-white/20;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    .glass-sidebar {
+        @apply bg-white/15 backdrop-blur-lg shadow-lg border-r border-white/25;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
     }
 
     .form-input {
-        @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm;
+        @apply block w-full rounded-md border-gray-300/50 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white/20 backdrop-blur-sm;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
 
     .form-label {
@@ -34,12 +68,74 @@
     .form-error {
         @apply mt-1 text-sm text-red-600;
     }
+
+    .gradient-bg {
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    }
+
+    .animate-float {
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .fade-in {
+        animation: fadeIn 1s ease-in;
+    }
+
+    /* Enhanced glassmorphism for special elements */
+    .glass-feature-card {
+        @apply bg-white/25 backdrop-blur-lg rounded-xl shadow-xl border border-white/30 p-6 hover:bg-white/30 transition-all duration-300;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+    }
+
+    .glass-stat-card {
+        @apply bg-white/20 backdrop-blur-md rounded-lg shadow-lg border border-white/25 p-4 hover:bg-white/25 transition-all duration-200;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    .glass-button {
+        @apply bg-white/20 backdrop-blur-sm rounded-lg border border-white/30 hover:bg-white/30 transition-all duration-200;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    .glass-table {
+        @apply bg-white/15 backdrop-blur-md rounded-lg border border-white/25 overflow-hidden;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    .glass-nav {
+        @apply bg-white/10 backdrop-blur-lg border-b border-white/20;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @media (max-width: 640px) {
-
     /* Make cards take full width and add spacing */
-    .card {
+    .card, .glass-card {
         @apply mb-4 mx-0 w-full;
     }
 
@@ -47,14 +143,12 @@
     .btn {
         @apply py-2 px-4 text-sm;
         min-height: 44px;
-        /* Recommended minimum touch target height */
     }
 
     /* Ensure forms are more usable on mobile */
     .form-input,
     .form-select {
         @apply text-base py-3;
-        /* Larger text and padding for touch */
     }
 
     /* Add more spacing between form elements */
@@ -106,7 +200,6 @@
 
 /* Tablet adjustments */
 @media (min-width: 641px) and (max-width: 1024px) {
-
     /* Adjust grid layouts for tablets */
     .grid-cols-3,
     .grid-cols-4 {
@@ -141,7 +234,6 @@
 
 /* Touchscreen-friendly controls */
 @media (hover: none) {
-
     /* Larger touch targets */
     .btn,
     .form-checkbox,
@@ -156,4 +248,45 @@
     .touch-friendly-nav>* {
         @apply py-3;
     }
+}
+
+/* Enhanced glassmorphism effects for better visual hierarchy */
+.glass-primary {
+    @apply bg-blue-500/20 backdrop-blur-md border border-blue-300/30;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-success {
+    @apply bg-green-500/20 backdrop-blur-md border border-green-300/30;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-warning {
+    @apply bg-yellow-500/20 backdrop-blur-md border border-yellow-300/30;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-error {
+    @apply bg-red-500/20 backdrop-blur-md border border-red-300/30;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Subtle hover effects for glassmorphism elements */
+.glass-hover {
+    @apply transition-all duration-300 hover:bg-white/30 hover:shadow-xl hover:scale-[1.02];
+}
+
+/* Text contrast improvements for glassmorphism */
+.glass-text {
+    @apply text-gray-800 font-medium;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.glass-text-light {
+    @apply text-gray-600;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
 }
