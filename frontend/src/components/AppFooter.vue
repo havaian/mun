@@ -1,12 +1,17 @@
 <template>
-    <footer class="bg-white border-t border-gray-200 mt-auto">
+    <footer class="bg-white/80 backdrop-blur-md border-t border-white/20 mt-auto">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="py-8 md:flex md:items-center md:justify-between">
                 <!-- Brand and description -->
                 <div class="space-y-4 md:w-1/2 md:pr-[10vw]">
                     <div class="flex items-center">
-                        <img src="/un-logo.png" alt="UN Logo" class="h-8 w-auto mr-2" />
-                        <span class="text-xl font-semibold text-un-blue">MUN.UZ</span>
+                        <div class="bg-un-blue rounded-full p-2 mr-2">
+                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
+                            </svg>
+                        </div>
+                        <span class="text-xl font-semibold text-gray-900">MUN<span class="text-un-blue">.UZ</span></span>
                     </div>
                     <p class="text-sm text-gray-500">
                         A comprehensive platform for organizing and conducting Model UN events, bringing together
@@ -23,17 +28,17 @@
                         </h3>
                         <ul class="mt-4 space-y-2">
                             <li>
-                                <router-link to="/" class="text-sm text-gray-600 hover:text-un-blue">
+                                <router-link to="/" class="text-sm text-gray-600 hover:text-un-blue transition-colors">
                                     Home
                                 </router-link>
                             </li>
                             <li>
-                                <router-link to="/login" class="text-sm text-gray-600 hover:text-un-blue">
+                                <router-link to="/login" class="text-sm text-gray-600 hover:text-un-blue transition-colors">
                                     Admin Login
                                 </router-link>
                             </li>
                             <li>
-                                <router-link to="/delegate/auth" class="text-sm text-gray-600 hover:text-un-blue">
+                                <router-link to="/delegate/auth" class="text-sm text-gray-600 hover:text-un-blue transition-colors">
                                     Delegate Access
                                 </router-link>
                             </li>
@@ -56,7 +61,7 @@
                             </li>
                             <li class="mt-4">
                                 <div class="flex space-x-3">
-                                    <a href="#" class="text-gray-400 hover:text-gray-500">
+                                    <a href="#" class="text-gray-400 hover:text-gray-500 transition-colors">
                                         <span class="sr-only">Facebook</span>
                                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                             <path fill-rule="evenodd"
@@ -64,14 +69,14 @@
                                                 clip-rule="evenodd" />
                                         </svg>
                                     </a>
-                                    <a href="#" class="text-gray-400 hover:text-gray-500">
+                                    <a href="#" class="text-gray-400 hover:text-gray-500 transition-colors">
                                         <span class="sr-only">Twitter</span>
                                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                             <path
                                                 d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
                                         </svg>
                                     </a>
-                                    <a href="#" class="text-gray-400 hover:text-gray-500">
+                                    <a href="#" class="text-gray-400 hover:text-gray-500 transition-colors">
                                         <span class="sr-only">Instagram</span>
                                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                             <path fill-rule="evenodd"
@@ -87,22 +92,22 @@
             </div>
 
             <!-- Copyright and language selector -->
-            <div class="border-t border-gray-200 py-4 flex flex-col sm:flex-row justify-between items-center">
+            <div class="border-t border-gray-200/50 py-4 flex flex-col sm:flex-row justify-between items-center">
                 <p class="text-xs text-gray-500">
                     &copy; {{ currentYear }} MUN.UZ. All rights reserved.
                 </p>
                 <div class="mt-4 sm:mt-0">
                     <div class="flex items-center space-x-4">
                         <button @click="switchLanguage('en')"
-                            :class="['text-xs', language === 'en' ? 'text-un-blue font-medium' : 'text-gray-500']">
+                            :class="['text-xs transition-colors', language === 'en' ? 'text-un-blue font-medium' : 'text-gray-500 hover:text-gray-700']">
                             English
                         </button>
                         <button @click="switchLanguage('ru')"
-                            :class="['text-xs', language === 'ru' ? 'text-un-blue font-medium' : 'text-gray-500']">
+                            :class="['text-xs transition-colors', language === 'ru' ? 'text-un-blue font-medium' : 'text-gray-500 hover:text-gray-700']">
                             Русский
                         </button>
                         <button @click="switchLanguage('uz')"
-                            :class="['text-xs', language === 'uz' ? 'text-un-blue font-medium' : 'text-gray-500']">
+                            :class="['text-xs transition-colors', language === 'uz' ? 'text-un-blue font-medium' : 'text-gray-500 hover:text-gray-700']">
                             O'zbekcha
                         </button>
                     </div>
