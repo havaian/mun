@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen">
+  <div class="min-h-screen" :class="{ 'gradient-bg': isHomePage }">
     <AppHeader v-if="!isHomePage" />
     <main :class="isHomePage ? '' : 'container mx-auto py-6 px-4 sm:px-6 lg:px-8'">
       <router-view />
