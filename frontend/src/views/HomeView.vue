@@ -6,34 +6,34 @@
                 <!-- Logo Section -->
                 <div class="mb-8 animate-float">
                     <div class="flex items-center justify-center mb-4">
-                        <div class="bg-un-blue rounded-full p-4 shadow-lg">
+                        <div class="bg-un-blue rounded-full p-4 shadow-lg glass-card">
                             <svg class="h-12 w-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
                             </svg>
                         </div>
                     </div>
-                    <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-2">
+                    <h1 class="text-4xl sm:text-5xl font-bold glass-text mb-2">
                         MUN<span class="text-un-blue">.UZ</span>
                     </h1>
-                    <p class="text-lg text-gray-600">Model United Nations Platform</p>
+                    <p class="text-lg glass-text-light">Model United Nations Platform</p>
                 </div>
 
                 <!-- Coming Soon Message -->
                 <div class="mb-12">
-                    <h2 class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-4">
+                    <h2 class="text-2xl sm:text-3xl font-semibold glass-text mb-4">
                         Something Amazing is Coming Soon
                     </h2>
-                    <p class="text-lg text-gray-600 leading-relaxed">
+                    <p class="text-lg glass-text-light leading-relaxed">
                         We're building the ultimate platform for organizing and conducting Model UN events.
                         A comprehensive solution for administrators, presidium members, and delegates.
                     </p>
                 </div>
 
                 <!-- Email Subscription Form -->
-                <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Stay in the Loop</h3>
-                    <p class="text-gray-600 mb-6">Be the first to know when we launch!</p>
+                <div class="glass-modal rounded-2xl shadow-xl p-8 mb-8">
+                    <h3 class="text-xl font-semibold glass-text mb-4">Stay in the Loop</h3>
+                    <p class="glass-text-light mb-6">Be the first to know when we launch!</p>
 
                     <form @submit.prevent="handleSubscription" class="space-y-4">
                         <div class="flex flex-col sm:flex-row gap-4">
@@ -42,12 +42,12 @@
                                 v-model="email" 
                                 placeholder="Enter your email address" 
                                 required
-                                class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-un-blue focus:border-un-blue outline-none transition-colors text-gray-900"
+                                class="flex-1 px-4 py-3 border border-white/30 rounded-lg focus:ring-2 focus:ring-un-blue focus:border-un-blue outline-none transition-colors glass-text bg-white/20 backdrop-blur-sm"
                             />
                             <button 
                                 type="submit" 
                                 :disabled="isSubmitting"
-                                class="px-8 py-3 bg-un-blue text-white font-medium rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-un-blue focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="px-8 py-3 bg-un-blue text-white font-medium rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-un-blue focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed glass-button"
                             >
                                 {{ isSubmitting ? 'Subscribing...' : 'Notify Me' }}
                             </button>
@@ -60,7 +60,7 @@
 
                 <!-- Features Preview -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                    <div class="bg-white/50 backdrop-blur-sm rounded-lg p-6 text-center">
+                    <div class="glass-feature-card text-center">
                         <div class="bg-un-blue/10 rounded-full p-3 inline-flex mb-4">
                             <svg class="h-6 w-6 text-un-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -68,11 +68,11 @@
                                 </path>
                             </svg>
                         </div>
-                        <h4 class="font-semibold text-gray-800 mb-2">Admin Dashboard</h4>
-                        <p class="text-sm text-gray-600">Comprehensive event and committee management</p>
+                        <h4 class="font-semibold glass-text mb-2">Admin Dashboard</h4>
+                        <p class="text-sm glass-text-light">Comprehensive event and committee management</p>
                     </div>
 
-                    <div class="bg-white/50 backdrop-blur-sm rounded-lg p-6 text-center">
+                    <div class="glass-feature-card text-center">
                         <div class="bg-un-blue/10 rounded-full p-3 inline-flex mb-4">
                             <svg class="h-6 w-6 text-un-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -80,11 +80,11 @@
                                 </path>
                             </svg>
                         </div>
-                        <h4 class="font-semibold text-gray-800 mb-2">Digital Resolutions</h4>
-                        <p class="text-sm text-gray-600">Submit and manage resolutions electronically</p>
+                        <h4 class="font-semibold glass-text mb-2">Digital Resolutions</h4>
+                        <p class="text-sm glass-text-light">Submit and manage resolutions electronically</p>
                     </div>
 
-                    <div class="bg-white/50 backdrop-blur-sm rounded-lg p-6 text-center">
+                    <div class="glass-feature-card text-center">
                         <div class="bg-un-blue/10 rounded-full p-3 inline-flex mb-4">
                             <svg class="h-6 w-6 text-un-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -92,17 +92,17 @@
                                 </path>
                             </svg>
                         </div>
-                        <h4 class="font-semibold text-gray-800 mb-2">Real-time Voting</h4>
-                        <p class="text-sm text-gray-600">Live voting and results tracking</p>
+                        <h4 class="font-semibold glass-text mb-2">Real-time Voting</h4>
+                        <p class="text-sm glass-text-light">Live voting and results tracking</p>
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="mt-8 flex justify-center gap-x-4">
-                    <router-link to="/login" class="btn btn-primary">
+                    <router-link to="/login" class="btn btn-primary glass-button">
                         Admin/Presidium Login
                     </router-link>
-                    <router-link to="/delegate/auth" class="btn btn-outline">
+                    <router-link to="/delegate/auth" class="btn btn-outline glass-button">
                         Delegate Access
                     </router-link>
                 </div>
@@ -111,7 +111,7 @@
             <!-- Footer -->
             <footer class="mt-auto py-8 text-center">
                 <div class="flex items-center justify-center space-x-6 mb-4">
-                    <a href="mailto:support@mun.uz" class="text-gray-500 hover:text-un-blue transition-colors">
+                    <a href="mailto:support@mun.uz" class="text-gray-500 hover:text-un-blue transition-colors glass-button p-2 rounded-full">
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                             <path
                                 d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z">
@@ -122,7 +122,7 @@
                         </svg>
                     </a>
                 </div>
-                <p class="text-sm text-gray-500">
+                <p class="text-sm glass-text-light">
                     &copy; {{ currentYear }} MUN.UZ. All rights reserved.
                 </p>
             </footer>

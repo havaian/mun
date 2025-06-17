@@ -12,13 +12,13 @@
             enter-to="opacity-100 scale-100" leave="duration-200 ease-in"
             leave-from="opacity-100 scale-100" leave-to="opacity-0 scale-95">
             <DialogPanel
-              class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-              <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900 text-center">
+              class="w-full max-w-md transform overflow-hidden glass-modal p-6 text-left align-middle shadow-xl transition-all">
+              <DialogTitle as="h3" class="text-lg font-medium leading-6 glass-text text-center">
                 Presidium QR Access Code
               </DialogTitle>
 
               <div class="mt-4 flex flex-col items-center">
-                <p class="text-sm text-gray-500 mb-4">
+                <p class="text-sm glass-text-light mb-4">
                   Scan this QR code to log in as <span class="font-medium">{{ username }}</span>
                 </p>
 
@@ -30,17 +30,17 @@
                   {{ error }}
                 </div>
 
-                <div v-else-if="qrData" class="bg-white p-4 rounded-lg">
+                <div v-else-if="qrData" class="glass-container p-4 rounded-lg">
                   <qrcode-vue :value="qrData" :size="200" level="H" />
 
                   <div class="mt-4 text-center">
-                    <p class="text-xs text-gray-500 break-all">Token: {{ qrData }}</p>
+                    <p class="text-xs glass-text-light break-all">Token: {{ qrData }}</p>
                   </div>
                 </div>
               </div>
 
               <div class="mt-6 flex justify-center">
-                <button type="button" class="btn btn-outline" @click="handleClose">
+                <button type="button" class="btn btn-outline glass-button" @click="handleClose">
                   Close
                 </button>
               </div>
