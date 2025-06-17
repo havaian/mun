@@ -1,17 +1,12 @@
 <template>
-    <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-white/20">
+    <header class="bg-white shadow-sm">
         <nav class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="flex h-16 justify-between items-center">
                 <!-- Logo -->
                 <div class="flex items-center">
                     <router-link to="/" class="flex items-center space-x-2">
-                        <div class="bg-un-blue rounded-full p-2">
-                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
-                            </svg>
-                        </div>
-                        <span class="text-xl font-semibold text-gray-900">MUN<span class="text-un-blue">.UZ</span></span>
+                        <img src="/un-logo.png" alt="UN Logo" class="h-8 w-auto" />
+                        <span class="text-xl font-semibold text-un-blue">MUN.UZ</span>
                     </router-link>
                 </div>
 
@@ -20,7 +15,7 @@
                     <template v-if="authStore.isAuthenticated">
                         <!-- User menu -->
                         <Menu as="div" class="relative ml-3">
-                            <MenuButton class="flex items-center space-x-2 text-gray-700 hover:text-gray-900 bg-white/50 backdrop-blur-sm rounded-lg px-3 py-2 transition-all">
+                            <MenuButton class="flex items-center space-x-2 text-gray-700 hover:text-gray-900">
                                 <span class="text-sm font-medium">
                                     {{ userDisplayName }}
                                 </span>
@@ -34,16 +29,16 @@
                                 leave-from-class="transform opacity-100 scale-100"
                                 leave-to-class="transform opacity-0 scale-95">
                                 <MenuItems
-                                    class="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white/95 backdrop-blur-md py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                    class="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                                     <MenuItem v-slot="{ active }">
                                     <router-link :to="authStore.getDefaultRoute"
-                                        :class="[active ? 'bg-gray-100/50' : '', 'block px-4 py-2 text-sm text-gray-700']">
+                                        :class="[active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700']">
                                         Dashboard
                                     </router-link>
                                     </MenuItem>
                                     <MenuItem v-slot="{ active }">
                                     <button @click="handleLogout"
-                                        :class="[active ? 'bg-gray-100/50' : '', 'block w-full text-left px-4 py-2 text-sm text-gray-700']">
+                                        :class="[active ? 'bg-gray-100' : '', 'block w-full text-left px-4 py-2 text-sm text-gray-700']">
                                         Logout
                                     </button>
                                     </MenuItem>
@@ -79,7 +74,7 @@
                 <!-- Mobile menu button -->
                 <div class="md:hidden">
                     <button @click="mobileMenuOpen = !mobileMenuOpen"
-                        class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-un-blue transition-all"
+                        class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-un-blue"
                         aria-expanded="false">
                         <span class="sr-only">Open main menu</span>
                         <!-- Icon when menu is closed -->
@@ -92,44 +87,44 @@
 
             <!-- Mobile menu, show/hide based on menu state -->
             <div v-if="mobileMenuOpen" class="md:hidden">
-                <div class="space-y-1 px-2 pb-3 pt-2 sm:px-3 bg-white/80 backdrop-blur-md rounded-lg mt-2">
+                <div class="space-y-1 px-2 pb-3 pt-2 sm:px-3">
                     <template v-if="authStore.isAuthenticated">
                         <div class="block px-3 py-2 text-base font-medium text-gray-900 border-b border-gray-200 mb-2">
                             {{ userDisplayName }}
                         </div>
                         <router-link :to="authStore.getDefaultRoute"
-                            class="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50/50 hover:text-gray-900"
+                            class="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                             @click="mobileMenuOpen = false">
                             Dashboard
                         </router-link>
                         <button @click="handleLogoutMobile"
-                            class="block w-full text-left rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50/50 hover:text-gray-900">
+                            class="block w-full text-left rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900">
                             Logout
                         </button>
                     </template>
                     <template v-else>
                         <template v-if="$route.name === 'delegate-auth'">
                             <router-link to="/login"
-                                class="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50/50 hover:text-gray-900"
+                                class="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                 @click="mobileMenuOpen = false">
                                 Admin/Presidium Login
                             </router-link>
                         </template>
                         <template v-else-if="$route.name === 'login'">
                             <router-link to="/delegate/auth"
-                                class="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50/50 hover:text-gray-900"
+                                class="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                 @click="mobileMenuOpen = false">
                                 Delegate Login
                             </router-link>
                         </template>
                         <template v-else>
                             <router-link to="/login"
-                                class="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50/50 hover:text-gray-900"
+                                class="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                 @click="mobileMenuOpen = false">
                                 Admin/Presidium Login
                             </router-link>
                             <router-link to="/delegate/auth"
-                                class="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50/50 hover:text-gray-900"
+                                class="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                                 @click="mobileMenuOpen = false">
                                 Delegate Login
                             </router-link>

@@ -1,214 +1,98 @@
 <template>
-    <div class="min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 mt-[5vh]">
-        <!-- Main Content -->
-        <div class="max-w-2xl w-full text-center fade-in">
-            <!-- Logo Section -->
-            <div class="mb-8 animate-float">
-                <div class="flex items-center justify-center mb-4">
-                    <div class="bg-un-blue rounded-full p-4 shadow-lg">
-                        <svg class="h-12 w-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
-                        </svg>
-                    </div>
-                </div>
-                <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-2">
-                    MUN<span class="text-un-blue">.UZ</span>
-                </h1>
-                <p class="text-lg text-gray-600">Model United Nations Platform</p>
-            </div>
-
-            <!-- Coming Soon Message -->
-            <div class="mb-12">
-                <h2 class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-4">
-                    Something Amazing is Coming Soon
-                </h2>
-                <p class="text-lg text-gray-600 leading-relaxed">
-                    We're building the ultimate platform for organizing and conducting Model UN events.
-                    A comprehensive solution for administrators, presidium members, and delegates.
-                </p>
-            </div>
-
-            <!-- Email Subscription Form -->
-            <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
-                <h3 class="text-xl font-semibold text-gray-800 mb-4">Stay in the Loop</h3>
-                <p class="text-gray-600 mb-6">Be the first to know when we launch!</p>
-
-                <form @submit.prevent="submitSubscription" class="space-y-4">
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <input 
-                            type="email" 
-                            v-model="email" 
-                            placeholder="Enter your email address" 
-                            required
-                            class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-un-blue focus:border-un-blue outline-none transition-colors text-gray-900"
-                        >
-                        <button 
-                            type="submit"
-                            :disabled="submitting"
-                            class="px-8 py-3 bg-un-blue text-white font-medium rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-un-blue focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {{ submitting ? 'Subscribing...' : 'Notify Me' }}
-                        </button>
-                    </div>
-                    <div v-if="message" :class="['text-sm', messageType === 'success' ? 'text-green-600' : 'text-red-600']">
-                        {{ message }}
-                    </div>
-                </form>
-            </div>
-
-            <!-- Features Preview -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <div class="bg-white/50 backdrop-blur-sm rounded-lg p-6 text-center">
-                    <div class="bg-un-blue/10 rounded-full p-3 inline-flex mb-4">
-                        <svg class="h-6 w-6 text-un-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
-                            </path>
-                        </svg>
-                    </div>
-                    <h4 class="font-semibold text-gray-800 mb-2">Admin Dashboard</h4>
-                    <p class="text-sm text-gray-600">Comprehensive event and committee management</p>
-                </div>
-
-                <div class="bg-white/50 backdrop-blur-sm rounded-lg p-6 text-center">
-                    <div class="bg-un-blue/10 rounded-full p-3 inline-flex mb-4">
-                        <svg class="h-6 w-6 text-un-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                            </path>
-                        </svg>
-                    </div>
-                    <h4 class="font-semibold text-gray-800 mb-2">Digital Resolutions</h4>
-                    <p class="text-sm text-gray-600">Submit and manage resolutions electronically</p>
-                </div>
-
-                <div class="bg-white/50 backdrop-blur-sm rounded-lg p-6 text-center">
-                    <div class="bg-un-blue/10 rounded-full p-3 inline-flex mb-4">
-                        <svg class="h-6 w-6 text-un-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 00-2-2z">
-                            </path>
-                        </svg>
-                    </div>
-                    <h4 class="font-semibold text-gray-800 mb-2">Real-time Voting</h4>
-                    <p class="text-sm text-gray-600">Live voting and results tracking</p>
-                </div>
-            </div>
-
-            <!-- Access Links for Development -->
-            <div class="bg-white/30 backdrop-blur-sm rounded-lg p-6 mb-8">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Development Access</h3>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <router-link to="/login" class="btn btn-primary">
-                        Admin/Presidium Login
-                    </router-link>
-                    <router-link to="/delegate/auth" class="btn btn-outline">
-                        Delegate Access
-                    </router-link>
-                </div>
+    <div class="max-w-7xl mx-auto">
+        <!-- Hero section -->
+        <div class="text-center py-12">
+            <h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
+                <span class="block">Model United Nations</span>
+                <span class="block text-un-blue">Platform</span>
+            </h1>
+            <p class="mt-3 text-base text-gray-500 sm:mx-auto sm:mt-5 sm:max-w-xl sm:text-lg md:mt-5 md:text-xl">
+                A comprehensive platform for organizing and conducting Model UN events, bringing together
+                administrators, presidium members, and delegates.
+            </p>
+            <div class="mt-8 flex justify-center gap-x-4">
+                <router-link to="/login" class="btn btn-primary">
+                    Admin/Presidium Login
+                </router-link>
+                <router-link to="/delegate/auth" class="btn btn-outline">
+                    Delegate Access
+                </router-link>
             </div>
         </div>
 
-        <!-- Footer -->
-        <footer class="mt-auto py-8 text-center">
-            <div class="flex items-center justify-center space-x-6 mb-4">
-                <a href="mailto:support@mun.uz" class="text-gray-500 hover:text-un-blue transition-colors">
-                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path
-                            d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z">
-                        </path>
-                        <path
-                            d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z">
-                        </path>
-                    </svg>
-                </a>
+        <!-- Features grid -->
+        <div class="mt-12">
+            <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                <!-- Admin features -->
+                <div class="card">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-md bg-un-blue text-white mb-4">
+                        <UserGroupIcon class="h-6 w-6" />
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900">Administrators</h3>
+                    <ul class="mt-4 space-y-2 text-gray-500">
+                        <li class="flex items-center">
+                            <CheckIcon class="h-5 w-5 text-green-500 mr-2" />
+                            Create and manage events
+                        </li>
+                        <li class="flex items-center">
+                            <CheckIcon class="h-5 w-5 text-green-500 mr-2" />
+                            Set up committees
+                        </li>
+                        <li class="flex items-center">
+                            <CheckIcon class="h-5 w-5 text-green-500 mr-2" />
+                            Generate delegate QR codes
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Presidium features -->
+                <div class="card">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-md bg-un-blue text-white mb-4">
+                        <ClipboardDocumentListIcon class="h-6 w-6" />
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900">Presidium</h3>
+                    <ul class="mt-4 space-y-2 text-gray-500">
+                        <li class="flex items-center">
+                            <CheckIcon class="h-5 w-5 text-green-500 mr-2" />
+                            Manage committee sessions
+                        </li>
+                        <li class="flex items-center">
+                            <CheckIcon class="h-5 w-5 text-green-500 mr-2" />
+                            Review resolutions
+                        </li>
+                        <li class="flex items-center">
+                            <CheckIcon class="h-5 w-5 text-green-500 mr-2" />
+                            Conduct voting procedures
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Delegate features -->
+                <div class="card">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-md bg-un-blue text-white mb-4">
+                        <DocumentTextIcon class="h-6 w-6" />
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900">Delegates</h3>
+                    <ul class="mt-4 space-y-2 text-gray-500">
+                        <li class="flex items-center">
+                            <CheckIcon class="h-5 w-5 text-green-500 mr-2" />
+                            Submit resolutions
+                        </li>
+                        <li class="flex items-center">
+                            <CheckIcon class="h-5 w-5 text-green-500 mr-2" />
+                            Propose amendments
+                        </li>
+                        <li class="flex items-center">
+                            <CheckIcon class="h-5 w-5 text-green-500 mr-2" />
+                            Participate in voting
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <p class="text-sm text-gray-500">
-                &copy; {{ currentYear }} MUN.UZ. All rights reserved.
-            </p>
-        </footer>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { toast } from 'vue3-toastify'
-
-const email = ref('')
-const submitting = ref(false)
-const message = ref('')
-const messageType = ref('')
-
-const currentYear = computed(() => new Date().getFullYear())
-
-async function submitSubscription() {
-    if (!email.value.trim()) {
-        showMessage('Please enter your email address.', 'error')
-        return
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email.value)) {
-        showMessage('Please enter a valid email address.', 'error')
-        return
-    }
-
-    submitting.value = true
-
-    try {
-        // Simulate API call for now
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        showMessage('Thank you for subscribing! We\'ll notify you when we launch.', 'success')
-        email.value = ''
-        toast.success('Successfully subscribed!')
-    } catch (error) {
-        console.error('Subscription error:', error)
-        showMessage('Network error. Please try again.', 'error')
-        toast.error('Subscription failed. Please try again.')
-    } finally {
-        submitting.value = false
-    }
-}
-
-function showMessage(text, type) {
-    message.value = text
-    messageType.value = type
-
-    if (type === 'success') {
-        setTimeout(() => {
-            message.value = ''
-        }, 5000)
-    }
-}
-
-// Add parallax effect for the floating logo
-onMounted(() => {
-    let ticking = false
-
-    function updateFloat() {
-        const scrolled = window.pageYOffset
-        const parallax = document.querySelector('.animate-float')
-        if (parallax) {
-            const speed = scrolled * 0.5
-            parallax.style.transform = `translateY(${speed}px)`
-        }
-        ticking = false
-    }
-
-    function requestTick() {
-        if (!ticking) {
-            requestAnimationFrame(updateFloat)
-            ticking = true
-        }
-    }
-
-    window.addEventListener('scroll', requestTick)
-
-    onBeforeUnmount(() => {
-        window.removeEventListener('scroll', requestTick)
-    })
-})
+import { UserGroupIcon, ClipboardDocumentListIcon, DocumentTextIcon, CheckIcon } from '@heroicons/vue/24/outline'
 </script>
