@@ -3,7 +3,7 @@
         class="min-h-[calc(100vh-12rem)] bg-gray-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div class="w-full max-w-md">
             <div class="text-center">
-                <img src="/un-logo.png" alt="UN Logo" class="mx-auto h-12 w-auto" />
+                <img src="/logo.svg" alt="UN Logo" class="mx-auto h-12 w-auto" />
                 <h2 class="mt-6 text-3xl font-bold tracking-tight text-gray-900">
                     Delegate Authentication
                 </h2>

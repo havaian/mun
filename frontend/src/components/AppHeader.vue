@@ -5,8 +5,10 @@
                 <!-- Logo -->
                 <div class="flex items-center">
                     <router-link to="/" class="flex items-center space-x-2">
-                        <img src="/un-logo.png" alt="UN Logo" class="h-8 w-auto" />
-                        <span class="text-xl font-semibold text-un-blue">MUN.UZ</span>
+                        <img src="/logo.svg" alt="UN Logo" class="h-8 w-auto" />
+                        <h1 class="text-xl sm:text-xl font-bold text-gray-900">
+                            MUN<span class="text-xl font-bold text-un-blue">.UZ</span>
+                        </h1>
                     </router-link>
                 </div>
 

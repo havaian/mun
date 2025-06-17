@@ -5,8 +5,10 @@
                 <!-- Brand and description -->
                 <div class="space-y-4 md:w-1/2 md:pr-[10vw]">
                     <div class="flex items-center">
-                        <img src="/un-logo.png" alt="UN Logo" class="h-8 w-auto mr-2" />
-                        <span class="text-xl font-semibold text-un-blue">MUN.UZ</span>
+                        <img src="/logo.svg" alt="UN Logo" class="h-8 w-auto mr-2" />
+                        <h1 class="text-xl sm:text-xl font-bold text-gray-900">
+                            MUN<span class="text-xl font-bold text-un-blue">.UZ</span>
+                        </h1>
                     </div>
                     <p class="text-sm text-gray-500">
                         A comprehensive platform for organizing and conducting Model UN events, bringing together
