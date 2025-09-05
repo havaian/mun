@@ -1,8 +1,11 @@
 {
-  "name": "mun-uz-frontend",
-  "private": true,
   "version": "0.0.0",
+  "name": "mun-uz-frontend",
+  "description": "Web platform for organizing and conducting Model UN events",
+  "author": "havaian",
+  "license": "ISC",
   "type": "module",
+  "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vite build",
