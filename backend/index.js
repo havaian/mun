@@ -23,6 +23,9 @@ const votingRoutes = require('./src/voting/routes');
 const messagingRoutes = require('./src/messaging/routes');
 const statisticsRoutes = require('./src/statistics/routes');
 const presentationRoutes = require('./src/presentation/routes');
+const timerRoutes = require('./src/timer/routes');
+const procedureRoutes = require('./src/procedure/routes');
+const exportRoutes = require('./src/export/routes');
 
 const app = express();
 const server = createServer(app);
@@ -34,6 +37,9 @@ const io = new Server(server, {
   },
   transports: ['websocket', 'polling']
 });
+
+// Make io available in routes
+app.locals.io = io;
 
 // Security middleware
 app.use(helmet({
@@ -76,13 +82,26 @@ app.use('/api/voting', votingRoutes);
 app.use('/api/messages', messagingRoutes);
 app.use('/api/statistics', statisticsRoutes);
 app.use('/api/presentation', presentationRoutes);
+app.use('/api/timers', timerRoutes);
+app.use('/api/procedure', procedureRoutes);
+app.use('/api/export', exportRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'healthy', 
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
+    modules: {
+      auth: 'active',
+      voting: 'active',
+      messaging: 'active',
+      statistics: 'active',
+      timers: 'active',
+      procedures: 'active',
+      export: 'active',
+      websocket: 'active'
+    }
   });
 });
 
@@ -131,11 +150,23 @@ async function startServer() {
     initializeWebSocket(io);
     logger.info('✅ WebSocket initialized');
     
+    // Initialize active timers
+    const { initializeActiveTimers } = require('./src/timer/controller');
+    await initializeActiveTimers();
+    logger.info('✅ Active timers initialized');
+    
     // Start server
     const PORT = process.env.BACKEND_PORT || process.env.PORT || 3000;
     server.listen(PORT, () => {
       logger.info(`🚀 Server running on port ${PORT}`);
       logger.info(`📊 Health check: http://localhost:${PORT}/api/health`);
+      logger.info(`🔌 WebSocket ready for connections`);
+      logger.info(`📈 Statistics system active`);
+      logger.info(`⏱️  Timer system active`);
+      logger.info(`💬 Messaging system active`);
+      logger.info(`🗳️  Voting system active`);
+      logger.info(`📝 Procedure system active`);
+      logger.info(`📤 Export system active`);
     });
     
   } catch (error) {
@@ -149,8 +180,14 @@ process.on('SIGTERM', async () => {
   logger.info('🔄 SIGTERM received, shutting down gracefully...');
   server.close(async () => {
     try {
+      // Cleanup WebSocket connections
+      const { cleanup } = require('./src/websocket/socketManager');
+      cleanup();
+      
+      // Close database connection
       const { closeConnection } = require('./src/database/connection');
       await closeConnection();
+      
       logger.info('✅ Graceful shutdown completed');
       process.exit(0);
     } catch (error) {

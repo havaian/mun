@@ -1,352 +1,406 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../auth/model');
 const logger = require('../utils/logger');
+const { User } = require('../auth/model');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-change-in-production';
+// Store active connections
+const activeConnections = new Map(); // userId -> Set of socket IDs
+const socketUsers = new Map(); // socketId -> userId
+const userRooms = new Map(); // userId -> Set of room names
+let io = null;
 
-// Store for socket connections organized by rooms
-const socketRooms = new Map();
-const userSockets = new Map(); // userId -> socket mapping
+// Initialize WebSocket server
+const initializeWebSocket = (socketIO) => {
+    io = socketIO;
 
-// Initialize WebSocket functionality
-const initializeWebSocket = (io) => {
-    // Authentication middleware for Socket.io
     io.use(async (socket, next) => {
         try {
-            const token = socket.handshake.auth.token || socket.handshake.headers.authorization;
+            const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.replace('Bearer ', '');
 
             if (!token) {
                 return next(new Error('Authentication token required'));
             }
 
-            // Remove 'Bearer ' prefix if present
-            const cleanToken = token.replace('Bearer ', '');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const user = await User.findById(decoded.userId);
 
-            // Verify JWT
-            const decoded = jwt.verify(cleanToken, JWT_SECRET);
-
-            // Get user details
-            const user = await User.findById(decoded.userId).populate('committeeId');
-
-            if (!user || !user.isActive) {
-                return next(new Error('User not found or inactive'));
+            if (!user) {
+                return next(new Error('User not found'));
             }
 
-            // Attach user info to socket
             socket.userId = user._id.toString();
-            socket.userRole = user.role;
-            socket.countryName = user.countryName;
-            socket.committeeId = user.committeeId?._id?.toString();
-            socket.presidiumRole = user.presidiumRole;
-            socket.specialRole = user.specialRole;
-            socket.email = user.email;
+            socket.user = {
+                userId: user._id.toString(),
+                email: user.email,
+                role: user.role,
+                countryName: user.countryName,
+                committeeId: user.committeeId?.toString(),
+                presidiumRole: user.presidiumRole
+            };
 
-            logger.info(`Socket authenticated: ${user.countryName || user.username} (${user.role})`);
             next();
-
         } catch (error) {
-            logger.warn('Socket authentication failed:', error.message);
+            logger.error('WebSocket authentication error:', error);
             next(new Error('Authentication failed'));
         }
     });
 
-    // Handle connections
     io.on('connection', (socket) => {
-        const {
-            userId,
-            userRole,
-            countryName,
-            committeeId,
-            presidiumRole,
-            specialRole
-        } = socket;
-
-        logger.info(`Socket connected: ${countryName || userId} (${userRole})`);
-
-        // Store socket reference
-        userSockets.set(userId, socket);
-
-        // Join appropriate rooms based on role and committee
-        joinAppropriateRooms(socket);
-
-        // Send current state to newly connected user
-        sendCurrentStateToUser(socket);
-
-        // Handle disconnection
-        socket.on('disconnect', (reason) => {
-            logger.info(`Socket disconnected: ${countryName || userId} (${reason})`);
-
-            // Remove from user sockets map
-            userSockets.delete(userId);
-
-            // Remove from all room tracking
-            for (const [roomName, users] of socketRooms.entries()) {
-                users.delete(userId);
-                if (users.size === 0) {
-                    socketRooms.delete(roomName);
-                }
-            }
-        });
-
-        // Handle room joining requests
-        socket.on('join-room', (roomName) => {
-            joinSpecificRoom(socket, roomName);
-        });
-
-        // Handle leaving rooms
-        socket.on('leave-room', (roomName) => {
-            leaveSpecificRoom(socket, roomName);
-        });
-
-        // Handle ping for connection keepalive
-        socket.on('ping', () => {
-            socket.emit('pong', { timestamp: Date.now() });
-        });
-
-        // Heartbeat to detect broken connections
-        socket.isAlive = true;
-        socket.on('pong', () => {
-            socket.isAlive = true;
-        });
+        handleConnection(socket);
     });
 
-    // Set up heartbeat interval
-    setInterval(() => {
-        io.sockets.sockets.forEach((socket) => {
-            if (socket.isAlive === false) {
-                logger.warn(`Terminating dead socket: ${socket.countryName || socket.userId}`);
-                return socket.terminate();
+    logger.info('WebSocket server initialized');
+};
+
+// Handle new socket connection
+const handleConnection = (socket) => {
+    const userId = socket.userId;
+    const user = socket.user;
+
+    logger.info(`User connected: ${user.email} (${socket.id})`);
+
+    // Track connection
+    if (!activeConnections.has(userId)) {
+        activeConnections.set(userId, new Set());
+    }
+    activeConnections.get(userId).add(socket.id);
+    socketUsers.set(socket.id, userId);
+
+    // Join appropriate rooms based on user role and committee
+    joinUserRooms(socket, user);
+
+    // Send connection confirmation
+    socket.emit('connected', {
+        message: 'Connected to MUN platform',
+        user: {
+            email: user.email,
+            role: user.role,
+            countryName: user.countryName,
+            committeeId: user.committeeId
+        },
+        timestamp: new Date()
+    });
+
+    // Handle custom events
+    setupEventHandlers(socket);
+
+    // Handle disconnection
+    socket.on('disconnect', (reason) => {
+        handleDisconnection(socket, reason);
+    });
+};
+
+// Join user to appropriate rooms
+const joinUserRooms = (socket, user) => {
+    const rooms = new Set();
+
+    if (user.committeeId) {
+        // Join committee room
+        const committeeRoom = `committee-${user.committeeId}`;
+        socket.join(committeeRoom);
+        rooms.add(committeeRoom);
+
+        // Join role-specific rooms
+        if (user.role === 'presidium') {
+            const presidiumRoom = `presidium-${user.committeeId}`;
+            socket.join(presidiumRoom);
+            rooms.add(presidiumRoom);
+        } else if (user.role === 'delegate') {
+            const delegatesRoom = `delegates-${user.committeeId}`;
+            socket.join(delegatesRoom);
+            rooms.add(delegatesRoom);
+        }
+
+        // Join presentation room (public display)
+        const presentationRoom = `presentation-${user.committeeId}`;
+        socket.join(presentationRoom);
+        rooms.add(presentationRoom);
+    }
+
+    // Join admin room if admin
+    if (user.role === 'admin') {
+        socket.join('admins');
+        rooms.add('admins');
+    }
+
+    // Store user rooms
+    userRooms.set(socket.userId, rooms);
+
+    logger.debug(`User ${user.email} joined rooms: ${Array.from(rooms).join(', ')}`);
+};
+
+// Setup event handlers for socket
+const setupEventHandlers = (socket) => {
+    const user = socket.user;
+
+    // Join/leave specific rooms
+    socket.on('join-room', (data) => {
+        const { roomName, password } = data;
+
+        // Validate room access
+        if (canJoinRoom(user, roomName, password)) {
+            socket.join(roomName);
+
+            if (!userRooms.has(socket.userId)) {
+                userRooms.set(socket.userId, new Set());
             }
+            userRooms.get(socket.userId).add(roomName);
 
-            socket.isAlive = false;
-            socket.ping();
-        });
-    }, 30000); // 30 seconds
+            socket.emit('room-joined', { roomName });
+            logger.debug(`User ${user.email} joined room: ${roomName}`);
+        } else {
+            socket.emit('room-join-failed', {
+                roomName,
+                error: 'Access denied to room'
+            });
+        }
+    });
 
-    return io;
+    socket.on('leave-room', (data) => {
+        const { roomName } = data;
+        socket.leave(roomName);
+
+        if (userRooms.has(socket.userId)) {
+            userRooms.get(socket.userId).delete(roomName);
+        }
+
+        socket.emit('room-left', { roomName });
+        logger.debug(`User ${user.email} left room: ${roomName}`);
+    });
+
+    // Voting-related events
+    socket.on('join-voting', (data) => {
+        const { votingId } = data;
+        const votingRoom = `voting-${votingId}`;
+
+        // Validate voting access
+        if (user.role === 'delegate' || user.role === 'presidium') {
+            socket.join(votingRoom);
+            socket.emit('voting-joined', { votingId });
+        }
+    });
+
+    // Coalition-related events
+    socket.on('join-coalition', (data) => {
+        const { coalitionId } = data;
+        const coalitionRoom = `coalition-${coalitionId}`;
+
+        // Validate coalition membership
+        // This would need to check if user is part of the coalition
+        socket.join(coalitionRoom);
+        socket.emit('coalition-joined', { coalitionId });
+    });
+
+    // Session-related events
+    socket.on('join-session', (data) => {
+        const { sessionId } = data;
+        const sessionRoom = `session-${sessionId}`;
+
+        if (user.committeeId) {
+            socket.join(sessionRoom);
+            socket.emit('session-joined', { sessionId });
+        }
+    });
+
+    // Heartbeat for connection monitoring
+    socket.on('ping', () => {
+        socket.emit('pong', { timestamp: new Date() });
+    });
+
+    // User status updates
+    socket.on('update-status', (data) => {
+        const { status } = data;
+
+        // Broadcast status to committee
+        if (user.committeeId) {
+            socket.to(`committee-${user.committeeId}`).emit('user-status-changed', {
+                userId: user.userId,
+                email: user.email,
+                countryName: user.countryName,
+                status,
+                timestamp: new Date()
+            });
+        }
+    });
+
+    // Error handling
+    socket.on('error', (error) => {
+        logger.error(`Socket error for user ${user.email}:`, error);
+    });
 };
 
-// Join appropriate rooms based on user role and committee
-const joinAppropriateRooms = (socket) => {
-    const {
-        userId,
-        userRole,
-        committeeId,
-        presidiumRole
-    } = socket;
+// Handle socket disconnection
+const handleDisconnection = (socket, reason) => {
+    const userId = socket.userId;
+    const user = socket.user;
 
-    if (!committeeId && userRole !== 'admin') {
-        logger.warn(`User ${userId} has no committee ID`);
-        return;
-    }
+    logger.info(`User disconnected: ${user.email} (${socket.id}) - ${reason}`);
 
-    // Everyone joins their committee room (if they have one)
-    if (committeeId) {
-        joinRoom(socket, `committee-${committeeId}`);
-    }
-
-    // Role-specific rooms
-    switch (userRole) {
-        case 'admin':
-            joinRoom(socket, 'admin-global');
-            // Admins can join any committee room they specify
-            break;
-
-        case 'presidium':
-            joinRoom(socket, `presidium-${committeeId}`);
-            joinRoom(socket, `delegates-${committeeId}`); // Can observe delegate room
-            break;
-
-        case 'delegate':
-            joinRoom(socket, `delegates-${committeeId}`);
-            break;
-    }
-
-    logger.info(`Socket ${socket.id} joined appropriate rooms for role: ${userRole}`);
-};
-
-// Join a specific room and track membership
-const joinRoom = (socket, roomName) => {
-    socket.join(roomName);
-
-    // Track room membership
-    if (!socketRooms.has(roomName)) {
-        socketRooms.set(roomName, new Set());
-    }
-    socketRooms.get(roomName).add(socket.userId);
-
-    logger.debug(`User ${socket.userId} joined room: ${roomName}`);
-};
-
-// Join specific room (for dynamic room joining)
-const joinSpecificRoom = (socket, roomName) => {
-    // Validate room access based on user role and committee
-    if (canAccessRoom(socket, roomName)) {
-        joinRoom(socket, roomName);
-        socket.emit('room-joined', { room: roomName, success: true });
-    } else {
-        logger.warn(`Access denied to room ${roomName} for user ${socket.userId}`);
-        socket.emit('room-join-error', {
-            room: roomName,
-            error: 'Access denied to this room'
-        });
-    }
-};
-
-// Leave specific room
-const leaveSpecificRoom = (socket, roomName) => {
-    socket.leave(roomName);
-
-    if (socketRooms.has(roomName)) {
-        socketRooms.get(roomName).delete(socket.userId);
-        if (socketRooms.get(roomName).size === 0) {
-            socketRooms.delete(roomName);
+    // Remove from tracking
+    if (activeConnections.has(userId)) {
+        activeConnections.get(userId).delete(socket.id);
+        if (activeConnections.get(userId).size === 0) {
+            activeConnections.delete(userId);
         }
     }
 
-    socket.emit('room-left', { room: roomName });
-    logger.debug(`User ${socket.userId} left room: ${roomName}`);
+    socketUsers.delete(socket.id);
+
+    // If user has no more connections, remove from room tracking
+    if (!activeConnections.has(userId)) {
+        userRooms.delete(userId);
+
+        // Notify committee about user going offline
+        if (user.committeeId) {
+            socket.to(`committee-${user.committeeId}`).emit('user-offline', {
+                userId: user.userId,
+                email: user.email,
+                countryName: user.countryName,
+                timestamp: new Date()
+            });
+        }
+    }
 };
 
-// Check if user can access a specific room
-const canAccessRoom = (socket, roomName) => {
-    const { userRole, committeeId, userId } = socket;
+// Utility function to check room access
+const canJoinRoom = (user, roomName, password) => {
+    // Basic room access validation
 
-    // Admin can access any room
-    if (userRole === 'admin') {
-        return true;
-    }
-
-    // Committee-specific rooms
-    if (roomName.startsWith('committee-') || roomName.startsWith('session-')) {
-        const roomCommitteeId = roomName.split('-')[1];
-        return committeeId === roomCommitteeId;
+    // Committee rooms
+    if (roomName.startsWith('committee-')) {
+        const committeeId = roomName.replace('committee-', '');
+        return user.committeeId === committeeId;
     }
 
     // Presidium rooms
     if (roomName.startsWith('presidium-')) {
-        const roomCommitteeId = roomName.split('-')[1];
-        return userRole === 'presidium' && committeeId === roomCommitteeId;
+        const committeeId = roomName.replace('presidium-', '');
+        return user.role === 'presidium' && user.committeeId === committeeId;
     }
 
     // Delegate rooms
     if (roomName.startsWith('delegates-')) {
-        const roomCommitteeId = roomName.split('-')[1];
-        return (userRole === 'delegate' || userRole === 'presidium') && committeeId === roomCommitteeId;
+        const committeeId = roomName.replace('delegates-', '');
+        return user.role === 'delegate' && user.committeeId === committeeId;
     }
 
-    // Voting rooms (only those with voting rights)
+    // Admin rooms
+    if (roomName === 'admins') {
+        return user.role === 'admin';
+    }
+
+    // Voting rooms (validated separately in voting controller)
     if (roomName.startsWith('voting-')) {
-        return userRole === 'admin' || userRole === 'presidium' ||
-            (userRole === 'delegate' && socket.specialRole !== 'observer' && socket.specialRole !== 'special');
+        return user.role === 'delegate' || user.role === 'presidium';
     }
 
-    // Coalition rooms - check if user is member
+    // Coalition rooms (would need coalition membership check)
     if (roomName.startsWith('coalition-')) {
-        // This would require checking coalition membership - implement when coalitions are ready
-        return false;
+        return user.role === 'delegate';
     }
 
-    // Default deny
     return false;
 };
 
-// Send current state to newly connected user
-const sendCurrentStateToUser = async (socket) => {
-    try {
-        // Send basic welcome message
-        socket.emit('connection-established', {
-            timestamp: new Date().toISOString(),
-            userRole: socket.userRole,
-            country: socket.countryName,
-            committeeId: socket.committeeId
-        });
-
-        // TODO: Send current session state, timers, etc. when those modules are ready
-
-    } catch (error) {
-        logger.error('Error sending current state:', error);
+// Emit to specific user (all their connections)
+const emitToUser = (io, userEmail, event, data) => {
+    // Find user ID by email (could be optimized with a reverse lookup map)
+    for (const [socketId, userId] of socketUsers.entries()) {
+        const socket = io.sockets.sockets.get(socketId);
+        if (socket && socket.user.email === userEmail) {
+            socket.emit(event, data);
+        }
     }
 };
 
-// Utility functions for emitting to specific rooms/users
+// Emit to room
+const emitToRoom = (io, roomName, event, data) => {
+    io.to(roomName).emit(event, data);
+};
 
-// Emit to all users in a committee
+// Emit to committee
 const emitToCommittee = (io, committeeId, event, data) => {
-    io.to(`committee-${committeeId}`).emit(event, {
-        ...data,
-        timestamp: new Date().toISOString()
-    });
-
-    logger.debug(`Emitted ${event} to committee ${committeeId}`);
+    emitToRoom(io, `committee-${committeeId}`, event, data);
 };
 
-// Emit to presidium of a committee
+// Emit to presidium
 const emitToPresidium = (io, committeeId, event, data) => {
-    io.to(`presidium-${committeeId}`).emit(event, {
-        ...data,
-        timestamp: new Date().toISOString()
-    });
-
-    logger.debug(`Emitted ${event} to presidium of committee ${committeeId}`);
+    emitToRoom(io, `presidium-${committeeId}`, event, data);
 };
 
-// Emit to delegates of a committee
+// Emit to delegates
 const emitToDelegates = (io, committeeId, event, data) => {
-    io.to(`delegates-${committeeId}`).emit(event, {
-        ...data,
-        timestamp: new Date().toISOString()
-    });
-
-    logger.debug(`Emitted ${event} to delegates of committee ${committeeId}`);
+    emitToRoom(io, `delegates-${committeeId}`, event, data);
 };
 
-// Emit to a specific user
-const emitToUser = (io, userId, event, data) => {
-    const socket = userSockets.get(userId);
-    if (socket) {
-        socket.emit(event, {
-            ...data,
-            timestamp: new Date().toISOString()
-        });
-        logger.debug(`Emitted ${event} to user ${userId}`);
-        return true;
-    }
-    return false;
-};
-
-// Emit to specific voting session
-const emitToVoting = (io, votingId, event, data) => {
-    io.to(`voting-${votingId}`).emit(event, {
-        ...data,
-        timestamp: new Date().toISOString()
-    });
-
-    logger.debug(`Emitted ${event} to voting ${votingId}`);
-};
-
-// Get online users in a committee
+// Get online users for committee
 const getOnlineUsers = (committeeId) => {
-    const roomName = `committee-${committeeId}`;
-    return socketRooms.get(roomName) || new Set();
+    const onlineUsers = [];
+
+    for (const [socketId, userId] of socketUsers.entries()) {
+        const socket = io.sockets.sockets.get(socketId);
+        if (socket && socket.user.committeeId === committeeId) {
+            onlineUsers.push({
+                userId: socket.user.userId,
+                email: socket.user.email,
+                countryName: socket.user.countryName,
+                role: socket.user.role,
+                connectedAt: new Date() // Could track actual connection time
+            });
+        }
+    }
+
+    return onlineUsers;
 };
 
-// Get room statistics
-const getRoomStats = () => {
-    const stats = {};
-    for (const [roomName, users] of socketRooms.entries()) {
-        stats[roomName] = users.size;
+// Get connection count for committee
+const getCommitteeConnectionCount = (committeeId) => {
+    let count = 0;
+
+    for (const [socketId, userId] of socketUsers.entries()) {
+        const socket = io.sockets.sockets.get(socketId);
+        if (socket && socket.user.committeeId === committeeId) {
+            count++;
+        }
     }
-    return stats;
+
+    return count;
+};
+
+// Broadcast system message
+const broadcastSystemMessage = (message, level = 'info') => {
+    io.emit('system-message', {
+        message,
+        level,
+        timestamp: new Date()
+    });
+
+    logger.info(`System broadcast: ${message}`);
+};
+
+// Get IO instance for external use
+const getIO = () => io;
+
+// Cleanup function for graceful shutdown
+const cleanup = () => {
+    if (io) {
+        io.close();
+        activeConnections.clear();
+        socketUsers.clear();
+        userRooms.clear();
+        logger.info('WebSocket server closed');
+    }
 };
 
 module.exports = {
     initializeWebSocket,
+    emitToUser,
+    emitToRoom,
     emitToCommittee,
     emitToPresidium,
     emitToDelegates,
-    emitToUser,
-    emitToVoting,
     getOnlineUsers,
-    getRoomStats
+    getCommitteeConnectionCount,
+    broadcastSystemMessage,
+    getIO,
+    cleanup
 };
