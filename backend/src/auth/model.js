@@ -10,33 +10,35 @@ const userSchema = new mongoose.Schema({
         required: true
     },
 
-    // For admin and presidium - traditional login
+    // For admin ONLY - traditional login (presidium now uses QR)
     username: {
         type: String,
         sparse: true, // Allows multiple null values
         unique: true,
-        required: function () { return this.role === 'admin' || this.role === 'presidium'; }
+        required: function () { return this.role === 'admin'; }
     },
 
     password: {
         type: String,
-        required: function () { return this.role === 'admin' || this.role === 'presidium'; }
+        required: function () { return this.role === 'admin'; }
     },
 
-    // For delegates - email binding after QR scan
+    // For presidium AND delegates - email binding after QR scan
     email: {
         type: String,
         sparse: true, // Allows multiple null values but ensures uniqueness when set
         unique: true,
         lowercase: true,
-        trim: true
+        trim: true,
+        required: function () { return this.role === 'presidium' || this.role === 'delegate'; }
     },
 
-    // QR token for initial access (delegates only)
+    // QR token for initial access (presidium AND delegates)
     qrToken: {
         type: String,
         sparse: true,
-        unique: true
+        unique: true,
+        required: function () { return this.role === 'presidium' || this.role === 'delegate'; }
     },
 
     isQrActive: {
@@ -60,7 +62,8 @@ const userSchema = new mongoose.Schema({
     // Special roles for observers/special participants
     specialRole: {
         type: String,
-        enum: ['observer', 'special'],
+        enum: ['observer', 'special', null],
+        default: null,
         required: function () { return this.role === 'delegate'; }
     },
 
@@ -102,8 +105,9 @@ userSchema.index({ role: 1, committeeId: 1 });
 userSchema.index({ qrToken: 1 }, { sparse: true });
 userSchema.index({ email: 1 }, { sparse: true });
 userSchema.index({ sessionId: 1 }, { sparse: true });
+userSchema.index({ presidiumRole: 1, committeeId: 1 });
 
-// Hash password before saving (for admin/presidium)
+// Hash password before saving (for admin only now)
 userSchema.pre('save', async function (next) {
     // Only hash password if it's being modified and exists
     if (!this.isModified('password') || !this.password) {
@@ -119,7 +123,7 @@ userSchema.pre('save', async function (next) {
     }
 });
 
-// Method to compare passwords
+// Method to compare passwords (admin only)
 userSchema.methods.comparePassword = async function (candidatePassword) {
     if (!this.password) {
         return false;

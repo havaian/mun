@@ -2,59 +2,36 @@ const jwt = require('jsonwebtoken');
 const { User, ActiveSession } = require('./model');
 const logger = require('../utils/logger');
 
-// JWT configuration
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-change-in-production';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const JWT_EXPIRES_IN = '24h';
 
-// Generate JWT token
+// Helper function to generate JWT token
 const generateToken = (payload) => {
     return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 };
 
-// Terminate existing sessions for user (except admin)
-const terminateExistingSessions = async (userId, currentSessionToken = null) => {
-    try {
-        const user = await User.findById(userId);
-
-        // Admins can have multiple sessions, others cannot
-        if (user && user.role !== 'admin') {
-            await ActiveSession.updateMany(
-                {
-                    userId,
-                    sessionToken: { $ne: currentSessionToken },
-                    isActive: true
-                },
-                { isActive: false }
-            );
-
-            // Clear sessionId from user document
-            await User.findByIdAndUpdate(userId, { sessionId: null });
-        }
-    } catch (error) {
-        logger.error('Error terminating existing sessions:', error);
-    }
-};
-
-// Create active session record
+// Helper function to create active session
 const createActiveSession = async (userId, sessionToken, req) => {
-    try {
-        const session = new ActiveSession({
-            userId,
-            sessionToken,
-            ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
-            userAgent: req.get('User-Agent') || 'unknown',
-            lastActivity: new Date()
-        });
-
-        await session.save();
-        return session;
-    } catch (error) {
-        logger.error('Error creating active session:', error);
-        throw error;
-    }
+    const session = new ActiveSession({
+        userId,
+        sessionToken,
+        ipAddress: req.ip || req.connection.remoteAddress || 'unknown',
+        userAgent: req.get('User-Agent') || 'unknown'
+    });
+    
+    await session.save();
+    return session;
 };
 
-// Admin login
+// Helper function to terminate existing sessions
+const terminateExistingSessions = async (userId, currentSessionToken) => {
+    await ActiveSession.updateMany(
+        { userId, sessionToken: { $ne: currentSessionToken } },
+        { $set: { isActive: false } }
+    );
+};
+
+// Admin login (unchanged - still uses username/password)
 const adminLogin = async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -78,8 +55,9 @@ const adminLogin = async (req, res) => {
             });
         }
 
-        // Generate session
+        // Terminate existing sessions
         const sessionToken = admin.generateSessionId();
+        await terminateExistingSessions(admin._id, sessionToken);
         await admin.save();
 
         // Create active session
@@ -112,68 +90,9 @@ const adminLogin = async (req, res) => {
     }
 };
 
-// Presidium login
-const presidiumLogin = async (req, res) => {
-    try {
-        const { username, password } = req.body;
+// REMOVED: presidiumLogin function - presidium now uses QR flow
 
-        if (!username || !password) {
-            return res.status(400).json({
-                error: 'Username and password are required'
-            });
-        }
-
-        // Find presidium member
-        const presidium = await User.findOne({
-            username: username.toLowerCase().trim(),
-            role: 'presidium'
-        }).populate('committeeId');
-
-        if (!presidium || !await presidium.comparePassword(password)) {
-            logger.warn(`Failed presidium login attempt for username: ${username}`);
-            return res.status(401).json({
-                error: 'Invalid credentials'
-            });
-        }
-
-        // Terminate existing sessions
-        const sessionToken = presidium.generateSessionId();
-        await terminateExistingSessions(presidium._id, sessionToken);
-        await presidium.save();
-
-        // Create active session
-        await createActiveSession(presidium._id, sessionToken, req);
-
-        // Generate JWT
-        const token = generateToken({
-            userId: presidium._id,
-            role: presidium.role,
-            committeeId: presidium.committeeId,
-            presidiumRole: presidium.presidiumRole,
-            sessionId: sessionToken
-        });
-
-        // Update last login
-        presidium.lastLogin = new Date();
-        presidium.lastActivity = new Date();
-        await presidium.save();
-
-        logger.info(`Presidium login successful: ${username} (${presidium.presidiumRole})`);
-
-        res.json({
-            success: true,
-            token,
-            user: presidium.toJSON(),
-            expiresIn: JWT_EXPIRES_IN
-        });
-
-    } catch (error) {
-        logger.error('Presidium login error:', error);
-        res.status(500).json({ error: 'Login failed' });
-    }
-};
-
-// QR code login (initial access for delegates)
+// QR code login (for both delegates AND presidium)
 const qrLogin = async (req, res) => {
     try {
         const { token } = req.body;
@@ -184,11 +103,11 @@ const qrLogin = async (req, res) => {
             });
         }
 
-        // Find user by QR token
+        // Find user by QR token (delegate OR presidium)
         const user = await User.findOne({
             qrToken: token,
             isQrActive: true,
-            role: 'delegate'
+            role: { $in: ['delegate', 'presidium'] } // CHANGED: Now includes presidium
         }).populate('committeeId');
 
         if (!user) {
@@ -198,15 +117,28 @@ const qrLogin = async (req, res) => {
             });
         }
 
-        logger.info(`QR login initiated for country: ${user.countryName}`);
-
-        res.json({
-            success: true,
-            country: user.countryName,
-            committee: user.committeeId.name,
-            qrToken: token,
-            message: 'QR code verified. Please provide your email address to complete registration.'
-        });
+        // Different response based on role
+        if (user.role === 'delegate') {
+            logger.info(`QR login initiated for delegate: ${user.countryName}`);
+            res.json({
+                success: true,
+                userType: 'delegate',
+                country: user.countryName,
+                committee: user.committeeId.name,
+                qrToken: token,
+                message: 'QR code verified. Please provide your email address to complete registration.'
+            });
+        } else if (user.role === 'presidium') {
+            logger.info(`QR login initiated for presidium: ${user.presidiumRole}`);
+            res.json({
+                success: true,
+                userType: 'presidium',
+                presidiumRole: user.presidiumRole,
+                committee: user.committeeId.name,
+                qrToken: token,
+                message: 'QR code verified. Please provide your email address to complete registration.'
+            });
+        }
 
     } catch (error) {
         logger.error('QR login error:', error);
@@ -214,7 +146,7 @@ const qrLogin = async (req, res) => {
     }
 };
 
-// Email binding after QR verification
+// Email binding after QR verification (for both delegates AND presidium)
 const bindEmail = async (req, res) => {
     try {
         const { token, email } = req.body;
@@ -241,11 +173,11 @@ const bindEmail = async (req, res) => {
             });
         }
 
-        // Find user by QR token
+        // Find user by QR token (delegate OR presidium)
         const user = await User.findOne({
             qrToken: token,
             isQrActive: true,
-            role: 'delegate'
+            role: { $in: ['delegate', 'presidium'] } // CHANGED: Now includes presidium
         }).populate('committeeId');
 
         if (!user) {
@@ -267,18 +199,27 @@ const bindEmail = async (req, res) => {
         // Create active session
         await createActiveSession(user._id, sessionToken, req);
 
-        // Generate JWT
-        const token_jwt = generateToken({
+        // Generate JWT with role-specific data
+        const tokenData = {
             userId: user._id,
             role: user.role,
             email: user.email,
-            countryName: user.countryName,
             committeeId: user.committeeId,
-            specialRole: user.specialRole,
             sessionId: sessionToken
-        });
+        };
 
-        logger.info(`Email binding successful: ${user.countryName} -> ${email}`);
+        // Add role-specific data
+        if (user.role === 'delegate') {
+            tokenData.countryName = user.countryName;
+            tokenData.specialRole = user.specialRole;
+        } else if (user.role === 'presidium') {
+            tokenData.presidiumRole = user.presidiumRole;
+        }
+
+        const token_jwt = generateToken(tokenData);
+
+        const userType = user.role === 'delegate' ? user.countryName : user.presidiumRole;
+        logger.info(`Email binding successful: ${userType} -> ${email}`);
 
         res.json({
             success: true,
@@ -294,54 +235,72 @@ const bindEmail = async (req, res) => {
     }
 };
 
-// Email login for delegates (after email binding)
+// Email login for delegates AND presidium (after email binding)
 const emailLogin = async (req, res) => {
     try {
         const { email } = req.body;
 
         if (!email) {
             return res.status(400).json({
-                error: 'Email is required'
+                error: 'Email address is required'
             });
         }
 
-        // Find delegate by email
+        // Find user by email (delegate OR presidium)
         const user = await User.findOne({
             email: email.toLowerCase(),
-            role: 'delegate'
+            role: { $in: ['delegate', 'presidium'] }, // CHANGED: Now includes presidium
+            isActive: true
         }).populate('committeeId');
 
         if (!user) {
-            logger.warn(`Failed delegate login attempt for email: ${email}`);
+            logger.warn(`Failed email login attempt for: ${email}`);
             return res.status(401).json({
-                error: 'Email not found or not registered'
+                error: 'No account found with this email address'
+            });
+        }
+
+        // Check if QR is still active (shouldn't be after binding)
+        if (user.isQrActive) {
+            return res.status(400).json({
+                error: 'Account setup not completed. Please scan QR code and bind email first.'
             });
         }
 
         // Terminate existing sessions
         const sessionToken = user.generateSessionId();
         await terminateExistingSessions(user._id, sessionToken);
-
-        // Update activity
-        user.lastLogin = new Date();
-        user.lastActivity = new Date();
         await user.save();
 
         // Create active session
         await createActiveSession(user._id, sessionToken, req);
 
-        // Generate JWT
-        const token = generateToken({
+        // Generate JWT with role-specific data
+        const tokenData = {
             userId: user._id,
             role: user.role,
             email: user.email,
-            countryName: user.countryName,
             committeeId: user.committeeId,
-            specialRole: user.specialRole,
             sessionId: sessionToken
-        });
+        };
 
-        logger.info(`Delegate login successful: ${user.countryName} (${email})`);
+        // Add role-specific data
+        if (user.role === 'delegate') {
+            tokenData.countryName = user.countryName;
+            tokenData.specialRole = user.specialRole;
+        } else if (user.role === 'presidium') {
+            tokenData.presidiumRole = user.presidiumRole;
+        }
+
+        const token = generateToken(tokenData);
+
+        // Update last login
+        user.lastLogin = new Date();
+        user.lastActivity = new Date();
+        await user.save();
+
+        const userType = user.role === 'delegate' ? user.countryName : user.presidiumRole;
+        logger.info(`Email login successful: ${userType} (${email})`);
 
         res.json({
             success: true,
@@ -356,21 +315,24 @@ const emailLogin = async (req, res) => {
     }
 };
 
-// Logout
+// Logout (requires authentication)
 const logout = async (req, res) => {
     try {
-        const { sessionId } = req.user;
+        if (req.user && req.user.sessionId) {
+            // Deactivate current session
+            await ActiveSession.updateOne(
+                { sessionToken: req.user.sessionId },
+                { $set: { isActive: false } }
+            );
 
-        // Deactivate the session
-        await ActiveSession.findOneAndUpdate(
-            { sessionToken: sessionId, isActive: true },
-            { isActive: false }
-        );
+            // Clear session ID from user
+            await User.updateOne(
+                { _id: req.user.userId },
+                { $unset: { sessionId: 1 } }
+            );
+        }
 
-        // Clear sessionId from user
-        await User.findByIdAndUpdate(req.user.userId, { sessionId: null });
-
-        logger.info(`User logged out: ${req.user.userId}`);
+        logger.info(`User logged out: ${req.user?.email || req.user?.userId}`);
 
         res.json({
             success: true,
@@ -383,31 +345,22 @@ const logout = async (req, res) => {
     }
 };
 
-// Validate session
+// Session validation
 const validateSession = async (req, res) => {
     try {
-        const user = await User.findById(req.user.userId)
-            .populate('committeeId')
-            .select('-password -qrToken');
+        // User is already validated by authenticateToken middleware
+        const user = await User.findById(req.user.userId).populate('committeeId');
 
-        if (!user) {
-            return res.status(401).json({ error: 'User not found' });
+        if (!user || !user.isActive) {
+            return res.status(401).json({
+                error: 'Session invalid'
+            });
         }
-
-        // Update last activity
-        user.lastActivity = new Date();
-        await user.save();
-
-        // Update session activity
-        await ActiveSession.findOneAndUpdate(
-            { sessionToken: req.user.sessionId, isActive: true },
-            { lastActivity: new Date() }
-        );
 
         res.json({
             success: true,
             user: user.toJSON(),
-            sessionValid: true
+            valid: true
         });
 
     } catch (error) {
@@ -423,7 +376,7 @@ const checkQrStatus = async (req, res) => {
 
         const user = await User.findOne({
             qrToken: token,
-            role: 'delegate'
+            role: { $in: ['delegate', 'presidium'] } // CHANGED: Now includes presidium
         }).populate('committeeId');
 
         if (!user) {
@@ -435,24 +388,82 @@ const checkQrStatus = async (req, res) => {
         res.json({
             success: true,
             isActive: user.isQrActive,
-            country: user.countryName,
-            committee: user.committeeId.name,
-            emailBound: !!user.email
+            isUsed: !user.isQrActive,
+            userType: user.role,
+            committeeId: user.committeeId._id,
+            committeeName: user.committeeId.name,
+            ...(user.role === 'delegate' && { countryName: user.countryName }),
+            ...(user.role === 'presidium' && { presidiumRole: user.presidiumRole })
         });
 
     } catch (error) {
         logger.error('QR status check error:', error);
-        res.status(500).json({ error: 'Status check failed' });
+        res.status(500).json({ error: 'Failed to check QR status' });
+    }
+};
+
+// QR token reactivation (admin only)
+const reactivateQr = async (req, res) => {
+    try {
+        const { userId } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({
+                error: 'User ID is required'
+            });
+        }
+
+        // Find user
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                error: 'User not found'
+            });
+        }
+
+        // Only allow reactivation for delegate and presidium users
+        if (!['delegate', 'presidium'].includes(user.role)) {
+            return res.status(400).json({
+                error: 'QR reactivation only available for delegates and presidium members'
+            });
+        }
+
+        // Reactivate QR and clear email
+        user.isQrActive = true;
+        user.email = null;
+        user.sessionId = null;
+
+        // Deactivate all sessions
+        await ActiveSession.updateMany(
+            { userId: user._id },
+            { $set: { isActive: false } }
+        );
+
+        await user.save();
+
+        const userType = user.role === 'delegate' ? user.countryName : user.presidiumRole;
+        logger.info(`QR reactivated for: ${userType} by admin ${req.user.userId}`);
+
+        res.json({
+            success: true,
+            message: `QR code reactivated for ${userType}`,
+            qrToken: user.qrToken
+        });
+
+    } catch (error) {
+        logger.error('QR reactivation error:', error);
+        res.status(500).json({ error: 'QR reactivation failed' });
     }
 };
 
 module.exports = {
     adminLogin,
-    presidiumLogin,
+    // presidiumLogin removed - now uses QR flow
     qrLogin,
     bindEmail,
     emailLogin,
     logout,
     validateSession,
-    checkQrStatus
+    checkQrStatus,
+    reactivateQr
 };

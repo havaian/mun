@@ -505,6 +505,254 @@ const deleteCommittee = async (req, res) => {
     }
 };
 
+// Generate presidium QR tokens for committee
+const generatePresidiumQRs = async (req, res) => {
+    try {
+        const { committeeId } = req.params;
+
+        // Find committee
+        const committee = await Committee.findById(committeeId);
+        if (!committee) {
+            return res.status(404).json({
+                error: 'Committee not found'
+            });
+        }
+
+        const presidiumRoles = ['chairman', 'co-chairman', 'expert', 'secretary'];
+        const createdUsers = [];
+        const errors = [];
+
+        for (const role of presidiumRoles) {
+            try {
+                // Check if presidium member already exists
+                const existingUser = await User.findOne({
+                    committeeId: committeeId,
+                    role: 'presidium',
+                    presidiumRole: role
+                });
+
+                if (existingUser) {
+                    // Update existing user to ensure QR token exists
+                    if (!existingUser.qrToken) {
+                        existingUser.qrToken = crypto.randomBytes(32).toString('hex');
+                        existingUser.isQrActive = true;
+                        await existingUser.save();
+                    }
+                    createdUsers.push({
+                        role: role,
+                        qrToken: existingUser.qrToken,
+                        status: 'updated'
+                    });
+                } else {
+                    // Create new presidium user
+                    const presidiumUser = new User({
+                        role: 'presidium',
+                        presidiumRole: role,
+                        committeeId: committeeId,
+                        qrToken: crypto.randomBytes(32).toString('hex'),
+                        isQrActive: true,
+                        isActive: true
+                    });
+
+                    await presidiumUser.save();
+                    createdUsers.push({
+                        role: role,
+                        qrToken: presidiumUser.qrToken,
+                        status: 'created'
+                    });
+                }
+
+                logger.info(`Presidium QR ${createdUsers[createdUsers.length - 1].status}: ${role} for committee ${committee.name}`);
+
+            } catch (error) {
+                logger.error(`Error creating presidium QR for ${role}:`, error);
+                errors.push({
+                    role: role,
+                    error: error.message
+                });
+            }
+        }
+
+        res.json({
+            success: true,
+            message: 'Presidium QR tokens generated successfully',
+            presidiumUsers: createdUsers,
+            errors: errors.length > 0 ? errors : undefined
+        });
+
+    } catch (error) {
+        logger.error('Generate presidium QRs error:', error);
+        res.status(500).json({
+            error: 'Failed to generate presidium QR tokens'
+        });
+    }
+};
+
+// Get presidium status for committee
+const getPresidiumStatus = async (req, res) => {
+    try {
+        const { committeeId } = req.params;
+
+        // Find all presidium members for this committee
+        const presidiumMembers = await User.find({
+            committeeId: committeeId,
+            role: 'presidium'
+        }).select('presidiumRole email qrToken isQrActive createdAt');
+
+        const presidiumRoles = ['chairman', 'co-chairman', 'expert', 'secretary'];
+        const statusMap = {};
+
+        // Initialize all roles as missing
+        presidiumRoles.forEach(role => {
+            statusMap[role] = {
+                role: role,
+                status: 'missing',
+                hasQR: false,
+                isRegistered: false
+            };
+        });
+
+        // Update with actual data
+        presidiumMembers.forEach(member => {
+            statusMap[member.presidiumRole] = {
+                role: member.presidiumRole,
+                status: 'created',
+                hasQR: !!member.qrToken,
+                isQRActive: member.isQrActive,
+                isRegistered: !!member.email,
+                email: member.email,
+                registeredAt: member.email ? member.createdAt : null
+            };
+        });
+
+        res.json({
+            success: true,
+            presidiumStatus: Object.values(statusMap),
+            summary: {
+                totalRoles: presidiumRoles.length,
+                createdRoles: presidiumMembers.length,
+                registeredRoles: presidiumMembers.filter(m => m.email).length,
+                activeQRs: presidiumMembers.filter(m => m.isQrActive).length
+            }
+        });
+
+    } catch (error) {
+        logger.error('Get presidium status error:', error);
+        res.status(500).json({
+            error: 'Failed to get presidium status'
+        });
+    }
+};
+
+// Reset presidium QR token (admin only)
+const resetPresidiumQR = async (req, res) => {
+    try {
+        const { committeeId, role } = req.params;
+
+        // Validate role
+        if (!['chairman', 'co-chairman', 'expert', 'secretary'].includes(role)) {
+            return res.status(400).json({
+                error: 'Invalid presidium role'
+            });
+        }
+
+        // Find presidium member
+        const presidiumUser = await User.findOne({
+            committeeId: committeeId,
+            role: 'presidium',
+            presidiumRole: role
+        });
+
+        if (!presidiumUser) {
+            return res.status(404).json({
+                error: `${role} not found for this committee`
+            });
+        }
+
+        // Reset user data
+        presidiumUser.qrToken = crypto.randomBytes(32).toString('hex');
+        presidiumUser.isQrActive = true;
+        presidiumUser.email = null;
+        presidiumUser.sessionId = null;
+
+        // Deactivate all sessions for this user
+        await ActiveSession.updateMany(
+            { userId: presidiumUser._id },
+            { $set: { isActive: false } }
+        );
+
+        await presidiumUser.save();
+
+        logger.info(`Reset QR for presidium ${role} in committee ${committeeId} by admin ${req.user.userId}`);
+
+        res.json({
+            success: true,
+            message: `QR code reset successfully for ${role}`,
+            newQRToken: presidiumUser.qrToken
+        });
+
+    } catch (error) {
+        logger.error('Reset presidium QR error:', error);
+        res.status(500).json({
+            error: 'Failed to reset presidium QR'
+        });
+    }
+};
+
+// Get QR tokens for PDF generation (admin only)
+const getCommitteeQRTokens = async (req, res) => {
+    try {
+        const { committeeId } = req.params;
+
+        // Get committee with countries
+        const committee = await Committee.findById(committeeId)
+            .select('name type countries')
+            .lean();
+
+        if (!committee) {
+            return res.status(404).json({
+                error: 'Committee not found'
+            });
+        }
+
+        // Get presidium members
+        const presidiumMembers = await User.find({
+            committeeId: committeeId,
+            role: 'presidium'
+        }).select('presidiumRole qrToken').lean();
+
+        // Format response
+        const qrTokens = {
+            committee: {
+                id: committee._id,
+                name: committee.name,
+                type: committee.type
+            },
+            presidium: presidiumMembers.map(member => ({
+                role: member.presidiumRole,
+                qrToken: member.qrToken
+            })),
+            delegates: committee.countries.map(country => ({
+                name: country.name,
+                qrToken: country.qrToken,
+                isObserver: country.isObserver,
+                specialRole: country.specialRole
+            }))
+        };
+
+        res.json({
+            success: true,
+            qrTokens
+        });
+
+    } catch (error) {
+        logger.error('Get committee QR tokens error:', error);
+        res.status(500).json({
+            error: 'Failed to get QR tokens'
+        });
+    }
+};
+
 module.exports = {
     createCommittee,
     getCommittee,
@@ -514,5 +762,9 @@ module.exports = {
     getCountries,
     generateQRCodes,
     updatePresidium,
-    deleteCommittee
+    deleteCommittee,
+    generatePresidiumQRs,
+    getPresidiumStatus,
+    resetPresidiumQR,
+    getCommitteeQRTokens
 };

@@ -129,6 +129,12 @@ const validateCountryName = [
         .trim()
 ];
 
+const validatePresidiumRole = [
+    param('role')
+        .isIn(['chairman', 'co-chairman', 'expert', 'secretary'])
+        .withMessage('Invalid presidium role')
+];
+
 // Routes
 
 // Create new committee (admin only)
@@ -453,6 +459,43 @@ router.post('/:id/qr-codes/:countryName/regenerate',
             res.status(500).json({ error: 'Failed to regenerate QR code' });
         }
     }
+);
+
+// Generate presidium QR tokens for committee (admin only)
+router.post('/:committeeId/presidium/generate-qrs',
+    authenticateToken,
+    requireAdmin,
+    validateCommitteeId,
+    handleValidationErrors,
+    controller.generatePresidiumQRs
+);
+
+// Get presidium status for committee
+router.get('/:committeeId/presidium/status',
+    authenticateToken,
+    requirePresidium, // Presidium can view their own status
+    validateCommitteeId,
+    handleValidationErrors,
+    controller.getPresidiumStatus
+);
+
+// Reset specific presidium QR token (admin only)
+router.post('/:committeeId/presidium/:role/reset-qr',
+    authenticateToken,
+    requireAdmin,
+    validateCommitteeId,
+    validatePresidiumRole,
+    handleValidationErrors,
+    controller.resetPresidiumQR
+);
+
+// Get all QR tokens for committee (for PDF generation - admin only)
+router.get('/:committeeId/qr-tokens',
+    authenticateToken,
+    requireAdmin,
+    validateCommitteeId,
+    handleValidationErrors,
+    controller.getCommitteeQRTokens
 );
 
 module.exports = router;

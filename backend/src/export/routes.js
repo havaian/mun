@@ -1,12 +1,13 @@
+// backend/src/export/routes.js - Updated with PDF generation
 const express = require('express');
-const { param, query, validationResult } = require('express-validator');
+const { param, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
 const {
     authenticateToken,
-    requirePresidium,
-    requireSameCommittee
+    requireAdmin,
+    requirePresidium
 } = require('../auth/middleware');
 
 // Validation middleware
@@ -21,142 +22,56 @@ const handleValidationErrors = (req, res, next) => {
     next();
 };
 
-// Validation schemas
+// Committee ID validation
 const validateCommitteeId = [
     param('committeeId')
         .isMongoId()
         .withMessage('Valid committee ID is required')
 ];
 
-const validateExportFormat = [
-    query('format')
-        .optional()
-        .isIn(['json', 'csv'])
-        .withMessage('Format must be json or csv')
-];
-
-const validateIncludeDetails = [
-    query('includeDetails')
-        .optional()
-        .isBoolean()
-        .withMessage('Include details must be boolean')
-];
-
-// Export Routes (Presidium only)
-
-// Export committee summary report
-router.get('/committee/:committeeId/summary',
+// Generate QR codes PDF for committee (admin only)
+router.get('/qr-codes/:committeeId',
     authenticateToken,
-    requirePresidium,
+    requireAdmin, // Only admin can generate QR PDFs
     validateCommitteeId,
-    validateExportFormat,
     handleValidationErrors,
-    requireSameCommittee,
-    controller.exportCommitteeSummary
+    controller.generateCommitteeQRPDF
 );
 
-// Export voting results
-router.get('/committee/:committeeId/voting-results',
+// Export committee statistics (presidium + admin)
+router.get('/statistics/:committeeId',
     authenticateToken,
     requirePresidium,
     validateCommitteeId,
-    validateExportFormat,
-    validateIncludeDetails,
     handleValidationErrors,
-    requireSameCommittee,
+    controller.exportStatistics
+);
+
+// Export voting results (presidium + admin)
+router.get('/voting-results/:committeeId',
+    authenticateToken,
+    requirePresidium,
+    validateCommitteeId,
+    handleValidationErrors,
     controller.exportVotingResults
 );
 
-// Export participation report
-router.get('/committee/:committeeId/participation',
+// Export resolutions (presidium + admin)
+router.get('/resolutions/:committeeId',
     authenticateToken,
     requirePresidium,
     validateCommitteeId,
-    validateExportFormat,
     handleValidationErrors,
-    requireSameCommittee,
-    controller.exportParticipationReport
+    controller.exportResolutions
 );
 
-// Export resolution summary
-router.get('/committee/:committeeId/resolutions',
+// Export complete committee report (admin only)
+router.get('/committee-report/:committeeId',
     authenticateToken,
-    requirePresidium,
+    requireAdmin,
     validateCommitteeId,
-    validateExportFormat,
     handleValidationErrors,
-    requireSameCommittee,
-    controller.exportResolutionSummary
+    controller.exportCompleteReport
 );
-
-// Export full event report (admin only)
-router.get('/event/:eventId/full-report',
-    authenticateToken,
-    param('eventId').isMongoId().withMessage('Valid event ID is required'),
-    validateExportFormat,
-    handleValidationErrors,
-    async (req, res) => {
-        try {
-            // Only admins can export full event reports
-            if (req.user.role !== 'admin') {
-                return res.status(403).json({ error: 'Admin access required' });
-            }
-
-            const { Event } = require('../event/model');
-            const { Committee } = require('../committee/model');
-            const { eventId } = req.params;
-            const { format = 'json' } = req.query;
-
-            const event = await Event.findById(eventId);
-            if (!event) {
-                return res.status(404).json({ error: 'Event not found' });
-            }
-
-            const committees = await Committee.find({ eventId });
-
-            const fullReport = {
-                event: {
-                    name: event.name,
-                    description: event.description,
-                    startDate: event.startDate,
-                    endDate: event.endDate,
-                    status: event.status,
-                    totalCommittees: committees.length
-                },
-                committees: committees.map(committee => ({
-                    id: committee._id,
-                    name: committee.name,
-                    type: committee.type,
-                    totalCountries: committee.countries.length,
-                    status: committee.status
-                })),
-                generatedAt: new Date(),
-                generatedBy: req.user.email
-            };
-
-            if (format === 'csv') {
-                const csv = generateEventCSV(fullReport);
-                res.setHeader('Content-Type', 'text/csv');
-                res.setHeader('Content-Disposition', `attachment; filename=event-${event.name}-report.csv`);
-                res.send(csv);
-            } else {
-                res.json({
-                    success: true,
-                    report: fullReport
-                });
-            }
-
-        } catch (error) {
-            res.status(500).json({ error: 'Failed to export event report' });
-        }
-    }
-);
-
-// Helper function for event CSV
-const generateEventCSV = (report) => {
-    const headers = ['Committee Name', 'Committee Type', 'Total Countries', 'Status'];
-    const rows = report.committees.map(c => [c.name, c.type, c.totalCountries, c.status]);
-    return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
-};
 
 module.exports = router;
