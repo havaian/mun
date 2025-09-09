@@ -1,198 +1,354 @@
 <template>
-    <div class="space-y-6">
-        <!-- Page Header -->
+    <div class="p-6 space-y-6">
+        <!-- Header -->
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-mun-gray-900">Admin Dashboard</h1>
-                <p class="text-mun-gray-600 mt-2">
-                    Welcome back, {{ authStore.user?.username }}. Here's what's happening with your MUN platform.
-                </p>
+                <h1 class="text-2xl font-bold text-mun-gray-900">Admin Dashboard</h1>
+                <p class="text-mun-gray-600">System overview and management</p>
             </div>
+            <div class="flex items-center space-x-3">
+                <button @click="refreshDashboard" :disabled="isLoading" class="btn-un-secondary">
+                    <ArrowPathIcon class="w-5 h-5 mr-2" />
+                    Refresh
+                </button>
+                <button @click="showExportModal = true" class="btn-un-primary">
+                    <DocumentArrowDownIcon class="w-5 h-5 mr-2" />
+                    Export Reports
+                </button>
+            </div>
+        </div>
 
-            <div class="flex items-center space-x-4">
-                <button @click="refreshDashboard" :disabled="isLoading"
-                    class="p-2 rounded-lg bg-white/60 hover:bg-white/80 border border-white/20 transition-colors">
-                    <ArrowPathIcon :class="['w-5 h-5 text-mun-gray-600', { 'animate-spin': isLoading }]" />
+        <!-- Dashboard Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div v-for="stat in dashboardStats" :key="stat.title" class="mun-card p-6">
+                <div class="flex items-center">
+                    <div :class="[
+                        'p-3 rounded-lg',
+                        stat.color === 'blue' ? 'bg-un-blue/10' :
+                            stat.color === 'green' ? 'bg-mun-green-500/10' :
+                                stat.color === 'purple' ? 'bg-purple-500/10' :
+                                    'bg-orange-500/10'
+                    ]">
+                        <component :is="stat.icon" :class="[
+                            'w-6 h-6',
+                            stat.color === 'blue' ? 'text-un-blue' :
+                                stat.color === 'green' ? 'text-mun-green-500' :
+                                    stat.color === 'purple' ? 'text-purple-500' :
+                                        'text-orange-500'
+                        ]" />
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-mun-gray-600">{{ stat.title }}</p>
+                        <div class="flex items-center space-x-2">
+                            <p class="text-2xl font-bold text-mun-gray-900">{{ stat.value }}</p>
+                            <span v-if="stat.change" :class="[
+                                'text-sm font-medium',
+                                stat.trend === 'up' ? 'text-mun-green-600' : 'text-mun-red-600'
+                            ]">
+                                {{ stat.change }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mun-card p-6">
+            <h2 class="text-lg font-semibold text-mun-gray-900 mb-4">Quick Actions</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <button @click="showCreateEventModal = true"
+                    class="flex flex-col items-center p-4 border-2 border-dashed border-mun-gray-200 rounded-lg hover:border-un-blue hover:bg-un-blue/5 transition-colors">
+                    <PlusIcon class="w-8 h-8 text-un-blue mb-2" />
+                    <span class="text-sm font-medium text-mun-gray-900">Create Event</span>
                 </button>
 
-                <AppButton variant="primary" :icon="PlusIcon" @click="quickActions.showCreateEvent = true">
-                    Quick Create
-                </AppButton>
+                <button @click="showCreateCommitteeModal = true"
+                    class="flex flex-col items-center p-4 border-2 border-dashed border-mun-gray-200 rounded-lg hover:border-mun-green-500 hover:bg-mun-green-50 transition-colors">
+                    <UserGroupIcon class="w-8 h-8 text-mun-green-500 mb-2" />
+                    <span class="text-sm font-medium text-mun-gray-900">Add Committee</span>
+                </button>
+
+                <button @click="bulkGenerateQR"
+                    class="flex flex-col items-center p-4 border-2 border-dashed border-mun-gray-200 rounded-lg hover:border-mun-yellow-500 hover:bg-mun-yellow-50 transition-colors">
+                    <QrCodeIcon class="w-8 h-8 text-mun-yellow-500 mb-2" />
+                    <span class="text-sm font-medium text-mun-gray-900">Generate QR Codes</span>
+                </button>
+
+                <RouterLink to="/admin/reports"
+                    class="flex flex-col items-center p-4 border-2 border-dashed border-mun-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors">
+                    <ChartBarIcon class="w-8 h-8 text-purple-500 mb-2" />
+                    <span class="text-sm font-medium text-mun-gray-900">View Reports</span>
+                </RouterLink>
             </div>
         </div>
 
-        <!-- Stats Overview -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard v-for="stat in stats" :key="stat.title" :title="stat.title" :value="stat.value"
-                :change="stat.change" :trend="stat.trend" :icon="stat.icon" :color="stat.color" :loading="isLoading" />
-        </div>
-
-        <!-- Quick Actions & Recent Activity -->
+        <!-- Main Content Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Quick Actions -->
-            <div class="lg:col-span-1">
-                <AppCard title="Quick Actions" class="h-full">
-                    <template #header-action>
-                        <button class="text-sm text-un-blue hover:text-un-blue-600">
-                            View All
-                        </button>
-                    </template>
-
-                    <div class="space-y-4">
-                        <QuickActionItem icon="CalendarDaysIcon" title="Create Event"
-                            description="Set up a new MUN event" @click="quickActions.showCreateEvent = true" />
-
-                        <QuickActionItem icon="UserGroupIcon" title="Add Committee" description="Create a new committee"
-                            @click="quickActions.showCreateCommittee = true" />
-
-                        <QuickActionItem icon="QrCodeIcon" title="Generate QR Codes"
-                            description="Create authentication QR codes" @click="showQRGeneration" />
-
-                        <QuickActionItem icon="DocumentTextIcon" title="Export Reports"
-                            description="Download platform reports" @click="quickActions.showExportReports = true" />
+            <!-- System Health -->
+            <div class="mun-card p-6">
+                <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">System Health</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-mun-gray-600">API Status</span>
+                        <div class="flex items-center space-x-2">
+                            <div :class="[
+                                'w-2 h-2 rounded-full',
+                                systemHealth.apiStatus === 'healthy' ? 'bg-mun-green-500' : 'bg-mun-red-500'
+                            ]"></div>
+                            <span class="text-sm font-medium">{{ systemHealth.apiResponseTime }}ms</span>
+                        </div>
                     </div>
-                </AppCard>
+
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-mun-gray-600">Database</span>
+                        <div class="flex items-center space-x-2">
+                            <div :class="[
+                                'w-2 h-2 rounded-full',
+                                systemHealth.dbStatus === 'connected' ? 'bg-mun-green-500' : 'bg-mun-red-500'
+                            ]"></div>
+                            <span class="text-sm font-medium">{{ systemHealth.dbStatus }}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-mun-gray-600">WebSocket</span>
+                        <div class="flex items-center space-x-2">
+                            <div :class="[
+                                'w-2 h-2 rounded-full',
+                                systemHealth.wsStatus === 'healthy' ? 'bg-mun-green-500' : 'bg-mun-red-500'
+                            ]"></div>
+                            <span class="text-sm font-medium">{{ systemHealth.activeConnections }} active</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-mun-gray-600">Storage</span>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-16 bg-mun-gray-200 rounded-full h-2">
+                                <div :class="[
+                                    'h-2 rounded-full transition-all duration-300',
+                                    systemHealth.storageUsed < 80 ? 'bg-mun-green-500' : 'bg-mun-red-500'
+                                ]" :style="{ width: `${systemHealth.storageUsed}%` }"></div>
+                            </div>
+                            <span class="text-sm font-medium">{{ systemHealth.storageUsed }}%</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Recent Activity -->
-            <div class="lg:col-span-2">
-                <AppCard title="Recent Activity" class="h-full">
-                    <template #header-action>
-                        <button class="text-sm text-un-blue hover:text-un-blue-600">
-                            View All
-                        </button>
-                    </template>
+            <div class="lg:col-span-2 mun-card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-mun-gray-900">Recent Activity</h3>
+                    <button @click="loadRecentActivity" class="text-sm text-un-blue hover:text-un-blue-600">
+                        View All
+                    </button>
+                </div>
 
-                    <div class="space-y-4">
-                        <ActivityItem v-for="activity in recentActivity" :key="activity.id" :activity="activity" />
+                <div v-if="isLoading" class="flex items-center justify-center py-8">
+                    <LoadingSpinner />
+                </div>
 
-                        <div v-if="recentActivity.length === 0" class="text-center py-8">
-                            <ClockIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
-                            <p class="text-mun-gray-500">No recent activity</p>
+                <div v-else class="space-y-4">
+                    <div v-for="activity in recentActivity" :key="activity.id"
+                        class="flex items-start space-x-3 p-3 hover:bg-mun-gray-50 rounded-lg transition-colors">
+                        <div :class="[
+                            'p-2 rounded-lg',
+                            activity.color === 'blue' ? 'bg-un-blue/10' :
+                                activity.color === 'green' ? 'bg-mun-green-500/10' :
+                                    activity.color === 'purple' ? 'bg-purple-500/10' :
+                                        'bg-orange-500/10'
+                        ]">
+                            <component :is="activity.icon" :class="[
+                                'w-4 h-4',
+                                activity.color === 'blue' ? 'text-un-blue' :
+                                    activity.color === 'green' ? 'text-mun-green-500' :
+                                        activity.color === 'purple' ? 'text-purple-500' :
+                                            'text-orange-500'
+                            ]" />
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-mun-gray-900">{{ activity.title }}</p>
+                            <p class="text-sm text-mun-gray-600">{{ activity.description }}</p>
+                            <div class="flex items-center space-x-2 mt-1 text-xs text-mun-gray-500">
+                                <span>{{ activity.user }}</span>
+                                <span>•</span>
+                                <span>{{ formatTime(activity.timestamp) }}</span>
+                            </div>
                         </div>
                     </div>
-                </AppCard>
+
+                    <div v-if="recentActivity.length === 0" class="text-center py-8">
+                        <ClockIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-4" />
+                        <p class="text-mun-gray-500">No recent activity</p>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Events & Committees Overview -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Active Events -->
-            <AppCard title="Active Events">
-                <template #header-action>
-                    <RouterLink :to="{ name: 'AdminEvents' }" class="text-sm text-un-blue hover:text-un-blue-600">
+            <div class="mun-card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-mun-gray-900">Active Events</h3>
+                    <RouterLink to="/admin/events" class="text-sm text-un-blue hover:text-un-blue-600">
                         Manage Events
                     </RouterLink>
-                </template>
+                </div>
 
                 <div class="space-y-4">
-                    <EventCard v-for="event in activeEvents" :key="event.id" :event="event"
-                        @click="goToEvent(event.id)" />
+                    <div v-for="event in activeEvents" :key="event.id" @click="goToEvent(event.id)"
+                        class="p-4 border border-mun-gray-200 rounded-lg hover:bg-mun-gray-50 cursor-pointer transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-medium text-mun-gray-900">{{ event.name }}</h4>
+                                <p class="text-sm text-mun-gray-600 mt-1">{{ event.description }}</p>
+                                <div class="flex items-center space-x-4 mt-2 text-xs text-mun-gray-500">
+                                    <span>{{ event.committees?.length || 0 }} committees</span>
+                                    <span>{{ event.participants || 0 }} participants</span>
+                                    <span>{{ formatDate(event.startDate) }}</span>
+                                </div>
+                            </div>
+                            <span :class="[
+                                'px-2 py-1 rounded-full text-xs font-medium',
+                                event.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
+                                    event.status === 'draft' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
+                                        'bg-mun-gray-100 text-mun-gray-700'
+                            ]">
+                                {{ event.status }}
+                            </span>
+                        </div>
+                    </div>
 
                     <div v-if="activeEvents.length === 0" class="text-center py-8">
-                        <CalendarDaysIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
+                        <CalendarDaysIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-4" />
                         <p class="text-mun-gray-500 mb-4">No active events</p>
-                        <AppButton variant="outline" size="sm" @click="quickActions.showCreateEvent = true">
+                        <button @click="showCreateEventModal = true" class="btn-un-primary">
                             Create First Event
-                        </AppButton>
+                        </button>
                     </div>
                 </div>
-            </AppCard>
+            </div>
 
             <!-- Committee Status -->
-            <AppCard title="Committee Status">
-                <template #header-action>
-                    <RouterLink :to="{ name: 'AdminCommittees' }" class="text-sm text-un-blue hover:text-un-blue-600">
+            <div class="mun-card p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-mun-gray-900">Committee Status</h3>
+                    <RouterLink to="/admin/committees" class="text-sm text-un-blue hover:text-un-blue-600">
                         Manage Committees
                     </RouterLink>
-                </template>
+                </div>
 
                 <div class="space-y-4">
-                    <CommitteeStatusItem v-for="committee in committeeStatus" :key="committee.id"
-                        :committee="committee" />
+                    <div v-for="committee in committeeStatus" :key="committee.id"
+                        class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg">
+                        <div>
+                            <h4 class="font-medium text-mun-gray-900">{{ committee.name }}</h4>
+                            <p class="text-sm text-mun-gray-600">{{ committee.eventName }}</p>
+                            <div class="flex items-center space-x-3 mt-1 text-xs text-mun-gray-500">
+                                <span>{{ committee.countries?.length || 0 }} countries</span>
+                                <span>{{ committee.registeredCount || 0 }} registered</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span :class="[
+                                'px-2 py-1 rounded-full text-xs font-medium',
+                                committee.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
+                                    committee.status === 'setup' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
+                                        'bg-mun-gray-100 text-mun-gray-700'
+                            ]">
+                                {{ committee.status }}
+                            </span>
+                            <div class="mt-2 text-xs text-mun-gray-500">
+                                {{ Math.round(((committee.registeredCount || 0) / (committee.countries?.length || 1)) *
+                                100) }}% ready
+                            </div>
+                        </div>
+                    </div>
 
                     <div v-if="committeeStatus.length === 0" class="text-center py-8">
-                        <UserGroupIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
-                        <p class="text-mun-gray-500 mb-4">No committees created</p>
-                        <AppButton variant="outline" size="sm" @click="quickActions.showCreateCommittee = true">
-                            Create First Committee
-                        </AppButton>
+                        <UserGroupIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-4" />
+                        <p class="text-mun-gray-500 mb-4">No committees yet</p>
+                        <button @click="showCreateCommitteeModal = true" class="btn-un-secondary">
+                            Create Committee
+                        </button>
                     </div>
                 </div>
-            </AppCard>
+            </div>
         </div>
 
-        <!-- System Health -->
-        <AppCard title="System Health" v-if="systemHealth">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <HealthMetric title="API Response Time" :value="systemHealth.apiResponseTime" unit="ms"
-                    :status="systemHealth.apiStatus" />
-
-                <HealthMetric title="WebSocket Connections" :value="systemHealth.activeConnections" unit="users"
-                    :status="systemHealth.wsStatus" />
-
-                <HealthMetric title="Database Status" :value="systemHealth.dbStatus" :status="systemHealth.dbHealth" />
-            </div>
-        </AppCard>
-
-        <!-- Quick Create Modals -->
-        <CreateEventModal v-model="quickActions.showCreateEvent" @created="handleEventCreated" />
-
-        <CreateCommitteeModal v-model="quickActions.showCreateCommittee" @created="handleCommitteeCreated" />
+        <!-- Modals -->
+        <CreateEventModal v-model="showCreateEventModal" @created="handleEventCreated" />
+        <CreateCommitteeModal v-model="showCreateCommitteeModal" @created="handleCommitteeCreated" />
+        <ExportReportsModal v-model="showExportModal" />
     </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
+import { useToast } from '@/plugins/toast'
 import { apiMethods } from '@/utils/api'
+
+// Icons
 import {
     ArrowPathIcon,
+    DocumentArrowDownIcon,
     PlusIcon,
-    CalendarDaysIcon,
     UserGroupIcon,
     QrCodeIcon,
-    DocumentTextIcon,
+    ChartBarIcon,
     ClockIcon,
+    CalendarDaysIcon,
     UsersIcon,
-    ChartBarIcon
+    DocumentTextIcon
 } from '@heroicons/vue/24/outline'
 
-// Import components (these would be created next)
-import StatCard from '@/components/admin/StatCard.vue'
-import QuickActionItem from '@/components/admin/QuickActionItem.vue'
-import ActivityItem from '@/components/admin/ActivityItem.vue'
-import EventCard from '@/components/admin/EventCard.vue'
-import CommitteeStatusItem from '@/components/admin/CommitteeStatusItem.vue'
-import HealthMetric from '@/components/admin/HealthMetric.vue'
+// Components
 import CreateEventModal from '@/components/admin/CreateEventModal.vue'
 import CreateCommitteeModal from '@/components/admin/CreateCommitteeModal.vue'
+import ExportReportsModal from '@/components/admin/ExportReportsModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const toast = useToast()
 
 // State
 const isLoading = ref(false)
-const stats = ref([])
+const showCreateEventModal = ref(false)
+const showCreateCommitteeModal = ref(false)
+const showExportModal = ref(false)
+
+const stats = reactive({
+    totalEvents: 0,
+    activeCommittees: 0,
+    registeredUsers: 0,
+    documentsUploaded: 0
+})
+
+const systemHealth = reactive({
+    apiStatus: 'healthy',
+    apiResponseTime: 125,
+    dbStatus: 'connected',
+    wsStatus: 'healthy',
+    activeConnections: 47,
+    storageUsed: 34
+})
+
 const activeEvents = ref([])
 const committeeStatus = ref([])
 const recentActivity = ref([])
-const systemHealth = ref(null)
-
-const quickActions = reactive({
-    showCreateEvent: false,
-    showCreateCommittee: false,
-    showExportReports: false
-})
 
 // Computed
 const dashboardStats = computed(() => [
     {
         title: 'Total Events',
-        value: stats.value.totalEvents || 0,
+        value: stats.totalEvents,
         change: '+12%',
         trend: 'up',
         icon: CalendarDaysIcon,
@@ -200,7 +356,7 @@ const dashboardStats = computed(() => [
     },
     {
         title: 'Active Committees',
-        value: stats.value.activeCommittees || 0,
+        value: stats.activeCommittees,
         change: '+5%',
         trend: 'up',
         icon: UserGroupIcon,
@@ -208,7 +364,7 @@ const dashboardStats = computed(() => [
     },
     {
         title: 'Registered Users',
-        value: stats.value.registeredUsers || 0,
+        value: stats.registeredUsers,
         change: '+23%',
         trend: 'up',
         icon: UsersIcon,
@@ -216,7 +372,7 @@ const dashboardStats = computed(() => [
     },
     {
         title: 'Documents Uploaded',
-        value: stats.value.documentsUploaded || 0,
+        value: stats.documentsUploaded,
         change: '+8%',
         trend: 'up',
         icon: DocumentTextIcon,
@@ -229,45 +385,92 @@ const loadDashboardData = async () => {
     try {
         isLoading.value = true
 
-        // Load dashboard statistics
+        // Load all dashboard data in parallel
         const [eventsRes, committeesRes, statsRes] = await Promise.all([
-            apiMethods.events.getAll({ status: 'active', limit: 5 }),
-            apiMethods.committees.getAll({ limit: 5 }),
+            loadActiveEvents(),
+            loadCommitteeStatus(),
             loadDashboardStats()
         ])
 
-        activeEvents.value = eventsRes.data.events || []
-        committeeStatus.value = committeesRes.data.committees || []
-
-        // Load recent activity
         await loadRecentActivity()
-
-        // Load system health
         await loadSystemHealth()
 
     } catch (error) {
         console.error('Dashboard loading error:', error)
-        appStore.showErrorMessage('Failed to load dashboard data')
+        toast.error('Failed to load dashboard data')
     } finally {
         isLoading.value = false
     }
 }
 
+const loadActiveEvents = async () => {
+    try {
+        // TODO: Replace with actual API call
+        activeEvents.value = [
+            {
+                id: 1,
+                name: "Global Youth MUN 2025",
+                description: "Annual global youth model united nations conference",
+                status: "active",
+                startDate: new Date().toISOString(),
+                committees: [1, 2, 3],
+                participants: 150
+            },
+            {
+                id: 2,
+                name: "Regional Security Council",
+                description: "Regional security council simulation",
+                status: "draft",
+                startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                committees: [1],
+                participants: 45
+            }
+        ]
+    } catch (error) {
+        console.error('Load events error:', error)
+    }
+}
+
+const loadCommitteeStatus = async () => {
+    try {
+        // TODO: Replace with actual API call
+        committeeStatus.value = [
+            {
+                id: 1,
+                name: "General Assembly",
+                eventName: "Global Youth MUN 2025",
+                status: "active",
+                countries: new Array(48),
+                registeredCount: 42
+            },
+            {
+                id: 2,
+                name: "Security Council",
+                eventName: "Global Youth MUN 2025",
+                status: "setup",
+                countries: new Array(15),
+                registeredCount: 8
+            }
+        ]
+    } catch (error) {
+        console.error('Load committees error:', error)
+    }
+}
+
 const loadDashboardStats = async () => {
     try {
-        // This would be a dedicated dashboard stats endpoint
-        const response = await apiMethods.export.getStatistics('global')
-        stats.value = response.data.statistics || {}
-        return response
+        // TODO: Replace with actual API call to /api/export/statistics
+        stats.totalEvents = 8
+        stats.activeCommittees = 12
+        stats.registeredUsers = 342
+        stats.documentsUploaded = 89
     } catch (error) {
-        console.error('Stats loading error:', error)
-        return { data: {} }
+        console.error('Load stats error:', error)
     }
 }
 
 const loadRecentActivity = async () => {
     try {
-        // Mock activity data - in real app this would come from an activity log API
         recentActivity.value = [
             {
                 id: 1,
@@ -301,121 +504,78 @@ const loadRecentActivity = async () => {
             }
         ]
     } catch (error) {
-        console.error('Activity loading error:', error)
+        console.error('Load activity error:', error)
     }
 }
 
 const loadSystemHealth = async () => {
     try {
-        // Mock system health data
-        systemHealth.value = {
-            apiResponseTime: 125,
-            apiStatus: 'healthy',
-            activeConnections: 47,
-            wsStatus: 'healthy',
-            dbStatus: 'Connected',
-            dbHealth: 'healthy'
+        // TODO: Replace with actual API call to /api/health
+        const response = await fetch('/api/health')
+        if (response.ok) {
+            const health = await response.json()
+            Object.assign(systemHealth, {
+                apiStatus: health.status === 'healthy' ? 'healthy' : 'unhealthy',
+                apiResponseTime: Math.round(performance.now()),
+                dbStatus: health.services?.database || 'unknown',
+                wsStatus: health.modules?.websocket === 'active' ? 'healthy' : 'unhealthy',
+                activeConnections: 47, // TODO: get from health endpoint
+                storageUsed: 34 // TODO: get from health endpoint
+            })
         }
     } catch (error) {
-        console.error('System health loading error:', error)
+        console.error('Load health error:', error)
+        systemHealth.apiStatus = 'unhealthy'
+        systemHealth.dbStatus = 'unknown'
+        systemHealth.wsStatus = 'unhealthy'
     }
 }
 
 const refreshDashboard = async () => {
     await loadDashboardData()
-    appStore.showSuccessMessage('Dashboard refreshed')
+    toast.success('Dashboard refreshed')
 }
 
-const showQRGeneration = () => {
-    if (activeEvents.value.length === 0) {
-        appStore.showWarningMessage('Please create an event first before generating QR codes')
-        return
+const bulkGenerateQR = async () => {
+    try {
+        // TODO: Implement bulk QR generation
+        toast.info('Bulk QR generation would start here')
+    } catch (error) {
+        toast.error('Failed to generate QR codes')
     }
-
-    router.push({ name: 'AdminCommittees', query: { action: 'generate-qr' } })
 }
 
 const goToEvent = (eventId) => {
-    router.push({ name: 'AdminEvents', params: { id: eventId } })
+    router.push({ name: 'AdminEvents', query: { highlight: eventId } })
 }
 
 const handleEventCreated = (event) => {
     activeEvents.value.unshift(event)
-    appStore.showSuccessMessage('Event created successfully')
-    loadDashboardData() // Refresh stats
+    stats.totalEvents++
+    toast.success(`Event "${event.name}" created successfully`)
 }
 
 const handleCommitteeCreated = (committee) => {
     committeeStatus.value.unshift(committee)
-    appStore.showSuccessMessage('Committee created successfully')
-    loadDashboardData() // Refresh stats
+    stats.activeCommittees++
+    toast.success(`Committee "${committee.name}" created successfully`)
 }
 
-// Initialize dashboard
+const formatTime = (timestamp) => {
+    const now = new Date()
+    const diff = Math.floor((now - new Date(timestamp)) / 60000)
+
+    if (diff < 60) return `${diff}m ago`
+    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`
+    return `${Math.floor(diff / 1440)}d ago`
+}
+
+const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString()
+}
+
+// Lifecycle
 onMounted(() => {
     loadDashboardData()
-
-    // Set up auto-refresh every 5 minutes
-    const refreshInterval = setInterval(() => {
-        if (!document.hidden) {
-            loadDashboardData()
-        }
-    }, 5 * 60 * 1000)
-
-    // Cleanup on unmount
-    onUnmounted(() => {
-        clearInterval(refreshInterval)
-    })
 })
-
-// Update breadcrumbs
-appStore.setBreadcrumbs([
-    { text: 'Admin', to: { name: 'AdminDashboard' } },
-    { text: 'Dashboard', active: true }
-])
 </script>
-
-<style scoped>
-/* Custom animations for dashboard cards */
-.dashboard-card {
-    animation: slideInUp 0.6s ease-out;
-}
-
-.dashboard-card:nth-child(1) {
-    animation-delay: 0.1s;
-}
-
-.dashboard-card:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.dashboard-card:nth-child(3) {
-    animation-delay: 0.3s;
-}
-
-.dashboard-card:nth-child(4) {
-    animation-delay: 0.4s;
-}
-
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Hover effects for cards */
-.hover-lift {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.hover-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 158, 219, 0.15);
-}
-</style>

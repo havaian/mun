@@ -1,225 +1,316 @@
 <template>
-    <div class="max-w-7xl mx-auto p-6 space-y-6">
-        <!-- Page Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+    <div class="p-6 space-y-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-mun-gray-900">Event Management</h1>
-                <p class="text-mun-gray-600 mt-1">Create and manage MUN events</p>
+                <p class="text-mun-gray-600">Create and manage MUN events</p>
             </div>
-
             <div class="flex items-center space-x-3">
-                <AppButton variant="outline" size="md" @click="refreshEvents" :loading="isLoading">
-                    <ArrowPathIcon class="w-4 h-4 mr-2" />
+                <button @click="refreshEvents" :disabled="isLoading" class="btn-un-secondary">
+                    <ArrowPathIcon class="w-5 h-5 mr-2" />
                     Refresh
-                </AppButton>
-
-                <AppButton variant="primary" size="md" @click="showCreateEvent = true">
-                    <PlusIcon class="w-4 h-4 mr-2" />
+                </button>
+                <button @click="showCreateModal = true" class="btn-un-primary">
+                    <PlusIcon class="w-5 h-5 mr-2" />
                     Create Event
-                </AppButton>
+                </button>
             </div>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard v-for="stat in eventStats" :key="stat.title" :title="stat.title" :value="stat.value"
-                :change="stat.change" :trend="stat.trend" :icon="stat.icon" :color="stat.color" />
+        <!-- Events Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="mun-card p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-lg bg-un-blue/10">
+                        <CalendarDaysIcon class="w-6 h-6 text-un-blue" />
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-mun-gray-600">Total Events</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.total }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mun-card p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-lg bg-mun-green-500/10">
+                        <PlayIcon class="w-6 h-6 text-mun-green-500" />
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-mun-gray-600">Active</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.active }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mun-card p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-lg bg-mun-yellow-500/10">
+                        <ClockIcon class="w-6 h-6 text-mun-yellow-500" />
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-mun-gray-600">Upcoming</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.upcoming }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mun-card p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-lg bg-mun-red-500/10">
+                        <UsersIcon class="w-6 h-6 text-mun-red-500" />
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-mun-gray-600">Total Participants</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.totalParticipants }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Filters and Search -->
-        <AppCard class="p-6">
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                <!-- Search -->
-                <div class="lg:col-span-2">
-                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                        Search Events
-                    </label>
-                    <div class="relative">
-                        <input v-model="searchQuery" type="text"
-                            placeholder="Search by name, description, or organizer..." class="input-field pl-10"
-                            @input="debouncedSearch" />
-                        <MagnifyingGlassIcon
-                            class="w-5 h-5 text-mun-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                    </div>
-                </div>
-
-                <!-- Status Filter -->
-                <div>
-                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                        Status
-                    </label>
-                    <select v-model="filters.status" class="input-field" @change="applyFilters">
+        <div class="mun-card p-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                <div class="flex items-center space-x-4">
+                    <select v-model="filters.status" @change="filterEvents" class="input-field max-w-xs">
                         <option value="">All Statuses</option>
                         <option value="draft">Draft</option>
-                        <option value="published">Published</option>
                         <option value="active">Active</option>
                         <option value="completed">Completed</option>
                         <option value="cancelled">Cancelled</option>
                     </select>
+
+                    <select v-model="filters.dateRange" @change="filterEvents" class="input-field max-w-xs">
+                        <option value="">All Dates</option>
+                        <option value="this_week">This Week</option>
+                        <option value="this_month">This Month</option>
+                        <option value="next_month">Next Month</option>
+                        <option value="past">Past Events</option>
+                    </select>
+
+                    <div class="flex items-center space-x-2">
+                        <button @click="viewMode = 'grid'" :class="[
+                            'p-2 rounded-lg transition-colors',
+                            viewMode === 'grid' ? 'bg-un-blue text-white' : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
+                        ]">
+                            <Squares2X2Icon class="w-5 h-5" />
+                        </button>
+                        <button @click="viewMode = 'list'" :class="[
+                            'p-2 rounded-lg transition-colors',
+                            viewMode === 'list' ? 'bg-un-blue text-white' : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
+                        ]">
+                            <ListBulletIcon class="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Date Range -->
-                <div>
-                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                        Date Range
-                    </label>
-                    <select v-model="filters.dateRange" class="input-field" @change="applyFilters">
-                        <option value="">All Dates</option>
-                        <option value="upcoming">Upcoming</option>
-                        <option value="this_month">This Month</option>
-                        <option value="this_year">This Year</option>
-                        <option value="past">Past Events</option>
+                <div class="flex items-center space-x-3">
+                    <input v-model="searchQuery" @input="debouncedSearch" type="text" placeholder="Search events..."
+                        class="input-field max-w-xs">
+                    <select v-model="sortBy" @change="sortEvents" class="input-field max-w-xs">
+                        <option value="created_desc">Newest First</option>
+                        <option value="created_asc">Oldest First</option>
+                        <option value="name_asc">Name A-Z</option>
+                        <option value="name_desc">Name Z-A</option>
+                        <option value="date_asc">Start Date</option>
+                        <option value="date_desc">End Date</option>
                     </select>
                 </div>
             </div>
+        </div>
 
-            <!-- Advanced Filters (Collapsible) -->
-            <div v-if="showAdvancedFilters" class="mt-6 pt-6 border-t border-mun-gray-200">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                            Organizer
-                        </label>
-                        <input v-model="filters.organizer" type="text" placeholder="Filter by organizer..."
-                            class="input-field" @input="applyFilters" />
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                            Participant Count
-                        </label>
-                        <select v-model="filters.participantRange" class="input-field" @change="applyFilters">
-                            <option value="">Any Size</option>
-                            <option value="small">Small (1-50)</option>
-                            <option value="medium">Medium (51-150)</option>
-                            <option value="large">Large (151-300)</option>
-                            <option value="xlarge">Very Large (300+)</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                            Event Type
-                        </label>
-                        <select v-model="filters.eventType" class="input-field" @change="applyFilters">
-                            <option value="">All Types</option>
-                            <option value="conference">Conference</option>
-                            <option value="simulation">Simulation</option>
-                            <option value="training">Training</option>
-                            <option value="competition">Competition</option>
-                        </select>
+        <!-- Events List/Grid -->
+        <div class="mun-card">
+            <div class="px-6 py-4 border-b border-mun-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-mun-gray-900">Events</h2>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-sm text-mun-gray-500">
+                            {{ filteredEvents.length }} of {{ events.length }} events
+                        </span>
+                        <button @click="exportEvents" class="btn-un-secondary px-3 py-2">
+                            <DocumentArrowDownIcon class="w-4 h-4 mr-2" />
+                            Export
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Filter Actions -->
-            <div class="flex items-center justify-between mt-4">
-                <button @click="showAdvancedFilters = !showAdvancedFilters"
-                    class="text-sm text-un-blue hover:text-un-blue-600 flex items-center">
-                    <ChevronDownIcon v-if="!showAdvancedFilters" class="w-4 h-4 mr-1" />
-                    <ChevronUpIcon v-else class="w-4 h-4 mr-1" />
-                    {{ showAdvancedFilters ? 'Hide' : 'Show' }} Advanced Filters
+            <div v-if="isLoading" class="flex items-center justify-center py-12">
+                <LoadingSpinner />
+            </div>
+
+            <div v-else-if="filteredEvents.length === 0" class="text-center py-12">
+                <CalendarDaysIcon class="mx-auto h-12 w-12 text-mun-gray-300" />
+                <h3 class="mt-4 text-lg font-medium text-mun-gray-900">
+                    {{searchQuery || Object.values(filters).some(v => v) ? 'No events found' : 'No events yet'}}
+                </h3>
+                <p class="mt-2 text-mun-gray-600 mb-4">
+                    {{searchQuery || Object.values(filters).some(v => v) ? 'Try adjusting your search or filters' :
+                    'Create your first event to get started' }}
+                </p>
+                <button v-if="!searchQuery && !Object.values(filters).some(v => v)" @click="showCreateModal = true"
+                    class="btn-un-primary">
+                    Create First Event
                 </button>
+            </div>
 
-                <div class="flex items-center space-x-3">
-                    <span v-if="hasActiveFilters" class="text-sm text-mun-gray-600">
-                        {{ filteredEvents.length }} of {{ totalEvents }} events
-                    </span>
+            <!-- Grid View -->
+            <div v-else-if="viewMode === 'grid'" class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div v-for="event in paginatedEvents" :key="event.id"
+                        class="border border-mun-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                        @click="viewEvent(event)">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-medium text-mun-gray-900">{{ event.name }}</h3>
+                                <p class="text-sm text-mun-gray-600">{{ event.description }}</p>
+                            </div>
+                            <span :class="[
+                                'px-2 py-1 rounded-full text-xs font-medium',
+                                event.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
+                                    event.status === 'draft' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
+                                        event.status === 'completed' ? 'bg-mun-gray-100 text-mun-gray-700' :
+                                            'bg-mun-red-100 text-mun-red-700'
+                            ]">
+                                {{ formatStatus(event.status) }}
+                            </span>
+                        </div>
 
-                    <AppButton v-if="hasActiveFilters" variant="ghost" size="sm" @click="clearFilters">
-                        Clear Filters
-                    </AppButton>
+                        <div class="space-y-2 text-sm text-mun-gray-600">
+                            <div class="flex items-center">
+                                <CalendarDaysIcon class="w-4 h-4 mr-2" />
+                                <span>{{ formatDateRange(event.startDate, event.endDate) }}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <UserGroupIcon class="w-4 h-4 mr-2" />
+                                <span>{{ event.committees?.length || 0 }} committees</span>
+                            </div>
+                            <div class="flex items-center">
+                                <UsersIcon class="w-4 h-4 mr-2" />
+                                <span>{{ event.participants || 0 }} participants</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-4 pt-4 border-t border-mun-gray-200">
+                            <span class="text-xs text-mun-gray-500">
+                                Created {{ formatRelativeDate(event.createdAt) }}
+                            </span>
+                            <div class="flex items-center space-x-2">
+                                <button @click.stop="editEvent(event)"
+                                    class="p-1 text-mun-gray-400 hover:text-un-blue transition-colors">
+                                    <PencilIcon class="w-4 h-4" />
+                                </button>
+                                <button @click.stop="duplicateEvent(event)"
+                                    class="p-1 text-mun-gray-400 hover:text-mun-green-500 transition-colors">
+                                    <DocumentDuplicateIcon class="w-4 h-4" />
+                                </button>
+                                <button @click.stop="deleteEvent(event)"
+                                    class="p-1 text-mun-gray-400 hover:text-mun-red-500 transition-colors">
+                                    <TrashIcon class="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </AppCard>
 
-        <!-- View Toggle -->
-        <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-                <span class="text-sm text-mun-gray-600">View:</span>
-                <button @click="viewMode = 'grid'" :class="[
-                    'p-2 rounded-lg transition-colors',
-                    viewMode === 'grid'
-                        ? 'bg-un-blue text-white'
-                        : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
-                ]">
-                    <Squares2X2Icon class="w-4 h-4" />
-                </button>
-                <button @click="viewMode = 'list'" :class="[
-                    'p-2 rounded-lg transition-colors',
-                    viewMode === 'list'
-                        ? 'bg-un-blue text-white'
-                        : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
-                ]">
-                    <ListBulletIcon class="w-4 h-4" />
-                </button>
+            <!-- List View -->
+            <div v-else class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-mun-gray-200">
+                    <thead class="bg-mun-gray-50">
+                        <tr>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                Event
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                Dates
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                Committees
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                Participants
+                            </th>
+                            <th
+                                class="px-6 py-3 text-right text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-mun-gray-200">
+                        <tr v-for="event in paginatedEvents" :key="event.id"
+                            class="hover:bg-mun-gray-50 cursor-pointer transition-colors" @click="viewEvent(event)">
+                            <td class="px-6 py-4">
+                                <div>
+                                    <div class="text-sm font-medium text-mun-gray-900">{{ event.name }}</div>
+                                    <div class="text-sm text-mun-gray-500 max-w-xs truncate">{{ event.description }}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span :class="[
+                                    'px-2 py-1 rounded-full text-xs font-medium',
+                                    event.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
+                                        event.status === 'draft' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
+                                            event.status === 'completed' ? 'bg-mun-gray-100 text-mun-gray-700' :
+                                                'bg-mun-red-100 text-mun-red-700'
+                                ]">
+                                    {{ formatStatus(event.status) }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-500">
+                                {{ formatDateRange(event.startDate, event.endDate) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-900">
+                                {{ event.committees?.length || 0 }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-900">
+                                {{ event.participants || 0 }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <button @click.stop="editEvent(event)"
+                                        class="text-un-blue hover:text-un-blue-600 transition-colors">
+                                        <PencilIcon class="w-4 h-4" />
+                                    </button>
+                                    <button @click.stop="duplicateEvent(event)"
+                                        class="text-mun-gray-400 hover:text-mun-green-500 transition-colors">
+                                        <DocumentDuplicateIcon class="w-4 h-4" />
+                                    </button>
+                                    <button @click.stop="deleteEvent(event)"
+                                        class="text-mun-gray-400 hover:text-mun-red-500 transition-colors">
+                                        <TrashIcon class="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
-            <!-- Sort Options -->
-            <div class="flex items-center space-x-2">
-                <span class="text-sm text-mun-gray-600">Sort by:</span>
-                <select v-model="sortBy" class="input-field !py-2 !px-3 text-sm" @change="applySorting">
-                    <option value="created_desc">Newest First</option>
-                    <option value="created_asc">Oldest First</option>
-                    <option value="name_asc">Name A-Z</option>
-                    <option value="name_desc">Name Z-A</option>
-                    <option value="start_date_asc">Start Date (Soon)</option>
-                    <option value="start_date_desc">Start Date (Latest)</option>
-                    <option value="participants_desc">Most Participants</option>
-                    <option value="participants_asc">Least Participants</option>
-                </select>
+            <!-- Pagination -->
+            <div v-if="totalPages > 1" class="px-6 py-4 border-t border-mun-gray-200">
+                <Pagination :current-page="pagination.currentPage" :total-pages="totalPages"
+                    @page-change="handlePageChange" />
             </div>
         </div>
-
-        <!-- Events Display -->
-        <div v-if="isLoading" class="flex justify-center py-12">
-            <LoadingSpinner size="lg" />
-        </div>
-
-        <div v-else-if="filteredEvents.length === 0" class="text-center py-12">
-            <CalendarDaysIcon class="w-16 h-16 text-mun-gray-400 mx-auto mb-4" />
-            <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
-                {{ hasActiveFilters ? 'No events match your filters' : 'No events found' }}
-            </h3>
-            <p class="text-mun-gray-600 mb-6">
-                {{ hasActiveFilters
-                    ? 'Try adjusting your search criteria or filters.'
-                    : 'Get started by creating your first MUN event.'
-                }}
-            </p>
-            <AppButton v-if="!hasActiveFilters" variant="primary" @click="showCreateEvent = true">
-                <PlusIcon class="w-4 h-4 mr-2" />
-                Create First Event
-            </AppButton>
-            <AppButton v-else variant="outline" @click="clearFilters">
-                Clear All Filters
-            </AppButton>
-        </div>
-
-        <!-- Grid View -->
-        <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <EventCard v-for="event in paginatedEvents" :key="event._id" :event="event" @view="viewEvent"
-                @edit="editEvent" @delete="deleteEvent" @duplicate="duplicateEvent"
-                @toggle-status="toggleEventStatus" />
-        </div>
-
-        <!-- List View -->
-        <EventTable v-else :events="paginatedEvents" :loading="isLoading" @view="viewEvent" @edit="editEvent"
-            @delete="deleteEvent" @duplicate="duplicateEvent" @toggle-status="toggleEventStatus"
-            @sort="handleTableSort" />
-
-        <!-- Pagination -->
-        <Pagination v-if="filteredEvents.length > pagination.pageSize" :current-page="pagination.currentPage"
-            :total-pages="pagination.totalPages" :total-items="filteredEvents.length" :page-size="pagination.pageSize"
-            @page-change="handlePageChange" @page-size-change="handlePageSizeChange" />
 
         <!-- Modals -->
-        <CreateEditEventModal v-model="showCreateEvent" @created="handleEventCreated" />
+        <CreateEditEventModal v-model="showCreateModal" mode="create" @saved="handleEventCreated" />
 
-        <CreateEditEventModal v-model="showEditEvent" :event="selectedEvent" mode="edit"
-            @updated="handleEventUpdated" />
+        <CreateEditEventModal v-model="showEditModal" mode="edit" :event="selectedEvent" @saved="handleEventUpdated" />
 
-        <EventDetailsModal v-model="showEventDetails" :event="selectedEvent" @edit="editEventFromDetails"
+        <EventDetailsModal v-model="showDetailsModal" :event="selectedEvent" @edit="editEventFromDetails"
             @delete="deleteEvent" />
 
         <ConfirmDeleteModal v-model="showDeleteConfirm" :title="`Delete Event: ${selectedEvent?.name}`"
@@ -229,7 +320,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
 import { useToast } from '@/plugins/toast'
@@ -241,23 +332,27 @@ import {
     PlusIcon,
     ArrowPathIcon,
     MagnifyingGlassIcon,
-    ChevronDownIcon,
-    ChevronUpIcon,
     Squares2X2Icon,
     ListBulletIcon,
-    CalendarDaysIcon
+    CalendarDaysIcon,
+    PlayIcon,
+    ClockIcon,
+    UsersIcon,
+    UserGroupIcon,
+    DocumentArrowDownIcon,
+    PencilIcon,
+    DocumentDuplicateIcon,
+    TrashIcon
 } from '@heroicons/vue/24/outline'
 
 // Components
-import StatCard from '@/components/admin/StatCard.vue'
-import EventCard from '@/components/admin/EventCard.vue'
-import EventTable from '@/components/admin/EventTable.vue'
-import Pagination from '@/components/ui/Pagination.vue'
 import CreateEditEventModal from '@/components/admin/CreateEditEventModal.vue'
 import EventDetailsModal from '@/components/admin/EventDetailsModal.vue'
 import ConfirmDeleteModal from '@/components/admin/ConfirmDeleteModal.vue'
+import Pagination from '@/components/ui/Pagination.vue'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const appStore = useAppStore()
 const toast = useToast()
@@ -267,111 +362,70 @@ const isLoading = ref(false)
 const searchQuery = ref('')
 const viewMode = ref('grid') // 'grid' or 'list'
 const sortBy = ref('created_desc')
-const showAdvancedFilters = ref(false)
 
 // Events data
 const events = ref([])
 const selectedEvent = ref(null)
-const totalEvents = ref(0)
 
 // Modals
-const showCreateEvent = ref(false)
-const showEditEvent = ref(false)
-const showEventDetails = ref(false)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
+const showDetailsModal = ref(false)
 const showDeleteConfirm = ref(false)
 
 // Filters
 const filters = reactive({
     status: '',
-    dateRange: '',
-    organizer: '',
-    participantRange: '',
-    eventType: ''
+    dateRange: ''
+})
+
+// Stats
+const stats = reactive({
+    total: 0,
+    active: 0,
+    upcoming: 0,
+    totalParticipants: 0
 })
 
 // Pagination
 const pagination = reactive({
     currentPage: 1,
-    pageSize: 12,
-    totalPages: 0
+    pageSize: 12
 })
 
 // Computed
-const eventStats = computed(() => [
-    {
-        title: 'Total Events',
-        value: totalEvents.value,
-        change: '+12%',
-        trend: 'up',
-        icon: CalendarDaysIcon,
-        color: 'blue'
-    },
-    {
-        title: 'Active Events',
-        value: events.value.filter(e => e.status === 'active').length,
-        change: '+5%',
-        trend: 'up',
-        icon: CalendarDaysIcon,
-        color: 'green'
-    },
-    {
-        title: 'Upcoming Events',
-        value: events.value.filter(e => e.status === 'published' && new Date(e.startDate) > new Date()).length,
-        change: '+8%',
-        trend: 'up',
-        icon: CalendarDaysIcon,
-        color: 'purple'
-    },
-    {
-        title: 'This Month',
-        value: events.value.filter(e => {
-            const eventDate = new Date(e.startDate)
-            const now = new Date()
-            return eventDate.getMonth() === now.getMonth() && eventDate.getFullYear() === now.getFullYear()
-        }).length,
-        change: '+15%',
-        trend: 'up',
-        icon: CalendarDaysIcon,
-        color: 'orange'
-    }
-])
-
-const hasActiveFilters = computed(() => {
-    return searchQuery.value.trim() !== '' ||
-        Object.values(filters).some(value => value !== '')
-})
-
 const filteredEvents = computed(() => {
-    let filtered = [...events.value]
+    let filtered = events.value
 
-    // Apply search
-    if (searchQuery.value.trim()) {
-        const query = searchQuery.value.toLowerCase().trim()
+    // Search filter
+    if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase()
         filtered = filtered.filter(event =>
             event.name.toLowerCase().includes(query) ||
-            event.description?.toLowerCase().includes(query) ||
-            event.organizer?.toLowerCase().includes(query)
+            event.description.toLowerCase().includes(query)
         )
     }
 
-    // Apply filters
+    // Status filter
     if (filters.status) {
         filtered = filtered.filter(event => event.status === filters.status)
     }
 
+    // Date range filter
     if (filters.dateRange) {
         const now = new Date()
         filtered = filtered.filter(event => {
             const eventDate = new Date(event.startDate)
-
             switch (filters.dateRange) {
-                case 'upcoming':
-                    return eventDate > now
+                case 'this_week':
+                    const weekStart = new Date(now.setDate(now.getDate() - now.getDay()))
+                    const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
+                    return eventDate >= weekStart && eventDate <= weekEnd
                 case 'this_month':
-                    return eventDate.getMonth() === now.getMonth() &&
-                        eventDate.getFullYear() === now.getFullYear()
-                case 'this_year':
-                    return eventDate.getFullYear() === now.getFullYear()
+                    return eventDate.getMonth() === now.getMonth() && eventDate.getFullYear() === now.getFullYear()
+                case 'next_month':
+                    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1)
+                    return eventDate.getMonth() === nextMonth.getMonth() && eventDate.getFullYear() === nextMonth.getFullYear()
                 case 'past':
                     return eventDate < now
                 default:
@@ -380,113 +434,39 @@ const filteredEvents = computed(() => {
         })
     }
 
-    if (filters.organizer) {
-        const organizer = filters.organizer.toLowerCase()
-        filtered = filtered.filter(event =>
-            event.organizer?.toLowerCase().includes(organizer)
-        )
-    }
-
-    if (filters.participantRange) {
-        filtered = filtered.filter(event => {
-            const count = event.maxParticipants || 0
-
-            switch (filters.participantRange) {
-                case 'small':
-                    return count <= 50
-                case 'medium':
-                    return count > 50 && count <= 150
-                case 'large':
-                    return count > 150 && count <= 300
-                case 'xlarge':
-                    return count > 300
-                default:
-                    return true
-            }
-        })
-    }
-
-    if (filters.eventType) {
-        filtered = filtered.filter(event => event.eventType === filters.eventType)
-    }
-
-    return filtered
-})
-
-const sortedEvents = computed(() => {
-    const sorted = [...filteredEvents.value]
-
-    const [field, direction] = sortBy.value.split('_')
-
-    sorted.sort((a, b) => {
-        let aVal, bVal
-
-        switch (field) {
-            case 'name':
-                aVal = a.name.toLowerCase()
-                bVal = b.name.toLowerCase()
-                break
-            case 'created':
-                aVal = new Date(a.createdAt)
-                bVal = new Date(b.createdAt)
-                break
-            case 'start':
-                aVal = new Date(a.startDate)
-                bVal = new Date(b.startDate)
-                break
-            case 'participants':
-                aVal = a.maxParticipants || 0
-                bVal = b.maxParticipants || 0
-                break
+    // Sort
+    return filtered.sort((a, b) => {
+        switch (sortBy.value) {
+            case 'created_asc':
+                return new Date(a.createdAt) - new Date(b.createdAt)
+            case 'created_desc':
+                return new Date(b.createdAt) - new Date(a.createdAt)
+            case 'name_asc':
+                return a.name.localeCompare(b.name)
+            case 'name_desc':
+                return b.name.localeCompare(a.name)
+            case 'date_asc':
+                return new Date(a.startDate) - new Date(b.startDate)
+            case 'date_desc':
+                return new Date(b.startDate) - new Date(a.startDate)
             default:
                 return 0
         }
-
-        if (direction === 'asc') {
-            return aVal < bVal ? -1 : aVal > bVal ? 1 : 0
-        } else {
-            return aVal > bVal ? -1 : aVal < bVal ? 1 : 0
-        }
     })
+})
 
-    return sorted
+const totalPages = computed(() => {
+    return Math.ceil(filteredEvents.value.length / pagination.pageSize)
 })
 
 const paginatedEvents = computed(() => {
     const start = (pagination.currentPage - 1) * pagination.pageSize
     const end = start + pagination.pageSize
-    return sortedEvents.value.slice(start, end)
+    return filteredEvents.value.slice(start, end)
 })
 
 const deleteConfirmMessage = computed(() => {
-    if (!selectedEvent.value) return ''
-
-    const event = selectedEvent.value
-    const hasCommittees = event.committees?.length > 0
-    const hasParticipants = event.registrations?.length > 0
-
-    let message = `Are you sure you want to delete "${event.name}"?`
-
-    if (hasCommittees || hasParticipants) {
-        message += '\n\nThis action will also delete:'
-        if (hasCommittees) {
-            message += `\n• ${event.committees.length} committee(s)`
-        }
-        if (hasParticipants) {
-            message += `\n• ${event.registrations.length} registration(s)`
-        }
-        message += '\n\nThis action cannot be undone.'
-    }
-
-    return message
-})
-
-// Update pagination when filtered events change
-watch(() => filteredEvents.value.length, (newLength) => {
-    pagination.totalPages = Math.ceil(newLength / pagination.pageSize)
-    if (pagination.currentPage > pagination.totalPages && pagination.totalPages > 0) {
-        pagination.currentPage = pagination.totalPages
-    }
+    return `Are you sure you want to delete "${selectedEvent.value?.name}"? This action cannot be undone and will also delete all associated committees and data.`
 })
 
 // Methods
@@ -494,16 +474,44 @@ const loadEvents = async () => {
     try {
         isLoading.value = true
 
-        const response = await apiMethods.events.getAll({
-            page: 1,
-            limit: 1000, // Get all events for client-side filtering/sorting
-            include: 'committees,registrations'
-        })
+        // TODO: Replace with actual API call
+        events.value = [
+            {
+                id: 1,
+                name: "Global Youth MUN 2025",
+                description: "Annual global youth model united nations conference",
+                status: "active",
+                startDate: new Date().toISOString(),
+                endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+                committees: [1, 2, 3],
+                participants: 150,
+                createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+            },
+            {
+                id: 2,
+                name: "Regional Security Council",
+                description: "Regional security council simulation",
+                status: "draft",
+                startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                endDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+                committees: [1],
+                participants: 45,
+                createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+            },
+            {
+                id: 3,
+                name: "Local MUN Workshop",
+                description: "Training workshop for new delegates",
+                status: "completed",
+                startDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+                endDate: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+                committees: [1],
+                participants: 30,
+                createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
+            }
+        ]
 
-        if (response.data.success) {
-            events.value = response.data.events || []
-            totalEvents.value = response.data.total || events.value.length
-        }
+        updateStats()
 
     } catch (error) {
         console.error('Load events error:', error)
@@ -513,59 +521,65 @@ const loadEvents = async () => {
     }
 }
 
+const updateStats = () => {
+    stats.total = events.value.length
+    stats.active = events.value.filter(e => e.status === 'active').length
+    stats.upcoming = events.value.filter(e => e.status === 'draft').length
+    stats.totalParticipants = events.value.reduce((sum, e) => sum + (e.participants || 0), 0)
+}
+
 const refreshEvents = async () => {
     await loadEvents()
     toast.success('Events refreshed')
+}
+
+const filterEvents = () => {
+    pagination.currentPage = 1
+}
+
+const sortEvents = () => {
+    pagination.currentPage = 1
 }
 
 const debouncedSearch = debounce(() => {
     pagination.currentPage = 1
 }, 300)
 
-const applyFilters = () => {
-    pagination.currentPage = 1
-}
-
-const applySorting = () => {
-    pagination.currentPage = 1
-}
-
-const clearFilters = () => {
-    searchQuery.value = ''
-    Object.keys(filters).forEach(key => {
-        filters[key] = ''
-    })
-    pagination.currentPage = 1
-}
-
-const handlePageChange = (page) => {
-    pagination.currentPage = page
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
-const handlePageSizeChange = (size) => {
-    pagination.pageSize = size
-    pagination.currentPage = 1
-}
-
-const handleTableSort = (column, direction) => {
-    sortBy.value = `${column}_${direction}`
-}
-
-// Event actions
 const viewEvent = (event) => {
     selectedEvent.value = event
-    showEventDetails.value = true
+    showDetailsModal.value = true
 }
 
 const editEvent = (event) => {
     selectedEvent.value = event
-    showEditEvent.value = true
+    showEditModal.value = true
 }
 
-const editEventFromDetails = () => {
-    showEventDetails.value = false
-    showEditEvent.value = true
+const editEventFromDetails = (event) => {
+    showDetailsModal.value = false
+    setTimeout(() => {
+        selectedEvent.value = event
+        showEditModal.value = true
+    }, 100)
+}
+
+const duplicateEvent = async (event) => {
+    try {
+        const duplicate = {
+            ...event,
+            id: Date.now(),
+            name: `${event.name} (Copy)`,
+            status: 'draft',
+            createdAt: new Date().toISOString()
+        }
+
+        events.value.unshift(duplicate)
+        updateStats()
+        toast.success(`Event "${duplicate.name}" created successfully`)
+    } catch (error) {
+        console.error('Duplicate event error:', error)
+        toast.error('Failed to duplicate event')
+    }
 }
 
 const deleteEvent = (event) => {
@@ -575,117 +589,90 @@ const deleteEvent = (event) => {
 
 const confirmDelete = async () => {
     try {
-        await apiMethods.events.delete(selectedEvent.value._id)
+        // TODO: Replace with actual API call
+        events.value = events.value.filter(e => e.id !== selectedEvent.value.id)
+        updateStats()
 
-        events.value = events.value.filter(e => e._id !== selectedEvent.value._id)
-        totalEvents.value--
-
-        toast.success('Event deleted successfully')
         showDeleteConfirm.value = false
+        toast.success(`Event "${selectedEvent.value.name}" deleted successfully`)
         selectedEvent.value = null
-
     } catch (error) {
         console.error('Delete event error:', error)
         toast.error('Failed to delete event')
     }
 }
 
-const duplicateEvent = async (event) => {
+const exportEvents = async () => {
     try {
-        const duplicatedData = {
-            ...event,
-            name: `${event.name} (Copy)`,
-            status: 'draft',
-            startDate: null,
-            endDate: null
-        }
-
-        delete duplicatedData._id
-        delete duplicatedData.createdAt
-        delete duplicatedData.updatedAt
-        delete duplicatedData.committees
-        delete duplicatedData.registrations
-
-        const response = await apiMethods.events.create(duplicatedData)
-
-        if (response.data.success) {
-            events.value.unshift(response.data.event)
-            totalEvents.value++
-            toast.success('Event duplicated successfully')
-        }
-
+        // TODO: Implement export functionality
+        toast.info('Export functionality would be implemented here')
     } catch (error) {
-        console.error('Duplicate event error:', error)
-        toast.error('Failed to duplicate event')
-    }
-}
-
-const toggleEventStatus = async (event) => {
-    try {
-        const newStatus = event.status === 'active' ? 'published' : 'active'
-
-        const response = await apiMethods.events.update(event._id, {
-            status: newStatus
-        })
-
-        if (response.data.success) {
-            const index = events.value.findIndex(e => e._id === event._id)
-            if (index !== -1) {
-                events.value[index] = { ...events.value[index], ...response.data.event }
-            }
-
-            toast.success(`Event ${newStatus === 'active' ? 'activated' : 'deactivated'}`)
-        }
-
-    } catch (error) {
-        console.error('Toggle event status error:', error)
-        toast.error('Failed to update event status')
+        console.error('Export events error:', error)
+        toast.error('Failed to export events')
     }
 }
 
 const handleEventCreated = (event) => {
     events.value.unshift(event)
-    totalEvents.value++
-    showCreateEvent.value = false
-    toast.success('Event created successfully')
+    updateStats()
+    toast.success(`Event "${event.name}" created successfully`)
 }
 
-const handleEventUpdated = (updatedEvent) => {
-    const index = events.value.findIndex(e => e._id === updatedEvent._id)
+const handleEventUpdated = (event) => {
+    const index = events.value.findIndex(e => e.id === event.id)
     if (index !== -1) {
-        events.value[index] = updatedEvent
+        events.value[index] = event
+        updateStats()
+        toast.success(`Event "${event.name}" updated successfully`)
     }
-    showEditEvent.value = false
-    selectedEvent.value = null
-    toast.success('Event updated successfully')
 }
+
+const handlePageChange = (page) => {
+    pagination.currentPage = page
+}
+
+// Utility functions
+const formatStatus = (status) => {
+    const statusMap = {
+        'draft': 'Draft',
+        'active': 'Active',
+        'completed': 'Completed',
+        'cancelled': 'Cancelled'
+    }
+    return statusMap[status] || status
+}
+
+const formatDateRange = (startDate, endDate) => {
+    const start = new Date(startDate).toLocaleDateString()
+    const end = new Date(endDate).toLocaleDateString()
+    return `${start} - ${end}`
+}
+
+const formatRelativeDate = (dateString) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now - date
+    const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000))
+
+    if (diffDays === 0) return 'Today'
+    if (diffDays === 1) return 'Yesterday'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
+    return `${Math.floor(diffDays / 30)} months ago`
+}
+
+// Watchers
+watch(() => route.query.highlight, (eventId) => {
+    if (eventId) {
+        const event = events.value.find(e => e.id === parseInt(eventId))
+        if (event) {
+            viewEvent(event)
+        }
+    }
+}, { immediate: true })
 
 // Lifecycle
 onMounted(() => {
     loadEvents()
-
-    // Update breadcrumbs
-    appStore.setBreadcrumbs([
-        { text: 'Admin', to: { name: 'AdminDashboard' } },
-        { text: 'Events', active: true }
-    ])
 })
 </script>
-
-<style scoped>
-/* Custom transitions for view mode changes */
-.view-transition-enter-active,
-.view-transition-leave-active {
-    transition: all 0.3s ease;
-}
-
-.view-transition-enter-from {
-    opacity: 0;
-    transform: translateY(20px);
-}
-
-.view-transition-leave-to {
-    opacity: 0;
-    transform: translateY(-20px);
-}
-</style>
