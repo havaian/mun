@@ -1,146 +1,168 @@
 <template>
-    <div class="mun-card hover-lift group relative overflow-hidden">
-        <!-- Committee Type Indicator -->
-        <div class="absolute top-0 right-0 w-0 h-0 border-l-[40px] border-l-transparent border-t-[40px] border-t-current"
-            :class="typeColorClasses">
-            <div class="absolute -top-8 -right-1 text-white text-xs font-bold rotate-45">
-                {{ committee.type?.toUpperCase() }}
+    <div class="mun-card group hover:shadow-mun-lg transition-all duration-300 cursor-pointer relative"
+        @click="$emit('view', committee)">
+
+        <!-- Selection Checkbox -->
+        <div class="absolute top-4 left-4 z-10">
+            <input type="checkbox" :checked="selected" @click.stop="$emit('select', committee._id)"
+                class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+        </div>
+
+        <!-- QR Status Indicator -->
+        <div class="absolute top-4 right-4">
+            <div v-if="committee.qrGenerated"
+                class="bg-mun-green-100 text-mun-green-800 px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1">
+                <QrCodeIcon class="w-3 h-3" />
+                <span>QR Ready</span>
+            </div>
+            <div v-else class="bg-mun-gray-100 text-mun-gray-600 px-2 py-1 rounded-full text-xs font-medium">
+                No QR
             </div>
         </div>
 
-        <!-- Card Header -->
-        <div class="p-6 pb-4">
-            <div class="flex items-start justify-between mb-4">
-                <div class="flex-1">
-                    <div class="flex items-center space-x-3 mb-2">
-                        <div :class="['p-2 rounded-lg', typeIconBgClasses]">
-                            <component :is="typeIcon" :class="['w-5 h-5', typeIconClasses]" />
-                        </div>
-                        <div>
-                            <h3
-                                class="text-lg font-semibold text-mun-gray-900 group-hover:text-un-blue transition-colors">
-                                {{ committee.name }}
-                            </h3>
-                            <div class="flex items-center space-x-2 text-sm text-mun-gray-500">
-                                <span>{{ formatCommitteeType(committee.type) }}</span>
-                                <span>•</span>
-                                <span>{{ committee.language || 'English' }}</span>
-                            </div>
-                        </div>
+        <!-- Card Content -->
+        <div class="p-6 pt-12">
+            <!-- Committee Type Icon -->
+            <div class="w-12 h-12 rounded-xl mb-4 flex items-center justify-center" :class="committeeTypeIconClass">
+                <component :is="committeeTypeIcon" class="w-6 h-6 text-white" />
+            </div>
+
+            <!-- Committee Info -->
+            <div class="mb-4">
+                <h3 class="text-lg font-bold text-mun-gray-900 mb-2 group-hover:text-un-blue transition-colors">
+                    {{ committee.name }}
+                </h3>
+
+                <div class="space-y-2">
+                    <!-- Committee Type -->
+                    <div class="flex items-center text-sm text-mun-gray-600">
+                        <component :is="committeeTypeIcon" class="w-4 h-4 mr-2" />
+                        <span>{{ formatCommitteeType(committee.type) }}</span>
+                    </div>
+
+                    <!-- Event -->
+                    <div v-if="committee.eventId" class="flex items-center text-sm text-mun-gray-600">
+                        <CalendarDaysIcon class="w-4 h-4 mr-2" />
+                        <span class="truncate">{{ committee.eventId.name }}</span>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="flex items-center">
+                        <span :class="statusBadgeClass">
+                            {{ formatStatus(committee.status) }}
+                        </span>
                     </div>
                 </div>
-
-                <!-- Status Badge -->
-                <div :class="statusBadgeClasses">
-                    <component :is="statusIcon" class="w-4 h-4 mr-1" />
-                    {{ formatStatus(committee.status) }}
-                </div>
             </div>
 
-            <!-- Event Info -->
-            <div class="flex items-center text-sm text-mun-gray-600 mb-4">
-                <CalendarDaysIcon class="w-4 h-4 mr-2" />
-                <span>{{ eventName }}</span>
-            </div>
-
-            <!-- Description -->
-            <p v-if="committee.description" class="text-sm text-mun-gray-600 line-clamp-2 mb-4">
-                {{ committee.description }}
-            </p>
-        </div>
-
-        <!-- Statistics -->
-        <div class="px-6 pb-4">
-            <div class="grid grid-cols-3 gap-4">
+            <!-- Statistics -->
+            <div class="grid grid-cols-3 gap-4 py-4 border-t border-b border-mun-gray-100 mb-4">
                 <div class="text-center">
-                    <div class="text-2xl font-bold text-mun-gray-900">
+                    <div class="text-lg font-bold text-mun-gray-900">
                         {{ committee.countries?.length || 0 }}
                     </div>
                     <div class="text-xs text-mun-gray-500">Countries</div>
                 </div>
-
                 <div class="text-center">
-                    <div class="text-2xl font-bold text-mun-green-600">
-                        {{ registeredCount }}
+                    <div class="text-lg font-bold text-mun-gray-900">
+                        {{ committee.presidium?.length || 0 }}
                     </div>
-                    <div class="text-xs text-mun-gray-500">Registered</div>
+                    <div class="text-xs text-mun-gray-500">Presidium</div>
                 </div>
-
                 <div class="text-center">
-                    <div class="text-2xl font-bold text-un-blue-600">
-                        {{ qrGeneratedCount }}
+                    <div class="text-lg font-bold text-mun-gray-900">
+                        {{ committee.documents?.length || 0 }}
                     </div>
-                    <div class="text-xs text-mun-gray-500">QR Codes</div>
+                    <div class="text-xs text-mun-gray-500">Documents</div>
                 </div>
             </div>
 
-            <!-- Progress Bar -->
-            <div class="mt-4">
-                <div class="flex justify-between text-xs text-mun-gray-500 mb-1">
-                    <span>Registration Progress</span>
-                    <span>{{ registrationProgress }}%</span>
+            <!-- Progress Indicators -->
+            <div class="space-y-3 mb-4">
+                <!-- Country Assignment Progress -->
+                <div>
+                    <div class="flex items-center justify-between text-sm mb-1">
+                        <span class="text-mun-gray-600">Countries Assigned</span>
+                        <span class="font-medium">{{ getCountryProgress() }}%</span>
+                    </div>
+                    <div class="w-full bg-mun-gray-200 rounded-full h-2">
+                        <div class="bg-un-blue h-2 rounded-full transition-all duration-300"
+                            :style="{ width: `${getCountryProgress()}%` }"></div>
+                    </div>
                 </div>
-                <div class="w-full bg-mun-gray-200 rounded-full h-2">
-                    <div class="bg-gradient-to-r from-un-blue to-mun-green h-2 rounded-full transition-all duration-500"
-                        :style="{ width: `${registrationProgress}%` }"></div>
+
+                <!-- Presidium Assignment Progress -->
+                <div>
+                    <div class="flex items-center justify-between text-sm mb-1">
+                        <span class="text-mun-gray-600">Presidium Setup</span>
+                        <span class="font-medium">{{ getPresidiumProgress() }}%</span>
+                    </div>
+                    <div class="w-full bg-mun-gray-200 rounded-full h-2">
+                        <div class="bg-mun-purple-500 h-2 rounded-full transition-all duration-300"
+                            :style="{ width: `${getPresidiumProgress()}%` }"></div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Quick Actions -->
-        <div class="px-6 py-4 bg-mun-gray-50/50 border-t border-mun-gray-100">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-1">
-                    <!-- Country Management -->
-                    <ActionButton :icon="FlagIcon" tooltip="Manage Countries"
-                        @click="$emit('manage-countries', committee)" />
+            <!-- Action Buttons -->
+            <div class="flex items-center space-x-2">
+                <AppButton variant="primary" size="sm" @click.stop="$emit('view', committee)" class="flex-1">
+                    <EyeIcon class="w-4 h-4 mr-2" />
+                    Details
+                </AppButton>
 
-                    <!-- QR Generation -->
-                    <ActionButton :icon="QrCodeIcon" tooltip="Generate QR Codes"
-                        @click="$emit('generate-qr', committee)" :disabled="!hasCountries" />
-
-                    <!-- View Details -->
-                    <ActionButton :icon="EyeIcon" tooltip="View Details" @click="$emit('view-details', committee)" />
-                </div>
-
-                <!-- More Actions Menu -->
+                <!-- Quick Actions Dropdown -->
                 <div class="relative">
-                    <ActionButton :icon="EllipsisVerticalIcon" tooltip="More Actions"
-                        @click="showActionsMenu = !showActionsMenu" />
+                    <button @click.stop="showActions = !showActions"
+                        class="p-2 rounded-lg hover:bg-mun-gray-100 transition-colors">
+                        <EllipsisVerticalIcon class="w-4 h-4 text-mun-gray-600" />
+                    </button>
 
-                    <!-- Actions Dropdown -->
-                    <transition enter-active-class="transition ease-out duration-100"
-                        enter-from-class="transform opacity-0 scale-95" enter-to-class="transform opacity-100 scale-100"
-                        leave-active-class="transition ease-in duration-75"
-                        leave-from-class="transform opacity-100 scale-100"
-                        leave-to-class="transform opacity-0 scale-95">
-                        <div v-show="showActionsMenu"
-                            class="absolute right-0 bottom-full mb-2 w-48 bg-white rounded-xl shadow-mun-lg border border-white/20 py-2 z-10">
-                            <button @click="handleAction('edit')"
-                                class="flex items-center w-full px-4 py-2 text-sm text-mun-gray-700 hover:bg-mun-gray-50">
-                                <PencilIcon class="w-4 h-4 mr-3" />
-                                Edit Committee
+                    <!-- Actions Menu -->
+                    <transition name="dropdown">
+                        <div v-if="showActions"
+                            class="absolute right-0 bottom-full mb-2 w-56 bg-white rounded-xl shadow-mun-lg border border-white/20 py-2 z-20">
+
+                            <button @click.stop="handleEdit"
+                                class="w-full px-4 py-2 text-left text-sm text-mun-gray-700 hover:bg-mun-gray-50 flex items-center space-x-2">
+                                <PencilIcon class="w-4 h-4" />
+                                <span>Edit Committee</span>
                             </button>
 
-                            <button @click="handleAction('export-pdf')"
-                                class="flex items-center w-full px-4 py-2 text-sm text-mun-gray-700 hover:bg-mun-gray-50"
-                                :disabled="!hasQRCodes">
-                                <DocumentArrowDownIcon class="w-4 h-4 mr-3" />
-                                Export QR PDF
+                            <button @click.stop="handleManageCountries"
+                                class="w-full px-4 py-2 text-left text-sm text-mun-gray-700 hover:bg-mun-gray-50 flex items-center space-x-2">
+                                <GlobeAltIcon class="w-4 h-4" />
+                                <span>Manage Countries</span>
                             </button>
 
-                            <button @click="handleAction('duplicate')"
-                                class="flex items-center w-full px-4 py-2 text-sm text-mun-gray-700 hover:bg-mun-gray-50">
-                                <DocumentDuplicateIcon class="w-4 h-4 mr-3" />
-                                Duplicate Committee
+                            <button @click.stop="handleGenerateQR" :disabled="!canGenerateQR" :class="[
+                                'w-full px-4 py-2 text-left text-sm hover:bg-mun-gray-50 flex items-center space-x-2',
+                                canGenerateQR ? 'text-mun-gray-700' : 'text-mun-gray-400 cursor-not-allowed'
+                            ]">
+                                <QrCodeIcon class="w-4 h-4" />
+                                <span>{{ committee.qrGenerated ? 'Regenerate QR' : 'Generate QR' }}</span>
                             </button>
 
-                            <hr class="my-2 border-mun-gray-100" />
+                            <div class="border-t border-mun-gray-100 my-1"></div>
 
-                            <button @click="handleAction('delete')"
-                                class="flex items-center w-full px-4 py-2 text-sm text-mun-red-600 hover:bg-mun-red-50">
-                                <TrashIcon class="w-4 h-4 mr-3" />
-                                Delete Committee
+                            <button @click.stop="handleDuplicate"
+                                class="w-full px-4 py-2 text-left text-sm text-mun-gray-700 hover:bg-mun-gray-50 flex items-center space-x-2">
+                                <DocumentDuplicateIcon class="w-4 h-4" />
+                                <span>Duplicate</span>
+                            </button>
+
+                            <button @click.stop="handleToggleStatus"
+                                class="w-full px-4 py-2 text-left text-sm text-mun-gray-700 hover:bg-mun-gray-50 flex items-center space-x-2">
+                                <component :is="toggleStatusIcon" class="w-4 h-4" />
+                                <span>{{ toggleStatusText }}</span>
+                            </button>
+
+                            <div class="border-t border-mun-gray-100 my-1"></div>
+
+                            <button @click.stop="handleDelete"
+                                class="w-full px-4 py-2 text-left text-sm text-mun-red-600 hover:bg-mun-red-50 flex items-center space-x-2">
+                                <TrashIcon class="w-4 h-4" />
+                                <span>Delete</span>
                             </button>
                         </div>
                     </transition>
@@ -148,151 +170,159 @@
             </div>
         </div>
 
-        <!-- Loading Overlay -->
-        <transition name="fade">
-            <div v-if="isProcessing"
-                class="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center z-20">
-                <div class="text-center">
-                    <LoadingSpinner size="lg" />
-                    <p class="mt-3 text-sm text-mun-gray-600">{{ processingMessage }}</p>
-                </div>
+        <!-- Quick Access Icons (show on hover) -->
+        <div class="absolute top-16 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div class="flex flex-col space-y-2">
+                <button v-if="committee.countries?.length > 0" @click.stop="downloadCountryList"
+                    class="bg-un-blue text-white p-2 rounded-lg hover:bg-un-blue-600 transition-colors"
+                    title="Download Country List">
+                    <DocumentArrowDownIcon class="w-4 h-4" />
+                </button>
+
+                <button v-if="committee.qrGenerated" @click.stop="downloadQRCodes"
+                    class="bg-mun-purple-500 text-white p-2 rounded-lg hover:bg-mun-purple-600 transition-colors"
+                    title="Download QR Codes">
+                    <QrCodeIcon class="w-4 h-4" />
+                </button>
+
+                <button v-if="committee.status === 'active'" @click.stop="goToLiveView"
+                    class="bg-mun-green-500 text-white p-2 rounded-lg hover:bg-mun-green-600 transition-colors"
+                    title="Live Committee View">
+                    <PlayIcon class="w-4 h-4" />
+                </button>
             </div>
-        </transition>
+        </div>
+
+        <!-- Last Updated Info -->
+        <div class="absolute bottom-4 right-4 text-xs text-mun-gray-500">
+            Updated {{ formatRelativeDate(committee.updatedAt) }}
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onClickOutside } from 'vue'
-import { useAppStore } from '@/stores/app'
-import { apiMethods } from '@/utils/api'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import {
     CalendarDaysIcon,
-    FlagIcon,
-    QrCodeIcon,
     EyeIcon,
     EllipsisVerticalIcon,
     PencilIcon,
-    DocumentArrowDownIcon,
+    GlobeAltIcon,
+    QrCodeIcon,
     DocumentDuplicateIcon,
     TrashIcon,
-    UserGroupIcon,
-    ShieldCheckIcon,
-    GlobeAltIcon,
+    DocumentArrowDownIcon,
     PlayIcon,
     PauseIcon,
-    CheckCircleIcon
+    UserGroupIcon,
+    BuildingLibraryIcon,
+    ScaleIcon,
+    ShieldCheckIcon
 } from '@heroicons/vue/24/outline'
-import ActionButton from './ActionButton.vue'
-import LoadingSpinner from '../ui/LoadingSpinner.vue'
 
+const router = useRouter()
+
+// Props
 const props = defineProps({
     committee: {
         type: Object,
         required: true
+    },
+    selected: {
+        type: Boolean,
+        default: false
     }
 })
 
+// Emits
 const emit = defineEmits([
-    'edit',
-    'manage-countries',
-    'generate-qr',
-    'view-details',
-    'delete'
+    'view', 'edit', 'delete', 'duplicate', 'manage-countries',
+    'generate-qr', 'toggle-status', 'select'
 ])
 
-const appStore = useAppStore()
-
 // State
-const showActionsMenu = ref(false)
-const isProcessing = ref(false)
-const processingMessage = ref('')
+const showActions = ref(false)
 
 // Computed
-const eventName = computed(() => {
-    return props.committee.eventId?.name || props.committee.eventName || 'Unknown Event'
-})
-
-const registeredCount = computed(() => {
-    return props.committee.countries?.filter(country => country.email)?.length || 0
-})
-
-const qrGeneratedCount = computed(() => {
-    const delegateQRs = props.committee.countries?.filter(country => country.qrToken)?.length || 0
-    const presidiumQRs = props.committee.presidium?.filter(p => p.qrToken)?.length || 0
-    return delegateQRs + presidiumQRs
-})
-
-const registrationProgress = computed(() => {
-    const total = props.committee.countries?.length || 0
-    if (total === 0) return 0
-    return Math.round((registeredCount.value / total) * 100)
-})
-
-const hasCountries = computed(() => {
-    return (props.committee.countries?.length || 0) > 0
-})
-
-const hasQRCodes = computed(() => {
-    return qrGeneratedCount.value > 0
-})
-
-const typeIcon = computed(() => {
-    const iconMap = {
-        'GA': UserGroupIcon,
-        'SC': ShieldCheckIcon,
-        'other': GlobeAltIcon
+const committeeTypeIcon = computed(() => {
+    switch (props.committee.type) {
+        case 'GA':
+            return UserGroupIcon
+        case 'SC':
+            return ShieldCheckIcon
+        case 'ECOSOC':
+            return BuildingLibraryIcon
+        case 'HRC':
+            return ScaleIcon
+        case 'LEGAL':
+            return ScaleIcon
+        case 'DISEC':
+            return ShieldCheckIcon
+        case 'SPECPOL':
+            return UserGroupIcon
+        default:
+            return UserGroupIcon
     }
-    return iconMap[props.committee.type] || GlobeAltIcon
 })
 
-const typeColorClasses = computed(() => {
-    const colorMap = {
-        'GA': 'text-blue-500',
-        'SC': 'text-red-500',
-        'other': 'text-mun-gray-500'
+const committeeTypeIconClass = computed(() => {
+    switch (props.committee.type) {
+        case 'GA':
+            return 'bg-un-blue'
+        case 'SC':
+            return 'bg-mun-red-500'
+        case 'ECOSOC':
+            return 'bg-mun-green-500'
+        case 'HRC':
+            return 'bg-mun-purple-500'
+        case 'LEGAL':
+            return 'bg-mun-yellow-500'
+        case 'DISEC':
+            return 'bg-mun-red-600'
+        case 'SPECPOL':
+            return 'bg-mun-blue-600'
+        default:
+            return 'bg-mun-gray-500'
     }
-    return colorMap[props.committee.type] || colorMap.other
 })
 
-const typeIconBgClasses = computed(() => {
-    const colorMap = {
-        'GA': 'bg-blue-50',
-        'SC': 'bg-red-50',
-        'other': 'bg-mun-gray-50'
+const statusBadgeClass = computed(() => {
+    const baseClass = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium'
+
+    switch (props.committee.status) {
+        case 'draft':
+            return `${baseClass} bg-mun-gray-100 text-mun-gray-800`
+        case 'setup':
+            return `${baseClass} bg-blue-100 text-blue-800`
+        case 'active':
+            return `${baseClass} bg-mun-green-100 text-mun-green-800`
+        case 'paused':
+            return `${baseClass} bg-mun-yellow-100 text-mun-yellow-800`
+        case 'completed':
+            return `${baseClass} bg-mun-purple-100 text-mun-purple-800`
+        default:
+            return `${baseClass} bg-mun-gray-100 text-mun-gray-800`
     }
-    return colorMap[props.committee.type] || colorMap.other
 })
 
-const typeIconClasses = computed(() => {
-    const colorMap = {
-        'GA': 'text-blue-600',
-        'SC': 'text-red-600',
-        'other': 'text-mun-gray-600'
-    }
-    return colorMap[props.committee.type] || colorMap.other
+const toggleStatusIcon = computed(() => {
+    return props.committee.status === 'active' ? PauseIcon : PlayIcon
 })
 
-const statusIcon = computed(() => {
-    const iconMap = {
-        'setup': PencilIcon,
-        'active': PlayIcon,
-        'paused': PauseIcon,
-        'completed': CheckCircleIcon
+const toggleStatusText = computed(() => {
+    switch (props.committee.status) {
+        case 'active':
+            return 'Pause Committee'
+        case 'paused':
+            return 'Resume Committee'
+        default:
+            return 'Activate Committee'
     }
-    return iconMap[props.committee.status] || PencilIcon
 })
 
-const statusBadgeClasses = computed(() => {
-    const baseClasses = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium'
-
-    const colorMap = {
-        'setup': 'bg-mun-yellow-50 text-mun-yellow-700 border border-mun-yellow-200',
-        'active': 'bg-mun-green-50 text-mun-green-700 border border-mun-green-200',
-        'paused': 'bg-mun-gray-50 text-mun-gray-700 border border-mun-gray-200',
-        'completed': 'bg-un-blue-50 text-un-blue-700 border border-un-blue-200'
-    }
-
-    return `${baseClasses} ${colorMap[props.committee.status] || colorMap.setup}`
+const canGenerateQR = computed(() => {
+    return props.committee.countries?.length > 0
 })
 
 // Methods
@@ -300,146 +330,167 @@ const formatCommitteeType = (type) => {
     const typeMap = {
         'GA': 'General Assembly',
         'SC': 'Security Council',
-        'other': 'Other Committee'
+        'ECOSOC': 'Economic and Social Council',
+        'HRC': 'Human Rights Council',
+        'LEGAL': 'Legal Committee',
+        'DISEC': 'Disarmament Committee',
+        'SPECPOL': 'Special Political Committee',
+        'OTHER': 'Other'
     }
-    return typeMap[type] || 'Unknown Type'
+    return typeMap[type] || type
 }
 
 const formatStatus = (status) => {
     const statusMap = {
+        'draft': 'Draft',
         'setup': 'Setup',
         'active': 'Active',
         'paused': 'Paused',
         'completed': 'Completed'
     }
-    return statusMap[status] || 'Setup'
+    return statusMap[status] || 'Unknown'
 }
 
-const handleAction = async (action) => {
-    showActionsMenu.value = false
+const formatRelativeDate = (dateString) => {
+    if (!dateString) return ''
 
-    switch (action) {
-        case 'edit':
-            emit('edit', props.committee)
-            break
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
-        case 'export-pdf':
-            await exportQRPDF()
-            break
+    if (diffDays === 0) return 'today'
+    if (diffDays === 1) return 'yesterday'
+    if (diffDays < 7) return `${diffDays}d ago`
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
+    return `${Math.floor(diffDays / 30)}m ago`
+}
 
-        case 'duplicate':
-            await duplicateCommittee()
-            break
+const getCountryProgress = () => {
+    const assigned = props.committee.countries?.length || 0
+    const maxCountries = getMaxCountriesForType()
 
-        case 'delete':
-            emit('delete', props.committee)
-            break
+    if (maxCountries === 0) return 0
+    return Math.min(100, Math.round((assigned / maxCountries) * 100))
+}
+
+const getPresidiumProgress = () => {
+    const presidium = props.committee.presidium || []
+    const assigned = presidium.filter(p => p.email).length
+    const required = getRequiredPresidiumForType()
+
+    if (required === 0) return 100
+    return Math.min(100, Math.round((assigned / required) * 100))
+}
+
+const getMaxCountriesForType = () => {
+    switch (props.committee.type) {
+        case 'SC':
+            return 15
+        case 'GA':
+            return 193
+        case 'ECOSOC':
+            return 54
+        case 'HRC':
+            return 47
+        default:
+            return 50
     }
 }
 
-const exportQRPDF = async () => {
-    try {
-        isProcessing.value = true
-        processingMessage.value = 'Generating QR PDF...'
+const getRequiredPresidiumForType = () => {
+    // Most committees need: Chairman, Co-Chairman, Expert, Secretary
+    return 4
+}
 
-        const response = await apiMethods.export.generateQRPDF(props.committee._id)
+// Action handlers
+const handleEdit = () => {
+    showActions.value = false
+    emit('edit', props.committee)
+}
 
-        // Create blob and download
-        const blob = new Blob([response.data], { type: 'application/pdf' })
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = `QR_Codes_${props.committee.name.replace(/\s+/g, '_')}.pdf`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
+const handleDelete = () => {
+    showActions.value = false
+    emit('delete', props.committee)
+}
 
-        appStore.showSuccessMessage('QR PDF downloaded successfully')
+const handleDuplicate = () => {
+    showActions.value = false
+    emit('duplicate', props.committee)
+}
 
-    } catch (error) {
-        console.error('Export PDF error:', error)
-        appStore.showErrorMessage('Failed to export QR PDF')
-    } finally {
-        isProcessing.value = false
+const handleToggleStatus = () => {
+    showActions.value = false
+    emit('toggle-status', props.committee)
+}
+
+const handleManageCountries = () => {
+    showActions.value = false
+    emit('manage-countries', props.committee)
+}
+
+const handleGenerateQR = () => {
+    showActions.value = false
+    emit('generate-qr', props.committee)
+}
+
+// Quick actions
+const downloadCountryList = () => {
+    window.open(`/api/export/committee-countries/${props.committee._id}`, '_blank')
+}
+
+const downloadQRCodes = () => {
+    window.open(`/api/export/qr-codes/${props.committee._id}`, '_blank')
+}
+
+const goToLiveView = () => {
+    router.push({
+        name: 'CommitteeLive',
+        params: { id: props.committee._id }
+    })
+}
+
+// Click outside handler
+const handleClickOutside = (event) => {
+    if (!event.target.closest('.actions-dropdown')) {
+        showActions.value = false
     }
 }
 
-const duplicateCommittee = async () => {
-    try {
-        isProcessing.value = true
-        processingMessage.value = 'Duplicating committee...'
+// Lifecycle
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside)
+})
 
-        const duplicatedCommittee = {
-            ...props.committee,
-            name: `${props.committee.name} (Copy)`,
-            status: 'setup',
-            countries: props.committee.countries?.map(country => ({
-                ...country,
-                email: null,
-                qrToken: null,
-                isQrActive: true,
-                registeredAt: null
-            }))
-        }
-
-        delete duplicatedCommittee._id
-        delete duplicatedCommittee.createdAt
-        delete duplicatedCommittee.updatedAt
-
-        const response = await apiMethods.committees.create(duplicatedCommittee)
-
-        if (response.data.success) {
-            appStore.showSuccessMessage('Committee duplicated successfully')
-            // The parent component should refresh the list
-        }
-
-    } catch (error) {
-        console.error('Duplicate committee error:', error)
-        appStore.showErrorMessage('Failed to duplicate committee')
-    } finally {
-        isProcessing.value = false
-    }
-}
-
-// Close dropdown when clicking outside
-onClickOutside(showActionsMenu, () => {
-    showActionsMenu.value = false
+onUnmounted(() => {
+    document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
 <style scoped>
-/* Line clamp utility */
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+/* Dropdown animation */
+.dropdown-enter-active,
+.dropdown-leave-active {
+    transition: all 0.2s ease;
 }
 
-/* Hover effects */
-.hover-lift {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+.dropdown-enter-from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
 }
 
-.hover-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 28px rgba(0, 158, 219, 0.15);
+.dropdown-leave-to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+}
+
+/* Card hover effects */
+.mun-card:hover {
+    transform: translateY(-2px);
 }
 
 /* Progress bar animation */
 .progress-bar {
-    transition: width 0.5s ease-in-out;
-}
-
-/* Fade transition */
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
+    transition: width 0.3s ease;
 }
 </style>

@@ -1,608 +1,852 @@
 <template>
-    <TransitionRoot appear :show="modelValue" as="template">
-        <Dialog as="div" @close="close" class="relative z-50">
-            <TransitionChild as="template" enter="duration-300 ease-out" enter-from="opacity-0" enter-to="opacity-100"
-                leave="duration-200 ease-in" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-black/25 backdrop-blur-sm" />
-            </TransitionChild>
+    <Teleport to="body">
+        <transition name="modal" appear>
+            <div v-if="modelValue"
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
 
-            <div class="fixed inset-0 overflow-y-auto">
-                <div class="flex min-h-full items-center justify-center p-4">
-                    <TransitionChild as="template" enter="duration-300 ease-out" enter-from="opacity-0 scale-95"
-                        enter-to="opacity-100 scale-100" leave="duration-200 ease-in" leave-from="opacity-100 scale-100"
-                        leave-to="opacity-0 scale-95">
-                        <DialogPanel
-                            class="w-full max-w-3xl transform overflow-hidden rounded-2xl bg-white/95 backdrop-blur-sm p-6 shadow-2xl transition-all">
-                            <!-- Modal Header -->
-                            <div class="flex items-center justify-between mb-6">
-                                <div>
-                                    <DialogTitle as="h3" class="text-2xl font-bold text-mun-gray-900">
-                                        {{ isEditing ? 'Edit Committee' : 'Create New Committee' }}
-                                    </DialogTitle>
-                                    <p class="text-mun-gray-600 mt-1">
-                                        {{ isEditing ? 'Update committee settings and configuration' : 'Set up a new committee for your MUN event' }}
-                                    </p>
-                                </div>
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+                    <!-- Modal Header -->
+                    <div class="flex items-center justify-between p-6 border-b border-mun-gray-200">
+                        <div>
+                            <h2 class="text-xl font-bold text-mun-gray-900">
+                                {{ mode === 'edit' ? 'Edit Committee' : 'Create New Committee' }}
+                            </h2>
+                            <p class="text-sm text-mun-gray-600 mt-1">
+                                {{ mode === 'edit' ? 'Update committee details and settings' : 'Set up a new MUN committee' }}
+                            </p>
+                        </div>
 
-                                <button @click="close" class="p-2 rounded-lg hover:bg-mun-gray-100 transition-colors">
-                                    <XMarkIcon class="w-6 h-6 text-mun-gray-500" />
-                                </button>
-                            </div>
+                        <button @click="close" class="p-2 hover:bg-mun-gray-100 rounded-lg transition-colors">
+                            <XMarkIcon class="w-6 h-6 text-mun-gray-500" />
+                        </button>
+                    </div>
 
-                            <!-- Progress Steps -->
-                            <div class="mb-8">
-                                <div class="flex items-center justify-between">
-                                    <div v-for="(step, index) in steps" :key="step.id" class="flex items-center"
-                                        :class="{ 'flex-1': index < steps.length - 1 }">
-                                        <!-- Step Circle -->
-                                        <div :class="[
-                                            'flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all',
-                                            currentStep >= index
-                                                ? 'bg-un-blue border-un-blue text-white'
-                                                : 'bg-white border-mun-gray-300 text-mun-gray-400'
-                                        ]">
-                                            <CheckIcon v-if="currentStep > index" class="w-4 h-4" />
-                                            <span v-else class="text-sm font-medium">{{ index + 1 }}</span>
-                                        </div>
+                    <!-- Modal Content -->
+                    <div class="overflow-y-auto max-h-[calc(90vh-140px)]">
+                        <form @submit.prevent="submitForm" class="p-6 space-y-8">
+                            <!-- Basic Information -->
+                            <div class="space-y-6">
+                                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
+                                    <InformationCircleIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    Basic Information
+                                </h3>
 
-                                        <!-- Step Label -->
-                                        <span :class="[
-                                            'ml-2 text-sm font-medium',
-                                            currentStep >= index ? 'text-un-blue' : 'text-mun-gray-400'
-                                        ]">
-                                            {{ step.title }}
-                                        </span>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <!-- Committee Name -->
+                                    <div class="lg:col-span-2">
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Committee Name *
+                                        </label>
+                                        <input v-model="formData.name" type="text" required class="input-field"
+                                            placeholder="e.g., United Nations General Assembly"
+                                            :class="{ 'border-mun-red-300': errors.name }" />
+                                        <p v-if="errors.name" class="mt-1 text-sm text-mun-red-600">
+                                            {{ errors.name }}
+                                        </p>
+                                    </div>
 
-                                        <!-- Connector Line -->
-                                        <div v-if="index < steps.length - 1" :class="[
-                                            'flex-1 h-0.5 mx-4 transition-all',
-                                            currentStep > index ? 'bg-un-blue' : 'bg-mun-gray-200'
-                                        ]"></div>
+                                    <!-- Committee Type -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Committee Type *
+                                        </label>
+                                        <select v-model="formData.type" required class="input-field"
+                                            :class="{ 'border-mun-red-300': errors.type }" @change="handleTypeChange">
+                                            <option value="">Select committee type</option>
+                                            <option value="GA">General Assembly</option>
+                                            <option value="SC">Security Council</option>
+                                            <option value="ECOSOC">Economic and Social Council</option>
+                                            <option value="HRC">Human Rights Council</option>
+                                            <option value="LEGAL">Legal Committee</option>
+                                            <option value="DISEC">Disarmament Committee</option>
+                                            <option value="SPECPOL">Special Political Committee</option>
+                                            <option value="OTHER">Other</option>
+                                        </select>
+                                        <p v-if="errors.type" class="mt-1 text-sm text-mun-red-600">
+                                            {{ errors.type }}
+                                        </p>
+                                    </div>
+
+                                    <!-- Event -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Event *
+                                        </label>
+                                        <select v-model="formData.eventId" required class="input-field"
+                                            :class="{ 'border-mun-red-300': errors.eventId }">
+                                            <option value="">Select event</option>
+                                            <option v-for="event in availableEvents" :key="event._id"
+                                                :value="event._id">
+                                                {{ event.name }}
+                                            </option>
+                                        </select>
+                                        <p v-if="errors.eventId" class="mt-1 text-sm text-mun-red-600">
+                                            {{ errors.eventId }}
+                                        </p>
+                                    </div>
+
+                                    <!-- Status -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Status
+                                        </label>
+                                        <select v-model="formData.status" class="input-field">
+                                            <option value="draft">Draft</option>
+                                            <option value="setup">Setup</option>
+                                            <option value="active">Active</option>
+                                            <option value="paused">Paused</option>
+                                            <option value="completed">Completed</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Abbreviation -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Abbreviation
+                                        </label>
+                                        <input v-model="formData.abbreviation" type="text" class="input-field"
+                                            placeholder="e.g., UNGA" maxlength="10" />
+                                    </div>
+
+                                    <!-- Description -->
+                                    <div class="lg:col-span-2">
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Description
+                                        </label>
+                                        <textarea v-model="formData.description" rows="3"
+                                            class="input-field resize-none"
+                                            placeholder="Describe the committee's purpose and scope..."></textarea>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Form Steps -->
-                            <form @submit.prevent="handleSubmit" class="space-y-6">
-                                <!-- Step 1: Basic Information -->
-                                <div v-show="currentStep === 0" class="space-y-6">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <!-- Event Selection -->
-                                        <div class="md:col-span-2">
-                                            <label for="eventId"
-                                                class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                                Select Event *
-                                            </label>
-                                            <select id="eventId" v-model="form.eventId" required class="input-field"
-                                                :disabled="isSubmitting || isEditing">
-                                                <option value="">Choose an event...</option>
-                                                <option v-for="event in events" :key="event._id" :value="event._id">
-                                                    {{ event.name }}
-                                                </option>
-                                            </select>
-                                            <p v-if="isEditing" class="text-xs text-mun-gray-500 mt-1">
-                                                Event cannot be changed after committee creation
-                                            </p>
-                                        </div>
+                            <!-- Committee Settings -->
+                            <div class="space-y-6">
+                                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
+                                    <CogIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    Committee Settings
+                                </h3>
 
-                                        <!-- Committee Name -->
-                                        <div>
-                                            <label for="committeeName"
-                                                class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                                Committee Name *
-                                            </label>
-                                            <input id="committeeName" v-model="form.name" type="text" required
-                                                class="input-field" placeholder="e.g., United Nations Security Council"
-                                                :disabled="isSubmitting" />
-                                        </div>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <!-- Topic -->
+                                    <div class="lg:col-span-2">
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Committee Topic
+                                        </label>
+                                        <input v-model="formData.topic" type="text" class="input-field"
+                                            placeholder="e.g., Addressing Climate Change and Sustainable Development" />
+                                    </div>
 
-                                        <!-- Committee Type -->
-                                        <div>
-                                            <label for="committeeType"
-                                                class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                                Committee Type *
-                                            </label>
-                                            <select id="committeeType" v-model="form.type" required class="input-field"
-                                                :disabled="isSubmitting">
-                                                <option value="">Select type...</option>
-                                                <option value="GA">General Assembly</option>
-                                                <option value="SC">Security Council</option>
-                                                <option value="other">Other Committee</option>
-                                            </select>
-                                        </div>
+                                    <!-- Language -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Working Language
+                                        </label>
+                                        <select v-model="formData.language" class="input-field">
+                                            <option value="en">English</option>
+                                            <option value="ru">Russian</option>
+                                            <option value="uz_lat">Uzbek (Latin)</option>
+                                            <option value="uz_cyr">Uzbek (Cyrillic)</option>
+                                        </select>
+                                    </div>
 
-                                        <!-- Language -->
-                                        <div>
-                                            <label for="language"
-                                                class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                                Working Language
-                                            </label>
-                                            <select id="language" v-model="form.language" class="input-field"
-                                                :disabled="isSubmitting">
-                                                <option value="en">English</option>
-                                                <option value="ru">Russian</option>
-                                                <option value="uz_lat">Uzbek (Latin)</option>
-                                                <option value="uz_cyr">Uzbek (Cyrillic)</option>
-                                            </select>
-                                        </div>
+                                    <!-- Max Countries -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Maximum Countries
+                                        </label>
+                                        <input v-model.number="formData.maxCountries" type="number" min="1" max="200"
+                                            class="input-field" :placeholder="getRecommendedMaxCountries()" />
+                                        <p class="mt-1 text-xs text-mun-gray-500">
+                                            Recommended for {{ formatCommitteeType(formData.type) }}: {{
+                                            getRecommendedMaxCountries() }}
+                                        </p>
+                                    </div>
 
-                                        <!-- Status -->
-                                        <div>
-                                            <label for="status"
-                                                class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                                Initial Status
-                                            </label>
-                                            <select id="status" v-model="form.status" class="input-field"
-                                                :disabled="isSubmitting">
-                                                <option value="setup">Setup (Preparing)</option>
-                                                <option value="active">Active (Running)</option>
-                                                <option value="completed">Completed</option>
-                                            </select>
-                                        </div>
+                                    <!-- Session Duration -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Session Duration (hours)
+                                        </label>
+                                        <input v-model.number="formData.sessionDuration" type="number" min="1" max="24"
+                                            class="input-field" placeholder="8" />
+                                    </div>
 
-                                        <!-- Description -->
-                                        <div class="md:col-span-2">
-                                            <label for="description"
-                                                class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                                Description
-                                            </label>
-                                            <textarea id="description" v-model="form.description" rows="3"
-                                                class="input-field resize-none"
-                                                placeholder="Brief description of the committee's mandate and focus areas..."
-                                                :disabled="isSubmitting"></textarea>
-                                        </div>
+                                    <!-- Time Zone -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Time Zone
+                                        </label>
+                                        <select v-model="formData.timeZone" class="input-field">
+                                            <option value="Asia/Tashkent">Asia/Tashkent (UTC+5)</option>
+                                            <option value="UTC">UTC (UTC+0)</option>
+                                            <option value="America/New_York">America/New_York (UTC-5)</option>
+                                            <option value="Europe/London">Europe/London (UTC+0)</option>
+                                            <option value="Asia/Dubai">Asia/Dubai (UTC+4)</option>
+                                        </select>
                                     </div>
                                 </div>
 
-                                <!-- Step 2: Committee Settings -->
-                                <div v-show="currentStep === 1" class="space-y-6">
-                                    <div class="bg-mun-gray-50 rounded-xl p-6">
-                                        <h4 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <CogIcon class="w-5 h-5 mr-2" />
-                                            Committee Settings
-                                        </h4>
+                                <!-- Committee Features -->
+                                <div class="space-y-4">
+                                    <h4 class="font-medium text-mun-gray-900">Committee Features</h4>
 
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <!-- Session Settings -->
-                                            <div class="space-y-4">
-                                                <h5
-                                                    class="font-medium text-mun-gray-700 border-b border-mun-gray-200 pb-2">
-                                                    Session Settings
-                                                </h5>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="flex items-center">
+                                            <input id="allowObservers" v-model="formData.allowObservers" type="checkbox"
+                                                class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                            <label for="allowObservers" class="ml-2 text-sm text-mun-gray-700">
+                                                Allow observers
+                                            </label>
+                                        </div>
 
-                                                <div>
-                                                    <label for="defaultSpeechTime"
-                                                        class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                                        Default Speech Time (seconds)
-                                                    </label>
-                                                    <input id="defaultSpeechTime"
-                                                        v-model.number="form.settings.speechSettings.defaultSpeechTime"
-                                                        type="number" min="30" max="300" class="input-field"
-                                                        :disabled="isSubmitting" />
-                                                </div>
+                                        <div class="flex items-center">
+                                            <input id="enableVoting" v-model="formData.enableVoting" type="checkbox"
+                                                class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                            <label for="enableVoting" class="ml-2 text-sm text-mun-gray-700">
+                                                Enable voting
+                                            </label>
+                                        </div>
 
-                                                <div>
-                                                    <label for="extensionTime"
-                                                        class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                                        Extension Time (seconds)
-                                                    </label>
-                                                    <input id="extensionTime"
-                                                        v-model.number="form.settings.speechSettings.extensionTime"
-                                                        type="number" min="15" max="60" class="input-field"
-                                                        :disabled="isSubmitting" />
-                                                </div>
+                                        <div class="flex items-center">
+                                            <input id="allowAmendments" v-model="formData.allowAmendments"
+                                                type="checkbox"
+                                                class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                            <label for="allowAmendments" class="ml-2 text-sm text-mun-gray-700">
+                                                Allow amendments
+                                            </label>
+                                        </div>
 
-                                                <div class="flex items-center space-x-3">
-                                                    <input id="allowExtensions"
-                                                        v-model="form.settings.speechSettings.allowExtensions"
-                                                        type="checkbox"
-                                                        class="h-4 w-4 text-un-blue border-mun-gray-300 rounded focus:ring-un-blue"
-                                                        :disabled="isSubmitting" />
-                                                    <label for="allowExtensions" class="text-sm text-mun-gray-700">
-                                                        Allow speech extensions
-                                                    </label>
-                                                </div>
-                                            </div>
-
-                                            <!-- Voting Settings -->
-                                            <div class="space-y-4">
-                                                <h5
-                                                    class="font-medium text-mun-gray-700 border-b border-mun-gray-200 pb-2">
-                                                    Voting Settings
-                                                </h5>
-
-                                                <div>
-                                                    <label for="votingMethod"
-                                                        class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                                        Default Voting Method
-                                                    </label>
-                                                    <select id="votingMethod"
-                                                        v-model="form.settings.votingSettings.defaultMethod"
-                                                        class="input-field" :disabled="isSubmitting">
-                                                        <option value="simple">Simple Majority</option>
-                                                        <option value="rollCall">Roll Call</option>
-                                                        <option value="consensus">Consensus</option>
-                                                    </select>
-                                                </div>
-
-                                                <div class="flex items-center space-x-3">
-                                                    <input id="allowAbstentions"
-                                                        v-model="form.settings.votingSettings.allowAbstentions"
-                                                        type="checkbox"
-                                                        class="h-4 w-4 text-un-blue border-mun-gray-300 rounded focus:ring-un-blue"
-                                                        :disabled="isSubmitting" />
-                                                    <label for="allowAbstentions" class="text-sm text-mun-gray-700">
-                                                        Allow abstentions
-                                                    </label>
-                                                </div>
-
-                                                <div class="flex items-center space-x-3">
-                                                    <input id="requireTwoThirds"
-                                                        v-model="form.settings.votingSettings.requireTwoThirds"
-                                                        type="checkbox"
-                                                        class="h-4 w-4 text-un-blue border-mun-gray-300 rounded focus:ring-un-blue"
-                                                        :disabled="isSubmitting" />
-                                                    <label for="requireTwoThirds" class="text-sm text-mun-gray-700">
-                                                        Require 2/3 majority for resolutions
-                                                    </label>
-                                                </div>
-                                            </div>
+                                        <div class="flex items-center">
+                                            <input id="requirePositionPapers" v-model="formData.requirePositionPapers"
+                                                type="checkbox"
+                                                class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                            <label for="requirePositionPapers" class="ml-2 text-sm text-mun-gray-700">
+                                                Require position papers
+                                            </label>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                <!-- Step 3: Review & Create -->
-                                <div v-show="currentStep === 2" class="space-y-6">
-                                    <div class="bg-un-blue-50 rounded-xl p-6">
-                                        <h4 class="text-lg font-semibold text-un-blue-900 mb-4 flex items-center">
-                                            <DocumentCheckIcon class="w-5 h-5 mr-2" />
-                                            Review Committee Details
-                                        </h4>
+                            <!-- Security Council Specific Settings -->
+                            <div v-if="formData.type === 'SC'" class="space-y-6">
+                                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
+                                    <ShieldCheckIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    Security Council Settings
+                                </h3>
 
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                    <div class="flex items-center mb-3">
+                                        <InformationCircleIcon class="w-5 h-5 text-blue-600 mr-2" />
+                                        <h4 class="font-medium text-blue-900">Permanent Members Configuration</h4>
+                                    </div>
+
+                                    <div class="space-y-3">
+                                        <div class="flex items-center">
+                                            <input id="enableVetoPower" v-model="formData.scSettings.enableVetoPower"
+                                                type="checkbox"
+                                                class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                            <label for="enableVetoPower" class="ml-2 text-sm text-blue-800">
+                                                Enable veto power for permanent members
+                                            </label>
+                                        </div>
+
+                                        <div class="flex items-center">
+                                            <input id="requireUnanimity" v-model="formData.scSettings.requireUnanimity"
+                                                type="checkbox"
+                                                class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                            <label for="requireUnanimity" class="ml-2 text-sm text-blue-800">
+                                                Require unanimity for procedural votes
+                                            </label>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-blue-800 mb-2">
+                                                Voting Threshold (non-procedural)
+                                            </label>
+                                            <select v-model="formData.scSettings.votingThreshold"
+                                                class="input-field !border-blue-300 !focus:border-blue-500">
+                                                <option value="simple">Simple Majority</option>
+                                                <option value="qualified">Qualified Majority (9/15)</option>
+                                                <option value="two-thirds">Two-Thirds Majority</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Presidium Setup -->
+                            <div class="space-y-6">
+                                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
+                                    <UsersIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    Presidium Setup
+                                </h3>
+
+                                <div class="space-y-4">
+                                    <div v-for="(member, index) in formData.presidium" :key="index"
+                                        class="bg-mun-gray-50 rounded-xl p-4">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h4 class="font-medium text-mun-gray-900">
+                                                {{ formatPresidiumRole(member.role) }}
+                                            </h4>
+                                            <button v-if="formData.presidium.length > 1" type="button"
+                                                @click="removePresidiumMember(index)"
+                                                class="text-mun-red-600 hover:text-mun-red-800">
+                                                <XMarkIcon class="w-4 h-4" />
+                                            </button>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <h5 class="font-medium text-un-blue-800 mb-2">Basic Information</h5>
-                                                <div class="space-y-2 text-sm">
-                                                    <div><strong>Event:</strong> {{ selectedEventName }}</div>
-                                                    <div><strong>Name:</strong> {{ form.name }}</div>
-                                                    <div><strong>Type:</strong> {{ formatCommitteeType(form.type) }}
-                                                    </div>
-                                                    <div><strong>Language:</strong> {{ formatLanguage(form.language) }}
-                                                    </div>
-                                                    <div><strong>Status:</strong> {{ formatStatus(form.status) }}</div>
-                                                </div>
+                                                <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                                    Role
+                                                </label>
+                                                <select v-model="member.role" class="input-field">
+                                                    <option value="chairman">Chairman</option>
+                                                    <option value="co-chairman">Co-Chairman</option>
+                                                    <option value="expert">Expert</option>
+                                                    <option value="secretary">Secretary</option>
+                                                </select>
                                             </div>
 
                                             <div>
-                                                <h5 class="font-medium text-un-blue-800 mb-2">Settings Summary</h5>
-                                                <div class="space-y-2 text-sm">
-                                                    <div><strong>Speech Time:</strong> {{
-                                                        form.settings.speechSettings.defaultSpeechTime }}s</div>
-                                                    <div><strong>Extensions:</strong> {{
-                                                        form.settings.speechSettings.allowExtensions ? 'Allowed' : 'Not Allowed' }}</div>
-                                                    <div><strong>Voting Method:</strong> {{
-                                                        formatVotingMethod(form.settings.votingSettings.defaultMethod)
-                                                        }}</div>
-                                                    <div><strong>Abstentions:</strong> {{
-                                                        form.settings.votingSettings.allowAbstentions ? 'Allowed' : 'Not Allowed' }}</div>
-                                                </div>
+                                                <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                                    Email (Optional)
+                                                </label>
+                                                <input v-model="member.email" type="email" class="input-field"
+                                                    placeholder="presidium@munuz.org" />
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                                    Name (Optional)
+                                                </label>
+                                                <input v-model="member.name" type="text" class="input-field"
+                                                    placeholder="Full name" />
+                                            </div>
+
+                                            <div>
+                                                <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                                    Institution (Optional)
+                                                </label>
+                                                <input v-model="member.institution" type="text" class="input-field"
+                                                    placeholder="University or organization" />
                                             </div>
                                         </div>
-
-                                        <div v-if="form.description" class="mt-4">
-                                            <h5 class="font-medium text-un-blue-800 mb-2">Description</h5>
-                                            <p class="text-sm text-un-blue-700">{{ form.description }}</p>
-                                        </div>
                                     </div>
-                                </div>
 
-                                <!-- Navigation Buttons -->
-                                <div class="flex justify-between pt-6 border-t border-mun-gray-200">
-                                    <AppButton v-if="currentStep > 0" type="button" variant="outline"
-                                        @click="previousStep" :disabled="isSubmitting">
-                                        Previous
+                                    <AppButton type="button" variant="outline" size="sm" @click="addPresidiumMember"
+                                        :disabled="formData.presidium.length >= 6">
+                                        <PlusIcon class="w-4 h-4 mr-2" />
+                                        Add Presidium Member
                                     </AppButton>
-                                    <div v-else></div>
+                                </div>
+                            </div>
 
-                                    <div class="flex space-x-4">
-                                        <AppButton type="button" variant="ghost" @click="close"
-                                            :disabled="isSubmitting">
-                                            Cancel
-                                        </AppButton>
+                            <!-- Advanced Settings -->
+                            <div class="space-y-6">
+                                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
+                                    <AdjustmentsHorizontalIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    Advanced Settings
+                                </h3>
 
-                                        <AppButton v-if="currentStep < steps.length - 1" type="button" variant="primary"
-                                            @click="nextStep" :disabled="!canProceedToNextStep">
-                                            Next
-                                        </AppButton>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <!-- Speaking Time -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Default Speaking Time (seconds)
+                                        </label>
+                                        <input v-model.number="formData.speakingTime" type="number" min="30" max="600"
+                                            class="input-field" placeholder="120" />
+                                    </div>
 
-                                        <AppButton v-else type="submit" variant="primary" :loading="isSubmitting"
-                                            :disabled="!isFormValid">
-                                            {{ isEditing ? 'Update Committee' : 'Create Committee' }}
-                                        </AppButton>
+                                    <!-- Debate Format -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Debate Format
+                                        </label>
+                                        <select v-model="formData.debateFormat" class="input-field">
+                                            <option value="formal">Formal Debate</option>
+                                            <option value="informal">Informal Consultation</option>
+                                            <option value="mixed">Mixed Format</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Roll Call Voting -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Voting Method
+                                        </label>
+                                        <select v-model="formData.votingMethod" class="input-field">
+                                            <option value="placard">Placard Voting</option>
+                                            <option value="roll-call">Roll Call</option>
+                                            <option value="electronic">Electronic Voting</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Document Deadline -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Document Submission Deadline
+                                        </label>
+                                        <input v-model="formData.documentDeadline" type="datetime-local"
+                                            class="input-field" />
                                     </div>
                                 </div>
-                            </form>
-                        </DialogPanel>
-                    </TransitionChild>
+
+                                <!-- Additional Notes -->
+                                <div>
+                                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                        Additional Notes
+                                    </label>
+                                    <textarea v-model="formData.notes" rows="3" class="input-field resize-none"
+                                        placeholder="Any additional notes or special instructions for this committee..."></textarea>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="flex items-center justify-between p-6 bg-mun-gray-50 border-t border-mun-gray-200">
+                        <div class="flex items-center space-x-4">
+                            <AppButton variant="ghost" @click="close" :disabled="isSubmitting">
+                                Cancel
+                            </AppButton>
+
+                            <AppButton v-if="mode === 'edit'" variant="outline" @click="resetForm"
+                                :disabled="isSubmitting">
+                                <ArrowPathIcon class="w-4 h-4 mr-2" />
+                                Reset
+                            </AppButton>
+                        </div>
+
+                        <div class="flex items-center space-x-3">
+                            <AppButton v-if="mode === 'create'" variant="outline" @click="saveDraft"
+                                :loading="isDraftSaving" :disabled="isSubmitting">
+                                <DocumentIcon class="w-4 h-4 mr-2" />
+                                Save as Draft
+                            </AppButton>
+
+                            <AppButton variant="primary" @click="submitForm" :loading="isSubmitting">
+                                <CheckIcon class="w-4 h-4 mr-2" />
+                                {{ mode === 'edit' ? 'Update Committee' : 'Create Committee' }}
+                            </AppButton>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </Dialog>
-    </TransitionRoot>
+        </transition>
+    </Teleport>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch } from 'vue'
-import {
-    Dialog,
-    DialogPanel,
-    DialogTitle,
-    TransitionRoot,
-    TransitionChild
-} from '@headlessui/vue'
-import { useAppStore } from '@/stores/app'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { useToast } from '@/plugins/toast'
 import { apiMethods } from '@/utils/api'
+
+// Icons
 import {
     XMarkIcon,
-    CheckIcon,
+    InformationCircleIcon,
     CogIcon,
-    DocumentCheckIcon
+    ShieldCheckIcon,
+    UsersIcon,
+    AdjustmentsHorizontalIcon,
+    PlusIcon,
+    ArrowPathIcon,
+    DocumentIcon,
+    CheckIcon
 } from '@heroicons/vue/24/outline'
 
+// Props
 const props = defineProps({
     modelValue: {
         type: Boolean,
-        required: true
+        default: false
     },
-
     committee: {
         type: Object,
         default: null
     },
-
-    events: {
-        type: Array,
-        default: () => []
+    mode: {
+        type: String,
+        default: 'create',
+        validator: (value) => ['create', 'edit'].includes(value)
     }
 })
 
-const emit = defineEmits(['update:modelValue', 'saved', 'close'])
+// Emits
+const emit = defineEmits(['update:modelValue', 'created', 'updated'])
 
-const appStore = useAppStore()
+const toast = useToast()
 
 // State
-const currentStep = ref(0)
 const isSubmitting = ref(false)
+const isDraftSaving = ref(false)
+const errors = ref({})
+const availableEvents = ref([])
 
-const steps = [
-    { id: 'basic', title: 'Basic Info' },
-    { id: 'settings', title: 'Settings' },
-    { id: 'review', title: 'Review' }
-]
-
-const form = reactive({
-    eventId: '',
+// Form data
+const formData = reactive({
+    // Basic Information
     name: '',
     type: '',
-    language: 'en',
-    status: 'setup',
+    eventId: '',
+    status: 'draft',
+    abbreviation: '',
     description: '',
-    settings: {
-        speechSettings: {
-            defaultSpeechTime: 90,
-            extensionTime: 30,
-            allowExtensions: true
-        },
-        votingSettings: {
-            defaultMethod: 'simple',
-            allowAbstentions: true,
-            requireTwoThirds: false
-        }
-    }
+
+    // Committee Settings
+    topic: '',
+    language: 'en',
+    maxCountries: null,
+    sessionDuration: 8,
+    timeZone: 'Asia/Tashkent',
+    allowObservers: false,
+    enableVoting: true,
+    allowAmendments: true,
+    requirePositionPapers: true,
+
+    // Security Council Specific
+    scSettings: {
+        enableVetoPower: true,
+        requireUnanimity: false,
+        votingThreshold: 'qualified'
+    },
+
+    // Presidium
+    presidium: [
+        { role: 'chairman', email: '', name: '', institution: '' }
+    ],
+
+    // Advanced Settings
+    speakingTime: 120,
+    debateFormat: 'formal',
+    votingMethod: 'placard',
+    documentDeadline: '',
+    notes: ''
 })
 
 // Computed
-const isEditing = computed(() => !!props.committee?._id)
-
-const selectedEventName = computed(() => {
-    const event = props.events.find(e => e._id === form.eventId)
-    return event?.name || 'Unknown Event'
+const isValid = computed(() => {
+    return formData.name.trim() !== '' &&
+        formData.type !== '' &&
+        formData.eventId !== '' &&
+        Object.keys(errors.value).length === 0
 })
 
-const canProceedToNextStep = computed(() => {
-    switch (currentStep.value) {
-        case 0:
-            return form.eventId && form.name && form.type
-        case 1:
-            return true // Settings are optional with defaults
-        default:
-            return true
+// Watchers
+watch(() => props.modelValue, (newVal) => {
+    if (newVal) {
+        initializeForm()
+        loadEvents()
     }
 })
 
-const isFormValid = computed(() => {
-    return form.eventId &&
-        form.name.trim() &&
-        form.type &&
-        form.settings.speechSettings.defaultSpeechTime >= 30 &&
-        form.settings.speechSettings.defaultSpeechTime <= 300
+watch(() => formData.name, () => {
+    if (errors.value.name) {
+        delete errors.value.name
+    }
 })
 
 // Methods
+const loadEvents = async () => {
+    try {
+        const response = await apiMethods.events.getAll({
+            status: 'active,published',
+            limit: 100
+        })
+
+        if (response.data.success) {
+            availableEvents.value = response.data.events || []
+        }
+
+    } catch (error) {
+        console.error('Load events error:', error)
+    }
+}
+
+const initializeForm = () => {
+    errors.value = {}
+
+    if (props.mode === 'edit' && props.committee) {
+        // Populate form with existing committee data
+        Object.keys(formData).forEach(key => {
+            if (props.committee[key] !== undefined) {
+                if (key === 'documentDeadline' && props.committee[key]) {
+                    formData[key] = new Date(props.committee[key]).toISOString().slice(0, 16)
+                } else {
+                    formData[key] = props.committee[key]
+                }
+            }
+        })
+
+        // Handle presidium array
+        if (props.committee.presidium && props.committee.presidium.length > 0) {
+            formData.presidium = [...props.committee.presidium]
+        }
+
+        // Handle SC settings
+        if (props.committee.scSettings) {
+            formData.scSettings = { ...formData.scSettings, ...props.committee.scSettings }
+        }
+    } else {
+        resetForm()
+    }
+}
+
 const resetForm = () => {
-    form.eventId = ''
-    form.name = ''
-    form.type = ''
-    form.language = 'en'
-    form.status = 'setup'
-    form.description = ''
-    form.settings.speechSettings.defaultSpeechTime = 90
-    form.settings.speechSettings.extensionTime = 30
-    form.settings.speechSettings.allowExtensions = true
-    form.settings.votingSettings.defaultMethod = 'simple'
-    form.settings.votingSettings.allowAbstentions = true
-    form.settings.votingSettings.requireTwoThirds = false
-    currentStep.value = 0
-}
-
-const populateForm = (committee) => {
-    if (!committee) return
-
-    form.eventId = committee.eventId._id || committee.eventId
-    form.name = committee.name || ''
-    form.type = committee.type || ''
-    form.language = committee.language || 'en'
-    form.status = committee.status || 'setup'
-    form.description = committee.description || ''
-
-    if (committee.settings) {
-        if (committee.settings.speechSettings) {
-            form.settings.speechSettings = { ...committee.settings.speechSettings }
+    Object.keys(formData).forEach(key => {
+        if (key === 'presidium') {
+            formData[key] = [{ role: 'chairman', email: '', name: '', institution: '' }]
+        } else if (key === 'scSettings') {
+            formData[key] = {
+                enableVetoPower: true,
+                requireUnanimity: false,
+                votingThreshold: 'qualified'
+            }
+        } else if (typeof formData[key] === 'boolean') {
+            formData[key] = ['enableVoting', 'allowAmendments', 'requirePositionPapers'].includes(key)
+        } else if (typeof formData[key] === 'number') {
+            formData[key] = key === 'sessionDuration' ? 8 : key === 'speakingTime' ? 120 : null
+        } else if (key === 'status') {
+            formData[key] = 'draft'
+        } else if (key === 'language') {
+            formData[key] = 'en'
+        } else if (key === 'timeZone') {
+            formData[key] = 'Asia/Tashkent'
+        } else if (key === 'debateFormat') {
+            formData[key] = 'formal'
+        } else if (key === 'votingMethod') {
+            formData[key] = 'placard'
+        } else {
+            formData[key] = ''
         }
-        if (committee.settings.votingSettings) {
-            form.settings.votingSettings = { ...committee.settings.votingSettings }
-        }
+    })
+    errors.value = {}
+}
+
+const handleTypeChange = () => {
+    // Set recommended max countries based on committee type
+    const recommendations = {
+        'SC': 15,
+        'GA': 193,
+        'ECOSOC': 54,
+        'HRC': 47,
+        'LEGAL': 50,
+        'DISEC': 50,
+        'SPECPOL': 50,
+        'OTHER': 30
+    }
+
+    if (!formData.maxCountries) {
+        formData.maxCountries = recommendations[formData.type] || 30
     }
 }
 
-const nextStep = () => {
-    if (currentStep.value < steps.length - 1) {
-        currentStep.value++
+const formatCommitteeType = (type) => {
+    const typeMap = {
+        'GA': 'General Assembly',
+        'SC': 'Security Council',
+        'ECOSOC': 'Economic and Social Council',
+        'HRC': 'Human Rights Council',
+        'LEGAL': 'Legal Committee',
+        'DISEC': 'Disarmament Committee',
+        'SPECPOL': 'Special Political Committee',
+        'OTHER': 'Other'
+    }
+    return typeMap[type] || type
+}
+
+const getRecommendedMaxCountries = () => {
+    const recommendations = {
+        'SC': '15',
+        'GA': '193',
+        'ECOSOC': '54',
+        'HRC': '47',
+        'LEGAL': '50',
+        'DISEC': '50',
+        'SPECPOL': '50',
+        'OTHER': '30'
+    }
+    return recommendations[formData.type] || '30'
+}
+
+const formatPresidiumRole = (role) => {
+    const roleMap = {
+        'chairman': 'Chairman',
+        'co-chairman': 'Co-Chairman',
+        'expert': 'Expert',
+        'secretary': 'Secretary'
+    }
+    return roleMap[role] || role
+}
+
+const addPresidiumMember = () => {
+    if (formData.presidium.length < 6) {
+        formData.presidium.push({
+            role: 'co-chairman',
+            email: '',
+            name: '',
+            institution: ''
+        })
     }
 }
 
-const previousStep = () => {
-    if (currentStep.value > 0) {
-        currentStep.value--
+const removePresidiumMember = (index) => {
+    if (formData.presidium.length > 1) {
+        formData.presidium.splice(index, 1)
     }
 }
 
-const handleSubmit = async () => {
-    if (!isFormValid.value) return
+const validateForm = () => {
+    errors.value = {}
+
+    // Required fields
+    if (!formData.name.trim()) {
+        errors.value.name = 'Committee name is required'
+    }
+
+    if (!formData.type) {
+        errors.value.type = 'Committee type is required'
+    }
+
+    if (!formData.eventId) {
+        errors.value.eventId = 'Event selection is required'
+    }
+
+    return Object.keys(errors.value).length === 0
+}
+
+const submitForm = async () => {
+    if (!validateForm()) {
+        toast.error('Please fix the form errors before submitting')
+        return
+    }
 
     try {
         isSubmitting.value = true
 
-        const committeeData = {
-            eventId: form.eventId,
-            name: form.name.trim(),
-            type: form.type,
-            language: form.language,
-            status: form.status,
-            description: form.description.trim(),
-            settings: {
-                speechSettings: { ...form.settings.speechSettings },
-                votingSettings: { ...form.settings.votingSettings }
-            }
+        // Prepare data for API
+        const submitData = { ...formData }
+
+        // Convert datetime-local string to ISO string
+        if (submitData.documentDeadline) {
+            submitData.documentDeadline = new Date(submitData.documentDeadline).toISOString()
         }
 
+        // Clean up presidium data
+        submitData.presidium = submitData.presidium.filter(member =>
+            member.role && (member.email || member.name)
+        )
+
         let response
-        if (isEditing.value) {
-            response = await apiMethods.committees.update(props.committee._id, committeeData)
+        if (props.mode === 'edit') {
+            response = await apiMethods.committees.update(props.committee._id, submitData)
         } else {
-            response = await apiMethods.committees.create(committeeData)
+            response = await apiMethods.committees.create(submitData)
         }
 
         if (response.data.success) {
-            emit('saved', response.data.committee)
-            close()
+            const committee = response.data.committee
 
-            const message = isEditing.value ? 'Committee updated successfully' : 'Committee created successfully'
-            appStore.showSuccessMessage(message)
+            if (props.mode === 'edit') {
+                emit('updated', committee)
+                toast.success('Committee updated successfully')
+            } else {
+                emit('created', committee)
+                toast.success('Committee created successfully')
+            }
+
+            close()
+        } else {
+            throw new Error(response.data.error || 'Failed to save committee')
         }
 
     } catch (error) {
-        console.error('Save committee error:', error)
-        const message = error.response?.data?.error || 'Failed to save committee'
-        appStore.showErrorMessage(message)
+        console.error('Submit committee error:', error)
+        toast.error(error.message || 'Failed to save committee')
     } finally {
         isSubmitting.value = false
     }
 }
 
+const saveDraft = async () => {
+    try {
+        isDraftSaving.value = true
+
+        const draftData = { ...formData, status: 'draft' }
+
+        if (draftData.documentDeadline) {
+            draftData.documentDeadline = new Date(draftData.documentDeadline).toISOString()
+        }
+
+        draftData.presidium = draftData.presidium.filter(member =>
+            member.role && (member.email || member.name)
+        )
+
+        const response = await apiMethods.committees.create(draftData)
+
+        if (response.data.success) {
+            emit('created', response.data.committee)
+            toast.success('Committee saved as draft')
+            close()
+        }
+
+    } catch (error) {
+        console.error('Save draft error:', error)
+        toast.error('Failed to save draft')
+    } finally {
+        isDraftSaving.value = false
+    }
+}
+
 const close = () => {
     emit('update:modelValue', false)
-    emit('close')
 }
 
-// Formatters
-const formatCommitteeType = (type) => {
-    const typeMap = {
-        'GA': 'General Assembly',
-        'SC': 'Security Council',
-        'other': 'Other Committee'
-    }
-    return typeMap[type] || type
-}
-
-const formatLanguage = (lang) => {
-    const langMap = {
-        'en': 'English',
-        'ru': 'Russian',
-        'uz_lat': 'Uzbek (Latin)',
-        'uz_cyr': 'Uzbek (Cyrillic)'
-    }
-    return langMap[lang] || lang
-}
-
-const formatStatus = (status) => {
-    const statusMap = {
-        'setup': 'Setup',
-        'active': 'Active',
-        'completed': 'Completed'
-    }
-    return statusMap[status] || status
-}
-
-const formatVotingMethod = (method) => {
-    const methodMap = {
-        'simple': 'Simple Majority',
-        'rollCall': 'Roll Call',
-        'consensus': 'Consensus'
-    }
-    return methodMap[method] || method
-}
-
-// Watchers
-watch(() => props.modelValue, (newValue) => {
-    if (newValue) {
-        if (props.committee) {
-            populateForm(props.committee)
-        } else {
-            resetForm()
-        }
-    }
-})
-
-watch(() => props.committee, (newCommittee) => {
-    if (props.modelValue && newCommittee) {
-        populateForm(newCommittee)
+// Lifecycle
+onMounted(() => {
+    if (props.modelValue) {
+        initializeForm()
+        loadEvents()
     }
 })
 </script>
 
 <style scoped>
-/* Step transition animations */
-.step-transition-enter-active,
-.step-transition-leave-active {
+/* Modal animation */
+.modal-enter-active,
+.modal-leave-active {
     transition: all 0.3s ease;
 }
 
-.step-transition-enter-from {
+.modal-enter-from {
     opacity: 0;
-    transform: translateX(20px);
+    transform: scale(0.9) translateY(-20px);
 }
 
-.step-transition-leave-to {
+.modal-leave-to {
     opacity: 0;
-    transform: translateX(-20px);
+    transform: scale(0.9) translateY(20px);
 }
 
-/* Progress step animation */
-.step-circle {
-    transition: all 0.3s ease;
+/* Custom scrollbar for modal content */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
 }
 
-.step-connector {
-    transition: all 0.3s ease;
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 </style>
