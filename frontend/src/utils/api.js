@@ -197,7 +197,29 @@ export const apiMethods = {
         review: (id, reviewData) => api.put(`/resolutions/${id}/review`, reviewData),
         submitNewVersion: (id, formData) => api.post(`/resolutions/${id}/new-version`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
-        })
+        }),
+        // Amendments
+        submitAmendment: (data) => api.post('/amendments', data),
+        getAmendments: (resolutionId, params = {}) => api.get(`/amendments/${resolutionId}`, { params }),
+        getAmendment: (id) => api.get(`/amendments/${id}`),
+        reviewAmendment: (id, reviewData) => api.put(`/amendments/${id}/review`, reviewData),
+        inviteCoauthor: (id, invitationData) => api.post(`/amendments/${id}/invite-coauthor`, invitationData),
+        respondToCoauthor: (id, responseData) => api.put(`/amendments/${id}/coauthor-response`, responseData),
+
+        // Second-order amendments
+        createSecondOrderAmendment: (id, data) => api.post(`/amendments/${id}/second-order`, data),
+        voteOnSecondOrder: (id, voteData) => api.post(`/amendments/${id}/second-order/vote`, voteData),
+
+        // Amendment voting
+        createAmendmentVoting: (id, votingData) => api.post(`/amendments/${id}/voting`, votingData),
+        getAmendmentVotingStatus: (id) => api.get(`/amendments/${id}/voting-status`),
+        getAmendmentPriorityOrder: (committeeId) => api.get(`/amendments/committee/${committeeId}/priority-order`),
+
+        // Resolution versions and review
+        getResolutionVersions: (id) => api.get(`/resolutions/${id}/versions`),
+        createResolutionVoting: (id, votingData) => api.post(`/resolutions/${id}/voting`, votingData),
+        getResolutionVotingStatus: (id) => api.get(`/resolutions/${id}/voting-status`),
+        submitPresidiumDraft: (data) => api.post('/resolutions/presidium-draft', data),
     },
 
     // Voting
@@ -207,14 +229,28 @@ export const apiMethods = {
         create: (data) => api.post('/voting', data),
         castVote: (id, vote) => api.post(`/voting/${id}/vote`, vote),
         getResults: (id) => api.get(`/voting/${id}/results`),
-        endVoting: (id) => api.post(`/voting/${id}/end`)
+        endVoting: (id) => api.post(`/voting/${id}/end`),
+        getEligibleVoters: (id) => api.get(`/voting/${id}/eligible-voters`),
+        getRollCallOrder: (id) => api.get(`/voting/${id}/roll-call-order`),
+        setCurrentVoter: (id, voterData) => api.put(`/voting/${id}/current-voter`, voterData),
+        skipVote: (id) => api.post(`/voting/${id}/skip`),
+        getSkippedCountries: (id) => api.get(`/voting/${id}/skipped-countries`),
+        useVeto: (id, vetoData) => api.post(`/voting/${id}/veto`, vetoData),
+        cancel: (id, cancelData) => api.delete(`/voting/${id}`, { data: cancelData }),
     },
 
     // Messages
     messages: {
         getAll: (params = {}) => api.get('/messages', { params }),
         send: (data) => api.post('/messages', data),
-        markAsRead: (id) => api.put(`/messages/${id}/read`)
+        markAsRead: (id) => api.put(`/messages/${id}/read`),
+
+        getCommitteeMessages: (committeeId, params = {}) => api.get(`/messages/committee/${committeeId}`, { params }),
+        sendToCommittee: (data) => api.post('/messages/committee', data),
+        sendDiplomaticNote: (data) => api.post('/messages/diplomatic', data),
+        getDiplomaticNotes: (params = {}) => api.get('/messages/diplomatic', { params }),
+        markAllAsRead: (committeeId) => api.put(`/messages/committee/${committeeId}/read-all`),
+        deleteMessage: (id) => api.delete(`/messages/${id}`),
     },
 
     // Export/PDF
@@ -224,7 +260,20 @@ export const apiMethods = {
         }),
         getStatistics: (committeeId) => api.get(`/export/statistics/${committeeId}`),
         getVotingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`),
-        getResolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`)
+        getResolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`),
+
+        getEventCSV: (eventId) => api.get(`/export/event/${eventId}/csv`, { responseType: 'blob' }),
+        getEventFullReport: (eventId) => api.get(`/export/event/${eventId}/full-report`, { responseType: 'blob' }),
+        getCommitteeCSV: (committeeId) => api.get(`/export/committee/${committeeId}/csv`, { responseType: 'blob' }),
+        getCommitteeStatistics: (committeeId) => api.get(`/export/committee/${committeeId}/statistics`, { responseType: 'blob' }),
+        getResolutionsExport: (committeeId) => api.get(`/export/committee/${committeeId}/resolutions`, { responseType: 'blob' }),
+        getVotingRecords: (committeeId) => api.get(`/export/committee/${committeeId}/voting-records`, { responseType: 'blob' }),
+        getAttendanceExport: (committeeId) => api.get(`/export/committee/${committeeId}/attendance`, { responseType: 'blob' }),
+        getMessagingStats: (committeeId) => api.get(`/export/committee/${committeeId}/messaging-stats`, { responseType: 'blob' }),
+
+        getPDFExport: (type, id) => api.get(`/export/${type}/${id}/pdf`, { responseType: 'blob' }),
+        getExcelExport: (type, id) => api.get(`/export/${type}/${id}/excel`, { responseType: 'blob' }),
+        getJSONExport: (type, id) => api.get(`/export/${type}/${id}/json`),
     },
 
     // File upload helper
@@ -241,6 +290,134 @@ export const apiMethods = {
                 }
             }
         })
+    },
+
+
+    // Sessions Management
+    sessions: {
+        getAll: (committeeId, params = {}) => api.get(`/sessions/${committeeId}`, { params }),
+        getById: (id) => api.get(`/sessions/${id}`),
+        create: (data) => api.post('/sessions', data),
+        updateStatus: (id, statusData) => api.put(`/sessions/${id}/status`, statusData),
+        delete: (id) => api.delete(`/sessions/${id}`),
+
+        // Mode management
+        changeMode: (id, modeData) => api.put(`/sessions/${id}/mode`, modeData),
+        getCurrentMode: (id) => api.get(`/sessions/${id}/current-mode`),
+        getModeHistory: (id) => api.post(`/sessions/${id}/mode-history`),
+
+        // Speaker list management
+        getSpeakerList: (id) => api.get(`/sessions/${id}/speaker-list`),
+        updateSpeakerList: (id, speakerData) => api.put(`/sessions/${id}/speaker-list`, speakerData),
+        addToSpeakerList: (id) => api.post(`/sessions/${id}/speaker-list/add`),
+        removeFromSpeakerList: (id, data) => api.put(`/sessions/${id}/speaker-list/remove`, data),
+        moveToEndOfList: (id) => api.put(`/sessions/${id}/speaker-list/move`),
+        setCurrentSpeaker: (id, speakerData) => api.put(`/sessions/${id}/current-speaker`, speakerData),
+
+        // Attendance management
+        updateAttendance: (id, attendanceData) => api.put(`/sessions/${id}/attendance`, attendanceData),
+        getAttendance: (id) => api.get(`/sessions/${id}/attendance`),
+        getQuorum: (id) => api.get(`/sessions/${id}/quorum`)
+    },
+
+    // Timer Management
+    timers: {
+        getAll: (sessionId) => api.get(`/timers/${sessionId}`),
+
+        // Session timer
+        updateSessionTimer: (sessionId, timerData) => api.put(`/timers/${sessionId}/session`, timerData),
+
+        // Speaker timer
+        updateSpeakerTimer: (sessionId, timerData) => api.put(`/timers/${sessionId}/speaker`, timerData),
+
+        // Additional timers
+        createAdditionalTimer: (sessionId, timerData) => api.post(`/timers/${sessionId}/additional`, timerData),
+        updateAdditionalTimer: (sessionId, timerId, timerData) => api.put(`/timers/${sessionId}/additional/${timerId}`, timerData),
+        deleteAdditionalTimer: (sessionId, timerId) => api.delete(`/timers/${sessionId}/additional/${timerId}`),
+
+        // Timer operations
+        startTimer: (sessionId, type, data = {}) => api.post(`/timers/${sessionId}/${type}/start`, data),
+        pauseTimer: (sessionId, type) => api.post(`/timers/${sessionId}/${type}/pause`),
+        resumeTimer: (sessionId, type) => api.post(`/timers/${sessionId}/${type}/resume`),
+        stopTimer: (sessionId, type) => api.post(`/timers/${sessionId}/${type}/stop`),
+        extendTimer: (sessionId, type, extensionData) => api.put(`/timers/${sessionId}/${type}/extend`, extensionData),
+        transferSpeakerTime: (sessionId, transferData) => api.post(`/timers/${sessionId}/speaker/transfer`, transferData),
+
+        // Settings and history
+        updateSettings: (sessionId, settings) => api.put(`/timers/${sessionId}/settings`, settings),
+        getHistory: (sessionId) => api.get(`/timers/${sessionId}/history`)
+    },
+
+
+    // Statistics
+    statistics: {
+        getCommitteeStats: (committeeId) => api.get(`/statistics/committee/${committeeId}`),
+        getDelegateStats: (committeeId, delegateEmail) => api.get(`/statistics/committee/${committeeId}/delegate/${delegateEmail}`),
+        getLeaderboard: (committeeId, params = {}) => api.get(`/statistics/committee/${committeeId}/leaderboard`, { params }),
+        getParticipationAnalytics: (committeeId, params = {}) => api.get(`/statistics/committee/${committeeId}/participation`, { params }),
+        getDelegateAnalytics: (committeeId, delegateEmail) => api.get(`/statistics/committee/${committeeId}/delegate/${delegateEmail}/analytics`),
+        exportCommitteeCSV: (committeeId) => api.get(`/statistics/committee/${committeeId}/export`, {
+            responseType: 'blob'
+        }),
+
+        // Global statistics (admin only)
+        getGlobalStats: () => api.get('/statistics/global'),
+        getEventStats: (eventId) => api.get(`/statistics/event/${eventId}`),
+        exportEventCSV: (eventId) => api.get(`/statistics/event/${eventId}/export`, {
+            responseType: 'blob'
+        })
+    },
+
+    // Presentation/Display
+    presentation: {
+        getDisplayData: (committeeId) => api.get(`/presentation/${committeeId}`),
+        getSessionStatus: (committeeId) => api.get(`/presentation/${committeeId}/session-status`),
+        getCurrentSpeaker: (committeeId) => api.get(`/presentation/${committeeId}/current-speaker`),
+        getTimers: (committeeId) => api.get(`/presentation/${committeeId}/timers`),
+        getVotingInfo: (committeeId) => api.get(`/presentation/${committeeId}/voting`),
+        getQuorumStatus: (committeeId) => api.get(`/presentation/${committeeId}/quorum`),
+
+        // Display control
+        updateDisplay: (committeeId, data) => api.put(`/presentation/${committeeId}/update`, data),
+        makeAnnouncement: (committeeId, announcement) => api.post(`/presentation/${committeeId}/announce`, announcement),
+        highlightInfo: (committeeId, highlight) => api.put(`/presentation/${committeeId}/highlight`, highlight),
+        sendEmergency: (committeeId, emergency) => api.post(`/presentation/${committeeId}/emergency`, emergency),
+
+        // Settings
+        updateSettings: (committeeId, settings) => api.put(`/presentation/${committeeId}/settings`, settings),
+        getSettings: (committeeId) => api.get(`/presentation/${committeeId}/settings`)
+    },
+    // Procedures/Motions
+    procedures: {
+        // Procedural motions
+        submitMotion: (data) => api.post('/motions', data),
+        getMotions: (sessionId, params = {}) => api.get(`/motions/${sessionId}`, { params }),
+        getMotion: (id) => api.get(`/motions/${id}`),
+        reviewMotion: (id, reviewData) => api.put(`/motions/${id}/review`, reviewData),
+        supportMotion: (id) => api.post(`/motions/${id}/support`),
+        voteOnMotion: (id, voteData) => api.post(`/motions/${id}/vote`, voteData),
+
+        // Presidium motions
+        submitPresidiumMotion: (data) => api.post('/motions/presidium', data),
+        updateMotionPriority: (id, priorityData) => api.put(`/motions/${id}/priority`, priorityData),
+
+        // History and queue
+        getMotionHistory: (sessionId) => api.get(`/motions/${sessionId}/history`),
+        getMotionQueue: (sessionId) => api.get(`/motions/${sessionId}/queue`),
+
+        // Questions
+        submitQuestion: (data) => api.post('/questions', data),
+        getQuestions: (sessionId, params = {}) => api.get(`/questions/${sessionId}`, { params }),
+        getQuestion: (id) => api.get(`/questions/${id}`),
+        answerQuestion: (id, answerData) => api.put(`/questions/${id}/answer`, answerData),
+        updateQuestionPriority: (id, priorityData) => api.put(`/questions/${id}/priority`, priorityData)
+    },
+    // Health check
+    health: {
+        check: () => api.get('/health'),
+        getSystemStatus: () => api.get('/health/system'),
+        getDatabaseStatus: () => api.get('/health/database'),
+        getServiceStatus: () => api.get('/health/services')
     }
 }
 
