@@ -1,25 +1,29 @@
 <template>
-    <span class="inline-flex flex-col items-center justify-center ml-1">
-        <!-- Up Arrow -->
-        <svg class="w-3 h-3 transition-colors duration-200" :class="getUpArrowClass()" fill="currentColor"
-            viewBox="0 0 20 20">
-            <path fill-rule="evenodd"
-                d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
-                clip-rule="evenodd" />
-        </svg>
-
-        <!-- Down Arrow -->
-        <svg class="w-3 h-3 -mt-1 transition-colors duration-200" :class="getDownArrowClass()" fill="currentColor"
-            viewBox="0 0 20 20">
-            <path fill-rule="evenodd"
-                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                clip-rule="evenodd" />
-        </svg>
-    </span>
+    <div class="flex flex-col ml-1">
+        <!-- Up arrow -->
+        <ChevronUpIcon 
+            :class="[
+                'w-3 h-3 transition-colors',
+                isActive && currentDirection === 'asc' 
+                    ? 'text-un-blue' 
+                    : 'text-mun-gray-400 group-hover:text-mun-gray-600'
+            ]"
+        />
+        <!-- Down arrow -->
+        <ChevronDownIcon 
+            :class="[
+                'w-3 h-3 -mt-1 transition-colors',
+                isActive && currentDirection === 'desc' 
+                    ? 'text-un-blue' 
+                    : 'text-mun-gray-400 group-hover:text-mun-gray-600'
+            ]"
+        />
+    </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
 
 // Props
 const props = defineProps({
@@ -38,38 +42,15 @@ const props = defineProps({
     }
 })
 
-// Computed properties for arrow styling
-const isActiveColumn = computed(() => props.currentSort === props.column)
-
-const getUpArrowClass = () => {
-    if (!isActiveColumn.value) {
-        return 'text-mun-gray-400 hover:text-mun-gray-600'
-    }
-
-    return props.currentDirection === 'asc'
-        ? 'text-un-blue'
-        : 'text-mun-gray-400'
-}
-
-const getDownArrowClass = () => {
-    if (!isActiveColumn.value) {
-        return 'text-mun-gray-400 hover:text-mun-gray-600'
-    }
-
-    return props.currentDirection === 'desc'
-        ? 'text-un-blue'
-        : 'text-mun-gray-400'
-}
+// Computed
+const isActive = computed(() => {
+    return props.currentSort === props.column
+})
 </script>
 
 <style scoped>
-/* Additional styling for smooth transitions */
-svg {
-    transition: color 0.2s ease-in-out;
-}
-
-/* Ensure proper spacing and alignment */
-span {
-    line-height: 1;
+/* Additional hover effects for the parent button */
+.group:hover .text-mun-gray-400 {
+    @apply text-mun-gray-600;
 }
 </style>
