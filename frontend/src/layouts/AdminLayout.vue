@@ -174,7 +174,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onClickOutside } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { onClickOutside } from '@vueuse/core'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
