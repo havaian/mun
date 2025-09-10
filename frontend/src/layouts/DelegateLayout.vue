@@ -29,7 +29,7 @@
 
             <!-- Navigation Menu -->
             <nav class="flex-1 p-4 space-y-2">
-                <RouterLink v-for="item in navigationItems" :key="item.name" :to="item.to" class="nav-link"
+                <RouterLink v-for="item in navigationItems" :key="item.name" :to="item.to" class=nav-link group"
                     :class="{ 'active': $route.name === item.name }">
                     <component :is="item.icon" class="w-5 h-5 mr-3 flex-shrink-0" />
                     <span>{{ item.label }}</span>
