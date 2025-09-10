@@ -601,4 +601,4 @@ input[type="checkbox"]:indeterminate {
     border-color: #009edb;
     background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M3 8h10'/%3e%3c/svg%3e");
 }
-</style>z
+</style>
