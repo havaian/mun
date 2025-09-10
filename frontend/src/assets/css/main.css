@@ -130,6 +130,7 @@
     .nav-link {
         @apply flex items-center px-4 py-3 text-mun-gray-700 rounded-xl;
         @apply transition-all duration-200 hover:bg-white/60 hover:text-un-blue;
+        @apply relative;
     }
 
     .nav-link.active {
