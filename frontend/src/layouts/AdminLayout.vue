@@ -136,7 +136,7 @@
                                 enter-to-class="transform opacity-100 scale-100"
                                 leave-active-class="transition ease-in duration-75"
                                 leave-from-class="transform opacity-100 scale-100"
-                                leave-to-class="transform opacity-0 scale-95">
+                                leave-to-class="transform opacity-0 scale-95">T
                                 <div v-show="showUserMenu"
                                     class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-mun-lg border border-white/20 py-2 z-50">
                                     <RouterLink to="/profile"

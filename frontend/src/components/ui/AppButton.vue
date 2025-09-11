@@ -152,7 +152,7 @@ const buttonClasses = computed(() => {
         // Variant classes
         {
             // Primary
-            'bg-un-blue text-white hover:bg-un-blue-600 focus:ring-un-blue shadow-mun hover:shadow-mun-lg transform hover:scale-105':
+            'bg-un-blue text-white hover:bg-un-blue-600 focus:ring-un-blue shadow-mun hover:shadow-mun-lg transform':
                 props.variant === 'primary',
 
             // Secondary  
@@ -168,11 +168,11 @@ const buttonClasses = computed(() => {
                 props.variant === 'ghost',
 
             // Danger
-            'bg-mun-red text-white hover:bg-mun-red-600 focus:ring-mun-red shadow-mun hover:shadow-lg transform hover:scale-105':
+            'bg-mun-red text-white hover:bg-mun-red-600 focus:ring-mun-red shadow-mun hover:shadow-lg transform':
                 props.variant === 'danger',
 
             // Success
-            'bg-mun-green text-white hover:bg-mun-green-600 focus:ring-mun-green shadow-mun hover:shadow-lg transform hover:scale-105':
+            'bg-mun-green text-white hover:bg-mun-green-600 focus:ring-mun-green shadow-mun hover:shadow-lg transform':
                 props.variant === 'success'
         },
 

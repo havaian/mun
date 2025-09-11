@@ -299,11 +299,6 @@ watch(() => props.currentPage, () => {
     @apply ring-2 ring-un-blue ring-offset-2;
 }
 
-/* Hover animations */
-.pagination-button:not(:disabled):hover {
-    @apply transform scale-105;
-}
-
 .pagination-button:disabled {
     @apply cursor-not-allowed;
 }
