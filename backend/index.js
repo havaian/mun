@@ -65,7 +65,7 @@ app.use('/api/', limiter);
 // General middleware
 app.use(compression());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  origin: process.env.PROJECT_URL || "http://localhost:3000",
   credentials: true
 }));
 app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));

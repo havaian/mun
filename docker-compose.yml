@@ -14,6 +14,7 @@ services:
       - "${BACKEND_EXPOSE}:${BACKEND_PORT}"
     environment:
       - PORT=${BACKEND_PORT}
+      - PROJECT_URL=${PROJECT_URL}
       - MONGODB_URI=mongodb://mongo:${MONGODB_PORT}/${MONGO_DATABASE}
     env_file: ./.env
     volumes:
