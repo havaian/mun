@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 // Import the actual User model from auth module
-const { User } = require('../src/auth/model');
+const { User } = require('../auth/model');
 
 // Default admin configuration
 const DEFAULT_ADMIN = {
