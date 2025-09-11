@@ -10,14 +10,11 @@ RUN npm ci --only=production
 # Bundle app source
 COPY . .
 
-# Make entrypoint script executable
-RUN chmod +x entrypoint.sh
-
 # Expose API port
 EXPOSE 3000
 
 # Environment variables
 ENV NODE_ENV=production
 
-# Use entrypoint script
-ENTRYPOINT ["./entrypoint.sh"]
+# Command to run the application
+CMD ["node", "index.js"]
