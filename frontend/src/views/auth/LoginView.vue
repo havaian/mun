@@ -2,13 +2,10 @@
     <div class="flex items-center justify-center px-8 py-8">
         <div class="w-full max-w-md">
             <!-- Logo and Title -->
-            <div class="text-center mb-8">
+            <div class="text-center mb-4 bg-white">
                 <div
                     class="mx-auto w-16 h-16 bg-un-blue rounded-full flex items-center justify-center mb-4 animate-float">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
-                    </svg>
+                    <img src="/logo.svg" alt="" class="w-8 h-8 text-white">
                 </div>
                 <h1 class="text-3xl font-bold text-mun-gray-900 mb-2">
                     MUN<span class="text-un-blue">.UZ</span>
@@ -17,14 +14,10 @@
             </div>
 
             <!-- Main Content Card -->
-            <div class="mun-card p-8 mb-6">
+            <div class="mun-card">
                 <transition name="slide-replace" mode="out-in">
                     <!-- Login Method Selection -->
                     <div v-if="currentView === 'selection'" key="selection">
-                        <h2 class="text-xl font-semibold text-mun-gray-900 mb-6 text-center">
-                            Choose Login Method
-                        </h2>
-
                         <div class="space-y-4">
                             <!-- Admin Login Button -->
                             <AppButton 
@@ -70,10 +63,7 @@
 
                     <!-- Admin Login Form -->
                     <div v-else-if="currentView === 'admin'" key="admin">
-                        <div class="flex items-center justify-between mb-6">
-                            <h3 class="text-lg font-semibold text-mun-gray-900">
-                                Administrator Login
-                            </h3>
+                        <div class="flex items-center justify-between">
                             <button 
                                 @click="currentView = 'selection'" 
                                 class="text-mun-gray-400 hover:text-mun-gray-600 transition-colors"
@@ -127,10 +117,7 @@
 
                     <!-- Email Login Form -->
                     <div v-else-if="currentView === 'email'" key="email">
-                        <div class="flex items-center justify-between mb-6">
-                            <h3 class="text-lg font-semibold text-mun-gray-900">
-                                Login with Email
-                            </h3>
+                        <div class="flex items-center justify-between">
                             <button 
                                 @click="currentView = 'selection'" 
                                 class="text-mun-gray-400 hover:text-mun-gray-600 transition-colors"
@@ -173,13 +160,6 @@
                         </div>
                     </div>
                 </transition>
-            </div>
-
-            <!-- Footer -->
-            <div class="text-center">
-                <p class="text-sm text-mun-gray-500">
-                    &copy; 2025 MUN.UZ. All rights reserved.
-                </p>
             </div>
         </div>
     </div>
