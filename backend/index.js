@@ -8,7 +8,7 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 require('dotenv').config();
 
-const connectDB = require('./config/database');
+const { connectToDatabase } = require('./db');
 const logger = require('./utils/logger');
 const { initializeWebSocket } = require('./websocket/socketManager');
 
@@ -168,7 +168,7 @@ app.use('*', (req, res) => {
 async function startServer() {
   try {
     // Connect to database
-    await connectDB();
+    await connectToDatabase();
     logger.info('✅ Database connected successfully');
     
     // Initialize flag cache on startup
