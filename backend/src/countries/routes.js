@@ -1,9 +1,20 @@
 const express = require('express');
-const { param, query } = require('express-validator');
+const { param, query, validationResult } = require('express-validator');
 
 const controller = require('./controller');
-const { handleValidationErrors } = require('../middleware/validation');
-const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { authenticateToken, requireAdmin } = require('../auth/middleware');
+
+// Validation middleware
+const handleValidationErrors = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            error: 'Validation failed',
+            details: errors.array()
+        });
+    }
+    next();
+};
 
 const router = express.Router();
 
