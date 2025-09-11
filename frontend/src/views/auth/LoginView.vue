@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="flex items-center justify-center px-8 py-16">
         <div class="w-full max-w-md">
             <!-- Logo and Title -->
             <div class="text-center mb-8">

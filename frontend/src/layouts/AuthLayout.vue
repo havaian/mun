@@ -156,41 +156,6 @@
                             <RouterView />
                         </div>
                     </div>
-
-                    <!-- Footer Information -->
-                    <div class="mt-6 text-center">
-                        <div class="flex items-center justify-center space-x-4 text-white/60 text-xs">
-                            <button @click="showHelp = !showHelp"
-                                class="hover:text-white/80 transition-colors flex items-center space-x-1">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span>Help</span>
-                            </button>
-                            <span>•</span>
-                            <span>Version 2.0</span>
-                            <span>•</span>
-                            <span>© 2024 MUN Platform</span>
-                        </div>
-
-                        <!-- Help Panel -->
-                        <transition name="slide-up">
-                            <div v-if="showHelp"
-                                class="mt-4 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 text-left">
-                                <h4 class="text-sm font-semibold text-white mb-2">Need Help?</h4>
-                                <div class="space-y-2 text-xs text-white/70">
-                                    <p>• <strong>QR Login:</strong> Use the QR code provided by your MUN organizers</p>
-                                    <p>• <strong>Email Login:</strong> Available for returning users with registered
-                                        emails</p>
-                                    <p>• <strong>Admin Access:</strong> Contact your system administrator for
-                                        credentials</p>
-                                    <p>• <strong>Technical Issues:</strong> Contact technical support at
-                                        support@munplatform.org</p>
-                                </div>
-                            </div>
-                        </transition>
-                    </div>
                 </div>
             </div>
         </div>
@@ -214,9 +179,6 @@ import {
 
 const route = useRoute()
 const authStore = useAuthStore()
-
-// State
-const showHelp = ref(false)
 
 // Computed properties for dynamic content based on current route
 const currentPageInfo = computed(() => {
@@ -275,11 +237,6 @@ const loadingMessage = computed(() => {
         }
     }
     return ''
-})
-
-// Close help panel when route changes
-watch(() => route.name, () => {
-    showHelp.value = false
 })
 </script>
 
