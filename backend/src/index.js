@@ -225,6 +225,8 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
+require('./seed');
+
 startServer();
 
 module.exports = app;
