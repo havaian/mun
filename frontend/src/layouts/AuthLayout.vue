@@ -3,8 +3,8 @@
         <!-- Animated Background Elements -->
         <div class="absolute inset-0 overflow-hidden">
             <!-- Floating UN Logo Background -->
-            <div class="absolute top-10 left-10 opacity-10 animate-float-slow">
-                <svg class="w-32 h-32 text-white" fill="currentColor" viewBox="0 0 100 100">
+            <div class="absolute top-16 right-12 opacity-8 animate-float-slow">
+                <svg class="w-28 h-28 text-white" fill="currentColor" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="2" fill="none" />
                     <circle cx="50" cy="50" r="35" stroke="currentColor" stroke-width="1" fill="none" />
                     <path d="M25 35 L75 35 M25 45 L75 45 M25 55 L75 55 M25 65 L75 65" stroke="currentColor"
@@ -15,16 +15,24 @@
             </div>
 
             <!-- Floating Elements -->
-            <div class="absolute top-20 right-20 opacity-5 animate-float-delayed">
-                <svg class="w-24 h-24 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <div class="absolute bottom-24 right-8 opacity-6 animate-float-delayed">
+                <svg class="w-20 h-20 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                 </svg>
             </div>
 
-            <div class="absolute bottom-20 left-20 opacity-5 animate-pulse">
-                <svg class="w-20 h-20 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <div class="absolute top-32 left-8 opacity-7 animate-pulse">
+                <svg class="w-24 h-24 text-white" fill="currentColor" viewBox="0 0 24 24">
                     <path
                         d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+                </svg>
+            </div>
+
+            <!-- Additional floating element for balance -->
+            <div class="absolute bottom-8 left-16 opacity-4 animate-float-slow" style="animation-delay: 1s;">
+                <svg class="w-16 h-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                        d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
                 </svg>
             </div>
 
@@ -104,14 +112,14 @@
                         </div>
 
                         <!-- Current Page Indicator -->
-                        <div class="mt-8 p-4 bg-white/15 backdrop-blur-sm rounded-xl border border-white/30 shadow-lg">
+                        <div class="mt-8 p-4 bg-slate-900/40 backdrop-blur-sm rounded-xl border border-slate-700/50 shadow-lg">
                             <div class="flex items-center space-x-3">
-                                <component :is="currentPageIcon" class="w-5 h-5 text-white" />
+                                <component :is="currentPageIcon" class="w-5 h-5 text-slate-100" />
                                 <div>
-                                    <p class="text-sm font-medium text-white">
+                                    <p class="text-sm font-medium text-slate-100">
                                         {{ currentPageTitle }}
                                     </p>
-                                    <p class="text-xs text-white/80">
+                                    <p class="text-xs text-slate-300">
                                         {{ currentPageDescription }}
                                     </p>
                                 </div>
