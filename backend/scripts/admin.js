@@ -116,28 +116,24 @@ async function seedDatabase() {
     }
 }
 
-// Run directly if this file is executed as main module
-if (require.main === module) {
-    console.log('Starting database seeding process...');
+console.log('Starting database seeding process...');
+seedDatabase()
+.then((result) => {
+    console.log('\nSeeding process completed');
+    console.log('Result:', JSON.stringify(result, null, 2));
 
-    seedDatabase()
-        .then((result) => {
-            console.log('\nSeeding process completed');
-            console.log('Result:', JSON.stringify(result, null, 2));
-
-            if (result.success) {
-                console.log('Database seeding successful');
-                process.exit(0);
-            } else {
-                console.error('Database seeding failed');
-                process.exit(1);
-            }
-        })
-        .catch((error) => {
-            console.error('\nUnexpected error during seeding:');
-            console.error(error);
-            process.exit(1);
-        });
-}
+    if (result.success) {
+        console.log('Database seeding successful');
+        process.exit(0);
+    } else {
+        console.error('Database seeding failed');
+        process.exit(1);
+    }
+})
+.catch((error) => {
+    console.error('\nUnexpected error during seeding:');
+    console.error(error);
+    process.exit(1);
+});
 
 module.exports = seedDatabase;

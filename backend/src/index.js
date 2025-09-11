@@ -167,19 +167,6 @@ app.use('*', (req, res) => {
 // Initialize database and WebSocket
 async function startServer() {
   try {
-    // Connect to database FIRST
-    
-    // Seed database AFTER connection is established
-    console.log('Seeding the database...');
-    const seedDatabase = require('../scripts');
-    
-    const seedResult = await seedDatabase();
-    if (seedResult.success) {
-      console.log(`Admin user ${seedResult.action}: ${seedResult.user.username}`);
-    } else {
-      console.error('Seeding failed:', seedResult.error);
-    }
-    
     // Initialize flag cache on startup
     await initializeFlagCache();
     logger.info('Flag cache initialized');
