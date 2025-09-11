@@ -2,124 +2,162 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
-// User model (simplified for seeding)
-const userSchema = new mongoose.Schema({
-    role: {
-        type: String,
-        required: true,
-        enum: ['admin', 'presidium', 'delegate']
-    },
-    username: {
-        type: String,
-        required: function () { return this.role === 'admin' || this.role === 'presidium'; }
-    },
-    password: {
-        type: String,
-        required: function () { return this.role === 'admin' || this.role === 'presidium'; }
-    },
-    email: String,
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
-});
-
-const User = mongoose.model('User', userSchema);
+// Import the actual User model from auth module
+const { User } = require('../src/auth/model');
 
 // Default admin configuration
 const DEFAULT_ADMIN = {
     username: 'admin',
-    password: 'admin123', // Change this in production!
+    password: 'admin123',
     role: 'admin'
 };
 
+/**
+ * Seeds the database with default admin user if none exists
+ * @returns {Promise<Object>} Result object with success status and details
+ */
 async function seedDatabase() {
+    let connection = null;
+    
     try {
-        // Connect to MongoDB
-        console.log('🔄 Connecting to MongoDB...');
-        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/mun-platform', {
+        // Establish MongoDB connection
+        console.log('Connecting to MongoDB...');
+        const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/mun-platform';
+        
+        connection = await mongoose.connect(mongoUri, {
             useNewUrlParser: true,
             useUnifiedTopology: true
         });
-        console.log('✅ Connected to MongoDB successfully');
+        
+        console.log('Successfully connected to MongoDB');
 
-        // Check if admin user exists
-        console.log('🔍 Checking for existing admin user...');
+        // Check for existing admin user
+        console.log('Checking for existing admin user...');
         const existingAdmin = await User.findOne({ role: 'admin' });
 
         if (existingAdmin) {
-            console.log('ℹ️  Admin user already exists:');
-            console.log(`   Username: ${existingAdmin.username}`);
-            console.log(`   Created: ${existingAdmin.createdAt.toISOString()}`);
-            console.log('✅ No action needed - admin user found');
-        } else {
-            // Create admin user
-            console.log('➕ No admin user found, creating default admin...');
-
-            // Hash password
-            const saltRounds = 12;
-            const hashedPassword = await bcrypt.hash(DEFAULT_ADMIN.password, saltRounds);
-
-            // Create admin user
-            const adminUser = new User({
-                username: DEFAULT_ADMIN.username,
-                password: hashedPassword,
-                role: DEFAULT_ADMIN.role,
-                email: null // Admin doesn't need email initially
-            });
-
-            await adminUser.save();
-
-            console.log('✅ Admin user created successfully:');
-            console.log(`   Username: ${DEFAULT_ADMIN.username}`);
-            console.log(`   Password: ${DEFAULT_ADMIN.password}`);
-            console.log('⚠️  IMPORTANT: Change the default password after first login!');
+            console.log('Admin user already exists');
+            console.log(`Username: ${existingAdmin.username}`);
+            console.log(`Created: ${existingAdmin.createdAt.toISOString()}`);
+            
+            return {
+                success: true,
+                action: 'found',
+                message: 'Admin user already exists',
+                user: {
+                    username: existingAdmin.username,
+                    role: existingAdmin.role,
+                    createdAt: existingAdmin.createdAt
+                }
+            };
         }
+
+        // Create new admin user
+        console.log('No admin user found, creating default admin user...');
+        
+        // Create admin user document (password will be hashed by pre-save middleware)
+        const adminUser = new User({
+            username: DEFAULT_ADMIN.username,
+            password: DEFAULT_ADMIN.password, // Will be hashed by the model's pre-save hook
+            role: DEFAULT_ADMIN.role,
+            // Admin users don't need these fields based on your model's conditional requirements
+            email: null,
+            qrToken: null,
+            isQrActive: false,
+            committeeId: null,
+            countryName: null,
+            specialRole: null,
+            presidiumRole: null,
+            sessionId: null,
+            isActive: true,
+            lastActivity: new Date()
+        });
+
+        // Save to database (password hashing happens automatically)
+        const savedUser = await adminUser.save();
+        
+        console.log('Admin user created successfully');
+        console.log(`Username: ${DEFAULT_ADMIN.username}`);
+        console.log(`Password: ${DEFAULT_ADMIN.password}`);
+        console.log('IMPORTANT: Change the default password after first login');
+
+        return {
+            success: true,
+            action: 'created',
+            message: 'Admin user created successfully',
+            user: {
+                username: savedUser.username,
+                role: savedUser.role,
+                createdAt: savedUser.createdAt
+            },
+            credentials: {
+                username: DEFAULT_ADMIN.username,
+                password: DEFAULT_ADMIN.password
+            }
+        };
 
     } catch (error) {
-        console.error('❌ Error during database seeding:', error.message);
-
-        // Log specific error types
-        if (error.name === 'MongooseError') {
-            console.error('   MongoDB connection issue - check your connection string');
+        console.error('Database seeding failed:', error.message);
+        
+        // Provide specific error context
+        let errorContext = 'Unknown error occurred';
+        
+        if (error.name === 'MongooseError' || error.name === 'MongoError') {
+            errorContext = 'MongoDB connection or query error';
         } else if (error.name === 'ValidationError') {
-            console.error('   Data validation failed:', error.message);
+            errorContext = 'Data validation failed - check required fields';
+            console.error('Validation details:', error.errors);
         } else if (error.code === 11000) {
-            console.error('   Duplicate key error - admin user might already exist');
+            errorContext = 'Duplicate key error - admin user might already exist';
+        } else if (error.name === 'TypeError') {
+            errorContext = 'Type error - check data structure';
+        } else if (error.name === 'CastError') {
+            errorContext = 'Data casting error - invalid data type';
         }
+        
+        console.error(`Error context: ${errorContext}`);
+        
+        return {
+            success: false,
+            action: 'error',
+            message: `Seeding failed: ${error.message}`,
+            error: {
+                name: error.name,
+                message: error.message,
+                context: errorContext
+            }
+        };
 
-        process.exit(1);
     } finally {
         // Always disconnect from MongoDB
-        console.log('🔌 Disconnecting from MongoDB...');
-        await mongoose.disconnect();
-        console.log('✅ Disconnected from MongoDB');
+        if (connection) {
+            console.log('Disconnecting from MongoDB...');
+            await mongoose.disconnect();
+            console.log('MongoDB disconnection completed');
+        }
     }
 }
 
-// Handle script interruption
-process.on('SIGINT', async () => {
-    console.log('\n⚠️  Script interrupted, cleaning up...');
-    await mongoose.disconnect();
-    process.exit(0);
-});
-
-process.on('SIGTERM', async () => {
-    console.log('\n⚠️  Script terminated, cleaning up...');
-    await mongoose.disconnect();
-    process.exit(0);
-});
-
-// Run the seeding function
+// Run directly if this file is executed as main module
 if (require.main === module) {
-    console.log('🌱 Starting database seeding...\n');
+    console.log('Starting database seeding process...');
+    
     seedDatabase()
-        .then(() => {
-            console.log('\n🎉 Database seeding completed successfully');
-            process.exit(0);
+        .then((result) => {
+            console.log('\nSeeding process completed');
+            console.log('Result:', JSON.stringify(result, null, 2));
+            
+            if (result.success) {
+                console.log('Database seeding successful');
+                process.exit(0);
+            } else {
+                console.error('Database seeding failed');
+                process.exit(1);
+            }
         })
         .catch((error) => {
-            console.error('\n💥 Database seeding failed:', error.message);
+            console.error('\nUnexpected error during seeding:');
+            console.error(error);
             process.exit(1);
         });
 }

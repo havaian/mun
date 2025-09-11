@@ -255,6 +255,22 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
+const seedDatabase = require('./scripts/seed');
+
+// Call during startup
+console.log('Seeding the database');
+seedDatabase()
+  .then(result => {
+    if (result.success) {
+      console.log(`Admin user ${result.action}:`, result.user.username);
+    } else {
+      console.error('Seeding failed:', result.error);
+    }
+  })
+  .catch(err => {
+    console.error('Seeding error:', err.message);
+  });
+
 startServer();
 
 module.exports = app;
