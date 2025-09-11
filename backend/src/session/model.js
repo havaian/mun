@@ -152,7 +152,7 @@ const modeHistorySchema = new mongoose.Schema({
     },
 
     settings: {
-        type: mongoose.Schema.Mixed,
+        type: mongoose.Schema.Types.Mixed,
         default: {}
     },
 
