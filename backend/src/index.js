@@ -167,23 +167,34 @@ app.use('*', (req, res) => {
 // Initialize database and WebSocket
 async function startServer() {
   try {
-    // Connect to database
+    // Connect to database FIRST
     await connectToDatabase();
-    logger.info('✅ Database connected successfully');
+    logger.info('Database connected successfully');
+    
+    // Seed database AFTER connection is established
+    console.log('Seeding the database...');
+    const seedDatabase = require('../scripts/seed');
+    
+    const seedResult = await seedDatabase();
+    if (seedResult.success) {
+      console.log(`Admin user ${seedResult.action}: ${seedResult.user.username}`);
+    } else {
+      console.error('Seeding failed:', seedResult.error);
+    }
     
     // Initialize flag cache on startup
     await initializeFlagCache();
-    logger.info('✅ Flag cache initialized');
+    logger.info('Flag cache initialized');
     
     // Initialize WebSocket handlers
     initializeWebSocket(io);
-    logger.info('✅ WebSocket initialized');
+    logger.info('WebSocket initialized');
     
     // Initialize active timers
     try {
       const { initializeActiveTimers } = require('./timer/controller');
       await initializeActiveTimers();
-      logger.info('✅ Active timers initialized');
+      logger.info('Active timers initialized');
     } catch (error) {
       logger.warn('Timer initialization failed:', error.message);
     }
@@ -191,7 +202,7 @@ async function startServer() {
     // Start server
     const PORT = process.env.BACKEND_PORT || process.env.PORT || 5000;
     server.listen(PORT, () => {
-      logger.info(`🚀 Server running on port ${PORT}`);
+      logger.info(`Server running on port ${PORT}`);
       logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
     });
     
@@ -228,22 +239,6 @@ process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
   process.exit(1);
 });
-
-const seedDatabase = require('../scripts/seed');
-
-// Call during startup
-console.log('Seeding the database');
-seedDatabase()
-  .then(result => {
-    if (result.success) {
-      console.log(`Admin user ${result.action}:`, result.user.username);
-    } else {
-      console.error('Seeding failed:', result.error);
-    }
-  })
-  .catch(err => {
-    console.error('Seeding error:', err.message);
-  });
 
 startServer();
 
