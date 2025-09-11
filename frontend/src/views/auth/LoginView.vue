@@ -168,8 +168,7 @@
 
                         <div class="mt-4 p-4 bg-un-blue-50 rounded-xl">
                             <p class="text-sm text-un-blue-700">
-                                <InformationCircleIcon class="w-4 h-4 inline mr-2" />
-                                Use the email you registered with after scanning your QR code
+                                <InformationCircleIcon class="w-4 h-4 inline mr-1 mb-1" />Use the email you registered with
                             </p>
                         </div>
                     </div>
