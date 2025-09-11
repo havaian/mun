@@ -1,6 +1,6 @@
 <template>
-    <div class="flex items-center justify-center px-8 py-8">
-        <div class="w-full max-w-md bg-white">
+    <div class="flex items-center justify-center px-8 py-8 bg-white">
+        <div class="w-full max-w-md">
             <!-- Logo and Title -->
             <div class="text-center mb-4">
                 <div
@@ -63,12 +63,12 @@
 
                     <!-- Admin Login Form -->
                     <div v-else-if="currentView === 'admin'" key="admin">
-                        <div class="flex items-center justify-end">
+                        <div class="flex items-center justify-center mb-4">
                             <button 
                                 @click="currentView = 'selection'" 
                                 class="text-mun-gray-400 hover:text-mun-gray-600 transition-colors"
                             >
-                                <XMarkIcon class="w-5 h-5" />
+                                <ArrowLongLeftIcon class="w-5 h-5" />
                             </button>
                         </div>
 
@@ -117,12 +117,12 @@
 
                     <!-- Email Login Form -->
                     <div v-else-if="currentView === 'email'" key="email">
-                        <div class="flex items-center justify-end">
+                        <div class="flex items-center justify-center mb-4">
                             <button 
                                 @click="currentView = 'selection'" 
                                 class="text-mun-gray-400 hover:text-mun-gray-600 transition-colors"
                             >
-                                <XMarkIcon class="w-5 h-5" />
+                                <ArrowLongLeftIcon class="w-5 h-5" />
                             </button>
                         </div>
 
@@ -174,7 +174,7 @@ import {
     UserIcon,
     QrCodeIcon,
     EnvelopeIcon,
-    XMarkIcon,
+    ArrowLongLeftIcon,
     InformationCircleIcon
 } from '@heroicons/vue/24/outline'
 
