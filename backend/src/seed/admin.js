@@ -45,15 +45,6 @@ async function seedDatabase() {
             username: DEFAULT_ADMIN.username,
             password: DEFAULT_ADMIN.password, // Will be hashed by the model's pre-save hook
             role: DEFAULT_ADMIN.role,
-            // Admin users don't need these fields based on your model's conditional requirements
-            email: null,
-            qrToken: null,
-            isQrActive: false,
-            committeeId: null,
-            countryName: null,
-            specialRole: null,
-            presidiumRole: null,
-            sessionId: null,
             isActive: true,
             lastActivity: new Date()
         });
@@ -62,8 +53,6 @@ async function seedDatabase() {
         const savedUser = await adminUser.save();
 
         console.log('Admin user created successfully');
-        console.log(`Username: ${DEFAULT_ADMIN.username}`);
-        console.log(`Password: ${DEFAULT_ADMIN.password}`);
         console.log('IMPORTANT: Change the default password after first login');
 
         return {
@@ -74,10 +63,6 @@ async function seedDatabase() {
                 username: savedUser.username,
                 role: savedUser.role,
                 createdAt: savedUser.createdAt
-            },
-            credentials: {
-                username: DEFAULT_ADMIN.username,
-                password: DEFAULT_ADMIN.password
             }
         };
 
