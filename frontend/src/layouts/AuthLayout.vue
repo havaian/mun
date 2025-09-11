@@ -41,132 +41,43 @@
         </div>
 
         <!-- Main Content Container -->
-        <div class="relative z-10 min-h-screen flex max-w-6xl mx-auto">
-            <!-- Left Side - Branding & Information -->
-            <div class="hidden lg:flex lg:w-1/2 flex-col justify-center px-8 py-16">
-                <!-- Glassmorphism Background Container -->
-                <div class="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl">
-                    <div class="max-w-sm mx-auto">
-                        <!-- Logo and Branding -->
-                        <div class="text-center mb-10">
-                            <div
-                                class="inline-flex items-center justify-center w-20 h-20 bg-white/15 backdrop-blur-sm rounded-2xl mb-6 shadow-lg border border-white/30">
-                                <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                                </svg>
-                            </div>
-                            <h1 class="text-3xl font-bold text-white mb-2">
-                                MUN Platform
-                            </h1>
-                            <p class="text-lg text-white/90">
-                                Model United Nations Management System
-                            </p>
-                        </div>
-
-                        <!-- Feature Highlights -->
-                        <div class="space-y-5">
-                            <div class="flex items-start space-x-4">
-                                <div class="flex-shrink-0 w-8 h-8 bg-white/25 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
-                                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-white mb-1">Secure Access</h3>
-                                    <p class="text-white/80 text-sm">
-                                        QR-based authentication with role-based permissions
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-start space-x-4">
-                                <div class="flex-shrink-0 w-8 h-8 bg-white/25 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
-                                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-white mb-1">Multi-Role Support</h3>
-                                    <p class="text-white/80 text-sm">
-                                        Delegates, Presidium, and Administrators
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-start space-x-4">
-                                <div class="flex-shrink-0 w-8 h-8 bg-white/25 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
-                                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-white mb-1">Real-time Management</h3>
-                                    <p class="text-white/80 text-sm">
-                                        Live session tracking, voting, and document management
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Current Page Indicator -->
-                        <div class="mt-8 p-4 bg-slate-900/40 backdrop-blur-sm rounded-xl border border-slate-700/50 shadow-lg">
-                            <div class="flex items-center space-x-3">
-                                <component :is="currentPageIcon" class="w-5 h-5 text-slate-100" />
-                                <div>
-                                    <p class="text-sm font-medium text-slate-100">
-                                        {{ currentPageTitle }}
-                                    </p>
-                                    <p class="text-xs text-slate-300">
-                                        {{ currentPageDescription }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+        <div class="relative z-10 min-h-screen flex items-center justify-center">
+            <!-- Authentication Forms - Centered -->
+            <div class="w-full max-w-md px-6">
+                <!-- Mobile Logo (shown on all screens now) -->
+                <div class="text-center mb-8">
+                    <div
+                        class="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-xl mb-4 border border-white/20">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                        </svg>
                     </div>
+                    <h1 class="text-3xl font-bold text-white mb-1">
+                        MUN Platform
+                    </h1>
+                    <p class="text-white/80 text-lg">
+                        Model United Nations Management
+                    </p>
                 </div>
-            </div>
 
-            <!-- Right Side - Authentication Forms -->
-            <div class="flex-1 lg:w-1/2 flex items-center justify-center px-6 py-12">
-                <div class="w-full max-w-md">
-                    <!-- Mobile Logo (shown only on small screens) -->
-                    <div class="lg:hidden text-center mb-8">
-                        <div
-                            class="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-sm rounded-xl mb-4 border border-white/20">
-                            <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                            </svg>
+                <!-- Auth Form Container -->
+                <div class="relative">
+                    <div
+                        class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+                        <!-- Loading Overlay -->
+                        <div v-if="authStore.isLoading"
+                            class="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center rounded-2xl">
+                            <div class="flex flex-col items-center">
+                                <LoadingSpinner class="w-8 h-8 text-un-blue mb-2" />
+                                <p class="text-sm text-mun-gray-600">
+                                    {{ loadingMessage }}
+                                </p>
+                            </div>
                         </div>
-                        <h1 class="text-2xl font-bold text-white mb-1">
-                            MUN Platform
-                        </h1>
-                        <p class="text-white/80 text-sm">
-                            Model United Nations Management
-                        </p>
-                    </div>
 
-                    <!-- Auth Form Container -->
-                    <div class="relative">
-                        <div
-                            class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-                            <!-- Loading Overlay -->
-                            <div v-if="authStore.isLoading"
-                                class="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center rounded-2xl">
-                                <div class="flex flex-col items-center">
-                                    <LoadingSpinner class="w-8 h-8 text-un-blue mb-2" />
-                                    <p class="text-sm text-mun-gray-600">
-                                        {{ loadingMessage }}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- Router View for Auth Pages -->
-                            <div class="relative">
-                                <RouterView />
-                            </div>
+                        <!-- Router View for Auth Pages -->
+                        <div class="relative">
+                            <RouterView />
                         </div>
                     </div>
                 </div>
@@ -329,7 +240,7 @@ const loadingMessage = computed(() => {
     .backdrop-blur-md {
         background-color: rgba(255, 255, 255, 0.2);
     }
-    
+
     .backdrop-blur-sm {
         background-color: rgba(255, 255, 255, 0.15);
     }
