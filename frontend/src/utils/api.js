@@ -3,7 +3,7 @@ import { useToast } from '@/plugins/toast'
 
 // Create axios instance
 const api = axios.create({
-    baseURL: `${process.env.VITE_API_URL}/api` || 'http://localhost:5000/api',
+    baseURL: '/api',
     timeout: 30000, // 30 seconds
     headers: {
         'Content-Type': 'application/json'
