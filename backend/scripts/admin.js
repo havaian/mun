@@ -1,5 +1,3 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 // Import the actual User model from auth module
@@ -18,19 +16,8 @@ const DEFAULT_ADMIN = {
  */
 async function seedDatabase() {
     let connection = null;
-    
-    try {
-        // Establish MongoDB connection
-        console.log('Connecting to MongoDB...');
-        const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/mun-platform';
-        
-        connection = await mongoose.connect(mongoUri, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
-        
-        console.log('Successfully connected to MongoDB');
 
+    try {
         // Check for existing admin user
         console.log('Checking for existing admin user...');
         const existingAdmin = await User.findOne({ role: 'admin' });
@@ -39,7 +26,7 @@ async function seedDatabase() {
             console.log('Admin user already exists');
             console.log(`Username: ${existingAdmin.username}`);
             console.log(`Created: ${existingAdmin.createdAt.toISOString()}`);
-            
+
             return {
                 success: true,
                 action: 'found',
@@ -54,7 +41,7 @@ async function seedDatabase() {
 
         // Create new admin user
         console.log('No admin user found, creating default admin user...');
-        
+
         // Create admin user document (password will be hashed by pre-save middleware)
         const adminUser = new User({
             username: DEFAULT_ADMIN.username,
@@ -75,7 +62,7 @@ async function seedDatabase() {
 
         // Save to database (password hashing happens automatically)
         const savedUser = await adminUser.save();
-        
+
         console.log('Admin user created successfully');
         console.log(`Username: ${DEFAULT_ADMIN.username}`);
         console.log(`Password: ${DEFAULT_ADMIN.password}`);
@@ -98,13 +85,11 @@ async function seedDatabase() {
 
     } catch (error) {
         console.error('Database seeding failed:', error.message);
-        
+
         // Provide specific error context
         let errorContext = 'Unknown error occurred';
-        
-        if (error.name === 'MongooseError' || error.name === 'MongoError') {
-            errorContext = 'MongoDB connection or query error';
-        } else if (error.name === 'ValidationError') {
+
+        if (error.name === 'ValidationError') {
             errorContext = 'Data validation failed - check required fields';
             console.error('Validation details:', error.errors);
         } else if (error.code === 11000) {
@@ -114,9 +99,9 @@ async function seedDatabase() {
         } else if (error.name === 'CastError') {
             errorContext = 'Data casting error - invalid data type';
         }
-        
+
         console.error(`Error context: ${errorContext}`);
-        
+
         return {
             success: false,
             action: 'error',
@@ -128,25 +113,18 @@ async function seedDatabase() {
             }
         };
 
-    } finally {
-        // Always disconnect from MongoDB
-        if (connection) {
-            console.log('Disconnecting from MongoDB...');
-            await mongoose.disconnect();
-            console.log('MongoDB disconnection completed');
-        }
     }
 }
 
 // Run directly if this file is executed as main module
 if (require.main === module) {
     console.log('Starting database seeding process...');
-    
+
     seedDatabase()
         .then((result) => {
             console.log('\nSeeding process completed');
             console.log('Result:', JSON.stringify(result, null, 2));
-            
+
             if (result.success) {
                 console.log('Database seeding successful');
                 process.exit(0);

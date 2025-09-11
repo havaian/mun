@@ -7,8 +7,8 @@ const rateLimit = require('express-rate-limit');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 require('dotenv').config();
+require('./db');
 
-const { connectToDatabase } = require('./db');
 const logger = require('./utils/logger');
 const { initializeWebSocket } = require('./websocket/socketManager');
 
@@ -168,12 +168,10 @@ app.use('*', (req, res) => {
 async function startServer() {
   try {
     // Connect to database FIRST
-    await connectToDatabase();
-    logger.info('Database connected successfully');
     
     // Seed database AFTER connection is established
     console.log('Seeding the database...');
-    const seedDatabase = require('../scripts/seed');
+    const seedDatabase = require('../scripts');
     
     const seedResult = await seedDatabase();
     if (seedResult.success) {
