@@ -1,8 +1,8 @@
 <template>
     <div class="flex items-center justify-center px-8 py-8">
-        <div class="w-full max-w-md">
+        <div class="w-full max-w-md bg-white">
             <!-- Logo and Title -->
-            <div class="text-center mb-4 bg-white">
+            <div class="text-center mb-4">
                 <div
                     class="mx-auto w-16 h-16 bg-un-blue rounded-full flex items-center justify-center mb-4 animate-float">
                     <img src="/logo.svg" alt="" class="w-8 h-8 text-white">
@@ -63,7 +63,7 @@
 
                     <!-- Admin Login Form -->
                     <div v-else-if="currentView === 'admin'" key="admin">
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-end">
                             <button 
                                 @click="currentView = 'selection'" 
                                 class="text-mun-gray-400 hover:text-mun-gray-600 transition-colors"
@@ -117,7 +117,7 @@
 
                     <!-- Email Login Form -->
                     <div v-else-if="currentView === 'email'" key="email">
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-end">
                             <button 
                                 @click="currentView = 'selection'" 
                                 class="text-mun-gray-400 hover:text-mun-gray-600 transition-colors"
