@@ -16,108 +16,165 @@
                 <p class="text-mun-gray-600">Model United Nations Platform</p>
             </div>
 
-            <!-- Login Method Selection -->
+            <!-- Main Content Card -->
             <div class="mun-card p-8 mb-6">
-                <h2 class="text-xl font-semibold text-mun-gray-900 mb-6 text-center">
-                    Choose Login Method
-                </h2>
+                <transition name="slide-replace" mode="out-in">
+                    <!-- Login Method Selection -->
+                    <div v-if="currentView === 'selection'" key="selection">
+                        <h2 class="text-xl font-semibold text-mun-gray-900 mb-6 text-center">
+                            Choose Login Method
+                        </h2>
 
-                <div class="space-y-4">
-                    <!-- Admin Login Button -->
-                    <AppButton variant="primary" size="lg" full-width :icon="UserIcon" @click="showAdminLogin = true">
-                        Administrator Login
-                    </AppButton>
+                        <div class="space-y-4">
+                            <!-- Admin Login Button -->
+                            <AppButton 
+                                variant="primary" 
+                                size="lg" 
+                                full-width 
+                                :icon="UserIcon" 
+                                @click="currentView = 'admin'"
+                            >
+                                Administrator Login
+                            </AppButton>
 
-                    <!-- QR Code Login Button -->
-                    <AppButton variant="secondary" size="lg" full-width :icon="QrCodeIcon" @click="goToQRLogin">
-                        Scan QR Code
-                    </AppButton>
+                            <!-- QR Code Login Button -->
+                            <AppButton 
+                                variant="secondary" 
+                                size="lg" 
+                                full-width 
+                                :icon="QrCodeIcon" 
+                                @click="goToQRLogin"
+                            >
+                                Scan QR Code
+                            </AppButton>
 
-                    <!-- Email Login Button -->
-                    <AppButton variant="outline" size="lg" full-width :icon="EnvelopeIcon"
-                        @click="showEmailLogin = true">
-                        Login with Email
-                    </AppButton>
-                </div>
+                            <!-- Email Login Button -->
+                            <AppButton 
+                                variant="outline" 
+                                size="lg" 
+                                full-width 
+                                :icon="EnvelopeIcon"
+                                @click="currentView = 'email'"
+                            >
+                                Login with Email
+                            </AppButton>
+                        </div>
 
-                <!-- Help Text -->
-                <div class="mt-6 text-center">
-                    <p class="text-sm text-mun-gray-500">
-                        First time? Scan your QR code to get started
-                    </p>
-                </div>
+                        <!-- Help Text -->
+                        <div class="mt-6 text-center">
+                            <p class="text-sm text-mun-gray-500">
+                                First time? Scan your QR code to get started
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Admin Login Form -->
+                    <div v-else-if="currentView === 'admin'" key="admin">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-mun-gray-900">
+                                Administrator Login
+                            </h3>
+                            <button 
+                                @click="currentView = 'selection'" 
+                                class="text-mun-gray-400 hover:text-mun-gray-600 transition-colors"
+                            >
+                                <XMarkIcon class="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form @submit.prevent="handleAdminLogin" class="space-y-4">
+                            <div>
+                                <label for="username" class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                    Username
+                                </label>
+                                <input 
+                                    id="username" 
+                                    v-model="adminForm.username" 
+                                    type="text" 
+                                    required 
+                                    class="input-field"
+                                    placeholder="Enter your username" 
+                                    :disabled="authStore.isLoading" 
+                                />
+                            </div>
+
+                            <div>
+                                <label for="password" class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                    Password
+                                </label>
+                                <input 
+                                    id="password" 
+                                    v-model="adminForm.password" 
+                                    type="password" 
+                                    required
+                                    class="input-field" 
+                                    placeholder="Enter your password" 
+                                    :disabled="authStore.isLoading" 
+                                />
+                            </div>
+
+                            <AppButton 
+                                type="submit" 
+                                variant="primary" 
+                                size="lg" 
+                                full-width 
+                                :loading="authStore.isLoading"
+                            >
+                                Sign In
+                            </AppButton>
+                        </form>
+                    </div>
+
+                    <!-- Email Login Form -->
+                    <div v-else-if="currentView === 'email'" key="email">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-mun-gray-900">
+                                Login with Email
+                            </h3>
+                            <button 
+                                @click="currentView = 'selection'" 
+                                class="text-mun-gray-400 hover:text-mun-gray-600 transition-colors"
+                            >
+                                <XMarkIcon class="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form @submit.prevent="handleEmailLogin" class="space-y-4">
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                    Email Address
+                                </label>
+                                <input 
+                                    id="email" 
+                                    v-model="emailForm.email" 
+                                    type="email" 
+                                    required 
+                                    class="input-field"
+                                    placeholder="Enter your registered email" 
+                                    :disabled="authStore.isLoading" 
+                                />
+                            </div>
+
+                            <AppButton 
+                                type="submit" 
+                                variant="primary" 
+                                size="lg" 
+                                full-width 
+                                :loading="authStore.isLoading"
+                            >
+                                Sign In
+                            </AppButton>
+                        </form>
+
+                        <div class="mt-4 p-4 bg-un-blue-50 rounded-xl">
+                            <p class="text-sm text-un-blue-700">
+                                <InformationCircleIcon class="w-4 h-4 inline mr-2" />
+                                Use the email you registered with after scanning your QR code
+                            </p>
+                        </div>
+                    </div>
+                </transition>
             </div>
-
-            <!-- Admin Login Form -->
-            <transition name="slide-up">
-                <div v-if="showAdminLogin" class="mun-card p-8 mb-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-mun-gray-900">
-                            Administrator Login
-                        </h3>
-                        <button @click="showAdminLogin = false" class="text-mun-gray-400 hover:text-mun-gray-600">
-                            <XMarkIcon class="w-5 h-5" />
-                        </button>
-                    </div>
-
-                    <form @submit.prevent="handleAdminLogin" class="space-y-4">
-                        <div>
-                            <label for="username" class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                Username
-                            </label>
-                            <input id="username" v-model="adminForm.username" type="text" required class="input-field"
-                                placeholder="Enter your username" :disabled="authStore.isLoading" />
-                        </div>
-
-                        <div>
-                            <label for="password" class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                Password
-                            </label>
-                            <input id="password" v-model="adminForm.password" type="password" required
-                                class="input-field" placeholder="Enter your password" :disabled="authStore.isLoading" />
-                        </div>
-
-                        <AppButton type="submit" variant="primary" size="lg" full-width :loading="authStore.isLoading">
-                            Sign In
-                        </AppButton>
-                    </form>
-                </div>
-            </transition>
-
-            <!-- Email Login Form -->
-            <transition name="slide-up">
-                <div v-if="showEmailLogin" class="mun-card p-8 mb-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-mun-gray-900">
-                            Login with Email
-                        </h3>
-                        <button @click="showEmailLogin = false" class="text-mun-gray-400 hover:text-mun-gray-600">
-                            <XMarkIcon class="w-5 h-5" />
-                        </button>
-                    </div>
-
-                    <form @submit.prevent="handleEmailLogin" class="space-y-4">
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                Email Address
-                            </label>
-                            <input id="email" v-model="emailForm.email" type="email" required class="input-field"
-                                placeholder="Enter your registered email" :disabled="authStore.isLoading" />
-                        </div>
-
-                        <AppButton type="submit" variant="primary" size="lg" full-width :loading="authStore.isLoading">
-                            Sign In
-                        </AppButton>
-                    </form>
-
-                    <div class="mt-4 p-4 bg-un-blue-50 rounded-xl">
-                        <p class="text-sm text-un-blue-700">
-                            <InformationCircleIcon class="w-4 h-4 inline mr-2" />
-                            Use the email you registered with after scanning your QR code
-                        </p>
-                    </div>
-                </div>
-            </transition>
 
             <!-- Footer -->
             <div class="text-center">
@@ -146,9 +203,8 @@ const router = useRouter()
 const authStore = useAuthStore()
 const toast = useToast()
 
-// Reactive state
-const showAdminLogin = ref(false)
-const showEmailLogin = ref(false)
+// Current view state - controls what content is shown
+const currentView = ref('selection') // 'selection', 'admin', 'email'
 
 const adminForm = reactive({
     username: '',
@@ -200,19 +256,31 @@ const goToQRLogin = () => {
 </script>
 
 <style scoped>
-/* Slide up animation */
-.slide-up-enter-active,
-.slide-up-leave-active {
+/* Slide replace animation */
+.slide-replace-enter-active,
+.slide-replace-leave-active {
+    transition: all 0.4s ease;
+}
+
+.slide-replace-enter-from {
+    opacity: 0;
+    transform: translateX(30px);
+}
+
+.slide-replace-leave-to {
+    opacity: 0;
+    transform: translateX(-30px);
+}
+
+/* Alternative fade animation option */
+.fade-replace-enter-active,
+.fade-replace-leave-active {
     transition: all 0.3s ease;
 }
 
-.slide-up-enter-from {
+.fade-replace-enter-from,
+.fade-replace-leave-to {
     opacity: 0;
-    transform: translateY(20px);
-}
-
-.slide-up-leave-to {
-    opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(10px);
 }
 </style>
