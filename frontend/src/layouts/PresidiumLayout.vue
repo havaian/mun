@@ -374,16 +374,4 @@ onMounted(() => {
     @apply bg-mun-green-100 text-mun-green-700;
     transform: translateX(4px);
 }
-
-.nav-link.active::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 4px;
-    height: 20px;
-    background: #10b981;
-    border-radius: 0 2px 2px 0;
-}
 </style>

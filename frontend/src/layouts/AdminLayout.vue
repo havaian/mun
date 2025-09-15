@@ -238,7 +238,7 @@ const navigationItems = ref([
         label: 'Reports',
         to: { name: 'AdminReports' },
         icon: ChartBarIcon,
-        badge: '3'
+        badge: '0'
     }
 ])
 
@@ -321,17 +321,5 @@ onMounted(() => {
 .nav-link.active {
     background: linear-gradient(135deg, #009edb, #0284c7);
     transform: translateX(4px);
-}
-
-.nav-link.active::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 4px;
-    height: 20px;
-    background: white;
-    border-radius: 0 2px 2px 0;
 }
 </style>
