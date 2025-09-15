@@ -27,7 +27,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Total Events</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.total }}</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.total || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -39,7 +39,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Active</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.active }}</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.active || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -51,7 +51,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Upcoming</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.upcoming }}</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.upcoming || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -63,7 +63,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Total Participants</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.totalParticipants }}</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.totalParticipants || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -138,7 +138,7 @@
             </div>
 
             <div v-if="isLoading" class="flex items-center justify-center py-12">
-                <LoadingSpinner />
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-un-blue"></div>
             </div>
 
             <div v-else-if="filteredEvents.length === 0" class="text-center py-12">
@@ -148,7 +148,7 @@
                 </h3>
                 <p class="mt-2 text-mun-gray-600 mb-4">
                     {{searchQuery || Object.values(filters).some(v => v) ? 'Try adjusting your search or filters' :
-                    'Create your first event to get started' }}
+                        'Create your first event to get started'}}
                 </p>
                 <button v-if="!searchQuery && !Object.values(filters).some(v => v)" @click="showCreateModal = true"
                     class="btn-un-primary">
@@ -319,7 +319,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
@@ -374,21 +374,27 @@ const showDetailsModal = ref(false)
 const showDeleteConfirm = ref(false)
 
 // Filters
-const filters = reactive({
+const filters = ref({
     status: '',
     dateRange: ''
 })
 
-// Stats
-const stats = reactive({
-    total: 0,
-    active: 0,
-    upcoming: 0,
-    totalParticipants: 0
+// Stats - calculated from events data
+const stats = computed(() => {
+    const now = new Date()
+    const total = events.value.length
+    const active = events.value.filter(e => e.status === 'active').length
+    const upcoming = events.value.filter(e => {
+        const startDate = new Date(e.startDate)
+        return e.status === 'draft' && startDate > now
+    }).length
+    const totalParticipants = events.value.reduce((sum, e) => sum + (e.participants || 0), 0)
+
+    return { total, active, upcoming, totalParticipants }
 })
 
 // Pagination
-const pagination = reactive({
+const pagination = ref({
     currentPage: 1,
     pageSize: 12
 })
@@ -407,16 +413,16 @@ const filteredEvents = computed(() => {
     }
 
     // Status filter
-    if (filters.status) {
-        filtered = filtered.filter(event => event.status === filters.status)
+    if (filters.value.status) {
+        filtered = filtered.filter(event => event.status === filters.value.status)
     }
 
     // Date range filter
-    if (filters.dateRange) {
+    if (filters.value.dateRange) {
         const now = new Date()
         filtered = filtered.filter(event => {
             const eventDate = new Date(event.startDate)
-            switch (filters.dateRange) {
+            switch (filters.value.dateRange) {
                 case 'this_week':
                     const weekStart = new Date(now.setDate(now.getDate() - now.getDay()))
                     const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
@@ -456,12 +462,12 @@ const filteredEvents = computed(() => {
 })
 
 const totalPages = computed(() => {
-    return Math.ceil(filteredEvents.value.length / pagination.pageSize)
+    return Math.ceil(filteredEvents.value.length / pagination.value.pageSize)
 })
 
 const paginatedEvents = computed(() => {
-    const start = (pagination.currentPage - 1) * pagination.pageSize
-    const end = start + pagination.pageSize
+    const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
+    const end = start + pagination.value.pageSize
     return filteredEvents.value.slice(start, end)
 })
 
@@ -474,58 +480,21 @@ const loadEvents = async () => {
     try {
         isLoading.value = true
 
-        // TODO: Replace with actual API call
-        events.value = [
-            {
-                id: 1,
-                name: "Global Youth MUN 2025",
-                description: "Annual global youth model united nations conference",
-                status: "active",
-                startDate: new Date().toISOString(),
-                endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-                committees: [1, 2, 3],
-                participants: 150,
-                createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-            },
-            {
-                id: 2,
-                name: "Regional Security Council",
-                description: "Regional security council simulation",
-                status: "draft",
-                startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-                endDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-                committees: [1],
-                participants: 45,
-                createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-            },
-            {
-                id: 3,
-                name: "Local MUN Workshop",
-                description: "Training workshop for new delegates",
-                status: "completed",
-                startDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-                endDate: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
-                committees: [1],
-                participants: 30,
-                createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
-            }
-        ]
-
-        updateStats()
+        const response = await apiMethods.get('/api/admin/events')
+        if (response?.data) {
+            events.value = response.data
+        } else {
+            // Fallback if API fails
+            events.value = []
+        }
 
     } catch (error) {
         console.error('Load events error:', error)
         toast.error('Failed to load events')
+        events.value = []
     } finally {
         isLoading.value = false
     }
-}
-
-const updateStats = () => {
-    stats.total = events.value.length
-    stats.active = events.value.filter(e => e.status === 'active').length
-    stats.upcoming = events.value.filter(e => e.status === 'draft').length
-    stats.totalParticipants = events.value.reduce((sum, e) => sum + (e.participants || 0), 0)
 }
 
 const refreshEvents = async () => {
@@ -534,15 +503,15 @@ const refreshEvents = async () => {
 }
 
 const filterEvents = () => {
-    pagination.currentPage = 1
+    pagination.value.currentPage = 1
 }
 
 const sortEvents = () => {
-    pagination.currentPage = 1
+    pagination.value.currentPage = 1
 }
 
 const debouncedSearch = debounce(() => {
-    pagination.currentPage = 1
+    pagination.value.currentPage = 1
 }, 300)
 
 const viewEvent = (event) => {
@@ -565,17 +534,19 @@ const editEventFromDetails = (event) => {
 
 const duplicateEvent = async (event) => {
     try {
-        const duplicate = {
-            ...event,
-            id: Date.now(),
+        const duplicateData = {
             name: `${event.name} (Copy)`,
-            status: 'draft',
-            createdAt: new Date().toISOString()
+            description: event.description,
+            startDate: event.startDate,
+            endDate: event.endDate,
+            status: 'draft'
         }
 
-        events.value.unshift(duplicate)
-        updateStats()
-        toast.success(`Event "${duplicate.name}" created successfully`)
+        const response = await apiMethods.post('/api/admin/events', duplicateData)
+        if (response?.data) {
+            events.value.unshift(response.data)
+            toast.success(`Event "${response.data.name}" created successfully`)
+        }
     } catch (error) {
         console.error('Duplicate event error:', error)
         toast.error('Failed to duplicate event')
@@ -589,12 +560,13 @@ const deleteEvent = (event) => {
 
 const confirmDelete = async () => {
     try {
-        // TODO: Replace with actual API call
-        events.value = events.value.filter(e => e.id !== selectedEvent.value.id)
-        updateStats()
+        const response = await apiMethods.delete(`/api/admin/events/${selectedEvent.value.id}`)
+        if (response?.success) {
+            events.value = events.value.filter(e => e.id !== selectedEvent.value.id)
+            toast.success(`Event "${selectedEvent.value.name}" deleted successfully`)
+        }
 
         showDeleteConfirm.value = false
-        toast.success(`Event "${selectedEvent.value.name}" deleted successfully`)
         selectedEvent.value = null
     } catch (error) {
         console.error('Delete event error:', error)
@@ -604,8 +576,23 @@ const confirmDelete = async () => {
 
 const exportEvents = async () => {
     try {
-        // TODO: Implement export functionality
-        toast.info('Export functionality would be implemented here')
+        const response = await apiMethods.get('/api/admin/events/export', {
+            responseType: 'blob'
+        })
+
+        if (response) {
+            // Create download link
+            const url = window.URL.createObjectURL(new Blob([response]))
+            const link = document.createElement('a')
+            link.href = url
+            link.setAttribute('download', `events-export-${new Date().toISOString().split('T')[0]}.csv`)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.URL.revokeObjectURL(url)
+
+            toast.success('Events exported successfully')
+        }
     } catch (error) {
         console.error('Export events error:', error)
         toast.error('Failed to export events')
@@ -614,7 +601,6 @@ const exportEvents = async () => {
 
 const handleEventCreated = (event) => {
     events.value.unshift(event)
-    updateStats()
     toast.success(`Event "${event.name}" created successfully`)
 }
 
@@ -622,13 +608,12 @@ const handleEventUpdated = (event) => {
     const index = events.value.findIndex(e => e.id === event.id)
     if (index !== -1) {
         events.value[index] = event
-        updateStats()
         toast.success(`Event "${event.name}" updated successfully`)
     }
 }
 
 const handlePageChange = (page) => {
-    pagination.currentPage = page
+    pagination.value.currentPage = page
 }
 
 // Utility functions
@@ -643,12 +628,15 @@ const formatStatus = (status) => {
 }
 
 const formatDateRange = (startDate, endDate) => {
+    if (!startDate || !endDate) return 'No dates set'
     const start = new Date(startDate).toLocaleDateString()
     const end = new Date(endDate).toLocaleDateString()
     return `${start} - ${end}`
 }
 
 const formatRelativeDate = (dateString) => {
+    if (!dateString) return ''
+
     const date = new Date(dateString)
     const now = new Date()
     const diffMs = now - date

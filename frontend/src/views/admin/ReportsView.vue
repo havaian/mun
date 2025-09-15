@@ -27,7 +27,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Total Reports</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.totalReports }}</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.totalReports || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -39,7 +39,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Downloads</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.totalDownloads }}</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.totalDownloads || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -51,7 +51,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Processing</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.processing }}</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.processing || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -63,7 +63,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">This Month</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.thisMonth }}</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.thisMonth || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -136,26 +136,27 @@
                     <div class="space-y-4">
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-mun-gray-600">Average Response Time</span>
-                            <span class="font-medium text-mun-gray-900">{{ performanceMetrics.avgResponseTime
-                            }}ms</span>
+                            <span class="font-medium text-mun-gray-900">{{ performanceMetrics.avgResponseTime || '--'
+                                }}ms</span>
                         </div>
                         <div>
                             <div class="flex items-center justify-between mb-1">
                                 <span class="text-sm text-mun-gray-600">Server Uptime</span>
-                                <span class="font-medium text-mun-gray-900">{{ performanceMetrics.uptime }}%</span>
+                                <span class="font-medium text-mun-gray-900">{{ performanceMetrics.uptime || 0 }}%</span>
                             </div>
                             <div class="w-full bg-mun-gray-200 rounded-full h-2">
                                 <div class="bg-mun-green-500 h-2 rounded-full transition-all duration-300"
-                                    :style="{ width: `${performanceMetrics.uptime}%` }"></div>
+                                    :style="{ width: `${performanceMetrics.uptime || 0}%` }"></div>
                             </div>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-mun-gray-600">Active Sessions</span>
-                            <span class="font-medium text-mun-gray-900">{{ performanceMetrics.activeSessions }}</span>
+                            <span class="font-medium text-mun-gray-900">{{ performanceMetrics.activeSessions || 0
+                                }}</span>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-mun-gray-600">Error Rate</span>
-                            <span class="font-medium text-mun-gray-900">{{ performanceMetrics.errorRate }}%</span>
+                            <span class="font-medium text-mun-gray-900">{{ performanceMetrics.errorRate || 0 }}%</span>
                         </div>
                     </div>
                 </div>
@@ -180,7 +181,7 @@
             </div>
 
             <div v-if="isLoading" class="flex items-center justify-center py-12">
-                <LoadingSpinner />
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-un-blue"></div>
             </div>
 
             <div v-else-if="filteredReportHistory.length === 0" class="text-center py-12">
@@ -253,7 +254,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-500">
-                                {{ report.fileSize }}
+                                {{ report.fileSize || '--' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end space-x-2">
@@ -289,7 +290,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
@@ -320,28 +321,28 @@ const toast = useToast()
 
 // State
 const isLoading = ref(false)
-const isGenerating = reactive({})
+const isGenerating = ref({})
 const showCustomReportModal = ref(false)
 const historyFilter = ref('')
 
-const stats = reactive({
-    totalReports: 0,
-    totalDownloads: 0,
-    processing: 0,
-    thisMonth: 0
+const stats = ref({
+    totalReports: null,
+    totalDownloads: null,
+    processing: null,
+    thisMonth: null
 })
 
-const performanceMetrics = reactive({
-    avgResponseTime: 145,
-    uptime: 99.8,
-    activeSessions: 47,
-    errorRate: 0.2
+const performanceMetrics = ref({
+    avgResponseTime: null,
+    uptime: null,
+    activeSessions: null,
+    errorRate: null
 })
 
 const reportHistory = ref([])
 
 // Pagination
-const pagination = reactive({
+const pagination = ref({
     currentPage: 1,
     pageSize: 10
 })
@@ -400,12 +401,12 @@ const filteredReportHistory = computed(() => {
 })
 
 const totalPages = computed(() => {
-    return Math.ceil(filteredReportHistory.value.length / pagination.pageSize)
+    return Math.ceil(filteredReportHistory.value.length / pagination.value.pageSize)
 })
 
 const paginatedReportHistory = computed(() => {
-    const start = (pagination.currentPage - 1) * pagination.pageSize
-    const end = start + pagination.pageSize
+    const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
+    const end = start + pagination.value.pageSize
     return filteredReportHistory.value.slice(start, end)
 })
 
@@ -414,46 +415,52 @@ const loadReportsData = async () => {
     try {
         isLoading.value = true
 
-        // Load report statistics
-        stats.totalReports = 156
-        stats.totalDownloads = 89
-        stats.processing = 3
-        stats.thisMonth = 23
+        // Load all reports data in parallel
+        const [reportsResponse, analyticsResponse] = await Promise.all([
+            apiMethods.get('/api/admin/reports'),
+            apiMethods.get('/api/admin/analytics')
+        ])
 
-        // Load report history
-        reportHistory.value = [
-            {
-                id: 1,
-                name: 'Event Summary Report',
-                description: 'Complete overview of Global Youth MUN 2025',
-                type: 'event',
-                status: 'completed',
-                generatedAt: new Date().toISOString(),
-                fileSize: '2.4 MB'
-            },
-            {
-                id: 2,
-                name: 'User Activity Report',
-                description: 'Monthly user activity analysis',
-                type: 'user',
-                status: 'completed',
-                generatedAt: new Date(Date.now() - 3600000).toISOString(),
-                fileSize: '1.8 MB'
-            },
-            {
-                id: 3,
-                name: 'System Performance Report',
-                description: 'Weekly performance metrics',
-                type: 'system',
-                status: 'processing',
-                generatedAt: new Date(Date.now() - 7200000).toISOString(),
-                fileSize: '--'
+        // Update stats
+        if (reportsResponse?.data) {
+            stats.value = {
+                totalReports: reportsResponse.data.stats?.totalReports || 0,
+                totalDownloads: reportsResponse.data.stats?.totalDownloads || 0,
+                processing: reportsResponse.data.stats?.processing || 0,
+                thisMonth: reportsResponse.data.stats?.thisMonth || 0
             }
-        ]
+
+            reportHistory.value = reportsResponse.data.reports || []
+        }
+
+        // Update performance metrics
+        if (analyticsResponse?.data) {
+            performanceMetrics.value = {
+                avgResponseTime: analyticsResponse.data.avgResponseTime || null,
+                uptime: analyticsResponse.data.uptime || null,
+                activeSessions: analyticsResponse.data.activeSessions || null,
+                errorRate: analyticsResponse.data.errorRate || null
+            }
+        }
 
     } catch (error) {
         console.error('Load reports error:', error)
         toast.error('Failed to load reports data')
+
+        // Set defaults on error
+        stats.value = {
+            totalReports: 0,
+            totalDownloads: 0,
+            processing: 0,
+            thisMonth: 0
+        }
+        performanceMetrics.value = {
+            avgResponseTime: null,
+            uptime: null,
+            activeSessions: null,
+            errorRate: null
+        }
+        reportHistory.value = []
     } finally {
         isLoading.value = false
     }
@@ -466,62 +473,79 @@ const refreshData = async () => {
 
 const generateReport = async (reportTemplate) => {
     try {
-        isGenerating[reportTemplate.id] = true
+        isGenerating.value[reportTemplate.id] = true
 
-        // Simulate report generation
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        const response = await apiMethods.post('/api/admin/reports/generate', {
+            type: reportTemplate.id,
+            title: reportTemplate.title,
+            description: reportTemplate.description
+        })
 
-        const newReport = {
-            id: Date.now(),
-            name: reportTemplate.title,
-            description: reportTemplate.description,
-            type: reportTemplate.id.includes('user') ? 'user' : 'event',
-            status: 'completed',
-            generatedAt: new Date().toISOString(),
-            fileSize: `${(Math.random() * 3 + 1).toFixed(1)} MB`
+        if (response?.data) {
+            reportHistory.value.unshift(response.data)
+            stats.value.totalReports++
+            toast.success(`${reportTemplate.title} generation started`)
         }
-
-        reportHistory.value.unshift(newReport)
-        stats.totalReports++
-
-        toast.success(`${reportTemplate.title} generated successfully`)
 
     } catch (error) {
         console.error('Generate report error:', error)
         toast.error('Failed to generate report')
     } finally {
-        isGenerating[reportTemplate.id] = false
+        isGenerating.value[reportTemplate.id] = false
     }
 }
 
 const downloadReport = async (report) => {
     try {
-        // TODO: Implement actual download
-        toast.success(`Downloading ${report.name}`)
-        stats.totalDownloads++
+        const response = await apiMethods.get(`/api/admin/reports/${report.id}/download`, {
+            responseType: 'blob'
+        })
+
+        if (response) {
+            // Create download link
+            const url = window.URL.createObjectURL(new Blob([response]))
+            const link = document.createElement('a')
+            link.href = url
+            link.setAttribute('download', `${report.name.replace(/\s+/g, '_')}.pdf`)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.URL.revokeObjectURL(url)
+
+            // Update download count
+            stats.value.totalDownloads++
+            toast.success(`Downloaded ${report.name}`)
+        }
     } catch (error) {
         console.error('Download report error:', error)
         toast.error('Failed to download report')
     }
 }
 
-const viewReport = (report) => {
-    toast.info(`Viewing ${report.name}`)
-    // TODO: Open report viewer modal
+const viewReport = async (report) => {
+    try {
+        // Navigate to report viewer or open in new window
+        const response = await apiMethods.get(`/api/admin/reports/${report.id}/view`)
+        if (response?.data?.url) {
+            window.open(response.data.url, '_blank')
+        } else {
+            toast.info(`Viewing ${report.name}`)
+        }
+    } catch (error) {
+        console.error('View report error:', error)
+        toast.error('Failed to view report')
+    }
 }
 
 const deleteReport = async (report) => {
     try {
-        const confirmed = await toast.confirm({
-            title: 'Delete Report',
-            message: `Are you sure you want to delete "${report.name}"?`,
-            confirmText: 'Delete',
-            type: 'warning'
-        })
+        const confirmed = confirm(`Are you sure you want to delete "${report.name}"?`)
+        if (!confirmed) return
 
-        if (confirmed) {
+        const response = await apiMethods.delete(`/api/admin/reports/${report.id}`)
+        if (response?.success) {
             reportHistory.value = reportHistory.value.filter(r => r.id !== report.id)
-            stats.totalReports--
+            stats.value.totalReports--
             toast.success('Report deleted successfully')
         }
     } catch (error) {
@@ -532,12 +556,12 @@ const deleteReport = async (report) => {
 
 const handleCustomReportGenerated = (report) => {
     reportHistory.value.unshift(report)
-    stats.totalReports++
+    stats.value.totalReports++
     toast.success('Custom report generated successfully')
 }
 
 const handlePageChange = (page) => {
-    pagination.currentPage = page
+    pagination.value.currentPage = page
 }
 
 // Utility functions
@@ -561,6 +585,8 @@ const formatStatus = (status) => {
 }
 
 const formatDate = (dateString) => {
+    if (!dateString) return '--'
+
     const date = new Date(dateString)
     const now = new Date()
     const diffMs = now - date

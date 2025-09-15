@@ -8,26 +8,47 @@
             </div>
 
             <div class="flex items-center space-x-3">
-                <AppButton variant="outline" size="md" @click="refreshCommittees" :loading="isLoading">
+                <button @click="refreshCommittees" :disabled="isLoading" class="btn-un-secondary">
                     <ArrowPathIcon class="w-4 h-4 mr-2" />
                     Refresh
-                </AppButton>
+                </button>
 
-                <AppButton variant="primary" size="md" @click="showCreateCommittee = true">
+                <button @click="showCreateCommittee = true" class="btn-un-primary">
                     <PlusIcon class="w-4 h-4 mr-2" />
                     Create Committee
-                </AppButton>
+                </button>
             </div>
         </div>
 
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard v-for="stat in committeeStats" :key="stat.title" :title="stat.title" :value="stat.value"
-                :change="stat.change" :trend="stat.trend" :icon="stat.icon" :color="stat.color" />
+            <div v-for="stat in committeeStats" :key="stat.title" class="mun-card p-6">
+                <div class="flex items-center">
+                    <div :class="[
+                        'p-3 rounded-lg',
+                        stat.color === 'blue' ? 'bg-un-blue/10' :
+                            stat.color === 'green' ? 'bg-mun-green-500/10' :
+                                stat.color === 'purple' ? 'bg-purple-500/10' :
+                                    'bg-orange-500/10'
+                    ]">
+                        <component :is="stat.icon" :class="[
+                            'w-6 h-6',
+                            stat.color === 'blue' ? 'text-un-blue' :
+                                stat.color === 'green' ? 'text-mun-green-500' :
+                                    stat.color === 'purple' ? 'text-purple-500' :
+                                        'text-orange-500'
+                        ]" />
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-mun-gray-600">{{ stat.title }}</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stat.value || 0 }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Filters and Search -->
-        <AppCard class="p-6">
+        <div class="mun-card p-6">
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
                 <!-- Search -->
                 <div class="lg:col-span-2">
@@ -131,12 +152,12 @@
                         {{ filteredCommittees.length }} of {{ totalCommittees }} committees
                     </span>
 
-                    <AppButton v-if="hasActiveFilters" variant="ghost" size="sm" @click="clearFilters">
+                    <button v-if="hasActiveFilters" @click="clearFilters" class="btn-un-secondary px-3 py-2">
                         Clear Filters
-                    </AppButton>
+                    </button>
                 </div>
             </div>
-        </AppCard>
+        </div>
 
         <!-- View Toggle and Bulk Actions -->
         <div class="flex items-center justify-between">
@@ -168,19 +189,19 @@
                         {{ selectedCommittees.length }} selected
                     </span>
 
-                    <AppButton variant="outline" size="sm" @click="bulkGenerateQR" :loading="isBulkGenerating">
+                    <button @click="bulkGenerateQR" :disabled="isBulkGenerating" class="btn-un-secondary px-3 py-2">
                         <QrCodeIcon class="w-4 h-4 mr-2" />
                         Generate QR
-                    </AppButton>
+                    </button>
 
-                    <AppButton variant="outline" size="sm" @click="bulkExport">
+                    <button @click="bulkExport" class="btn-un-secondary px-3 py-2">
                         <DocumentArrowDownIcon class="w-4 h-4 mr-2" />
                         Export
-                    </AppButton>
+                    </button>
 
-                    <AppButton variant="outline" size="sm" @click="clearSelection">
+                    <button @click="clearSelection" class="btn-un-secondary px-3 py-2">
                         Clear
-                    </AppButton>
+                    </button>
                 </div>
             </div>
 
@@ -201,7 +222,7 @@
 
         <!-- Committees Display -->
         <div v-if="isLoading" class="flex justify-center py-12">
-            <LoadingSpinner size="lg" />
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-un-blue"></div>
         </div>
 
         <div v-else-if="filteredCommittees.length === 0" class="text-center py-12">
@@ -215,33 +236,165 @@
                     : 'Get started by creating your first committee.'
                 }}
             </p>
-            <AppButton v-if="!hasActiveFilters" variant="primary" @click="showCreateCommittee = true">
+            <button v-if="!hasActiveFilters" @click="showCreateCommittee = true" class="btn-un-primary">
                 <PlusIcon class="w-4 h-4 mr-2" />
                 Create First Committee
-            </AppButton>
-            <AppButton v-else variant="outline" @click="clearFilters">
+            </button>
+            <button v-else @click="clearFilters" class="btn-un-secondary">
                 Clear All Filters
-            </AppButton>
+            </button>
         </div>
 
         <!-- Grid View -->
         <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <CommitteeCard v-for="committee in paginatedCommittees" :key="committee._id" :committee="committee"
-                :selected="selectedCommittees.includes(committee._id)" @view="viewCommittee" @edit="editCommittee"
-                @delete="deleteCommittee" @duplicate="duplicateCommittee" @manage-countries="manageCountries"
-                @generate-qr="generateQR" @toggle-status="toggleCommitteeStatus" @select="toggleSelection" />
+            <div v-for="committee in paginatedCommittees" :key="committee._id"
+                class="mun-card p-6 hover:shadow-lg transition-shadow cursor-pointer" @click="viewCommittee(committee)">
+
+                <!-- Committee Header -->
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-medium text-mun-gray-900">{{ committee.name }}</h3>
+                        <p class="text-sm text-mun-gray-600 mt-1">{{ committee.description || 'No description' }}</p>
+                    </div>
+                    <input type="checkbox" v-model="selectedCommittees" :value="committee._id" @click.stop
+                        class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue">
+                </div>
+
+                <!-- Committee Info -->
+                <div class="space-y-2 text-sm text-mun-gray-600">
+                    <div class="flex items-center justify-between">
+                        <span>Type:</span>
+                        <span class="font-medium">{{ committee.type || 'Not set' }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>Countries:</span>
+                        <span class="font-medium">{{ committee.countries?.length || 0 }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>Status:</span>
+                        <span :class="[
+                            'px-2 py-1 rounded-full text-xs font-medium',
+                            committee.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
+                                committee.status === 'setup' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
+                                    'bg-mun-gray-100 text-mun-gray-700'
+                        ]">
+                            {{ formatStatus(committee.status) }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Committee Actions -->
+                <div class="flex items-center justify-between mt-4 pt-4 border-t border-mun-gray-200">
+                    <span class="text-xs text-mun-gray-500">
+                        {{ committee.eventId?.name || 'No event' }}
+                    </span>
+                    <div class="flex items-center space-x-2">
+                        <button @click.stop="editCommittee(committee)"
+                            class="p-1 text-mun-gray-400 hover:text-un-blue transition-colors">
+                            <PencilIcon class="w-4 h-4" />
+                        </button>
+                        <button @click.stop="duplicateCommittee(committee)"
+                            class="p-1 text-mun-gray-400 hover:text-mun-green-500 transition-colors">
+                            <DocumentDuplicateIcon class="w-4 h-4" />
+                        </button>
+                        <button @click.stop="deleteCommittee(committee)"
+                            class="p-1 text-mun-gray-400 hover:text-mun-red-500 transition-colors">
+                            <TrashIcon class="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- List View -->
-        <CommitteeTable v-else :committees="paginatedCommittees" :loading="isLoading" :selected="selectedCommittees"
-            @view="viewCommittee" @edit="editCommittee" @delete="deleteCommittee" @duplicate="duplicateCommittee"
-            @manage-countries="manageCountries" @generate-qr="generateQR" @toggle-status="toggleCommitteeStatus"
-            @sort="handleTableSort" @select="toggleSelection" @select-all="toggleSelectAll" />
+        <div v-else class="mun-card overflow-x-auto">
+            <table class="min-w-full divide-y divide-mun-gray-200">
+                <thead class="bg-mun-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left">
+                            <input type="checkbox" @change="toggleSelectAll" :checked="isAllSelected"
+                                class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue">
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                            Committee
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                            Type
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                            Event
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                            Countries
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-mun-gray-200">
+                    <tr v-for="committee in paginatedCommittees" :key="committee._id"
+                        class="hover:bg-mun-gray-50 cursor-pointer transition-colors" @click="viewCommittee(committee)">
+                        <td class="px-6 py-4">
+                            <input type="checkbox" v-model="selectedCommittees" :value="committee._id" @click.stop
+                                class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue">
+                        </td>
+                        <td class="px-6 py-4">
+                            <div>
+                                <div class="text-sm font-medium text-mun-gray-900">{{ committee.name }}</div>
+                                <div class="text-sm text-mun-gray-500 max-w-xs truncate">
+                                    {{ committee.description || 'No description' }}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-900">
+                            {{ committee.type || 'Not set' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-500">
+                            {{ committee.eventId?.name || 'No event' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-900">
+                            {{ committee.countries?.length || 0 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span :class="[
+                                'px-2 py-1 rounded-full text-xs font-medium',
+                                committee.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
+                                    committee.status === 'setup' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
+                                        'bg-mun-gray-100 text-mun-gray-700'
+                            ]">
+                                {{ formatStatus(committee.status) }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex items-center justify-end space-x-2">
+                                <button @click.stop="editCommittee(committee)"
+                                    class="text-un-blue hover:text-un-blue-600 transition-colors">
+                                    <PencilIcon class="w-4 h-4" />
+                                </button>
+                                <button @click.stop="duplicateCommittee(committee)"
+                                    class="text-mun-gray-400 hover:text-mun-green-500 transition-colors">
+                                    <DocumentDuplicateIcon class="w-4 h-4" />
+                                </button>
+                                <button @click.stop="deleteCommittee(committee)"
+                                    class="text-mun-gray-400 hover:text-mun-red-500 transition-colors">
+                                    <TrashIcon class="w-4 h-4" />
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
 
         <!-- Pagination -->
-        <Pagination v-if="filteredCommittees.length > pagination.pageSize" :current-page="pagination.currentPage"
-            :total-pages="pagination.totalPages" :total-items="filteredCommittees.length"
-            :page-size="pagination.pageSize" @page-change="handlePageChange" @page-size-change="handlePageSizeChange" />
+        <div v-if="filteredCommittees.length > pagination.pageSize" class="flex justify-center">
+            <Pagination :current-page="pagination.currentPage" :total-pages="pagination.totalPages"
+                @page-change="handlePageChange" />
+        </div>
 
         <!-- Modals -->
         <CreateEditCommitteeModal v-model="showCreateCommittee" @created="handleCommitteeCreated" />
@@ -263,7 +416,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
@@ -282,13 +435,13 @@ import {
     ListBulletIcon,
     UserGroupIcon,
     QrCodeIcon,
-    DocumentArrowDownIcon
+    DocumentArrowDownIcon,
+    PencilIcon,
+    DocumentDuplicateIcon,
+    TrashIcon
 } from '@heroicons/vue/24/outline'
 
 // Components
-import StatCard from '@/components/admin/StatCard.vue'
-import CommitteeCard from '@/components/admin/CommitteeCard.vue'
-import CommitteeTable from '@/components/admin/CommitteeTable.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import CreateEditCommitteeModal from '@/components/admin/CreateEditCommitteeModal.vue'
 import CommitteeDetailsModal from '@/components/admin/CommitteeDetailsModal.vue'
@@ -326,7 +479,7 @@ const showQRGeneration = ref(false)
 const showDeleteConfirm = ref(false)
 
 // Filters
-const filters = reactive({
+const filters = ref({
     eventId: '',
     type: '',
     status: '',
@@ -335,7 +488,7 @@ const filters = reactive({
 })
 
 // Pagination
-const pagination = reactive({
+const pagination = ref({
     currentPage: 1,
     pageSize: 12,
     totalPages: 0
@@ -346,32 +499,24 @@ const committeeStats = computed(() => [
     {
         title: 'Total Committees',
         value: totalCommittees.value,
-        change: '+8%',
-        trend: 'up',
         icon: UserGroupIcon,
         color: 'blue'
     },
     {
         title: 'Active Committees',
         value: committees.value.filter(c => c.status === 'active').length,
-        change: '+12%',
-        trend: 'up',
         icon: UserGroupIcon,
         color: 'green'
     },
     {
         title: 'Total Countries',
         value: committees.value.reduce((total, c) => total + (c.countries?.length || 0), 0),
-        change: '+15%',
-        trend: 'up',
         icon: UserGroupIcon,
         color: 'purple'
     },
     {
         title: 'QR Generated',
         value: committees.value.filter(c => c.qrGenerated).length,
-        change: '+25%',
-        trend: 'up',
         icon: QrCodeIcon,
         color: 'orange'
     }
@@ -379,7 +524,7 @@ const committeeStats = computed(() => [
 
 const hasActiveFilters = computed(() => {
     return searchQuery.value.trim() !== '' ||
-        Object.values(filters).some(value => value !== '')
+        Object.values(filters.value).some(value => value !== '')
 })
 
 const filteredCommittees = computed(() => {
@@ -396,23 +541,23 @@ const filteredCommittees = computed(() => {
     }
 
     // Apply filters
-    if (filters.eventId) {
-        filtered = filtered.filter(committee => committee.eventId?._id === filters.eventId)
+    if (filters.value.eventId) {
+        filtered = filtered.filter(committee => committee.eventId?._id === filters.value.eventId)
     }
 
-    if (filters.type) {
-        filtered = filtered.filter(committee => committee.type === filters.type)
+    if (filters.value.type) {
+        filtered = filtered.filter(committee => committee.type === filters.value.type)
     }
 
-    if (filters.status) {
-        filtered = filtered.filter(committee => committee.status === filters.status)
+    if (filters.value.status) {
+        filtered = filtered.filter(committee => committee.status === filters.value.status)
     }
 
-    if (filters.countryRange) {
+    if (filters.value.countryRange) {
         filtered = filtered.filter(committee => {
             const count = committee.countries?.length || 0
 
-            switch (filters.countryRange) {
+            switch (filters.value.countryRange) {
                 case 'small':
                     return count <= 15
                 case 'medium':
@@ -427,10 +572,10 @@ const filteredCommittees = computed(() => {
         })
     }
 
-    if (filters.hasQR) {
+    if (filters.value.hasQR) {
         filtered = filtered.filter(committee => {
-            if (filters.hasQR === 'yes') return committee.qrGenerated
-            if (filters.hasQR === 'no') return !committee.qrGenerated
+            if (filters.value.hasQR === 'yes') return committee.qrGenerated
+            if (filters.value.hasQR === 'no') return !committee.qrGenerated
             return true
         })
     }
@@ -478,9 +623,14 @@ const sortedCommittees = computed(() => {
 })
 
 const paginatedCommittees = computed(() => {
-    const start = (pagination.currentPage - 1) * pagination.pageSize
-    const end = start + pagination.pageSize
+    const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
+    const end = start + pagination.value.pageSize
     return sortedCommittees.value.slice(start, end)
+})
+
+const isAllSelected = computed(() => {
+    return paginatedCommittees.value.length > 0 &&
+        paginatedCommittees.value.every(committee => selectedCommittees.value.includes(committee._id))
 })
 
 const deleteConfirmMessage = computed(() => {
@@ -508,9 +658,9 @@ const deleteConfirmMessage = computed(() => {
 
 // Watch for filtered committees change
 watch(() => filteredCommittees.value.length, (newLength) => {
-    pagination.totalPages = Math.ceil(newLength / pagination.pageSize)
-    if (pagination.currentPage > pagination.totalPages && pagination.totalPages > 0) {
-        pagination.currentPage = pagination.totalPages
+    pagination.value.totalPages = Math.ceil(newLength / pagination.value.pageSize)
+    if (pagination.value.currentPage > pagination.value.totalPages && pagination.value.totalPages > 0) {
+        pagination.value.currentPage = pagination.value.totalPages
     }
 })
 
@@ -519,20 +669,25 @@ const loadCommittees = async () => {
     try {
         isLoading.value = true
 
-        const response = await apiMethods.committees.getAll({
-            page: 1,
-            limit: 1000,
-            include: 'eventId,countries,documents'
+        const response = await apiMethods.get('/api/admin/committees', {
+            params: {
+                include: 'eventId,countries,documents'
+            }
         })
 
-        if (response.data.success) {
-            committees.value = response.data.committees || []
+        if (response?.data) {
+            committees.value = response.data.committees || response.data || []
             totalCommittees.value = response.data.total || committees.value.length
+        } else {
+            committees.value = []
+            totalCommittees.value = 0
         }
 
     } catch (error) {
         console.error('Load committees error:', error)
         toast.error('Failed to load committees')
+        committees.value = []
+        totalCommittees.value = 0
     } finally {
         isLoading.value = false
     }
@@ -540,17 +695,22 @@ const loadCommittees = async () => {
 
 const loadEvents = async () => {
     try {
-        const response = await apiMethods.events.getAll({
-            status: 'active,published',
-            limit: 100
+        const response = await apiMethods.get('/api/admin/events', {
+            params: {
+                status: 'active,published',
+                limit: 100
+            }
         })
 
-        if (response.data.success) {
-            availableEvents.value = response.data.events || []
+        if (response?.data) {
+            availableEvents.value = response.data.events || response.data || []
+        } else {
+            availableEvents.value = []
         }
 
     } catch (error) {
         console.error('Load events error:', error)
+        availableEvents.value = []
     }
 }
 
@@ -560,37 +720,28 @@ const refreshCommittees = async () => {
 }
 
 const debouncedSearch = debounce(() => {
-    pagination.currentPage = 1
+    pagination.value.currentPage = 1
 }, 300)
 
 const applyFilters = () => {
-    pagination.currentPage = 1
+    pagination.value.currentPage = 1
 }
 
 const applySorting = () => {
-    pagination.currentPage = 1
+    pagination.value.currentPage = 1
 }
 
 const clearFilters = () => {
     searchQuery.value = ''
-    Object.keys(filters).forEach(key => {
-        filters[key] = ''
+    Object.keys(filters.value).forEach(key => {
+        filters.value[key] = ''
     })
-    pagination.currentPage = 1
+    pagination.value.currentPage = 1
 }
 
 const handlePageChange = (page) => {
-    pagination.currentPage = page
+    pagination.value.currentPage = page
     window.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
-const handlePageSizeChange = (size) => {
-    pagination.pageSize = size
-    pagination.currentPage = 1
-}
-
-const handleTableSort = (column, direction) => {
-    sortBy.value = `${column}_${direction}`
 }
 
 // Selection methods
@@ -604,7 +755,7 @@ const toggleSelection = (committeeId) => {
 }
 
 const toggleSelectAll = () => {
-    if (selectedCommittees.value.length === paginatedCommittees.value.length) {
+    if (isAllSelected.value) {
         selectedCommittees.value = []
     } else {
         selectedCommittees.value = paginatedCommittees.value.map(c => c._id)
@@ -638,12 +789,14 @@ const deleteCommittee = (committee) => {
 
 const confirmDelete = async () => {
     try {
-        await apiMethods.committees.delete(selectedCommittee.value._id)
+        const response = await apiMethods.delete(`/api/admin/committees/${selectedCommittee.value._id}`)
 
-        committees.value = committees.value.filter(c => c._id !== selectedCommittee.value._id)
-        totalCommittees.value--
+        if (response?.success) {
+            committees.value = committees.value.filter(c => c._id !== selectedCommittee.value._id)
+            totalCommittees.value--
+            toast.success('Committee deleted successfully')
+        }
 
-        toast.success('Committee deleted successfully')
         showDeleteConfirm.value = false
         selectedCommittee.value = null
 
@@ -668,10 +821,10 @@ const duplicateCommittee = async (committee) => {
         delete duplicatedData.updatedAt
         delete duplicatedData.documents
 
-        const response = await apiMethods.committees.create(duplicatedData)
+        const response = await apiMethods.post('/api/admin/committees', duplicatedData)
 
-        if (response.data.success) {
-            committees.value.unshift(response.data.committee)
+        if (response?.data) {
+            committees.value.unshift(response.data.committee || response.data)
             totalCommittees.value++
             toast.success('Committee duplicated successfully')
         }
@@ -686,11 +839,11 @@ const toggleCommitteeStatus = async (committee) => {
     try {
         const newStatus = committee.status === 'active' ? 'setup' : 'active'
 
-        const response = await apiMethods.committees.update(committee._id, {
+        const response = await apiMethods.put(`/api/admin/committees/${committee._id}`, {
             status: newStatus
         })
 
-        if (response.data.success) {
+        if (response?.data) {
             const index = committees.value.findIndex(c => c._id === committee._id)
             if (index !== -1) {
                 committees.value[index] = { ...committees.value[index], ...response.data.committee }
@@ -720,22 +873,22 @@ const bulkGenerateQR = async () => {
     try {
         isBulkGenerating.value = true
 
-        const promises = selectedCommittees.value.map(id =>
-            apiMethods.committees.generateQRs(id)
-        )
-
-        await Promise.all(promises)
-
-        // Update committees with QR generated status
-        selectedCommittees.value.forEach(id => {
-            const index = committees.value.findIndex(c => c._id === id)
-            if (index !== -1) {
-                committees.value[index].qrGenerated = true
-            }
+        const response = await apiMethods.post('/api/admin/committees/bulk-qr', {
+            committeeIds: selectedCommittees.value
         })
 
-        toast.success(`QR codes generated for ${selectedCommittees.value.length} committees`)
-        clearSelection()
+        if (response?.success) {
+            // Update committees with QR generated status
+            selectedCommittees.value.forEach(id => {
+                const index = committees.value.findIndex(c => c._id === id)
+                if (index !== -1) {
+                    committees.value[index].qrGenerated = true
+                }
+            })
+
+            toast.success(`QR codes generated for ${selectedCommittees.value.length} committees`)
+            clearSelection()
+        }
 
     } catch (error) {
         console.error('Bulk generate QR error:', error)
@@ -745,9 +898,30 @@ const bulkGenerateQR = async () => {
     }
 }
 
-const bulkExport = () => {
-    const committeeIds = selectedCommittees.value.join(',')
-    window.open(`/api/export/committees?ids=${committeeIds}`, '_blank')
+const bulkExport = async () => {
+    try {
+        const response = await apiMethods.get('/api/admin/committees/export', {
+            params: { ids: selectedCommittees.value.join(',') },
+            responseType: 'blob'
+        })
+
+        if (response) {
+            // Create download link
+            const url = window.URL.createObjectURL(new Blob([response]))
+            const link = document.createElement('a')
+            link.href = url
+            link.setAttribute('download', `committees-export-${new Date().toISOString().split('T')[0]}.csv`)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.URL.revokeObjectURL(url)
+
+            toast.success('Committees exported successfully')
+        }
+    } catch (error) {
+        console.error('Bulk export error:', error)
+        toast.error('Failed to export committees')
+    }
 }
 
 // Event handlers
@@ -786,20 +960,26 @@ const handleQRGenerated = (updatedCommittee) => {
     toast.success('QR codes generated successfully')
 }
 
+// Utility functions
+const formatStatus = (status) => {
+    const statusMap = {
+        'draft': 'Draft',
+        'setup': 'Setup',
+        'active': 'Active',
+        'paused': 'Paused',
+        'completed': 'Completed'
+    }
+    return statusMap[status] || status
+}
+
 // Lifecycle
 onMounted(async () => {
     await Promise.all([loadCommittees(), loadEvents()])
 
     // Check for event filter from route query
     if (route.query.event) {
-        filters.eventId = route.query.event
+        filters.value.eventId = route.query.event
     }
-
-    // Update breadcrumbs
-    appStore.setBreadcrumbs([
-        { text: 'Admin', to: { name: 'AdminDashboard' } },
-        { text: 'Committees', active: true }
-    ])
 })
 </script>
 

@@ -40,13 +40,7 @@
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">{{ stat.title }}</p>
                         <div class="flex items-center space-x-2">
-                            <p class="text-2xl font-bold text-mun-gray-900">{{ stat.value }}</p>
-                            <span v-if="stat.change" :class="[
-                                'text-sm font-medium',
-                                stat.trend === 'up' ? 'text-mun-green-600' : 'text-mun-red-600'
-                            ]">
-                                {{ stat.change }}
-                            </span>
+                            <p class="text-2xl font-bold text-mun-gray-900">{{ stat.value || 0 }}</p>
                         </div>
                     </div>
                 </div>
@@ -96,7 +90,7 @@
                                 'w-2 h-2 rounded-full',
                                 systemHealth.apiStatus === 'healthy' ? 'bg-mun-green-500' : 'bg-mun-red-500'
                             ]"></div>
-                            <span class="text-sm font-medium">{{ systemHealth.apiResponseTime }}ms</span>
+                            <span class="text-sm font-medium">{{ systemHealth.apiResponseTime || '--' }}ms</span>
                         </div>
                     </div>
 
@@ -107,7 +101,7 @@
                                 'w-2 h-2 rounded-full',
                                 systemHealth.dbStatus === 'connected' ? 'bg-mun-green-500' : 'bg-mun-red-500'
                             ]"></div>
-                            <span class="text-sm font-medium">{{ systemHealth.dbStatus }}</span>
+                            <span class="text-sm font-medium">{{ systemHealth.dbStatus || 'unknown' }}</span>
                         </div>
                     </div>
 
@@ -118,7 +112,7 @@
                                 'w-2 h-2 rounded-full',
                                 systemHealth.wsStatus === 'healthy' ? 'bg-mun-green-500' : 'bg-mun-red-500'
                             ]"></div>
-                            <span class="text-sm font-medium">{{ systemHealth.activeConnections }} active</span>
+                            <span class="text-sm font-medium">{{ systemHealth.activeConnections || 0 }} active</span>
                         </div>
                     </div>
 
@@ -128,10 +122,10 @@
                             <div class="w-16 bg-mun-gray-200 rounded-full h-2">
                                 <div :class="[
                                     'h-2 rounded-full transition-all duration-300',
-                                    systemHealth.storageUsed < 80 ? 'bg-mun-green-500' : 'bg-mun-red-500'
-                                ]" :style="{ width: `${systemHealth.storageUsed}%` }"></div>
+                                    (systemHealth.storageUsed || 0) < 80 ? 'bg-mun-green-500' : 'bg-mun-red-500'
+                                ]" :style="{ width: `${systemHealth.storageUsed || 0}%` }"></div>
                             </div>
-                            <span class="text-sm font-medium">{{ systemHealth.storageUsed }}%</span>
+                            <span class="text-sm font-medium">{{ systemHealth.storageUsed || 0 }}%</span>
                         </div>
                     </div>
                 </div>
@@ -147,7 +141,7 @@
                 </div>
 
                 <div v-if="isLoading" class="flex items-center justify-center py-8">
-                    <LoadingSpinner />
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-un-blue"></div>
                 </div>
 
                 <div v-else class="space-y-4">
@@ -263,7 +257,7 @@
                             </span>
                             <div class="mt-2 text-xs text-mun-gray-500">
                                 {{ Math.round(((committee.registeredCount || 0) / (committee.countries?.length || 1)) *
-                                100) }}% ready
+                                    100) }}% ready
                             </div>
                         </div>
                     </div>
@@ -287,7 +281,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
@@ -324,20 +318,21 @@ const showCreateEventModal = ref(false)
 const showCreateCommitteeModal = ref(false)
 const showExportModal = ref(false)
 
-const stats = reactive({
-    totalEvents: 0,
-    activeCommittees: 0,
-    registeredUsers: 0,
-    documentsUploaded: 0
+// Data - these will be populated from real API calls
+const stats = ref({
+    totalEvents: null,
+    activeCommittees: null,
+    registeredUsers: null,
+    documentsUploaded: null
 })
 
-const systemHealth = reactive({
-    apiStatus: 'healthy',
-    apiResponseTime: 125,
-    dbStatus: 'connected',
-    wsStatus: 'healthy',
-    activeConnections: 47,
-    storageUsed: 34
+const systemHealth = ref({
+    apiStatus: null,
+    apiResponseTime: null,
+    dbStatus: null,
+    wsStatus: null,
+    activeConnections: null,
+    storageUsed: null
 })
 
 const activeEvents = ref([])
@@ -348,33 +343,25 @@ const recentActivity = ref([])
 const dashboardStats = computed(() => [
     {
         title: 'Total Events',
-        value: stats.totalEvents,
-        change: '+12%',
-        trend: 'up',
+        value: stats.value.totalEvents,
         icon: CalendarDaysIcon,
         color: 'blue'
     },
     {
         title: 'Active Committees',
-        value: stats.activeCommittees,
-        change: '+5%',
-        trend: 'up',
+        value: stats.value.activeCommittees,
         icon: UserGroupIcon,
         color: 'green'
     },
     {
         title: 'Registered Users',
-        value: stats.registeredUsers,
-        change: '+23%',
-        trend: 'up',
+        value: stats.value.registeredUsers,
         icon: UsersIcon,
         color: 'purple'
     },
     {
         title: 'Documents Uploaded',
-        value: stats.documentsUploaded,
-        change: '+8%',
-        trend: 'up',
+        value: stats.value.documentsUploaded,
         icon: DocumentTextIcon,
         color: 'orange'
     }
@@ -385,149 +372,75 @@ const loadDashboardData = async () => {
     try {
         isLoading.value = true
 
-        // Load all dashboard data in parallel
-        const [eventsRes, committeesRes, statsRes] = await Promise.all([
-            loadActiveEvents(),
-            loadCommitteeStatus(),
-            loadDashboardStats()
+        // Load all data in parallel for better performance
+        const [dashboardResponse, healthResponse] = await Promise.all([
+            // Single API call for all dashboard data
+            apiMethods.get('/api/admin/dashboard'),
+            // System health check
+            fetch('/api/health').then(res => res.ok ? res.json() : null).catch(() => null)
         ])
 
-        await loadRecentActivity()
-        await loadSystemHealth()
+        if (dashboardResponse?.data) {
+            const data = dashboardResponse.data
+
+            // Update stats
+            stats.value = {
+                totalEvents: data.stats?.totalEvents || 0,
+                activeCommittees: data.stats?.activeCommittees || 0,
+                registeredUsers: data.stats?.registeredUsers || 0,
+                documentsUploaded: data.stats?.documentsUploaded || 0
+            }
+
+            // Update other sections
+            activeEvents.value = data.events || []
+            committeeStatus.value = data.committees || []
+            recentActivity.value = data.recentActivity || []
+        }
+
+        // Update system health
+        if (healthResponse) {
+            systemHealth.value = {
+                apiStatus: healthResponse.status === 'healthy' ? 'healthy' : 'unhealthy',
+                apiResponseTime: healthResponse.responseTime || null,
+                dbStatus: healthResponse.services?.database || 'unknown',
+                wsStatus: healthResponse.modules?.websocket === 'active' ? 'healthy' : 'unhealthy',
+                activeConnections: healthResponse.connections?.active || 0,
+                storageUsed: healthResponse.storage?.usedPercent || 0
+            }
+        }
 
     } catch (error) {
         console.error('Dashboard loading error:', error)
         toast.error('Failed to load dashboard data')
+
+        // Set defaults on error
+        stats.value = {
+            totalEvents: 0,
+            activeCommittees: 0,
+            registeredUsers: 0,
+            documentsUploaded: 0
+        }
+        systemHealth.value = {
+            apiStatus: 'unhealthy',
+            apiResponseTime: null,
+            dbStatus: 'unknown',
+            wsStatus: 'unhealthy',
+            activeConnections: 0,
+            storageUsed: 0
+        }
     } finally {
         isLoading.value = false
     }
 }
 
-const loadActiveEvents = async () => {
-    try {
-        // TODO: Replace with actual API call
-        activeEvents.value = [
-            {
-                id: 1,
-                name: "Global Youth MUN 2025",
-                description: "Annual global youth model united nations conference",
-                status: "active",
-                startDate: new Date().toISOString(),
-                committees: [1, 2, 3],
-                participants: 150
-            },
-            {
-                id: 2,
-                name: "Regional Security Council",
-                description: "Regional security council simulation",
-                status: "draft",
-                startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-                committees: [1],
-                participants: 45
-            }
-        ]
-    } catch (error) {
-        console.error('Load events error:', error)
-    }
-}
-
-const loadCommitteeStatus = async () => {
-    try {
-        // TODO: Replace with actual API call
-        committeeStatus.value = [
-            {
-                id: 1,
-                name: "General Assembly",
-                eventName: "Global Youth MUN 2025",
-                status: "active",
-                countries: new Array(48),
-                registeredCount: 42
-            },
-            {
-                id: 2,
-                name: "Security Council",
-                eventName: "Global Youth MUN 2025",
-                status: "setup",
-                countries: new Array(15),
-                registeredCount: 8
-            }
-        ]
-    } catch (error) {
-        console.error('Load committees error:', error)
-    }
-}
-
-const loadDashboardStats = async () => {
-    try {
-        // TODO: Replace with actual API call to /api/export/statistics
-        stats.totalEvents = 8
-        stats.activeCommittees = 12
-        stats.registeredUsers = 342
-        stats.documentsUploaded = 89
-    } catch (error) {
-        console.error('Load stats error:', error)
-    }
-}
-
 const loadRecentActivity = async () => {
     try {
-        recentActivity.value = [
-            {
-                id: 1,
-                type: 'event_created',
-                title: 'New event created',
-                description: 'Global Youth MUN 2025 has been created',
-                user: 'admin',
-                timestamp: new Date(Date.now() - 5 * 60 * 1000),
-                icon: CalendarDaysIcon,
-                color: 'blue'
-            },
-            {
-                id: 2,
-                type: 'committee_added',
-                title: 'Committee added',
-                description: 'Security Council added to Global Youth MUN 2025',
-                user: 'admin',
-                timestamp: new Date(Date.now() - 15 * 60 * 1000),
-                icon: UserGroupIcon,
-                color: 'green'
-            },
-            {
-                id: 3,
-                type: 'users_registered',
-                title: 'New registrations',
-                description: '12 new users registered in the last hour',
-                user: 'system',
-                timestamp: new Date(Date.now() - 45 * 60 * 1000),
-                icon: UsersIcon,
-                color: 'purple'
-            }
-        ]
-    } catch (error) {
-        console.error('Load activity error:', error)
-    }
-}
-
-const loadSystemHealth = async () => {
-    try {
-        // TODO: Replace with actual API call to /api/health
-        const response = await fetch('/api/health')
-        if (response.ok) {
-            const health = await response.json()
-            Object.assign(systemHealth, {
-                apiStatus: health.status === 'healthy' ? 'healthy' : 'unhealthy',
-                apiResponseTime: Math.round(performance.now()),
-                dbStatus: health.services?.database || 'unknown',
-                wsStatus: health.modules?.websocket === 'active' ? 'healthy' : 'unhealthy',
-                activeConnections: 47, // TODO: get from health endpoint
-                storageUsed: 34 // TODO: get from health endpoint
-            })
+        const response = await apiMethods.get('/api/admin/activity')
+        if (response?.data) {
+            recentActivity.value = response.data
         }
     } catch (error) {
-        console.error('Load health error:', error)
-        systemHealth.apiStatus = 'unhealthy'
-        systemHealth.dbStatus = 'unknown'
-        systemHealth.wsStatus = 'unhealthy'
+        console.error('Load activity error:', error)
     }
 }
 
@@ -538,9 +451,14 @@ const refreshDashboard = async () => {
 
 const bulkGenerateQR = async () => {
     try {
-        // TODO: Implement bulk QR generation
-        toast.info('Bulk QR generation would start here')
+        const response = await apiMethods.post('/api/admin/bulk-qr-generate')
+        if (response?.success) {
+            toast.success('QR codes generated successfully')
+        } else {
+            toast.error('Failed to generate QR codes')
+        }
     } catch (error) {
+        console.error('QR generation error:', error)
         toast.error('Failed to generate QR codes')
     }
 }
@@ -551,17 +469,19 @@ const goToEvent = (eventId) => {
 
 const handleEventCreated = (event) => {
     activeEvents.value.unshift(event)
-    stats.totalEvents++
+    stats.value.totalEvents++
     toast.success(`Event "${event.name}" created successfully`)
 }
 
 const handleCommitteeCreated = (committee) => {
     committeeStatus.value.unshift(committee)
-    stats.activeCommittees++
+    stats.value.activeCommittees++
     toast.success(`Committee "${committee.name}" created successfully`)
 }
 
 const formatTime = (timestamp) => {
+    if (!timestamp) return ''
+
     const now = new Date()
     const diff = Math.floor((now - new Date(timestamp)) / 60000)
 
@@ -571,6 +491,7 @@ const formatTime = (timestamp) => {
 }
 
 const formatDate = (dateString) => {
+    if (!dateString) return ''
     return new Date(dateString).toLocaleDateString()
 }
 

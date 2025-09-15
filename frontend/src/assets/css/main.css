@@ -137,11 +137,6 @@
         @apply bg-un-blue text-white shadow-mun;
     }
 
-    .nav-link.active::before {
-        content: '';
-        @apply absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full;
-    }
-
     /* Loading states */
     .loading-shimmer {
         @apply animate-pulse bg-gradient-to-r from-mun-gray-200 via-mun-gray-100 to-mun-gray-200;

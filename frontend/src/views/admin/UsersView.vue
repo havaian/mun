@@ -31,7 +31,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Total Users</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.total }}</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.total || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -43,7 +43,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Active</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.active }}</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.active || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -55,7 +55,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Pending</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.pending }}</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.pending || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -67,7 +67,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Inactive</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.inactive }}</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.inactive || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -131,7 +131,7 @@
             </div>
 
             <div v-if="isLoading" class="flex items-center justify-center py-12">
-                <LoadingSpinner />
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-un-blue"></div>
             </div>
 
             <div v-else-if="filteredUsers.length === 0" class="text-center py-12">
@@ -141,7 +141,7 @@
                 </h3>
                 <p class="mt-2 text-mun-gray-600 mb-4">
                     {{searchQuery || Object.values(filters).some(v => v) ? 'Try adjusting your search or filters' :
-                    'Add your first user to get started' }}
+                        'Add your first user to get started'}}
                 </p>
                 <button v-if="!searchQuery && !Object.values(filters).some(v => v)" @click="showCreateModal = true"
                     class="btn-un-primary">
@@ -297,7 +297,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
@@ -352,22 +352,24 @@ const showDetailsModal = ref(false)
 const showDeleteConfirm = ref(false)
 
 // Filters
-const filters = reactive({
+const filters = ref({
     role: '',
     status: '',
     committee: ''
 })
 
-// Stats
-const stats = reactive({
-    total: 0,
-    active: 0,
-    pending: 0,
-    inactive: 0
+// Stats - calculated from users data
+const stats = computed(() => {
+    const total = users.value.length
+    const active = users.value.filter(u => u.isActive).length
+    const pending = users.value.filter(u => !u.isActive && !u.email).length
+    const inactive = users.value.filter(u => !u.isActive && u.email).length
+
+    return { total, active, pending, inactive }
 })
 
 // Pagination
-const pagination = reactive({
+const pagination = ref({
     currentPage: 1,
     pageSize: 10
 })
@@ -388,21 +390,21 @@ const filteredUsers = computed(() => {
     }
 
     // Role filter
-    if (filters.role) {
-        filtered = filtered.filter(user => user.role === filters.role)
+    if (filters.value.role) {
+        filtered = filtered.filter(user => user.role === filters.value.role)
     }
 
     // Status filter
-    if (filters.status) {
+    if (filters.value.status) {
         filtered = filtered.filter(user => {
             const status = formatUserStatus(user).toLowerCase()
-            return status === filters.status
+            return status === filters.value.status
         })
     }
 
     // Committee filter
-    if (filters.committee) {
-        filtered = filtered.filter(user => user.committeeId === filters.committee)
+    if (filters.value.committee) {
+        filtered = filtered.filter(user => user.committeeId === filters.value.committee)
     }
 
     // Sort
@@ -431,12 +433,12 @@ const filteredUsers = computed(() => {
 })
 
 const totalPages = computed(() => {
-    return Math.ceil(filteredUsers.value.length / pagination.pageSize)
+    return Math.ceil(filteredUsers.value.length / pagination.value.pageSize)
 })
 
 const paginatedUsers = computed(() => {
-    const start = (pagination.currentPage - 1) * pagination.pageSize
-    const end = start + pagination.pageSize
+    const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
+    const end = start + pagination.value.pageSize
     return filteredUsers.value.slice(start, end)
 })
 
@@ -455,67 +457,31 @@ const loadUsers = async () => {
     try {
         isLoading.value = true
 
-        // TODO: Replace with actual API calls
-        users.value = [
-            {
-                id: 1,
-                role: 'admin',
-                username: 'admin',
-                email: 'admin@mun.uz',
-                isActive: true,
-                lastLogin: new Date().toISOString(),
-                createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-            },
-            {
-                id: 2,
-                role: 'presidium',
-                presidiumRole: 'chairman',
-                email: 'chairman@mun.uz',
-                committeeId: 'ga',
-                isActive: true,
-                lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-                createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
-            },
-            {
-                id: 3,
-                role: 'delegate',
-                countryName: 'United States',
-                email: 'usa@delegates.mun.uz',
-                committeeId: 'ga',
-                isActive: true,
-                lastLogin: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-                createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
-            },
-            {
-                id: 4,
-                role: 'delegate',
-                countryName: 'United Kingdom',
-                committeeId: 'ga',
-                isActive: false,
-                createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-            }
-        ]
+        const [usersResponse, committeesResponse] = await Promise.all([
+            apiMethods.get('/api/admin/users'),
+            apiMethods.get('/api/admin/committees')
+        ])
 
-        committees.value = [
-            { id: 'ga', name: 'General Assembly' },
-            { id: 'sc', name: 'Security Council' }
-        ]
+        if (usersResponse?.data) {
+            users.value = usersResponse.data
+        } else {
+            users.value = []
+        }
 
-        updateStats()
+        if (committeesResponse?.data) {
+            committees.value = committeesResponse.data
+        } else {
+            committees.value = []
+        }
 
     } catch (error) {
         console.error('Load users error:', error)
         toast.error('Failed to load users')
+        users.value = []
+        committees.value = []
     } finally {
         isLoading.value = false
     }
-}
-
-const updateStats = () => {
-    stats.total = users.value.length
-    stats.active = users.value.filter(u => u.isActive).length
-    stats.pending = users.value.filter(u => !u.isActive && !u.email).length
-    stats.inactive = users.value.filter(u => !u.isActive && u.email).length
 }
 
 const refreshUsers = async () => {
@@ -524,15 +490,15 @@ const refreshUsers = async () => {
 }
 
 const filterUsers = () => {
-    pagination.currentPage = 1
+    pagination.value.currentPage = 1
 }
 
 const sortUsers = () => {
-    pagination.currentPage = 1
+    pagination.value.currentPage = 1
 }
 
 const debouncedSearch = debounce(() => {
-    pagination.currentPage = 1
+    pagination.value.currentPage = 1
 }, 300)
 
 const toggleSelectAll = () => {
@@ -550,18 +516,23 @@ const bulkAction = async (action) => {
     try {
         if (selectedUsers.value.length === 0) return
 
-        // TODO: Implement bulk actions
-        if (action === 'activate') {
-            users.value.forEach(user => {
-                if (selectedUsers.value.includes(user.id)) {
-                    user.isActive = true
-                }
-            })
-            toast.success(`${selectedUsers.value.length} users activated`)
+        const response = await apiMethods.post('/api/admin/users/bulk-action', {
+            action,
+            userIds: selectedUsers.value
+        })
+
+        if (response?.success) {
+            if (action === 'activate') {
+                users.value.forEach(user => {
+                    if (selectedUsers.value.includes(user.id)) {
+                        user.isActive = true
+                    }
+                })
+                toast.success(`${selectedUsers.value.length} users activated`)
+            }
         }
 
         selectedUsers.value = []
-        updateStats()
 
     } catch (error) {
         console.error('Bulk action error:', error)
@@ -589,9 +560,14 @@ const editUserFromDetails = (user) => {
 
 const toggleUserStatus = async (user) => {
     try {
-        user.isActive = !user.isActive
-        updateStats()
-        toast.success(`User ${user.isActive ? 'activated' : 'deactivated'}`)
+        const response = await apiMethods.put(`/api/admin/users/${user.id}/status`, {
+            isActive: !user.isActive
+        })
+
+        if (response?.success) {
+            user.isActive = !user.isActive
+            toast.success(`User ${user.isActive ? 'activated' : 'deactivated'}`)
+        }
     } catch (error) {
         console.error('Toggle user status error:', error)
         toast.error('Failed to update user status')
@@ -600,8 +576,10 @@ const toggleUserStatus = async (user) => {
 
 const resetUserQR = async (user) => {
     try {
-        // TODO: API call to reset QR token
-        toast.success('QR code reset successfully')
+        const response = await apiMethods.post(`/api/admin/users/${user.id}/reset-qr`)
+        if (response?.success) {
+            toast.success('QR code reset successfully')
+        }
     } catch (error) {
         console.error('Reset QR error:', error)
         toast.error('Failed to reset QR code')
@@ -615,11 +593,13 @@ const deleteUser = (user) => {
 
 const confirmDelete = async () => {
     try {
-        users.value = users.value.filter(u => u.id !== selectedUser.value.id)
-        updateStats()
+        const response = await apiMethods.delete(`/api/admin/users/${selectedUser.value.id}`)
+        if (response?.success) {
+            users.value = users.value.filter(u => u.id !== selectedUser.value.id)
+            toast.success('User deleted successfully')
+        }
 
         showDeleteConfirm.value = false
-        toast.success('User deleted successfully')
         selectedUser.value = null
     } catch (error) {
         console.error('Delete user error:', error)
@@ -629,8 +609,23 @@ const confirmDelete = async () => {
 
 const exportUsers = async () => {
     try {
-        // TODO: Implement export functionality
-        toast.info('Export functionality would be implemented here')
+        const response = await apiMethods.get('/api/admin/users/export', {
+            responseType: 'blob'
+        })
+
+        if (response) {
+            // Create download link
+            const url = window.URL.createObjectURL(new Blob([response]))
+            const link = document.createElement('a')
+            link.href = url
+            link.setAttribute('download', `users-export-${new Date().toISOString().split('T')[0]}.csv`)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.URL.revokeObjectURL(url)
+
+            toast.success('Users exported successfully')
+        }
     } catch (error) {
         console.error('Export users error:', error)
         toast.error('Failed to export users')
@@ -639,7 +634,6 @@ const exportUsers = async () => {
 
 const handleUserCreated = (user) => {
     users.value.unshift(user)
-    updateStats()
     toast.success('User created successfully')
 }
 
@@ -647,13 +641,12 @@ const handleUserUpdated = (user) => {
     const index = users.value.findIndex(u => u.id === user.id)
     if (index !== -1) {
         users.value[index] = user
-        updateStats()
         toast.success('User updated successfully')
     }
 }
 
 const handlePageChange = (page) => {
-    pagination.currentPage = page
+    pagination.value.currentPage = page
 }
 
 // Utility functions
@@ -701,6 +694,8 @@ const getCommitteeName = (committeeId) => {
 }
 
 const formatRelativeDate = (dateString) => {
+    if (!dateString) return ''
+
     const date = new Date(dateString)
     const now = new Date()
     const diffMs = now - date
