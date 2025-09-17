@@ -1,329 +1,258 @@
 <template>
-    <div class="p-6 space-y-6">
-        <!-- Header -->
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-bold text-mun-gray-900">Admin Dashboard</h1>
-                <p class="text-mun-gray-600">System overview and management</p>
-            </div>
-            <div class="flex items-center space-x-3">
-                <button @click="refreshDashboard" :disabled="isLoading" class="btn-un-secondary">
-                    <ArrowPathIcon class="w-5 h-5 mr-2" />
-                    Refresh
-                </button>
-                <button @click="showExportModal = true" class="btn-un-primary">
-                    <DocumentArrowDownIcon class="w-5 h-5 mr-2" />
-                    Export Reports
-                </button>
-            </div>
-        </div>
-
-        <!-- Dashboard Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div v-for="stat in dashboardStats" :key="stat.title" class="mun-card p-6">
-                <div class="flex items-center">
-                    <div :class="[
-                        'p-3 rounded-lg',
-                        stat.color === 'blue' ? 'bg-un-blue/10' :
-                            stat.color === 'green' ? 'bg-mun-green-500/10' :
-                                stat.color === 'purple' ? 'bg-purple-500/10' :
-                                    'bg-orange-500/10'
-                    ]">
-                        <component :is="stat.icon" :class="[
-                            'w-6 h-6',
-                            stat.color === 'blue' ? 'text-un-blue' :
-                                stat.color === 'green' ? 'text-mun-green-500' :
-                                    stat.color === 'purple' ? 'text-purple-500' :
-                                        'text-orange-500'
-                        ]" />
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-mun-gray-600">{{ stat.title }}</p>
-                        <div class="flex items-center space-x-2">
-                            <p class="text-2xl font-bold text-mun-gray-900">{{ stat.value || 0 }}</p>
-                        </div>
-                    </div>
+    <AdminLayout>
+        <div class="space-y-6 p-6">
+            <!-- Header with Quick Actions -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+                    <p class="text-gray-600">System overview and key metrics</p>
+                </div>
+                <div class="flex space-x-3">
+                    <AppButton variant="outline" size="sm" @click="refreshDashboard" :loading="isRefreshing">
+                        <ArrowPathIcon class="h-4 w-4 mr-1" />
+                        Refresh
+                    </AppButton>
+                    <AppButton variant="primary" size="sm" @click="bulkGenerateQR" :loading="isGeneratingQR">
+                        <QrCodeIcon class="h-4 w-4 mr-1" />
+                        Generate QRs
+                    </AppButton>
                 </div>
             </div>
-        </div>
 
-        <!-- Quick Actions -->
-        <div class="mun-card p-6">
-            <h2 class="text-lg font-semibold text-mun-gray-900 mb-4">Quick Actions</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <button @click="showCreateEventModal = true"
-                    class="flex flex-col items-center p-4 border-2 border-dashed border-mun-gray-200 rounded-lg hover:border-un-blue hover:bg-un-blue/5 transition-colors">
-                    <PlusIcon class="w-8 h-8 text-un-blue mb-2" />
-                    <span class="text-sm font-medium text-mun-gray-900">Create Event</span>
-                </button>
-
-                <button @click="showCreateCommitteeModal = true"
-                    class="flex flex-col items-center p-4 border-2 border-dashed border-mun-gray-200 rounded-lg hover:border-mun-green-500 hover:bg-mun-green-50 transition-colors">
-                    <UserGroupIcon class="w-8 h-8 text-mun-green-500 mb-2" />
-                    <span class="text-sm font-medium text-mun-gray-900">Add Committee</span>
-                </button>
-
-                <button @click="bulkGenerateQR"
-                    class="flex flex-col items-center p-4 border-2 border-dashed border-mun-gray-200 rounded-lg hover:border-mun-yellow-500 hover:bg-mun-yellow-50 transition-colors">
-                    <QrCodeIcon class="w-8 h-8 text-mun-yellow-500 mb-2" />
-                    <span class="text-sm font-medium text-mun-gray-900">Generate QR Codes</span>
-                </button>
-
-                <RouterLink to="/admin/reports"
-                    class="flex flex-col items-center p-4 border-2 border-dashed border-mun-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors">
-                    <ChartBarIcon class="w-8 h-8 text-purple-500 mb-2" />
-                    <span class="text-sm font-medium text-mun-gray-900">View Reports</span>
-                </RouterLink>
-            </div>
-        </div>
-
-        <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- System Health -->
-            <div class="mun-card p-6">
-                <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">System Health</h3>
-                <div class="space-y-4">
+            <!-- Stats Grid - Load First for Instant Feedback -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div v-for="stat in dashboardStats" :key="stat.title"
+                    class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                     <div class="flex items-center justify-between">
-                        <span class="text-sm text-mun-gray-600">API Status</span>
-                        <div class="flex items-center space-x-2">
-                            <div :class="[
-                                'w-2 h-2 rounded-full',
-                                systemHealth.apiStatus === 'healthy' ? 'bg-mun-green-500' : 'bg-mun-red-500'
-                            ]"></div>
-                            <span class="text-sm font-medium">{{ systemHealth.apiResponseTime || '--' }}ms</span>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-mun-gray-600">Database</span>
-                        <div class="flex items-center space-x-2">
-                            <div :class="[
-                                'w-2 h-2 rounded-full',
-                                systemHealth.dbStatus === 'connected' ? 'bg-mun-green-500' : 'bg-mun-red-500'
-                            ]"></div>
-                            <span class="text-sm font-medium">{{ systemHealth.dbStatus || 'unknown' }}</span>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-mun-gray-600">WebSocket</span>
-                        <div class="flex items-center space-x-2">
-                            <div :class="[
-                                'w-2 h-2 rounded-full',
-                                systemHealth.wsStatus === 'healthy' ? 'bg-mun-green-500' : 'bg-mun-red-500'
-                            ]"></div>
-                            <span class="text-sm font-medium">{{ systemHealth.activeConnections || 0 }} active</span>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-mun-gray-600">Storage</span>
-                        <div class="flex items-center space-x-2">
-                            <div class="w-16 bg-mun-gray-200 rounded-full h-2">
-                                <div :class="[
-                                    'h-2 rounded-full transition-all duration-300',
-                                    (systemHealth.storageUsed || 0) < 80 ? 'bg-mun-green-500' : 'bg-mun-red-500'
-                                ]" :style="{ width: `${systemHealth.storageUsed || 0}%` }"></div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">{{ stat.title }}</p>
+                            <!-- Skeleton loading for stats -->
+                            <div v-if="isLoadingStats" class="mt-2">
+                                <div class="h-8 bg-gray-200 rounded animate-pulse w-16"></div>
                             </div>
-                            <span class="text-sm font-medium">{{ systemHealth.storageUsed || 0 }}%</span>
+                            <p v-else class="text-3xl font-bold text-gray-900 mt-2">
+                                {{ stat.value?.toLocaleString() || '0' }}
+                            </p>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="lg:col-span-2 mun-card p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-mun-gray-900">Recent Activity</h3>
-                    <button @click="loadRecentActivity" class="text-sm text-un-blue hover:text-un-blue-600">
-                        View All
-                    </button>
-                </div>
-
-                <div v-if="isLoading" class="flex items-center justify-center py-8">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-un-blue"></div>
-                </div>
-
-                <div v-else class="space-y-4">
-                    <div v-for="activity in recentActivity" :key="activity.id"
-                        class="flex items-start space-x-3 p-3 hover:bg-mun-gray-50 rounded-lg transition-colors">
                         <div :class="[
-                            'p-2 rounded-lg',
-                            activity.color === 'blue' ? 'bg-un-blue/10' :
-                                activity.color === 'green' ? 'bg-mun-green-500/10' :
-                                    activity.color === 'purple' ? 'bg-purple-500/10' :
-                                        'bg-orange-500/10'
+                            'h-12 w-12 rounded-md flex items-center justify-center',
+                            stat.color === 'blue' ? 'bg-blue-100 text-blue-600' :
+                                stat.color === 'green' ? 'bg-green-100 text-green-600' :
+                                    stat.color === 'purple' ? 'bg-purple-100 text-purple-600' :
+                                        'bg-orange-100 text-orange-600'
                         ]">
-                            <component :is="activity.icon" :class="[
-                                'w-4 h-4',
-                                activity.color === 'blue' ? 'text-un-blue' :
-                                    activity.color === 'green' ? 'text-mun-green-500' :
-                                        activity.color === 'purple' ? 'text-purple-500' :
-                                            'text-orange-500'
-                            ]" />
+                            <component :is="stat.icon" class="h-6 w-6" />
                         </div>
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-mun-gray-900">{{ activity.title }}</p>
-                            <p class="text-sm text-mun-gray-600">{{ activity.description }}</p>
-                            <div class="flex items-center space-x-2 mt-1 text-xs text-mun-gray-500">
-                                <span>{{ activity.user }}</span>
-                                <span>•</span>
-                                <span>{{ formatTime(activity.timestamp) }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div v-if="recentActivity.length === 0" class="text-center py-8">
-                        <ClockIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-4" />
-                        <p class="text-mun-gray-500">No recent activity</p>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Events & Committees Overview -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Active Events -->
-            <div class="mun-card p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-mun-gray-900">Active Events</h3>
-                    <RouterLink to="/admin/events" class="text-sm text-un-blue hover:text-un-blue-600">
-                        Manage Events
-                    </RouterLink>
-                </div>
-
-                <div class="space-y-4">
-                    <div v-for="event in activeEvents" :key="event.id" @click="goToEvent(event.id)"
-                        class="p-4 border border-mun-gray-200 rounded-lg hover:bg-mun-gray-50 cursor-pointer transition-colors">
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <h4 class="font-medium text-mun-gray-900">{{ event.name }}</h4>
-                                <p class="text-sm text-mun-gray-600 mt-1">{{ event.description }}</p>
-                                <div class="flex items-center space-x-4 mt-2 text-xs text-mun-gray-500">
-                                    <span>{{ event.committees?.length || 0 }} committees</span>
-                                    <span>{{ event.participants || 0 }} participants</span>
-                                    <span>{{ formatDate(event.startDate) }}</span>
+            <!-- Main Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left Column - Active Events -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">Active Events</h3>
+                                <AppButton variant="outline" size="sm" @click="goToEvents">
+                                    View All
+                                </AppButton>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <!-- Skeleton loading for events -->
+                            <div v-if="isLoadingEvents" class="space-y-4">
+                                <div v-for="i in 3" :key="i" class="flex items-center space-x-4">
+                                    <div class="h-10 w-10 bg-gray-200 rounded-full animate-pulse"></div>
+                                    <div class="flex-1 space-y-2">
+                                        <div class="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                                        <div class="h-3 bg-gray-200 rounded animate-pulse w-1/2"></div>
+                                    </div>
                                 </div>
                             </div>
-                            <span :class="[
-                                'px-2 py-1 rounded-full text-xs font-medium',
-                                event.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
-                                    event.status === 'draft' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
-                                        'bg-mun-gray-100 text-mun-gray-700'
-                            ]">
-                                {{ event.status }}
-                            </span>
+                            <!-- Events content -->
+                            <div v-else-if="activeEvents.length > 0" class="space-y-4">
+                                <div v-for="event in activeEvents.slice(0, 5)" :key="event.id"
+                                    class="flex items-center space-x-4 p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                                    @click="goToEvent(event.id)">
+                                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <CalendarDaysIcon class="h-5 w-5 text-blue-600" />
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-medium text-gray-900">{{ event.name }}</p>
+                                        <p class="text-sm text-gray-500">{{ formatDate(event.startDate) }}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-gray-900">{{ event.committeeCount }}
+                                            committees</p>
+                                        <p class="text-xs text-gray-500">{{ event.participantCount }} participants</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-else class="text-center py-8">
+                                <CalendarDaysIcon class="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                                <p class="text-gray-500">No active events</p>
+                                <AppButton variant="primary" size="sm" class="mt-2" @click="createEvent">
+                                    Create Event
+                                </AppButton>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - System Health & Quick Actions -->
+                <div class="space-y-6">
+                    <!-- System Health -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div class="p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">System Health</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">API Status</span>
+                                    <div v-if="isLoadingHealth" class="h-4 w-16 bg-gray-200 rounded animate-pulse">
+                                    </div>
+                                    <span v-else :class="[
+                                        'px-2 py-1 rounded-full text-xs font-medium',
+                                        systemHealth.apiStatus === 'healthy'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-red-100 text-red-700'
+                                    ]">
+                                        {{ systemHealth.apiStatus || 'Unknown' }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">Database</span>
+                                    <div v-if="isLoadingHealth" class="h-4 w-16 bg-gray-200 rounded animate-pulse">
+                                    </div>
+                                    <span v-else :class="[
+                                        'px-2 py-1 rounded-full text-xs font-medium',
+                                        systemHealth.dbStatus === 'healthy'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-red-100 text-red-700'
+                                    ]">
+                                        {{ systemHealth.dbStatus || 'Unknown' }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">WebSocket</span>
+                                    <div v-if="isLoadingHealth" class="h-4 w-16 bg-gray-200 rounded animate-pulse">
+                                    </div>
+                                    <span v-else :class="[
+                                        'px-2 py-1 rounded-full text-xs font-medium',
+                                        systemHealth.wsStatus === 'healthy'
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-red-100 text-red-700'
+                                    ]">
+                                        {{ systemHealth.wsStatus || 'Unknown' }}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div v-if="activeEvents.length === 0" class="text-center py-8">
-                        <CalendarDaysIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-4" />
-                        <p class="text-mun-gray-500 mb-4">No active events</p>
-                        <button @click="showCreateEventModal = true" class="btn-un-primary">
-                            Create First Event
-                        </button>
+                    <!-- Quick Actions -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div class="p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                            <div class="space-y-3">
+                                <AppButton variant="outline" size="sm" class="w-full justify-start"
+                                    @click="goToCommittees">
+                                    <UserGroupIcon class="h-4 w-4 mr-2" />
+                                    Manage Committees
+                                </AppButton>
+                                <AppButton variant="outline" size="sm" class="w-full justify-start" @click="goToUsers">
+                                    <UsersIcon class="h-4 w-4 mr-2" />
+                                    User Management
+                                </AppButton>
+                                <AppButton variant="outline" size="sm" class="w-full justify-start"
+                                    @click="goToReports">
+                                    <ChartBarIcon class="h-4 w-4 mr-2" />
+                                    View Reports
+                                </AppButton>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Committee Status -->
-            <div class="mun-card p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-mun-gray-900">Committee Status</h3>
-                    <RouterLink to="/admin/committees" class="text-sm text-un-blue hover:text-un-blue-600">
-                        Manage Committees
-                    </RouterLink>
+            <!-- Recent Activity - Load Last -->
+            <div v-if="!isInitialLoad" class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
                 </div>
-
-                <div class="space-y-4">
-                    <div v-for="committee in committeeStatus" :key="committee.id"
-                        class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg">
-                        <div>
-                            <h4 class="font-medium text-mun-gray-900">{{ committee.name }}</h4>
-                            <p class="text-sm text-mun-gray-600">{{ committee.eventName }}</p>
-                            <div class="flex items-center space-x-3 mt-1 text-xs text-mun-gray-500">
-                                <span>{{ committee.countries?.length || 0 }} countries</span>
-                                <span>{{ committee.registeredCount || 0 }} registered</span>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <span :class="[
-                                'px-2 py-1 rounded-full text-xs font-medium',
-                                committee.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
-                                    committee.status === 'setup' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
-                                        'bg-mun-gray-100 text-mun-gray-700'
-                            ]">
-                                {{ committee.status }}
-                            </span>
-                            <div class="mt-2 text-xs text-mun-gray-500">
-                                {{ Math.round(((committee.registeredCount || 0) / (committee.countries?.length || 1)) *
-                                    100) }}% ready
+                <div class="p-6">
+                    <!-- Skeleton loading for activity -->
+                    <div v-if="isLoadingActivity" class="space-y-3">
+                        <div v-for="i in 5" :key="i" class="flex items-start space-x-3">
+                            <div class="h-8 w-8 bg-gray-200 rounded-full animate-pulse"></div>
+                            <div class="flex-1 space-y-2">
+                                <div class="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                                <div class="h-3 bg-gray-200 rounded animate-pulse w-1/2"></div>
                             </div>
                         </div>
                     </div>
-
-                    <div v-if="committeeStatus.length === 0" class="text-center py-8">
-                        <UserGroupIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-4" />
-                        <p class="text-mun-gray-500 mb-4">No committees yet</p>
-                        <button @click="showCreateCommitteeModal = true" class="btn-un-secondary">
-                            Create Committee
-                        </button>
+                    <!-- Activity content -->
+                    <div v-else-if="recentActivity.length > 0" class="space-y-4">
+                        <div v-for="activity in recentActivity.slice(0, 10)" :key="activity.id"
+                            class="flex items-start space-x-3">
+                            <div class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                <div class="h-2 w-2 bg-blue-600 rounded-full"></div>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm text-gray-900">{{ activity.description }}</p>
+                                <p class="text-xs text-gray-500">{{ formatTime(activity.timestamp) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="text-center py-8">
+                        <p class="text-gray-500">No recent activity</p>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Modals -->
-        <CreateEventModal v-model="showCreateEventModal" @created="handleEventCreated" />
-        <CreateCommitteeModal v-model="showCreateCommitteeModal" @created="handleCommitteeCreated" />
-        <ExportReportsModal v-model="showExportModal" />
-    </div>
+    </AdminLayout>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useAppStore } from '@/stores/app'
 import { useToast } from '@/plugins/toast'
+import AdminLayout from '@/layouts/AdminLayout.vue'
 import { apiMethods } from '@/utils/api'
 
 // Icons
 import {
-    ArrowPathIcon,
-    DocumentArrowDownIcon,
-    PlusIcon,
+    CalendarDaysIcon,
     UserGroupIcon,
+    UsersIcon,
+    DocumentTextIcon,
+    ArrowPathIcon,
     QrCodeIcon,
     ChartBarIcon,
-    ClockIcon,
-    CalendarDaysIcon,
-    UsersIcon,
-    DocumentTextIcon
+    EyeIcon
 } from '@heroicons/vue/24/outline'
-
-// Components
-import CreateEventModal from '@/components/admin/CreateEventModal.vue'
-import CreateCommitteeModal from '@/components/admin/CreateCommitteeModal.vue'
-import ExportReportsModal from '@/components/admin/ExportReportsModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const appStore = useAppStore()
 const toast = useToast()
 
-// State
-const isLoading = ref(false)
-const showCreateEventModal = ref(false)
-const showCreateCommitteeModal = ref(false)
-const showExportModal = ref(false)
+// Loading states - Separate loading for different sections
+const isInitialLoad = ref(true)
+const isLoadingStats = ref(false)
+const isLoadingEvents = ref(false)
+const isLoadingHealth = ref(false)
+const isLoadingActivity = ref(false)
+const isRefreshing = ref(false)
+const isGeneratingQR = ref(false)
 
-// Data - these will be populated from real API calls
+// Data
 const stats = ref({
-    totalEvents: null,
-    activeCommittees: null,
-    registeredUsers: null,
-    documentsUploaded: null
+    totalEvents: 0,
+    activeCommittees: 0,
+    registeredUsers: 0,
+    documentsUploaded: 0
 })
 
 const systemHealth = ref({
@@ -336,8 +265,16 @@ const systemHealth = ref({
 })
 
 const activeEvents = ref([])
-const committeeStatus = ref([])
 const recentActivity = ref([])
+
+// Cache for API responses
+const cache = ref({
+    stats: null,
+    events: null,
+    health: null,
+    activity: null,
+    timestamp: null
+})
 
 // Computed
 const dashboardStats = computed(() => [
@@ -367,52 +304,62 @@ const dashboardStats = computed(() => [
     }
 ])
 
-// Methods
-const loadDashboardData = async () => {
-    try {
-        isLoading.value = true
+// Check if cache is valid (5 minutes)
+const isCacheValid = () => {
+    if (!cache.value.timestamp) return false
+    return Date.now() - cache.value.timestamp < 300000 // 5 minutes
+}
 
-        // Load all data in parallel for better performance
-        const [dashboardResponse, healthResponse] = await Promise.all([
-            // Single API call for all dashboard data
-            apiMethods.get('/api/admin/dashboard'),
-            // System health check
-            fetch('/api/health').then(res => res.ok ? res.json() : null).catch(() => null)
+// Load dashboard data in stages for perceived performance
+const loadDashboardData = async (forceRefresh = false) => {
+    try {
+        // Check cache first
+        if (!forceRefresh && isCacheValid()) {
+            stats.value = cache.value.stats
+            activeEvents.value = cache.value.events
+            systemHealth.value = cache.value.health
+            recentActivity.value = cache.value.activity
+            return
+        }
+
+        // Stage 1: Load stats first (most important)
+        await loadStats()
+
+        // Stage 2: Load events and health in parallel
+        await Promise.all([
+            loadEvents(),
+            loadSystemHealth()
         ])
 
-        if (dashboardResponse?.data) {
-            const data = dashboardResponse.data
-
-            // Update stats
-            stats.value = {
-                totalEvents: data.stats?.totalEvents || 0,
-                activeCommittees: data.stats?.activeCommittees || 0,
-                registeredUsers: data.stats?.registeredUsers || 0,
-                documentsUploaded: data.stats?.documentsUploaded || 0
-            }
-
-            // Update other sections
-            activeEvents.value = data.events || []
-            committeeStatus.value = data.committees || []
-            recentActivity.value = data.recentActivity || []
-        }
-
-        // Update system health
-        if (healthResponse) {
-            systemHealth.value = {
-                apiStatus: healthResponse.status === 'healthy' ? 'healthy' : 'unhealthy',
-                apiResponseTime: healthResponse.responseTime || null,
-                dbStatus: healthResponse.services?.database || 'unknown',
-                wsStatus: healthResponse.modules?.websocket === 'active' ? 'healthy' : 'unhealthy',
-                activeConnections: healthResponse.connections?.active || 0,
-                storageUsed: healthResponse.storage?.usedPercent || 0
-            }
-        }
+        // Stage 3: Load activity last (least important)
+        await nextTick() // Wait for UI update
+        setTimeout(() => loadRecentActivity(), 100) // Defer slightly
 
     } catch (error) {
         console.error('Dashboard loading error:', error)
         toast.error('Failed to load dashboard data')
+    } finally {
+        isInitialLoad.value = false
+    }
+}
 
+// Load stats - Priority 1
+const loadStats = async () => {
+    try {
+        isLoadingStats.value = true
+        const response = await apiMethods.get('/api/admin/dashboard/stats')
+
+        if (response?.data) {
+            stats.value = {
+                totalEvents: response.data.totalEvents || 0,
+                activeCommittees: response.data.activeCommittees || 0,
+                registeredUsers: response.data.registeredUsers || 0,
+                documentsUploaded: response.data.documentsUploaded || 0
+            }
+            cache.value.stats = stats.value
+        }
+    } catch (error) {
+        console.error('Load stats error:', error)
         // Set defaults on error
         stats.value = {
             totalEvents: 0,
@@ -420,6 +367,61 @@ const loadDashboardData = async () => {
             registeredUsers: 0,
             documentsUploaded: 0
         }
+    } finally {
+        isLoadingStats.value = false
+    }
+}
+
+// Load events - Priority 2
+const loadEvents = async () => {
+    try {
+        isLoadingEvents.value = true
+        const response = await apiMethods.get('/api/admin/dashboard/events')
+
+        if (response?.data) {
+            activeEvents.value = response.data
+            cache.value.events = activeEvents.value
+        }
+    } catch (error) {
+        console.error('Load events error:', error)
+        activeEvents.value = []
+    } finally {
+        isLoadingEvents.value = false
+    }
+}
+
+// Load system health - Priority 2
+const loadSystemHealth = async () => {
+    try {
+        isLoadingHealth.value = true
+        const response = await fetch('/api/health', {
+            method: 'GET',
+            timeout: 3000 // Quick timeout for health check
+        }).then(res => res.ok ? res.json() : null).catch(() => null)
+
+        if (response) {
+            systemHealth.value = {
+                apiStatus: response.status === 'healthy' ? 'healthy' : 'unhealthy',
+                apiResponseTime: response.responseTime || null,
+                dbStatus: response.services?.database || 'unknown',
+                wsStatus: response.modules?.websocket === 'active' ? 'healthy' : 'unhealthy',
+                activeConnections: response.connections?.active || 0,
+                storageUsed: response.storage?.usedPercent || 0
+            }
+            cache.value.health = systemHealth.value
+        } else {
+            // Set unhealthy status if no response
+            systemHealth.value = {
+                apiStatus: 'unhealthy',
+                apiResponseTime: null,
+                dbStatus: 'unknown',
+                wsStatus: 'unhealthy',
+                activeConnections: 0,
+                storageUsed: 0
+            }
+        }
+    } catch (error) {
+        console.error('Load system health error:', error)
         systemHealth.value = {
             apiStatus: 'unhealthy',
             apiResponseTime: null,
@@ -429,28 +431,40 @@ const loadDashboardData = async () => {
             storageUsed: 0
         }
     } finally {
-        isLoading.value = false
+        isLoadingHealth.value = false
     }
 }
 
+// Load recent activity - Priority 3
 const loadRecentActivity = async () => {
     try {
+        isLoadingActivity.value = true
         const response = await apiMethods.get('/api/admin/activity')
+
         if (response?.data) {
             recentActivity.value = response.data
+            cache.value.activity = recentActivity.value
+            cache.value.timestamp = Date.now()
         }
     } catch (error) {
         console.error('Load activity error:', error)
+        recentActivity.value = []
+    } finally {
+        isLoadingActivity.value = false
     }
 }
 
+// Actions
 const refreshDashboard = async () => {
-    await loadDashboardData()
+    isRefreshing.value = true
+    await loadDashboardData(true) // Force refresh
     toast.success('Dashboard refreshed')
+    isRefreshing.value = false
 }
 
 const bulkGenerateQR = async () => {
     try {
+        isGeneratingQR.value = true
         const response = await apiMethods.post('/api/admin/bulk-qr-generate')
         if (response?.success) {
             toast.success('QR codes generated successfully')
@@ -460,31 +474,41 @@ const bulkGenerateQR = async () => {
     } catch (error) {
         console.error('QR generation error:', error)
         toast.error('Failed to generate QR codes')
+    } finally {
+        isGeneratingQR.value = false
     }
 }
 
+// Navigation helpers
 const goToEvent = (eventId) => {
     router.push({ name: 'AdminEvents', query: { highlight: eventId } })
 }
 
-const handleEventCreated = (event) => {
-    activeEvents.value.unshift(event)
-    stats.value.totalEvents++
-    toast.success(`Event "${event.name}" created successfully`)
+const goToEvents = () => {
+    router.push({ name: 'AdminEvents' })
 }
 
-const handleCommitteeCreated = (committee) => {
-    committeeStatus.value.unshift(committee)
-    stats.value.activeCommittees++
-    toast.success(`Committee "${committee.name}" created successfully`)
+const goToCommittees = () => {
+    router.push({ name: 'AdminCommittees' })
 }
 
+const goToUsers = () => {
+    router.push({ name: 'AdminUsers' })
+}
+
+const goToReports = () => {
+    router.push({ name: 'AdminReports' })
+}
+
+const createEvent = () => {
+    router.push({ name: 'AdminEvents', query: { create: 'true' } })
+}
+
+// Utility functions
 const formatTime = (timestamp) => {
     if (!timestamp) return ''
-
     const now = new Date()
     const diff = Math.floor((now - new Date(timestamp)) / 60000)
-
     if (diff < 60) return `${diff}m ago`
     if (diff < 1440) return `${Math.floor(diff / 60)}h ago`
     return `${Math.floor(diff / 1440)}d ago`
@@ -495,8 +519,42 @@ const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString()
 }
 
-// Lifecycle
+// Initialize
 onMounted(() => {
     loadDashboardData()
 })
 </script>
+
+<style scoped>
+/* Smooth loading animations */
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Hover effects */
+.hover\:bg-gray-50:hover {
+    background-color: rgb(249 250 251);
+}
+
+/* Card hover effects */
+.shadow-sm {
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.shadow-sm:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition: box-shadow 0.15s ease-in-out;
+}
+</style>

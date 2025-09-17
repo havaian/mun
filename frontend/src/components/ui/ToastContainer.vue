@@ -56,7 +56,7 @@
                                     'h-1 transition-all ease-linear',
                                     getProgressClasses(toast.type)
                                 ]" :style="{
-                                    width: `${currentProgress[toast.id] || 0}%`,
+                                    width: `${Math.max(0, currentProgress[toast.id] || 0)}%`,
                                     transitionDuration: toast.paused ? '0ms' : '100ms'
                                 }"></div>
                             </div>
@@ -152,7 +152,11 @@ const calculateProgress = (toast) => {
     const elapsed = Date.now() - toast.timestamp - (toast.pausedTime || 0)
     const progress = Math.max(0, Math.min(100, (elapsed / toast.duration) * 100))
 
-    return Math.round(100 - progress)
+    // Ensure progress goes all the way to 0 before removal
+    const remainingProgress = 100 - progress
+
+    // If less than 1% remaining, show 0 to ensure smooth completion
+    return remainingProgress < 1 ? 0 : Math.round(remainingProgress)
 }
 
 const removeToast = (id) => {
@@ -197,9 +201,15 @@ const updateProgress = () => {
             const progress = calculateProgress(toast)
             currentProgress.value[toast.id] = progress
 
-            // Remove toast when time is up
-            if (progress <= 0 && !toast.paused) {
-                removeToast(toast.id)
+            // Remove toast when progress reaches 0 OR time has actually expired
+            const elapsed = Date.now() - toast.timestamp - (toast.pausedTime || 0)
+            const hasExpired = elapsed >= toast.duration
+
+            if ((progress <= 0 || hasExpired) && !toast.paused) {
+                // Small delay to ensure progress bar reaches 0 visually
+                setTimeout(() => {
+                    removeToast(toast.id)
+                }, 50)
             }
         }
     })
