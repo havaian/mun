@@ -3,8 +3,10 @@
         <div class="toast-container fixed top-4 right-4 z-50 space-y-2">
             <transition-group name="toast" tag="div" class="space-y-2">
                 <div v-for="toast in toasts" :key="toast.id" :class="[
-                    'toast-item max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300',
-                    getToastClasses(toast.type)
+                    'toast-item bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300',
+                    getToastClasses(toast.type),
+                    // Dynamic width based on content length
+                    getToastWidth(toast)
                 ]" @mouseenter="pauseTimer(toast.id)" @mouseleave="resumeTimer(toast.id)">
                     <div class="p-4">
                         <div class="flex items-start">
@@ -16,13 +18,13 @@
                                 ]" />
                             </div>
 
-                            <!-- Content -->
-                            <div class="ml-3 w-0 flex-1">
-                                <p v-if="toast.title" class="text-sm font-medium text-gray-900">
+                            <!-- Content - Fixed width constraint issue -->
+                            <div class="ml-3 flex-1 min-w-0">
+                                <p v-if="toast.title" class="text-sm font-medium text-gray-900 break-words">
                                     {{ toast.title }}
                                 </p>
                                 <p :class="[
-                                    'text-sm text-gray-500',
+                                    'text-sm text-gray-500 break-words',
                                     { 'mt-1': toast.title }
                                 ]">
                                     {{ toast.message }}
@@ -47,16 +49,16 @@
                             </div>
                         </div>
 
-                        <!-- Progress bar for timed toasts -->
+                        <!-- Progress bar for timed toasts - Fixed real-time updates -->
                         <div v-if="toast.duration > 0 && toast.showProgress !== false" class="mt-2 -mb-1 -mx-4">
                             <div class="h-1 bg-gray-100">
                                 <div :class="[
                                     'h-1 transition-all ease-linear',
                                     getProgressClasses(toast.type)
                                 ]" :style="{
-                                        width: `${getProgress(toast)}%`,
-                                        transitionDuration: toast.paused ? '0ms' : '100ms'
-                                    }"></div>
+                                    width: `${currentProgress[toast.id] || 0}%`,
+                                    transitionDuration: toast.paused ? '0ms' : '100ms'
+                                }"></div>
                             </div>
                         </div>
                     </div>
@@ -67,7 +69,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useToast } from '@/plugins/toast'
 import {
     CheckCircleIcon,
@@ -81,6 +83,9 @@ const { toast: toastService } = useToast()
 
 // Access reactive toasts from the service
 const toasts = computed(() => toastService.toasts)
+
+// Reactive progress tracking - Fixed status bar updates
+const currentProgress = ref({})
 
 // Toast type configurations
 const toastConfig = {
@@ -127,16 +132,32 @@ const getProgressClasses = (type) => {
     return toastConfig[type]?.progressClass || toastConfig.info.progressClass
 }
 
-const getProgress = (toast) => {
+// Fixed: Dynamic width calculation based on content
+const getToastWidth = (toast) => {
+    const messageLength = (toast.title || '').length + (toast.message || '').length
+
+    if (messageLength > 120) {
+        return 'w-96 max-w-md' // Wider for longer messages
+    } else if (messageLength > 60) {
+        return 'w-80 max-w-sm' // Medium width
+    } else {
+        return 'w-72 max-w-xs' // Compact for short messages
+    }
+}
+
+// Fixed: Progress calculation with proper real-time updates
+const calculateProgress = (toast) => {
     if (!toast.duration || toast.duration <= 0) return 0
 
     const elapsed = Date.now() - toast.timestamp - (toast.pausedTime || 0)
     const progress = Math.max(0, Math.min(100, (elapsed / toast.duration) * 100))
 
-    return 100 - progress
+    return Math.round(100 - progress)
 }
 
 const removeToast = (id) => {
+    // Clean up progress tracking
+    delete currentProgress.value[id]
     toastService.remove(id)
 }
 
@@ -167,21 +188,45 @@ const resumeTimer = (id) => {
     }
 }
 
-// Progress update interval
+// Fixed: Progress update interval with proper cleanup
 let progressInterval = null
 
-onMounted(() => {
-    // Update progress bars every 100ms for smooth animation
-    progressInterval = setInterval(() => {
-        toasts.value.forEach(toast => {
-            if (toast.duration > 0 && !toast.paused) {
-                const elapsed = Date.now() - toast.timestamp - (toast.pausedTime || 0)
-                if (elapsed >= toast.duration) {
-                    removeToast(toast.id)
-                }
+const updateProgress = () => {
+    toasts.value.forEach(toast => {
+        if (toast.duration > 0) {
+            const progress = calculateProgress(toast)
+            currentProgress.value[toast.id] = progress
+
+            // Remove toast when time is up
+            if (progress <= 0 && !toast.paused) {
+                removeToast(toast.id)
+            }
+        }
+    })
+}
+
+// Watch for new toasts and initialize their progress
+watch(toasts, (newToasts, oldToasts) => {
+    newToasts.forEach(toast => {
+        if (toast.duration > 0 && !(toast.id in currentProgress.value)) {
+            currentProgress.value[toast.id] = 100
+        }
+    })
+
+    // Clean up progress for removed toasts
+    if (oldToasts) {
+        const currentIds = new Set(newToasts.map(t => t.id))
+        Object.keys(currentProgress.value).forEach(id => {
+            if (!currentIds.has(parseInt(id))) {
+                delete currentProgress.value[id]
             }
         })
-    }, 100)
+    }
+}, { immediate: true })
+
+onMounted(() => {
+    // Update progress bars every 50ms for smoother animation
+    progressInterval = setInterval(updateProgress, 50)
 })
 
 onUnmounted(() => {
@@ -239,7 +284,8 @@ onUnmounted(() => {
     }
 
     .toast-item {
-        max-width: none;
+        max-width: calc(100vw - 2rem);
+        width: auto;
     }
 }
 
