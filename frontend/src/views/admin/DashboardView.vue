@@ -1,217 +1,218 @@
 <template>
-    <AdminLayout>
-        <div class="space-y-6 p-6">
-            <!-- Header with Quick Actions -->
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-                    <p class="text-gray-600">System overview and key metrics</p>
-                </div>
-                <div class="flex space-x-3">
-                    <AppButton variant="outline" size="sm" @click="refreshDashboard" :loading="isRefreshing">
-                        <ArrowPathIcon class="h-4 w-4 mr-1" />
-                        Refresh
-                    </AppButton>
-                    <AppButton variant="primary" size="sm" @click="bulkGenerateQR" :loading="isGeneratingQR">
-                        <QrCodeIcon class="h-4 w-4 mr-1" />
-                        Generate QRs
-                    </AppButton>
-                </div>
+    <div class="space-y-6 p-6">
+        <!-- Header with Quick Actions -->
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+                <p class="text-gray-600">System overview and key metrics</p>
             </div>
-
-            <!-- Stats Grid - Load First for Instant Feedback -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div v-for="stat in dashboardStats" :key="stat.title"
-                    class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-600">{{ stat.title }}</p>
-                            <!-- Skeleton loading for stats -->
-                            <div v-if="isLoadingStats" class="mt-2">
-                                <div class="h-8 bg-gray-200 rounded animate-pulse w-16"></div>
-                            </div>
-                            <p v-else class="text-3xl font-bold text-gray-900 mt-2">
-                                {{ stat.value?.toLocaleString() || '0' }}
-                            </p>
-                        </div>
-                        <div :class="[
-                            'h-12 w-12 rounded-md flex items-center justify-center',
-                            stat.color === 'blue' ? 'bg-blue-100 text-blue-600' :
-                                stat.color === 'green' ? 'bg-green-100 text-green-600' :
-                                    stat.color === 'purple' ? 'bg-purple-100 text-purple-600' :
-                                        'bg-orange-100 text-orange-600'
-                        ]">
-                            <component :is="stat.icon" class="h-6 w-6" />
-                        </div>
-                    </div>
-                </div>
+            <div class="flex space-x-3">
+                <button @click="refreshDashboard" :disabled="isRefreshing"
+                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
+                    <ArrowPathIcon class="h-4 w-4 mr-1" />
+                    {{ isRefreshing ? 'Refreshing...' : 'Refresh' }}
+                </button>
+                <button @click="bulkGenerateQR" :disabled="isGeneratingQR"
+                    class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
+                    <QrCodeIcon class="h-4 w-4 mr-1" />
+                    {{ isGeneratingQR ? 'Generating...' : 'Generate QRs' }}
+                </button>
             </div>
+        </div>
 
-            <!-- Main Content Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Left Column - Active Events -->
-                <div class="lg:col-span-2">
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                        <div class="p-6 border-b border-gray-200">
-                            <div class="flex items-center justify-between">
-                                <h3 class="text-lg font-semibold text-gray-900">Active Events</h3>
-                                <AppButton variant="outline" size="sm" @click="goToEvents">
-                                    View All
-                                </AppButton>
-                            </div>
+        <!-- Stats Grid - Load First for Instant Feedback -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div v-for="stat in dashboardStats" :key="stat.title"
+                class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">{{ stat.title }}</p>
+                        <!-- Skeleton loading for stats -->
+                        <div v-if="isLoadingStats" class="mt-2">
+                            <div class="h-8 bg-gray-200 rounded animate-pulse w-16"></div>
                         </div>
-                        <div class="p-6">
-                            <!-- Skeleton loading for events -->
-                            <div v-if="isLoadingEvents" class="space-y-4">
-                                <div v-for="i in 3" :key="i" class="flex items-center space-x-4">
-                                    <div class="h-10 w-10 bg-gray-200 rounded-full animate-pulse"></div>
-                                    <div class="flex-1 space-y-2">
-                                        <div class="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
-                                        <div class="h-3 bg-gray-200 rounded animate-pulse w-1/2"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Events content -->
-                            <div v-else-if="activeEvents.length > 0" class="space-y-4">
-                                <div v-for="event in activeEvents.slice(0, 5)" :key="event.id"
-                                    class="flex items-center space-x-4 p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
-                                    @click="goToEvent(event.id)">
-                                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                        <CalendarDaysIcon class="h-5 w-5 text-blue-600" />
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="font-medium text-gray-900">{{ event.name }}</p>
-                                        <p class="text-sm text-gray-500">{{ formatDate(event.startDate) }}</p>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-sm font-medium text-gray-900">{{ event.committeeCount }}
-                                            committees</p>
-                                        <p class="text-xs text-gray-500">{{ event.participantCount }} participants</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div v-else class="text-center py-8">
-                                <CalendarDaysIcon class="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                <p class="text-gray-500">No active events</p>
-                                <AppButton variant="primary" size="sm" class="mt-2" @click="createEvent">
-                                    Create Event
-                                </AppButton>
-                            </div>
-                        </div>
+                        <p v-else class="text-3xl font-bold text-gray-900 mt-2">
+                            {{ stat.value?.toLocaleString() || '0' }}
+                        </p>
                     </div>
-                </div>
-
-                <!-- Right Column - System Health & Quick Actions -->
-                <div class="space-y-6">
-                    <!-- System Health -->
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                        <div class="p-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">System Health</h3>
-                            <div class="space-y-3">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">API Status</span>
-                                    <div v-if="isLoadingHealth" class="h-4 w-16 bg-gray-200 rounded animate-pulse">
-                                    </div>
-                                    <span v-else :class="[
-                                        'px-2 py-1 rounded-full text-xs font-medium',
-                                        systemHealth.apiStatus === 'healthy'
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-red-100 text-red-700'
-                                    ]">
-                                        {{ systemHealth.apiStatus || 'Unknown' }}
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">Database</span>
-                                    <div v-if="isLoadingHealth" class="h-4 w-16 bg-gray-200 rounded animate-pulse">
-                                    </div>
-                                    <span v-else :class="[
-                                        'px-2 py-1 rounded-full text-xs font-medium',
-                                        systemHealth.dbStatus === 'healthy'
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-red-100 text-red-700'
-                                    ]">
-                                        {{ systemHealth.dbStatus || 'Unknown' }}
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-600">WebSocket</span>
-                                    <div v-if="isLoadingHealth" class="h-4 w-16 bg-gray-200 rounded animate-pulse">
-                                    </div>
-                                    <span v-else :class="[
-                                        'px-2 py-1 rounded-full text-xs font-medium',
-                                        systemHealth.wsStatus === 'healthy'
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-red-100 text-red-700'
-                                    ]">
-                                        {{ systemHealth.wsStatus || 'Unknown' }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Quick Actions -->
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-                        <div class="p-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                            <div class="space-y-3">
-                                <AppButton variant="outline" size="sm" class="w-full justify-start"
-                                    @click="goToCommittees">
-                                    <UserGroupIcon class="h-4 w-4 mr-2" />
-                                    Manage Committees
-                                </AppButton>
-                                <AppButton variant="outline" size="sm" class="w-full justify-start" @click="goToUsers">
-                                    <UsersIcon class="h-4 w-4 mr-2" />
-                                    User Management
-                                </AppButton>
-                                <AppButton variant="outline" size="sm" class="w-full justify-start"
-                                    @click="goToReports">
-                                    <ChartBarIcon class="h-4 w-4 mr-2" />
-                                    View Reports
-                                </AppButton>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Activity - Load Last -->
-            <div v-if="!isInitialLoad" class="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="p-6 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
-                </div>
-                <div class="p-6">
-                    <!-- Skeleton loading for activity -->
-                    <div v-if="isLoadingActivity" class="space-y-3">
-                        <div v-for="i in 5" :key="i" class="flex items-start space-x-3">
-                            <div class="h-8 w-8 bg-gray-200 rounded-full animate-pulse"></div>
-                            <div class="flex-1 space-y-2">
-                                <div class="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
-                                <div class="h-3 bg-gray-200 rounded animate-pulse w-1/2"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Activity content -->
-                    <div v-else-if="recentActivity.length > 0" class="space-y-4">
-                        <div v-for="activity in recentActivity.slice(0, 10)" :key="activity.id"
-                            class="flex items-start space-x-3">
-                            <div class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
-                                <div class="h-2 w-2 bg-blue-600 rounded-full"></div>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm text-gray-900">{{ activity.description }}</p>
-                                <p class="text-xs text-gray-500">{{ formatTime(activity.timestamp) }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div v-else class="text-center py-8">
-                        <p class="text-gray-500">No recent activity</p>
+                    <div :class="[
+                        'h-12 w-12 rounded-md flex items-center justify-center',
+                        stat.color === 'blue' ? 'bg-blue-100 text-blue-600' :
+                            stat.color === 'green' ? 'bg-green-100 text-green-600' :
+                                stat.color === 'purple' ? 'bg-purple-100 text-purple-600' :
+                                    'bg-orange-100 text-orange-600'
+                    ]">
+                        <component :is="stat.icon" class="h-6 w-6" />
                     </div>
                 </div>
             </div>
         </div>
-    </AdminLayout>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column - Active Events -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900">Active Events</h3>
+                            <button @click="goToEvents"
+                                class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-xs leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                View All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <!-- Skeleton loading for events -->
+                        <div v-if="isLoadingEvents" class="space-y-4">
+                            <div v-for="i in 3" :key="i" class="flex items-center space-x-4">
+                                <div class="h-10 w-10 bg-gray-200 rounded-full animate-pulse"></div>
+                                <div class="flex-1 space-y-2">
+                                    <div class="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                                    <div class="h-3 bg-gray-200 rounded animate-pulse w-1/2"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Events content -->
+                        <div v-else-if="activeEvents.length > 0" class="space-y-4">
+                            <div v-for="event in activeEvents.slice(0, 5)" :key="event.id"
+                                class="flex items-center space-x-4 p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
+                                @click="goToEvent(event.id)">
+                                <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <CalendarDaysIcon class="h-5 w-5 text-blue-600" />
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-900">{{ event.name }}</p>
+                                    <p class="text-sm text-gray-500">{{ formatDate(event.startDate) }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-medium text-gray-900">{{ event.committeeCount }} committees
+                                    </p>
+                                    <p class="text-xs text-gray-500">{{ event.participantCount }} participants</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="text-center py-8">
+                            <CalendarDaysIcon class="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <p class="text-gray-500">No active events</p>
+                            <button @click="createEvent"
+                                class="mt-2 inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Create Event
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - System Health & Quick Actions -->
+            <div class="space-y-6">
+                <!-- System Health -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">System Health</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">API Status</span>
+                                <div v-if="isLoadingHealth" class="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+                                <span v-else :class="[
+                                    'px-2 py-1 rounded-full text-xs font-medium',
+                                    systemHealth.apiStatus === 'healthy'
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-red-100 text-red-700'
+                                ]">
+                                    {{ systemHealth.apiStatus || 'Unknown' }}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">Database</span>
+                                <div v-if="isLoadingHealth" class="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+                                <span v-else :class="[
+                                    'px-2 py-1 rounded-full text-xs font-medium',
+                                    systemHealth.dbStatus === 'healthy'
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-red-100 text-red-700'
+                                ]">
+                                    {{ systemHealth.dbStatus || 'Unknown' }}
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">WebSocket</span>
+                                <div v-if="isLoadingHealth" class="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+                                <span v-else :class="[
+                                    'px-2 py-1 rounded-full text-xs font-medium',
+                                    systemHealth.wsStatus === 'healthy'
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-red-100 text-red-700'
+                                ]">
+                                    {{ systemHealth.wsStatus || 'Unknown' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                        <div class="space-y-3">
+                            <button @click="goToCommittees"
+                                class="w-full inline-flex items-center justify-start px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <UserGroupIcon class="h-4 w-4 mr-2" />
+                                Manage Committees
+                            </button>
+                            <button @click="goToUsers"
+                                class="w-full inline-flex items-center justify-start px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <UsersIcon class="h-4 w-4 mr-2" />
+                                User Management
+                            </button>
+                            <button @click="goToReports"
+                                class="w-full inline-flex items-center justify-start px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <ChartBarIcon class="h-4 w-4 mr-2" />
+                                View Reports
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity - Load Last -->
+        <div v-if="!isInitialLoad" class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
+            </div>
+            <div class="p-6">
+                <!-- Skeleton loading for activity -->
+                <div v-if="isLoadingActivity" class="space-y-3">
+                    <div v-for="i in 5" :key="i" class="flex items-start space-x-3">
+                        <div class="h-8 w-8 bg-gray-200 rounded-full animate-pulse"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+                            <div class="h-3 bg-gray-200 rounded animate-pulse w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Activity content -->
+                <div v-else-if="recentActivity.length > 0" class="space-y-4">
+                    <div v-for="activity in recentActivity.slice(0, 10)" :key="activity.id"
+                        class="flex items-start space-x-3">
+                        <div class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+                            <div class="h-2 w-2 bg-blue-600 rounded-full"></div>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-900">{{ activity.description }}</p>
+                            <p class="text-xs text-gray-500">{{ formatTime(activity.timestamp) }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div v-else class="text-center py-8">
+                    <p class="text-gray-500">No recent activity</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
 </template>
 
 <script setup>
@@ -219,8 +220,31 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
-import AdminLayout from '@/layouts/AdminLayout.vue'
-import { apiMethods } from '@/utils/api'
+
+// Simple fetch-based API calls instead of complex apiMethods
+const apiCall = async (endpoint, options = {}) => {
+    try {
+        const token = localStorage.getItem('mun_token')
+        const response = await fetch(`/api${endpoint}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token ? `Bearer ${token}` : '',
+                ...options.headers
+            },
+            ...options
+        })
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`)
+        }
+
+        return await response.json()
+    } catch (error) {
+        console.error(`API call failed for ${endpoint}:`, error)
+        throw error
+    }
+}
 
 // Icons
 import {
@@ -347,20 +371,21 @@ const loadDashboardData = async (forceRefresh = false) => {
 const loadStats = async () => {
     try {
         isLoadingStats.value = true
-        const response = await apiMethods.get('/api/admin/dashboard/stats')
+        const response = await apiCall('/admin/dashboard/stats')
 
-        if (response?.data) {
+        if (response?.data || response) {
+            const data = response.data || response
             stats.value = {
-                totalEvents: response.data.totalEvents || 0,
-                activeCommittees: response.data.activeCommittees || 0,
-                registeredUsers: response.data.registeredUsers || 0,
-                documentsUploaded: response.data.documentsUploaded || 0
+                totalEvents: data.totalEvents || 0,
+                activeCommittees: data.activeCommittees || 0,
+                registeredUsers: data.registeredUsers || 0,
+                documentsUploaded: data.documentsUploaded || 0
             }
             cache.value.stats = stats.value
         }
     } catch (error) {
         console.error('Load stats error:', error)
-        // Set defaults on error
+        // Use fallback data for demo
         stats.value = {
             totalEvents: 0,
             activeCommittees: 0,
@@ -376,10 +401,11 @@ const loadStats = async () => {
 const loadEvents = async () => {
     try {
         isLoadingEvents.value = true
-        const response = await apiMethods.get('/api/admin/dashboard/events')
+        const response = await apiCall('/admin/dashboard/events')
 
-        if (response?.data) {
-            activeEvents.value = response.data
+        if (response?.data || response) {
+            const data = response.data || response
+            activeEvents.value = Array.isArray(data) ? data : []
             cache.value.events = activeEvents.value
         }
     } catch (error) {
@@ -439,10 +465,11 @@ const loadSystemHealth = async () => {
 const loadRecentActivity = async () => {
     try {
         isLoadingActivity.value = true
-        const response = await apiMethods.get('/api/admin/activity')
+        const response = await apiCall('/admin/activity')
 
-        if (response?.data) {
-            recentActivity.value = response.data
+        if (response?.data || response) {
+            const data = response.data || response
+            recentActivity.value = Array.isArray(data) ? data : []
             cache.value.activity = recentActivity.value
             cache.value.timestamp = Date.now()
         }
@@ -465,8 +492,10 @@ const refreshDashboard = async () => {
 const bulkGenerateQR = async () => {
     try {
         isGeneratingQR.value = true
-        const response = await apiMethods.post('/api/admin/bulk-qr-generate')
-        if (response?.success) {
+        const response = await apiCall('/admin/bulk-qr-generate', {
+            method: 'POST'
+        })
+        if (response?.success || response) {
             toast.success('QR codes generated successfully')
         } else {
             toast.error('Failed to generate QR codes')
