@@ -13,6 +13,7 @@ const logger = require('./utils/logger');
 const { initializeWebSocket } = require('./websocket/socketManager');
 
 // Import route modules
+const adminRoutes = require('./admin/routes');
 const authRoutes = require('./auth/routes');
 const eventRoutes = require('./event/routes');
 const committeeRoutes = require('./committee/routes');
@@ -80,6 +81,7 @@ app.use('/upload', express.static('upload', {
 }));
 
 // API Routes
+app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/committees', committeeRoutes);

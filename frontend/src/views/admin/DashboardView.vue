@@ -345,35 +345,35 @@ const loadDashboardData = async (forceRefresh = false) => {
             return
         }
 
-        // Stage 1: Load stats first (most important)
+        // Stage 1: Load stats first (most important) - this also gets events
         await loadStats()
 
-        // Stage 2: Load events and health in parallel
-        await Promise.all([
-            loadEvents(),
-            loadSystemHealth()
-        ])
+        // Stage 2: Load health check in parallel with any remaining data
+        await loadSystemHealth()
 
-        // Stage 3: Load activity last (least important)
+        // Stage 3: Load activity last (least important) with a small delay
         await nextTick() // Wait for UI update
-        setTimeout(() => loadRecentActivity(), 100) // Defer slightly
+        setTimeout(() => loadRecentActivity(), 200) // Defer to show other content first
 
     } catch (error) {
         console.error('Dashboard loading error:', error)
-        toast.error('Failed to load dashboard data')
+        // Don't show error toast for API issues, just log them
+        console.warn('Some dashboard data unavailable, using fallbacks')
     } finally {
         isInitialLoad.value = false
     }
 }
 
-// Load stats - Priority 1
+// Load stats - Use correct new admin endpoint  
 const loadStats = async () => {
     try {
         isLoadingStats.value = true
+
+        // Use NEW /api/admin/dashboard/stats endpoint
         const response = await apiCall('/admin/dashboard/stats')
 
-        if (response?.data || response) {
-            const data = response.data || response
+        if (response?.success && response.stats) {
+            const data = response.stats
             stats.value = {
                 totalEvents: data.totalEvents || 0,
                 activeCommittees: data.activeCommittees || 0,
@@ -384,7 +384,7 @@ const loadStats = async () => {
         }
     } catch (error) {
         console.error('Load stats error:', error)
-        // Use fallback data for demo
+        // Fallback data
         stats.value = {
             totalEvents: 0,
             activeCommittees: 0,
@@ -396,15 +396,16 @@ const loadStats = async () => {
     }
 }
 
-// Load events - Priority 2
+// Load events - Use existing events endpoint
 const loadEvents = async () => {
     try {
         isLoadingEvents.value = true
-        const response = await apiCall('/admin/dashboard/events')
 
-        if (response?.data || response) {
-            const data = response.data || response
-            activeEvents.value = Array.isArray(data) ? data : []
+        // Use existing /api/events endpoint (works)
+        const response = await apiCall('/events')
+
+        if (response && Array.isArray(response)) {
+            activeEvents.value = response.filter(event => event.status === 'active').slice(0, 5)
             cache.value.events = activeEvents.value
         }
     } catch (error) {
@@ -460,15 +461,16 @@ const loadSystemHealth = async () => {
     }
 }
 
-// Load recent activity - Priority 3
+// Load recent activity - Use new admin endpoint
 const loadRecentActivity = async () => {
     try {
         isLoadingActivity.value = true
-        const response = await apiCall('/admin/activity')
 
-        if (response?.data || response) {
-            const data = response.data || response
-            recentActivity.value = Array.isArray(data) ? data : []
+        // Use NEW /api/admin/dashboard/activity endpoint
+        const response = await apiCall('/admin/dashboard/activity')
+
+        if (response?.success && response.activities) {
+            recentActivity.value = response.activities
             cache.value.activity = recentActivity.value
             cache.value.timestamp = Date.now()
         }
@@ -491,11 +493,17 @@ const refreshDashboard = async () => {
 const bulkGenerateQR = async () => {
     try {
         isGeneratingQR.value = true
-        const response = await apiCall('/admin/bulk-qr-generate', {
-            method: 'POST'
+
+        // Use NEW /api/admin/committees/bulk-qr endpoint
+        const response = await apiCall('/admin/committees/bulk-qr', {
+            method: 'POST',
+            body: JSON.stringify({
+                committeeIds: [] // All committees - backend will handle getting the list
+            })
         })
-        if (response?.success || response) {
-            toast.success('QR codes generated successfully')
+
+        if (response?.success) {
+            toast.success(`QR codes generated. Total: ${response.totalQRGenerated || 0}`)
         } else {
             toast.error('Failed to generate QR codes')
         }
