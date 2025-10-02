@@ -1,40 +1,32 @@
 import { createApp } from 'vue'
+import { createRouter, createWebHistory } from 'vue-router'
 import { createPinia } from 'pinia'
-import router from './router'
 import App from './App.vue'
+import './style.css'
 
-// Import CSS
-import './assets/css/main.css'
+// Import stores
+import { useAuthStore } from './stores/auth'
+import { useSocketStore } from './stores/socket'
 
-// Import global components and plugins
-import Toast from './plugins/toast'
-import Modal from './plugins/modal'
-import LoadingSpinner from './components/ui/LoadingSpinner.vue'
-import AppButton from './components/ui/AppButton.vue'
+import router from './router'
 
-// Initialize Vue app
+// Create Vue app
 const app = createApp(App)
+const pinia = createPinia()
 
-// Install plugins
-app.use(createPinia())
+app.use(pinia)
 app.use(router)
-app.use(Toast)
-app.use(Modal)
 
-// Register global components
-app.component('LoadingSpinner', LoadingSpinner)
-app.component('AppButton', AppButton)
-app.component('AppCard', AppCard)
+// Initialize WebSocket connection after auth check
+const authStore = useAuthStore()
+const socketStore = useSocketStore()
 
-// Global error handler
-app.config.errorHandler = (err, vm, info) => {
-    console.error('Global error:', err, info)
+authStore.$subscribe((mutation, state) => {
+  if (state.isAuthenticated && state.user) {
+    socketStore.connect(state.token)
+  } else {
+    socketStore.disconnect()
+  }
+})
 
-    // In production, send to error reporting service
-    if (import.meta.env.PROD) {
-        // TODO: Send to error reporting service
-    }
-}
-
-// Mount app
 app.mount('#app')

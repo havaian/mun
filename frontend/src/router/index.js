@@ -1,90 +1,57 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { useAppStore } from '@/stores/app'
-
-// Import layouts
-const AuthLayout = () => import('@/views/auth/AuthLayout.vue')
 
 // Import views
-const LoginView = () => import('@/views/auth/LoginView.vue')
-const QRLoginView = () => import('@/views/auth/QRLoginView.vue')
-const EmailBindingView = () => import('@/views/auth/EmailBindingView.vue')
-const LanguageSelectionView = () => import('@/views/auth/LanguageSelectionView.vue')
+import LoginView from './views/LoginView.vue'
+import AdminDashboard from './views/admin/Dashboard.vue'
+import AdminEvents from './views/admin/Events.vue'
+import AdminUsers from './views/admin/Users.vue'
+import PresidiumDashboard from './views/presidium/Dashboard.vue'
+import DelegateHome from './views/delegate/Home.vue'
 
-// Shared views
-const NotFoundView = () => import('@/views/NotFoundView.vue')
-
+// Router configuration
 const routes = [
-    // Authentication routes
-    {
-        path: '/auth',
-        component: AuthLayout,
-        children: [
-            {
-                path: 'login',
-                name: 'Login',
-                component: LoginView,
-                meta: {
-                    title: 'Login',
-                    requiresAuth: false,
-                    hideForAuthenticated: true
-                }
-            },
-            {
-                path: 'qr-login',
-                name: 'QRLogin',
-                component: QRLoginView,
-                meta: {
-                    title: 'QR Login',
-                    requiresAuth: false,
-                    hideForAuthenticated: true
-                }
-            },
-            {
-                path: 'bind-email',
-                name: 'EmailBinding',
-                component: EmailBindingView,
-                meta: {
-                    title: 'Complete Registration',
-                    requiresAuth: false,
-                    hideForAuthenticated: true
-                }
-            },
-            {
-                path: 'language',
-                name: 'LanguageSelection',
-                component: LanguageSelectionView,
-                meta: {
-                    title: 'Select Language',
-                    requiresAuth: true,
-                    newUserOnly: true
-                }
-            }
-        ]
-    },
-
-    // Root redirect
-    {
-        path: '/',
-        redirect: (to) => {
-            const authStore = useAuthStore()
-
-            if (!authStore.isAuthenticated) {
-                return { name: 'Login' }
-            }
-
-            // Redirect based on user role
-            switch (authStore.user?.role) {}
-        }
-    },
-
-    // 404 route
-    {
-        path: '/:pathMatch(.*)*',
-        name: 'NotFound',
-        component: NotFoundView,
-        meta: { title: 'Page Not Found' }
-    }
+  {
+    path: '/',
+    name: 'login',
+    component: LoginView,
+    meta: { requiresGuest: true }
+  },
+  {
+    path: '/admin',
+    name: 'admin',
+    redirect: '/admin/dashboard',
+    meta: { requiresAuth: true, role: 'admin' }
+  },
+  {
+    path: '/admin/dashboard',
+    name: 'admin-dashboard',
+    component: AdminDashboard,
+    meta: { requiresAuth: true, role: 'admin' }
+  },
+  {
+    path: '/admin/events',
+    name: 'admin-events',
+    component: AdminEvents,
+    meta: { requiresAuth: true, role: 'admin' }
+  },
+  {
+    path: '/admin/users',
+    name: 'admin-users',
+    component: AdminUsers,
+    meta: { requiresAuth: true, role: 'admin' }
+  },
+  {
+    path: '/presidium',
+    name: 'presidium-dashboard',
+    component: PresidiumDashboard,
+    meta: { requiresAuth: true, role: 'presidium' }
+  },
+  {
+    path: '/delegate',
+    name: 'delegate-home',
+    component: DelegateHome,
+    meta: { requiresAuth: true, role: 'delegate' }
+  }
 ]
 
 const router = createRouter({
@@ -97,6 +64,35 @@ const router = createRouter({
             return { top: 0 }
         }
     }
+})
+
+// Navigation guards
+router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore()
+  
+  // Check if user is authenticated
+  if (!authStore.isAuthenticated && !authStore.isLoading) {
+    await authStore.checkAuth()
+  }
+  
+  // Handle guest-only routes
+  if (to.meta.requiresGuest && authStore.isAuthenticated) {
+    return next(authStore.getDefaultRoute())
+  }
+  
+  // Handle protected routes
+  if (to.meta.requiresAuth) {
+    if (!authStore.isAuthenticated) {
+      return next('/')
+    }
+    
+    // Check role permissions
+    if (to.meta.role && !authStore.hasRole(to.meta.role)) {
+      return next(authStore.getDefaultRoute())
+    }
+  }
+  
+  next()
 })
 
 export default router
