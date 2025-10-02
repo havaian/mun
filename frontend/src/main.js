@@ -11,7 +11,6 @@ import Toast from './plugins/toast'
 import Modal from './plugins/modal'
 import LoadingSpinner from './components/ui/LoadingSpinner.vue'
 import AppButton from './components/ui/AppButton.vue'
-import AppCard from './components/ui/AppCard.vue'
 
 // Initialize Vue app
 const app = createApp(App)
