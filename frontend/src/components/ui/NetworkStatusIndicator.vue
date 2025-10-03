@@ -123,7 +123,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
-import { useWebSocketStore } from '@/stores/websocket'
+import { useSocketStore } from '@/stores/websocket'
 import {
     WifiIcon,
     ArrowPathIcon,
@@ -133,7 +133,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const appStore = useAppStore()
-const wsStore = useWebSocketStore()
+const wsStore = useSocketStore()
 
 // State
 const isOnline = ref(navigator.onLine)
