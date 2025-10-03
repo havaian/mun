@@ -5,7 +5,7 @@ import { io } from 'socket.io-client'
 import { useAuthStore } from './auth'
 import { useToast } from '@/plugins/toast'
 
-export const useWebSocketStore = defineStore('websocket', () => {
+export const useSocketStore = defineStore('websocket', () => {
     const socket = ref(null)
     const isConnected = ref(false)
     const reconnectAttempts = ref(0)

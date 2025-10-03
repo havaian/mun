@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia'
 import { ref, reactive, computed } from 'vue'
 import { apiMethods } from '@/utils/api'
-import { useWebSocketStore } from './websocket'
+import { useSocketStore } from './websocket'
 import { useAuthStore } from './auth'
 
 export const useVotingStore = defineStore('voting', () => {
@@ -56,7 +56,7 @@ export const useVotingStore = defineStore('voting', () => {
     })
 
     // WebSocket and Auth integration
-    const wsStore = useWebSocketStore()
+    const wsStore = useSocketStore()
     const authStore = useAuthStore()
 
     // Computed

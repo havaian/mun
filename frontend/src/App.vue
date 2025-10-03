@@ -107,7 +107,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
-import { useWebSocketStore } from '@/stores/websocket'
+import { useSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
 
 // Components
@@ -126,7 +126,7 @@ import {
 const router = useRouter()
 const authStore = useAuthStore()
 const appStore = useAppStore()
-const wsStore = useWebSocketStore()
+const wsStore = useSocketStore()
 const toast = useToast()
 
 // Refs

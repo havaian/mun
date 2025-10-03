@@ -243,7 +243,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
-import { useSocketStore } from '../../stores/socket'
+import { useSocketStore } from '../../storeswebsocket'
 import CreateCoalitionModal from './CreateCoalitionModal.vue'
 
 const emit = defineEmits(['close', 'update'])

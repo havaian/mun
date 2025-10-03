@@ -48,7 +48,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useSocketStore } from '../../stores/socket'
+import { useSocketStore } from '../../storeswebsocket'
 
 // Icons
 const CheckCircleIcon = {

@@ -238,7 +238,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAuthStore } from '../../stores/auth'
-import { useSocketStore } from '../../stores/socket'
+import { useSocketStore } from '../../storeswebsocket'
 
 const emit = defineEmits(['close', 'vote'])
 const props = defineProps({
