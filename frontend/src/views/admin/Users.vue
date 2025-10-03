@@ -334,7 +334,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { useSocketStore } from '../../stores/websocket'
 
@@ -678,7 +678,6 @@ onMounted(() => {
         }
     })
 
-    import { onUnmounted } from 'vue'
     onUnmounted(unsubscribe)
 })
 </script>

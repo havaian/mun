@@ -256,7 +256,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { useSocketStore } from '../../stores/websocket'
 
@@ -631,7 +631,6 @@ onMounted(() => {
         }
     })
 
-    import { onUnmounted } from 'vue'
     onUnmounted(unsubscribe)
 })
 
@@ -643,7 +642,6 @@ onMounted(() => {
 
     document.addEventListener('click', handleClickOutside)
 
-    import { onUnmounted } from 'vue'
     onUnmounted(() => {
         document.removeEventListener('click', handleClickOutside)
     })

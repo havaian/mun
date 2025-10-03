@@ -321,7 +321,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import { useSocketStore } from '../../stores/websocket'
 import { useRouter } from 'vue-router'
@@ -475,7 +475,6 @@ onMounted(() => {
     const interval = setInterval(fetchDashboardData, 30000)
 
     // Cleanup
-    import { onUnmounted } from 'vue'
     onUnmounted(() => {
         unsubscribe()
         clearInterval(interval)
