@@ -307,6 +307,52 @@ export const useAuthStore = defineStore('auth', () => {
             user.value.committeeId?._id === committeeId
     }
 
+    // Check authentication status
+    const checkAuth = async () => {
+        if (!token.value) {
+            return false
+        }
+
+        try {
+            const response = await api.get('/auth/verify-token')
+
+            if (response.data.success) {
+                user.value = response.data.user
+                return true
+            } else {
+                // Invalid token, clear it
+                logout()
+                return false
+            }
+        } catch (error) {
+            console.error('Token verification failed:', error)
+            logout()
+            return false
+        }
+    }
+
+    // Get default route based on user role
+    const getDefaultRoute = () => {
+        if (!user.value) return '/'
+
+        switch (user.value.role) {
+            case 'admin':
+                return '/admin/dashboard'
+            case 'presidium':
+                return '/presidium'
+            case 'delegate':
+                return '/delegate'
+            default:
+                return '/'
+        }
+    }
+
+    // Check if user has specific role
+    const hasRole = (role) => {
+        return user.value?.role === role
+    }
+
+    // Return all methods and computed properties
     return {
         // State
         user,
@@ -325,12 +371,9 @@ export const useAuthStore = defineStore('auth', () => {
         adminLogin,
         presidiumLogin,
         qrLogin,
-        validateSession,
-        logout,
-        updateActivity,
-        startSessionMonitoring,
-        getDashboardRoute,
-        hasPermission,
-        canAccessCommittee
+        checkAuth,
+        getDefaultRoute,
+        hasRole,
+        logout
     }
 })
