@@ -1,12 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 // Import views
-import LoginView from './views/auth/LoginView.vue'
-import AdminDashboard from './views/admin/Dashboard.vue'
-import AdminEvents from './views/admin/Events.vue'
-import AdminUsers from './views/admin/Users.vue'
-import PresidiumDashboard from './views/presidium/Dashboard.vue'
-import DelegateHome from './views/delegate/Home.vue'
+import LoginView from '@/views/auth/LoginView.vue'
+import AdminDashboard from '@/views/admin/Dashboard.vue'
+import AdminEvents from '@/views/admin/Events.vue'
+import AdminUsers from '@/views/admin/Users.vue'
+import PresidiumDashboard from '@/views/presidium/Dashboard.vue'
+import DelegateHome from '@/views/delegate/Home.vue'
 
 // Router configuration
 const routes = [
