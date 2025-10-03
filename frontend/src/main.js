@@ -3,29 +3,15 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import './style.css'
 import router from './router'
+import toastPlugin from '@/plugins/toast'
 
-// Create app and pinia first
+// Create Vue app and pinia instance
 const app = createApp(App)
 const pinia = createPinia()
 
-// Register Pinia FIRST before any imports that might use stores
-app.use(pinia)
+// Register plugins in correct order
+app.use(pinia) 
 app.use(router)
+app.use(toastPlugin)
 
-// Import toast plugin AFTER pinia is registered
-const initializeToast = async () => {
-  try {
-    const toastModule = await import('@/plugins/toast')
-    app.use(toastModule.default)
-  } catch (error) {
-    console.warn('Toast plugin failed to load:', error)
-  }
-}
-
-// Initialize everything in correct order
-const initializeApp = async () => {
-  await initializeToast()
-  app.mount('#app')
-}
-
-initializeApp()
+app.mount('#app')
