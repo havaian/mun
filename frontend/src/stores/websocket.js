@@ -3,14 +3,26 @@ import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
 import { io } from 'socket.io-client'
 import { useAuthStore } from './auth'
-import { useToast } from '@/plugins/toast'
 
 export const useSocketStore = defineStore('websocket', () => {
     const socket = ref(null)
     const isConnected = ref(false)
+    const isConnecting = ref(false)
     const reconnectAttempts = ref(0)
     const maxReconnectAttempts = 5
-    const toast = useToast()
+    const connectionState = ref('disconnected') // 'disconnected', 'connecting', 'connected'
+
+    // Helper function to safely use toast
+    const showToast = (type, message, options = {}) => {
+        try {
+            const { useToast } = require('@/plugins/toast')
+            const toast = useToast()
+            toast[type](message, options)
+        } catch (error) {
+            // Fallback to console if toast is not available
+            console.log(`${type.toUpperCase()}: ${message}`)
+        }
+    }
 
     // Real-time data stores
     const sessionUpdates = reactive({})
@@ -25,21 +37,51 @@ export const useSocketStore = defineStore('websocket', () => {
         const authStore = useAuthStore()
 
         if (!authStore.token || socket.value?.connected) {
-            return
+            return Promise.resolve()
         }
 
-        const wsUrl = '/'
+        return new Promise((resolve, reject) => {
+            try {
+                isConnecting.value = true
+                connectionState.value = 'connecting'
 
-        socket.value = io(wsUrl, {
-            auth: {
-                token: authStore.token
-            },
-            transports: ['websocket', 'polling'],
-            timeout: 10000,
-            forceNew: true
+                const wsUrl = '/'
+
+                socket.value = io(wsUrl, {
+                    auth: {
+                        token: authStore.token
+                    },
+                    transports: ['websocket', 'polling'],
+                    timeout: 10000,
+                    forceNew: true
+                })
+
+                setupEventListeners()
+
+                // Handle connection success
+                socket.value.on('connect', () => {
+                    isConnected.value = true
+                    isConnecting.value = false
+                    connectionState.value = 'connected'
+                    reconnectAttempts.value = 0
+                    console.log('🔗 WebSocket connected')
+                    resolve()
+                })
+
+                // Handle connection error
+                socket.value.on('connect_error', (error) => {
+                    isConnecting.value = false
+                    connectionState.value = 'disconnected'
+                    console.error('WebSocket connection error:', error)
+                    reject(error)
+                })
+
+            } catch (error) {
+                isConnecting.value = false
+                connectionState.value = 'disconnected'
+                reject(error)
+            }
         })
-
-        setupEventListeners()
     }
 
     const disconnect = () => {
@@ -48,6 +90,8 @@ export const useSocketStore = defineStore('websocket', () => {
             socket.value = null
         }
         isConnected.value = false
+        isConnecting.value = false
+        connectionState.value = 'disconnected'
         reconnectAttempts.value = 0
     }
 
@@ -57,6 +101,8 @@ export const useSocketStore = defineStore('websocket', () => {
         // Connection events
         socket.value.on('connect', () => {
             isConnected.value = true
+            isConnecting.value = false
+            connectionState.value = 'connected'
             reconnectAttempts.value = 0
             console.log('🔗 WebSocket connected')
 
@@ -69,183 +115,124 @@ export const useSocketStore = defineStore('websocket', () => {
 
         socket.value.on('disconnect', (reason) => {
             isConnected.value = false
-            console.log('❌ WebSocket disconnected:', reason)
+            connectionState.value = 'disconnected'
+            console.log('🔌 WebSocket disconnected:', reason)
 
+            // Show notification for unexpected disconnections
             if (reason === 'io server disconnect') {
-                // Server disconnected, try to reconnect
-                setTimeout(() => {
-                    if (reconnectAttempts.value < maxReconnectAttempts) {
-                        reconnectAttempts.value++
-                        connect()
-                    }
-                }, 2000 * reconnectAttempts.value)
+                showToast('warning', 'Server disconnected. Please refresh the page.')
+            } else if (reason === 'transport close' || reason === 'transport error') {
+                showToast('warning', 'Connection lost. Attempting to reconnect...')
             }
         })
 
         socket.value.on('connect_error', (error) => {
+            isConnecting.value = false
+            connectionState.value = 'disconnected'
             console.error('WebSocket connection error:', error)
-            isConnected.value = false
+
+            reconnectAttempts.value++
+
+            if (reconnectAttempts.value <= maxReconnectAttempts) {
+                setTimeout(() => {
+                    if (reconnectAttempts.value <= maxReconnectAttempts) {
+                        console.log(`Reconnection attempt ${reconnectAttempts.value}/${maxReconnectAttempts}`)
+                        socket.value?.connect()
+                    }
+                }, Math.pow(2, reconnectAttempts.value) * 1000) // Exponential backoff
+            } else {
+                showToast('error', 'Unable to connect to server. Please check your connection and refresh the page.')
+            }
+        })
+
+        socket.value.on('reconnect', (attemptNumber) => {
+            console.log('🔄 WebSocket reconnected after', attemptNumber, 'attempts')
+            showToast('success', 'Connection restored!')
         })
 
         // Session events
-        socket.value.on('session-started', (data) => {
-            sessionUpdates[data.sessionId] = {
-                ...data,
-                status: 'active',
-                timestamp: Date.now()
-            }
-            toast.success(`Session started: ${data.mode} mode`)
-        })
+        socket.value.on('session-update', (data) => {
+            sessionUpdates[data.sessionId] = data
 
-        socket.value.on('session-ended', (data) => {
-            sessionUpdates[data.sessionId] = {
-                ...data,
-                status: 'ended',
-                timestamp: Date.now()
-            }
-            toast.info('Session ended')
-        })
-
-        socket.value.on('session-mode-changed', (data) => {
-            sessionUpdates[data.sessionId] = {
-                ...sessionUpdates[data.sessionId],
-                ...data,
-                timestamp: Date.now()
-            }
-            toast.info(`Debate mode changed to: ${data.newMode}`)
-        })
-
-        // Speaker events
-        socket.value.on('speaker-changed', (data) => {
-            speakerUpdates[data.sessionId] = {
-                currentSpeaker: data.country,
-                speakerEmail: data.email,
-                timestamp: Date.now()
-            }
-        })
-
-        socket.value.on('speaker-list-updated', (data) => {
-            speakerUpdates[data.sessionId] = {
-                ...speakerUpdates[data.sessionId],
-                speakerList: data.speakerList,
-                timestamp: Date.now()
-            }
-        })
-
-        // Timer events
-        socket.value.on('timer-started', (data) => {
-            timerUpdates[`${data.sessionId}-${data.timerType}`] = {
-                ...data,
-                status: 'running',
-                timestamp: Date.now()
-            }
-        })
-
-        socket.value.on('timer-paused', (data) => {
-            timerUpdates[`${data.sessionId}-${data.timerType}`] = {
-                ...data,
-                status: 'paused',
-                timestamp: Date.now()
-            }
-        })
-
-        socket.value.on('timer-stopped', (data) => {
-            timerUpdates[`${data.sessionId}-${data.timerType}`] = {
-                ...data,
-                status: 'stopped',
-                timestamp: Date.now()
-            }
-        })
-
-        socket.value.on('timer-tick', (data) => {
-            timerUpdates[`${data.sessionId}-${data.timerType}`] = {
-                ...timerUpdates[`${data.sessionId}-${data.timerType}`],
-                remainingTime: data.remainingTime,
-                timestamp: Date.now()
+            // Notify about important session changes
+            if (data.type === 'status-change') {
+                if (data.status === 'active') {
+                    showToast('info', `Session "${data.sessionName}" has started`)
+                } else if (data.status === 'paused') {
+                    showToast('warning', `Session "${data.sessionName}" has been paused`)
+                } else if (data.status === 'ended') {
+                    showToast('info', `Session "${data.sessionName}" has ended`)
+                }
             }
         })
 
         // Voting events
-        socket.value.on('voting-started', (data) => {
-            votingUpdates[data.votingId] = {
-                ...data,
-                status: 'active',
-                timestamp: Date.now()
-            }
-            toast.success(`New voting: ${data.subject}`)
-        })
+        socket.value.on('voting-update', (data) => {
+            votingUpdates[data.votingId] = data
 
-        socket.value.on('voting-completed', (data) => {
-            votingUpdates[data.votingId] = {
-                ...data,
-                status: 'completed',
-                timestamp: Date.now()
-            }
-            toast.success(`Voting completed: ${data.passed ? 'PASSED' : 'FAILED'}`)
-        })
-
-        socket.value.on('vote-cast', (data) => {
-            // Update voting progress without revealing individual votes
-            if (votingUpdates[data.votingId]) {
-                votingUpdates[data.votingId].votesCount = data.votesCount
-                votingUpdates[data.votingId].timestamp = Date.now()
+            if (data.type === 'voting-started') {
+                showToast('info', `Voting started: ${data.topic}`, { duration: 5000 })
+            } else if (data.type === 'voting-ended') {
+                const result = data.result?.passed ? 'passed' : 'failed'
+                showToast('info', `Voting ended: ${data.topic} - ${result}`)
             }
         })
 
-        socket.value.on('voting-progress', (data) => {
-            votingUpdates[data.votingId] = {
-                ...votingUpdates[data.votingId],
-                ...data,
-                timestamp: Date.now()
+        // Timer events
+        socket.value.on('timer-update', (data) => {
+            timerUpdates[`${data.sessionId}-${data.type}`] = data
+        })
+
+        socket.value.on('timer-warning', (data) => {
+            if (data.timeRemaining <= 60) { // 1 minute warning
+                showToast('warning', `Time warning: ${data.timeRemaining} seconds remaining`)
+            }
+        })
+
+        socket.value.on('timer-expired', (data) => {
+            showToast('error', 'Time expired!', { duration: 3000 })
+        })
+
+        // Speaker list events
+        socket.value.on('speaker-update', (data) => {
+            speakerUpdates[data.sessionId] = data
+
+            const authStore = useAuthStore()
+            if (data.type === 'speaker-added' && data.speakerEmail === authStore.user?.email) {
+                showToast('success', 'You have been added to the speakers list')
+            } else if (data.type === 'your-turn' && data.currentSpeakerEmail === authStore.user?.email) {
+                showToast('info', 'It\'s your turn to speak!', {
+                    duration: 10000,
+                    important: true
+                })
             }
         })
 
         // Attendance events
-        socket.value.on('attendance-updated', (data) => {
-            attendanceUpdates[data.sessionId] = {
-                attendance: data.attendance,
-                quorum: data.quorum,
-                timestamp: Date.now()
-            }
+        socket.value.on('attendance-update', (data) => {
+            attendanceUpdates[data.sessionId] = data
         })
 
-        socket.value.on('quorum-status-changed', (data) => {
-            attendanceUpdates[data.sessionId] = {
-                ...attendanceUpdates[data.sessionId],
-                quorum: data.quorum,
-                timestamp: Date.now()
-            }
-
-            if (data.quorum.hasQuorum) {
-                toast.success('Quorum achieved')
-            } else {
-                toast.warning('Quorum lost')
-            }
-        })
-
-        // Message events
+        // Messaging events
         socket.value.on('new-message', (data) => {
-            messageUpdates.push({
-                ...data,
-                timestamp: Date.now()
-            })
+            messageUpdates.push(data)
 
             const authStore = useAuthStore()
             if (data.recipientEmail === authStore.user?.email) {
-                toast.info(`New message from ${data.senderCountry}`)
+                showToast('info', `New message from ${data.senderCountry}`)
             }
         })
 
         // Emergency/announcement events
         socket.value.on('emergency-announcement', (data) => {
-            toast.error(data.message, {
+            showToast('error', data.message, {
                 duration: 10000,
                 important: true
             })
         })
 
         socket.value.on('general-announcement', (data) => {
-            toast.info(data.message, {
+            showToast('info', data.message, {
                 duration: 5000
             })
         })
@@ -285,8 +272,8 @@ export const useSocketStore = defineStore('websocket', () => {
         return votingUpdates[votingId] || null
     }
 
-    const getTimerUpdate = (sessionId, timerType) => {
-        return timerUpdates[`${sessionId}-${timerType}`] || null
+    const getTimerUpdate = (sessionId, type) => {
+        return timerUpdates[`${sessionId}-${type}`] || null
     }
 
     const getSpeakerUpdate = (sessionId) => {
@@ -297,17 +284,20 @@ export const useSocketStore = defineStore('websocket', () => {
         return attendanceUpdates[sessionId] || null
     }
 
-    const getRecentMessages = (limit = 50) => {
+    const getRecentMessages = (limit = 10) => {
         return messageUpdates.slice(-limit)
     }
 
-    // Cleanup
-    const clearUpdates = () => {
+    // Clear updates
+    const clearSessionUpdates = () => {
         Object.keys(sessionUpdates).forEach(key => delete sessionUpdates[key])
+    }
+
+    const clearVotingUpdates = () => {
         Object.keys(votingUpdates).forEach(key => delete votingUpdates[key])
-        Object.keys(timerUpdates).forEach(key => delete timerUpdates[key])
-        Object.keys(speakerUpdates).forEach(key => delete speakerUpdates[key])
-        Object.keys(attendanceUpdates).forEach(key => delete attendanceUpdates[key])
+    }
+
+    const clearMessageUpdates = () => {
         messageUpdates.splice(0, messageUpdates.length)
     }
 
@@ -315,6 +305,8 @@ export const useSocketStore = defineStore('websocket', () => {
         // State
         socket,
         isConnected,
+        isConnecting,
+        connectionState,
         reconnectAttempts,
 
         // Data stores
@@ -325,7 +317,7 @@ export const useSocketStore = defineStore('websocket', () => {
         attendanceUpdates,
         messageUpdates,
 
-        // Methods
+        // Actions
         connect,
         disconnect,
         joinCommittee,
@@ -340,6 +332,10 @@ export const useSocketStore = defineStore('websocket', () => {
         getSpeakerUpdate,
         getAttendanceUpdate,
         getRecentMessages,
-        clearUpdates
+
+        // Utilities
+        clearSessionUpdates,
+        clearVotingUpdates,
+        clearMessageUpdates
     }
 })

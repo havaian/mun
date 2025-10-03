@@ -16,9 +16,14 @@ export const useAuthStore = defineStore('auth', () => {
     // Helper function to safely use toast
     const showToast = (type, message) => {
         try {
-            const { useToast } = require('@/plugins/toast')
-            const toast = useToast()
-            toast[type](message)
+            // Use dynamic import to avoid initialization issues
+            import('@/plugins/toast').then(toastModule => {
+                const { useToast } = toastModule
+                const toast = useToast()
+                toast[type](message)
+            }).catch(() => {
+                console.log(`${type.toUpperCase()}: ${message}`)
+            })
         } catch (error) {
             // Fallback to console if toast is not available
             console.log(`${type.toUpperCase()}: ${message}`)
