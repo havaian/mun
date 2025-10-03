@@ -316,7 +316,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
-import { useSocketStore } from '../../storeswebsocket'
+import { useSocketStore } from '../../stores/websocket'
 
 const emit = defineEmits(['close', 'update'])
 const props = defineProps({

@@ -6,7 +6,7 @@ import './style.css'
 
 // Import stores
 import { useAuthStore } from './stores/auth'
-import { useSocketStore } from './storeswebsocket'
+import { useSocketStore } from './stores/websocket'
 
 import router from './router'
 
