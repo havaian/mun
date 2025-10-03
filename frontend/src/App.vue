@@ -109,7 +109,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
 import { useSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
-import { useAuthStore } from './stores/auth'
 
 // Components
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
