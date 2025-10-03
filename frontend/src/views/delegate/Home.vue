@@ -424,8 +424,8 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useAuthStore } from '../../stores/auth'
-import { useSocketStore } from '../../stores/websocket'
+import { useAuthStore } from '@/stores/auth'
+import { useSocketStore } from '@/stores/websocket'
 import { useRouter } from 'vue-router'
 
 const authStore = useAuthStore()

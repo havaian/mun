@@ -206,7 +206,7 @@
 
 <script setup>
 import { ref, reactive, computed } from 'vue'
-import { useAuthStore } from '../../stores/auth'
+import { useAuthStore } from '@/stores/auth'
 
 const emit = defineEmits(['close', 'success'])
 

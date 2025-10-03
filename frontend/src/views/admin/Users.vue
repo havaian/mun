@@ -335,8 +335,8 @@
 
 <script setup>
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
-import { useAuthStore } from '../../stores/auth'
-import { useSocketStore } from '../../stores/websocket'
+import { useAuthStore } from '@/stores/auth'
+import { useSocketStore } from '@/stores/websocket'
 
 const authStore = useAuthStore()
 const socketStore = useSocketStore()
