@@ -109,6 +109,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
 import { useSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
+import { useAuthStore } from './stores/auth'
 
 // Components
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
@@ -405,8 +406,19 @@ onMounted(async () => {
   // Set up router guards
   router.afterEach(handleRouteChange)
 
-  // Set up store watchers
-  authStore.$subscribe(handleAuthStateChange)
+  // Check if user is already authenticated on app load
+  if (authStore.isAuthenticated && authStore.user && authStore.token) {
+    wsStore.connect()
+  }
+
+  // Set up subscription to auth state changes
+  authStore.$subscribe((mutation, state) => {
+    if (state.isAuthenticated && state.user && state.token) {
+      wsStore.connect()
+    } else {
+      wsStore.disconnect()
+    }
+  })
 
   // Watch WebSocket state
   watch(() => wsStore.connectionState, handleWebSocketStateChange)
@@ -431,19 +443,19 @@ onUnmounted(() => {
   wsStore.disconnect()
 })
 
-// Watch for authentication changes to handle redirects
-watch(() => authStore.isAuthenticated, async (newVal, oldVal) => {
-  if (newVal && !oldVal) {
-    // User just logged in
-    const currentRoute = router.currentRoute.value
 
-    // If on auth page, redirect to dashboard
-    if (currentRoute.path.startsWith('/auth')) {
-      await nextTick()
-      router.push({ name: authStore.getDashboardRoute() })
+// Watch for auth state changes (alternative to $subscribe for more control)
+watch(
+  () => [authStore.isAuthenticated, authStore.user, authStore.token],
+  ([isAuth, user, token]) => {
+    if (isAuth && user && token) {
+      wsStore.connect()
+    } else {
+      wsStore.disconnect()
     }
-  }
-})
+  },
+  { immediate: true }
+)
 
 // Watch for language changes to update document
 watch(() => appStore.currentLanguage, (newLang) => {
