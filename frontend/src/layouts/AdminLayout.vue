@@ -1,8 +1,5 @@
 <template>
     <div class="min-h-screen bg-gradient-mun">
-        <!-- Universal Navbar -->
-        <UniversalNavbar />
-
         <!-- Performance-optimized sidebar with role-based navigation -->
         <aside :class="[
             'fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-mun-gray-200 transform transition-transform duration-200 ease-in-out',
@@ -185,9 +182,6 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useWebSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
-
-// Import the Universal Navbar
-import UniversalNavbar from '@/components/shared/UniversalNavbar.vue'
 
 // Icons
 import {

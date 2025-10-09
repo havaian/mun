@@ -1,8 +1,5 @@
 <template>
     <div class="min-h-screen bg-gradient-mun">
-        <!-- Universal Navbar -->
-        <UniversalNavbar />
-
         <!-- Delegate Sidebar -->
         <div :class="[
             'fixed inset-y-0 left-0 z-50 w-64 bg-white/90 backdrop-blur-sm border-r border-white/20 shadow-mun-lg transition-transform duration-300',
@@ -197,9 +194,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
 import { useWebSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
-
-// Import the Universal Navbar
-import UniversalNavbar from '@/components/shared/UniversalNavbar.vue'
 
 // Icons
 import {

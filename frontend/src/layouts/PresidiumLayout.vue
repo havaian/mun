@@ -1,7 +1,5 @@
 <template>
     <div class="min-h-screen bg-gradient-mun">
-        <!-- Universal Navbar -->
-        <UniversalNavbar />
 
         <!-- Presidium Sidebar -->
         <div :class="[
@@ -119,9 +117,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
 import { useWebSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
-
-// Import the Universal Navbar
-import UniversalNavbar from '@/components/shared/UniversalNavbar.vue'
 
 // Icons
 import {
