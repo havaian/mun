@@ -1,8 +1,12 @@
 <template>
     <div class="min-h-screen bg-gradient-mun">
+        <!-- Universal Navbar -->
+        <UniversalNavbar />
+
         <!-- Delegate Sidebar -->
         <div :class="[
             'fixed inset-y-0 left-0 z-50 w-64 bg-white/90 backdrop-blur-sm border-r border-white/20 shadow-mun-lg transition-transform duration-300',
+            'mt-16', // Add margin top for navbar
             { '-translate-x-full': appStore.sidebarCollapsed }
         ]">
             <!-- Sidebar Header -->
@@ -28,7 +32,7 @@
             </div>
 
             <!-- Navigation Menu -->
-            <nav class="flex-1 p-4 space-y-2">
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
                 <RouterLink v-for="item in navigationItems" :key="item.name" :to="item.to" class="nav-link group"
                     :class="{ 'active': $route.name === item.name }">
                     <component :is="item.icon" class="w-5 h-5 mr-3 flex-shrink-0" />
@@ -43,32 +47,87 @@
             <!-- Quick Actions -->
             <div class="p-4 border-t border-mun-gray-100">
                 <div class="space-y-2">
-                    <button @click="quickJoinSpeakers"
-                        class="w-full flex items-center px-3 py-2 text-sm font-medium text-un-blue hover:bg-un-blue/10 rounded-lg transition-colors">
-                        <MegaphoneIcon class="w-4 h-4 mr-3" />
-                        Join Speakers
+                    <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wider mb-3">
+                        Quick Actions
+                    </h4>
+
+                    <!-- Join Speakers List -->
+                    <button @click="joinSpeakersList" :disabled="isInSpeakersList || !canJoinSpeakers"
+                        class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                        :class="isInSpeakersList ? 'text-green-700 bg-green-100' : 'text-mun-blue-700 bg-mun-blue-100 hover:bg-mun-blue-200'">
+                        <HandRaisedIcon class="w-4 h-4 mr-2" />
+                        {{ isInSpeakersList ? 'In Speakers List' : 'Join Speakers' }}
                     </button>
-                    <button @click="quickVote"
-                        class="w-full flex items-center px-3 py-2 text-sm font-medium text-mun-green-600 hover:bg-mun-green-50 rounded-lg transition-colors">
-                        <HandRaisedIcon class="w-4 h-4 mr-3" />
-                        Quick Vote
+
+                    <!-- Submit Motion -->
+                    <button @click="openMotionModal" :disabled="!canSubmitMotion"
+                        class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-mun-purple-700 bg-mun-purple-100 hover:bg-mun-purple-200 rounded-lg transition-colors disabled:opacity-50">
+                        <DocumentPlusIcon class="w-4 h-4 mr-2" />
+                        Submit Motion
+                    </button>
+
+                    <!-- Quick Vote -->
+                    <button v-if="activeVoting" @click="$router.push('/delegate/voting')"
+                        class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors animate-pulse">
+                        <ExclamationTriangleIcon class="w-4 h-4 mr-2" />
+                        Vote Now!
                     </button>
                 </div>
             </div>
 
-            <!-- Sidebar Footer -->
-            <div class="p-4 border-t border-mun-gray-100">
-                <div class="text-sm text-mun-gray-600 mb-3">
-                    Ranking: #{{ delegateStats?.ranking || '--' }}
-                </div>
-                <div class="flex items-center space-x-2">
-                    <div :class="[
-                        'w-2 h-2 rounded-full',
-                        isSessionActive ? 'bg-mun-green-500' : 'bg-mun-gray-300'
-                    ]"></div>
-                    <span class="text-sm text-mun-gray-600">
-                        {{ isSessionActive ? 'Session Active' : 'No Active Session' }}
-                    </span>
+            <!-- Current Status -->
+            <div class="border-t border-mun-gray-100 p-4">
+                <div class="space-y-3">
+                    <!-- Session Status -->
+                    <div class="text-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-mun-gray-600">Session Status</span>
+                            <div class="flex items-center space-x-2">
+                                <div :class="[
+                                    'w-2 h-2 rounded-full',
+                                    isSessionActive ? 'bg-green-500' : 'bg-gray-400'
+                                ]"></div>
+                                <span class="text-xs font-medium">
+                                    {{ isSessionActive ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div v-if="currentSession" class="text-xs text-mun-gray-500">
+                            <div>Mode: {{ formatSessionMode(currentSession.currentMode) }}</div>
+                            <div v-if="currentSpeaker">Speaker: {{ currentSpeaker }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Voting Status -->
+                    <div v-if="activeVoting" class="text-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-mun-gray-600">Active Voting</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                                <span class="text-xs font-medium text-red-600">LIVE</span>
+                            </div>
+                        </div>
+
+                        <div class="text-xs text-mun-gray-500">
+                            {{ activeVoting.title }}
+                        </div>
+                    </div>
+
+                    <!-- Personal Stats -->
+                    <div class="text-xs text-mun-gray-500">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <div class="font-semibold text-mun-gray-900">{{ delegateStats.speechesGiven || 0 }}
+                                </div>
+                                <div>Speeches</div>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-mun-gray-900">{{ delegateStats.votesCast || 0 }}</div>
+                                <div>Votes Cast</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -76,394 +135,376 @@
         <!-- Main Content Area -->
         <div :class="[
             'transition-all duration-300',
+            'mt-16', // Add margin top for navbar
             appStore.sidebarCollapsed ? 'lg:ml-0' : 'lg:ml-64'
         ]">
-            <!-- Top Navigation Bar -->
-            <header class="bg-white/80 backdrop-blur-sm border-b border-white/20 shadow-sm sticky top-0 z-40">
-                <div class="flex items-center justify-between px-6 py-4">
-                    <!-- Left side - Menu toggle and breadcrumb -->
-                    <div class="flex items-center space-x-4">
-                        <button @click="appStore.toggleSidebar"
-                            class="p-2 rounded-lg hover:bg-mun-gray-100 transition-colors lg:hidden">
-                            <Bars3Icon class="w-5 h-5 text-mun-gray-600" />
-                        </button>
-
-                        <nav class="hidden md:flex items-center space-x-2 text-sm">
-                            <RouterLink to="/delegate"
-                                class="text-mun-gray-500 hover:text-mun-gray-700 transition-colors">
-                                Delegate
-                            </RouterLink>
-                            <ChevronRightIcon class="w-4 h-4 text-mun-gray-400" />
-                            <span class="text-mun-gray-900 font-medium">{{ pageTitle }}</span>
-                        </nav>
-                    </div>
-
-                    <!-- Center - Session Info -->
-                    <div v-if="currentSession" class="hidden md:flex items-center space-x-4 text-sm">
-                        <div class="flex items-center space-x-2">
-                            <div :class="[
-                                'w-2 h-2 rounded-full',
-                                currentSession.status === 'active' ? 'bg-mun-green-500' : 'bg-mun-yellow-500'
-                            ]"></div>
-                            <span class="text-mun-gray-600">Session {{ currentSession.number }}</span>
-                        </div>
-                        <div class="text-mun-gray-400">•</div>
-                        <div class="text-mun-gray-600">{{ currentSession.mode }}</div>
-                        <div v-if="sessionTimer" class="text-mun-gray-600">{{ sessionTimer }}</div>
-                    </div>
-
-                    <!-- Right side - User menu and notifications -->
-                    <div class="flex items-center space-x-4">
-                        <!-- Current Speaker Indicator -->
-                        <div v-if="currentSpeaker" class="hidden md:flex items-center space-x-2 text-sm">
-                            <div
-                                class="flex items-center space-x-2 px-3 py-1 bg-mun-yellow-100 text-mun-yellow-700 rounded-full">
-                                <div class="w-2 h-2 bg-mun-yellow-500 rounded-full animate-pulse"></div>
-                                <span>{{ currentSpeaker }} speaking</span>
-                            </div>
-                        </div>
-
-                        <!-- Messages -->
-                        <RouterLink to="/delegate/messages"
-                            class="p-2 rounded-lg hover:bg-mun-gray-100 transition-colors relative">
-                            <ChatBubbleLeftIcon class="w-5 h-5 text-mun-gray-600" />
-                            <span v-if="unreadMessages > 0"
-                                class="absolute -top-1 -right-1 bg-mun-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                {{ unreadMessages }}
-                            </span>
-                        </RouterLink>
-
-                        <!-- Notifications -->
-                        <div class="relative">
-                            <button @click="showNotifications = !showNotifications"
-                                class="p-2 rounded-lg hover:bg-mun-gray-100 transition-colors relative">
-                                <BellIcon class="w-5 h-5 text-mun-gray-600" />
-                                <span v-if="notificationCount > 0"
-                                    class="absolute -top-1 -right-1 bg-mun-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                    {{ notificationCount }}
-                                </span>
-                            </button>
-
-                            <!-- Notifications Dropdown -->
-                            <div v-if="showNotifications"
-                                class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-mun-gray-200 z-50">
-                                <div class="p-4 border-b border-mun-gray-200">
-                                    <h3 class="font-medium text-mun-gray-900">Notifications</h3>
-                                </div>
-                                <div class="max-h-64 overflow-y-auto">
-                                    <div v-for="notification in notifications" :key="notification.id"
-                                        class="p-4 hover:bg-mun-gray-50 border-b border-mun-gray-100 last:border-b-0">
-                                        <p class="text-sm text-mun-gray-900">{{ notification.message }}</p>
-                                        <p class="text-xs text-mun-gray-500 mt-1">{{ formatTime(notification.timestamp)
-                                        }}</p>
-                                    </div>
-                                    <div v-if="notifications.length === 0" class="p-4 text-center text-mun-gray-500">
-                                        No new notifications
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- User Menu -->
-                        <div class="relative">
-                            <button @click="showUserMenu = !showUserMenu"
-                                class="flex items-center space-x-3 p-2 rounded-lg hover:bg-mun-gray-100 transition-colors">
-                                <div class="w-8 h-8 bg-un-blue rounded-lg flex items-center justify-center">
-                                    <span class="text-white text-sm font-medium">
-                                        {{ getUserInitials() }}
-                                    </span>
-                                </div>
-                                <div class="hidden md:block text-left">
-                                    <p class="text-sm font-medium text-mun-gray-900">
-                                        {{ userCountry?.name || 'Delegate' }}
-                                    </p>
-                                    <p class="text-xs text-mun-gray-500">{{ committeeInfo?.name }}</p>
-                                </div>
-                                <ChevronDownIcon class="w-4 h-4 text-mun-gray-500" />
-                            </button>
-
-                            <!-- User Dropdown -->
-                            <div v-if="showUserMenu"
-                                class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-mun-gray-200 z-50">
-                                <div class="p-2">
-                                    <RouterLink to="/shared/profile"
-                                        class="flex items-center px-3 py-2 text-sm text-mun-gray-700 hover:bg-mun-gray-100 rounded-lg">
-                                        <UserIcon class="w-4 h-4 mr-3" />
-                                        Profile
-                                    </RouterLink>
-                                    <div class="border-t border-mun-gray-100 my-1"></div>
-                                    <div class="px-3 py-2 text-xs text-mun-gray-500">
-                                        Rank: #{{ delegateStats?.ranking || '--' }}
-                                    </div>
-                                    <div class="px-3 py-2 text-xs text-mun-gray-500">
-                                        Points: {{ delegateStats?.points || 0 }}
-                                    </div>
-                                    <div class="border-t border-mun-gray-100 my-1"></div>
-                                    <button @click="handleLogout"
-                                        class="w-full flex items-center px-3 py-2 text-sm text-mun-red-700 hover:bg-mun-red-50 rounded-lg">
-                                        <ArrowRightOnRectangleIcon class="w-4 h-4 mr-3" />
-                                        Sign Out
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
             <!-- Page Content -->
             <main class="min-h-screen">
                 <RouterView />
             </main>
         </div>
 
-        <!-- Mobile Menu Overlay -->
-        <div v-if="!appStore.sidebarCollapsed" @click="appStore.toggleSidebar"
-            class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden">
+        <!-- Mobile overlay -->
+        <div v-if="!appStore.sidebarCollapsed" class="fixed inset-0 bg-black bg-opacity-25 z-40 lg:hidden mt-16"
+            @click="appStore.toggleSidebar"></div>
+
+        <!-- Motion Submission Modal -->
+        <div v-if="showMotionModal"
+            class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Submit Procedural Motion</h3>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">Motion Type</label>
+                        <select v-model="motionForm.type"
+                            class="w-full border border-mun-gray-300 rounded-lg px-3 py-2">
+                            <option value="">Select motion type...</option>
+                            <option value="extension">Extension of Debate</option>
+                            <option value="closure">Closure of Debate</option>
+                            <option value="recess">Recess</option>
+                            <option value="adjournment">Adjournment</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">Justification</label>
+                        <textarea v-model="motionForm.justification" rows="3"
+                            class="w-full border border-mun-gray-300 rounded-lg px-3 py-2"
+                            placeholder="Provide justification for this motion..."></textarea>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 mt-6">
+                    <button @click="showMotionModal = false"
+                        class="px-4 py-2 text-sm font-medium text-mun-gray-700 hover:bg-mun-gray-100 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button @click="submitMotion" :disabled="!motionForm.type || !motionForm.justification"
+                        class="px-4 py-2 text-sm font-medium text-white bg-mun-blue-600 hover:bg-mun-blue-700 rounded-lg transition-colors disabled:opacity-50">
+                        Submit Motion
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
+import { useWebSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
-import { onClickOutside } from '@vueuse/core'
+
+// Import the Universal Navbar
+import UniversalNavbar from '@/components/shared/UniversalNavbar.vue'
 
 // Icons
 import {
     XMarkIcon,
-    Bars3Icon,
-    ChevronRightIcon,
-    BellIcon,
-    ChatBubbleLeftIcon,
-    ChevronDownIcon,
-    UserIcon,
-    ArrowRightOnRectangleIcon,
-    MegaphoneIcon,
-    HandRaisedIcon,
-    HomeIcon,
+    ChartBarIcon,
     DocumentTextIcon,
-    UserGroupIcon
+    HandRaisedIcon,
+    UserIcon,
+    DocumentPlusIcon,
+    ExclamationTriangleIcon,
+    ChatBubbleLeftRightIcon
 } from '@heroicons/vue/24/outline'
 
-const route = useRoute()
+// Stores and composables
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const wsStore = useWebSocketStore()
 const toast = useToast()
 
 // State
-const showUserMenu = ref(false)
-const showNotifications = ref(false)
-const sessionTimer = ref('00:00')
-const userCountry = ref(null)
-const committeeInfo = ref(null)
-const delegateStats = ref(null)
-const isSessionActive = ref(false)
+const showMotionModal = ref(false)
+const isInSpeakersList = ref(false)
 const currentSession = ref(null)
-const currentSpeaker = ref(null)
-const unreadMessages = ref(0)
-const notifications = ref([])
-const notificationCount = ref(0)
+const committeeInfo = ref(null)
+const userCountry = ref(null)
+const activeVoting = ref(null)
+const currentSpeaker = ref('')
+const delegateStats = ref({
+    speechesGiven: 0,
+    votesCast: 0,
+    documentsSubmitted: 0
+})
 
-// Navigation items
-const navigationItems = [
+const motionForm = ref({
+    type: '',
+    justification: ''
+})
+
+// Navigation items for delegates
+const navigationItems = computed(() => [
     {
         name: 'DelegateDashboard',
-        to: '/delegate',
         label: 'Dashboard',
-        icon: HomeIcon
+        to: '/delegate',
+        icon: ChartBarIcon
     },
     {
         name: 'DelegateDocuments',
-        to: '/delegate/documents',
         label: 'Documents',
-        icon: DocumentTextIcon
-    },
-    {
-        name: 'DelegateCoalitions',
-        to: '/delegate/coalitions',
-        label: 'Coalitions',
-        icon: UserGroupIcon,
-        badge: 1
-    },
-    {
-        name: 'DelegateMessages',
-        to: '/delegate/messages',
-        label: 'Messages',
-        icon: ChatBubbleLeftIcon,
-        badge: 5
+        to: '/delegate/documents',
+        icon: DocumentTextIcon,
+        badge: pendingDocuments.value > 0 ? pendingDocuments.value : null
     },
     {
         name: 'DelegateVoting',
-        to: '/delegate/voting',
         label: 'Voting',
-        icon: HandRaisedIcon
+        to: '/delegate/voting',
+        icon: HandRaisedIcon,
+        badge: activeVoting.value ? 'LIVE' : null
+    },
+    {
+        name: 'DelegateMessaging',
+        label: 'Messages',
+        to: '/delegate/messaging',
+        icon: ChatBubbleLeftRightIcon,
+        badge: unreadMessages.value > 0 ? unreadMessages.value : null
     }
-]
+])
 
-// Computed
+// Computed properties
+const pendingDocuments = computed(() => {
+    // This would come from your document store
+    return 0 // Placeholder
+})
+
+const unreadMessages = computed(() => {
+    // This would come from your messaging store
+    return 0 // Placeholder
+})
+
+const isSessionActive = computed(() => {
+    return currentSession.value?.status === 'active'
+})
+
+const canJoinSpeakers = computed(() => {
+    return isSessionActive.value && !isInSpeakersList.value
+})
+
+const canSubmitMotion = computed(() => {
+    return isSessionActive.value
+})
+
 const pageTitle = computed(() => {
-    const currentRoute = navigationItems.find(item => item.name === route.name)
-    return currentRoute ? currentRoute.label : 'Delegate'
+    const titleMap = {
+        'DelegateDashboard': 'Dashboard',
+        'DelegateDocuments': 'Documents',
+        'DelegateVoting': 'Voting',
+        'DelegateMessaging': 'Messages'
+    }
+    return titleMap[route.name] || 'Delegate Panel'
 })
 
 // Methods
-const loadLayoutData = async () => {
+const getCountryCode = () => {
+    return userCountry.value?.code || authStore.user?.countryCode || 'XX'
+}
+
+const formatSessionMode = (mode) => {
+    const modeMap = {
+        'formal': 'Formal Debate',
+        'moderated': 'Moderated Caucus',
+        'unmoderated': 'Unmoderated Caucus',
+        'informal': 'Informal Consultation',
+        'closed': 'Closed Session'
+    }
+    return modeMap[mode] || mode || 'Unknown'
+}
+
+const joinSpeakersList = async () => {
+    if (!canJoinSpeakers.value) return
+
     try {
-        // Load user country
-        userCountry.value = {
-            name: authStore.user?.countryName || "United States",
-            code: "US"
-        }
+        // Implementation would depend on your speakers list API
+        // const response = await speakersAPI.join(currentSession.value.id)
 
-        // Load committee info
-        committeeInfo.value = {
-            name: "General Assembly",
-            id: authStore.user?.committeeId
-        }
-
-        // Load delegate stats
-        delegateStats.value = {
-            ranking: 12,
-            points: 245
-        }
-
-        // Load current session
-        currentSession.value = {
-            number: 1,
-            status: 'active',
-            mode: 'Formal Debate'
-        }
-
-        currentSpeaker.value = "United Kingdom"
-        isSessionActive.value = true
-        unreadMessages.value = 5
-
-        // Load notifications
-        notifications.value = [
-            {
-                id: 1,
-                message: "Invited to join Climate Action Coalition",
-                timestamp: new Date().toISOString()
-            },
-            {
-                id: 2,
-                message: "New voting session started",
-                timestamp: new Date(Date.now() - 300000).toISOString()
-            }
-        ]
-
-        notificationCount.value = notifications.value.length
-        startSessionTimer()
+        // Mock implementation
+        isInSpeakersList.value = true
+        toast.success('Added to speakers list')
 
     } catch (error) {
-        console.error('Load layout data error:', error)
+        console.error('Failed to join speakers list:', error)
+        toast.error('Failed to join speakers list')
     }
 }
 
-const startSessionTimer = () => {
-    let seconds = 0
-    setInterval(() => {
-        seconds++
-        const hours = Math.floor(seconds / 3600)
-        const minutes = Math.floor((seconds % 3600) / 60)
-
-        sessionTimer.value = `${hours}:${minutes.toString().padStart(2, '0')}`
-    }, 1000)
+const openMotionModal = () => {
+    if (!canSubmitMotion.value) return
+    showMotionModal.value = true
 }
 
-const getCountryCode = () => {
-    const country = userCountry.value?.name || 'US'
-    return country.substring(0, 2).toUpperCase()
+const submitMotion = async () => {
+    if (!motionForm.value.type || !motionForm.value.justification) return
+
+    try {
+        // Implementation would depend on your motion API
+        // const response = await motionAPI.submit({
+        //   type: motionForm.value.type,
+        //   justification: motionForm.value.justification,
+        //   sessionId: currentSession.value.id
+        // })
+
+        // Mock implementation
+        toast.success('Motion submitted successfully')
+        showMotionModal.value = false
+        motionForm.value = { type: '', justification: '' }
+
+    } catch (error) {
+        console.error('Failed to submit motion:', error)
+        toast.error('Failed to submit motion')
+    }
 }
 
-const getUserInitials = () => {
-    const country = userCountry.value?.name || 'Country'
-    return country.substring(0, 2).toUpperCase()
+const loadDelegateData = async () => {
+    try {
+        // This would load delegate-specific data from your API
+        // const [sessionData, countryData, statsData] = await Promise.all([
+        //   sessionAPI.getCurrent(),
+        //   countryAPI.get(authStore.user.countryId),
+        //   statsAPI.getDelegate(authStore.user.email)
+        // ])
+
+        // Mock data for now
+        currentSession.value = {
+            id: 'session_1',
+            status: 'active',
+            currentMode: 'formal',
+            currentSpeaker: 'United States'
+        }
+
+        userCountry.value = {
+            name: authStore.user?.countryName || 'Your Country',
+            code: authStore.user?.countryCode || 'XX'
+        }
+
+        committeeInfo.value = {
+            id: 'committee_1',
+            name: authStore.user?.committeeName || 'General Assembly'
+        }
+
+        delegateStats.value = {
+            speechesGiven: Math.floor(Math.random() * 10),
+            votesCast: Math.floor(Math.random() * 20),
+            documentsSubmitted: Math.floor(Math.random() * 5)
+        }
+
+        // Check for active voting
+        activeVoting.value = Math.random() > 0.7 ? {
+            id: 'voting_1',
+            title: 'Resolution A/77/1',
+            status: 'active'
+        } : null
+
+        currentSpeaker.value = currentSession.value.currentSpeaker
+
+    } catch (error) {
+        console.error('Failed to load delegate data:', error)
+    }
 }
 
-const quickJoinSpeakers = () => {
-    toast.success('Added to speakers list')
-    // TODO: API call to join speakers list
-}
+// Lifecycle
+onMounted(async () => {
+    await loadDelegateData()
 
-const quickVote = () => {
-    router.push('/delegate/voting')
-}
+    // Set up real-time updates
+    if (wsStore?.isConnected) {
+        // Subscribe to relevant WebSocket events
+        // wsStore.on('session_update', handleSessionUpdate)
+        // wsStore.on('voting_started', handleVotingStarted)
+        // wsStore.on('speaker_changed', handleSpeakerChanged)
+    }
 
-const handleLogout = async () => {
-    const confirmed = await toast.confirm({
-        title: 'Sign Out',
-        message: 'Are you sure you want to sign out?',
-        confirmText: 'Sign Out',
-        type: 'warning'
+    // Set up data refresh interval
+    const refreshInterval = setInterval(async () => {
+        await loadDelegateData()
+    }, 30000) // Refresh every 30 seconds
+
+    // Cleanup on unmount
+    onUnmounted(() => {
+        clearInterval(refreshInterval)
     })
-
-    if (confirmed) {
-        await authStore.logout()
-    }
-}
-
-const formatTime = (timestamp) => {
-    const date = new Date(timestamp)
-    const now = new Date()
-    const diffMs = now - date
-    const diffMins = Math.floor(diffMs / 60000)
-
-    if (diffMins < 60) {
-        return `${diffMins}m ago`
-    } else {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
-}
-
-// Close dropdowns when clicking outside
-onClickOutside(showUserMenu, () => {
-    showUserMenu.value = false
-})
-
-onClickOutside(showNotifications, () => {
-    showNotifications.value = false
-})
-
-// Initialize sidebar state
-onMounted(() => {
-    appStore.initializeFromStorage()
-    loadLayoutData()
 })
 </script>
 
 <style scoped>
-/* Custom nav link hover effects */
+/* Navigation styles */
 .nav-link {
-    @apply flex items-center px-3 py-2 text-sm font-medium text-mun-gray-700 rounded-lg transition-all duration-200;
-    @apply hover:bg-mun-gray-100 hover:text-mun-gray-900;
-    position: relative;
-    overflow: hidden;
+    @apply flex items-center px-4 py-3 text-mun-gray-700 rounded-xl;
+    @apply transition-all duration-200 hover:bg-white/60 hover:text-mun-blue-600;
+    @apply relative;
 }
 
-.nav-link::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0, 158, 219, 0.1), transparent);
-    transition: left 0.5s;
-}
-
-.nav-link:hover::before {
-    left: 100%;
-}
-
-/* Active nav link styling */
 .nav-link.active {
-    @apply bg-un-blue/10 text-un-blue;
-    transform: translateX(4px);
+    @apply bg-mun-blue-600 text-white shadow-lg;
+}
+
+/* Ensure proper spacing with navbar */
+.mt-16 {
+    margin-top: 4rem;
+}
+
+/* Scrollbar styling */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Transition optimizations */
+.transition-colors {
+    transition-property: color, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+.transition-all {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+}
+
+/* Animation for active voting */
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Z-index management */
+.z-40 {
+    z-index: 40;
+}
+
+.z-50 {
+    z-index: 50;
 }
 </style>

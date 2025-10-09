@@ -1,8 +1,12 @@
 <template>
     <div class="min-h-screen bg-gradient-mun">
+        <!-- Universal Navbar -->
+        <UniversalNavbar />
+
         <!-- Presidium Sidebar -->
         <div :class="[
             'fixed inset-y-0 left-0 z-50 w-64 bg-white/90 backdrop-blur-sm border-r border-white/20 shadow-mun-lg transition-transform duration-300',
+            'mt-16', // Add margin top for navbar
             { '-translate-x-full': appStore.sidebarCollapsed }
         ]">
             <!-- Sidebar Header -->
@@ -24,7 +28,7 @@
             </div>
 
             <!-- Navigation Menu -->
-            <nav class="flex-1 p-4 space-y-2">
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
                 <RouterLink v-for="item in navigationItems" :key="item.name" :to="item.to" class="nav-link group"
                     :class="{ 'active': $route.name === item.name }">
                     <component :is="item.icon" class="w-5 h-5 mr-3 flex-shrink-0" />
@@ -36,19 +40,56 @@
                 </RouterLink>
             </nav>
 
-            <!-- Sidebar Footer -->
-            <div class="p-4 border-t border-mun-gray-100">
-                <div class="text-sm text-mun-gray-600 mb-3">
+            <!-- Session Controls -->
+            <div class="border-t border-mun-gray-100 p-4">
+                <div class="space-y-3">
+                    <!-- Current Session Status -->
+                    <div class="text-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-mun-gray-600">Current Session</span>
+                            <div class="flex items-center space-x-2">
+                                <div :class="[
+                                    'w-2 h-2 rounded-full',
+                                    currentSession?.status === 'active' ? 'bg-green-500' : 'bg-gray-400'
+                                ]"></div>
+                                <span class="text-xs font-medium">
+                                    {{ currentSession?.status === 'active' ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div v-if="currentSession" class="text-xs text-mun-gray-500">
+                            <div>Mode: {{ formatSessionMode(currentSession.currentMode) }}</div>
+                            <div v-if="sessionTimer">Timer: {{ sessionTimer }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Session Actions -->
+                    <div class="space-y-2">
+                        <button v-if="!currentSession || currentSession.status !== 'active'" @click="startSession"
+                            :disabled="isLoading"
+                            class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50">
+                            <PlayIcon class="w-4 h-4 mr-2" />
+                            Start Session
+                        </button>
+
+                        <button v-else @click="pauseSession" :disabled="isLoading"
+                            class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors disabled:opacity-50">
+                            <PauseIcon class="w-4 h-4 mr-2" />
+                            Pause Session
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Committee Info Footer -->
+            <div class="border-t border-mun-gray-100 p-4">
+                <div class="text-sm text-mun-gray-600 mb-2">
                     Committee: {{ committeeInfo?.name || 'Loading...' }}
                 </div>
-                <div class="flex items-center space-x-2">
-                    <div :class="[
-                        'w-2 h-2 rounded-full',
-                        isSessionActive ? 'bg-mun-green-500' : 'bg-mun-gray-300'
-                    ]"></div>
-                    <span class="text-sm text-mun-gray-600">
-                        {{ isSessionActive ? 'Session Active' : 'No Active Session' }}
-                    </span>
+                <div class="text-xs text-mun-gray-500">
+                    {{ committeeInfo?.countries?.length || 0 }} countries •
+                    {{ attendanceCount }} present
                 </div>
             </div>
         </div>
@@ -56,322 +97,284 @@
         <!-- Main Content Area -->
         <div :class="[
             'transition-all duration-300',
+            'mt-16', // Add margin top for navbar
             appStore.sidebarCollapsed ? 'lg:ml-0' : 'lg:ml-64'
         ]">
-            <!-- Top Navigation Bar -->
-            <header class="bg-white/80 backdrop-blur-sm border-b border-white/20 shadow-sm sticky top-0 z-40">
-                <div class="flex items-center justify-between px-6 py-4">
-                    <!-- Left side - Menu toggle and breadcrumb -->
-                    <div class="flex items-center space-x-4">
-                        <button @click="appStore.toggleSidebar"
-                            class="p-2 rounded-lg hover:bg-mun-gray-100 transition-colors lg:hidden">
-                            <Bars3Icon class="w-5 h-5 text-mun-gray-600" />
-                        </button>
-
-                        <nav class="hidden md:flex items-center space-x-2 text-sm">
-                            <RouterLink to="/presidium"
-                                class="text-mun-gray-500 hover:text-mun-gray-700 transition-colors">
-                                Presidium
-                            </RouterLink>
-                            <ChevronRightIcon class="w-4 h-4 text-mun-gray-400" />
-                            <span class="text-mun-gray-900 font-medium">{{ pageTitle }}</span>
-                        </nav>
-                    </div>
-
-                    <!-- Right side - User menu and notifications -->
-                    <div class="flex items-center space-x-4">
-                        <!-- Session Timer -->
-                        <div v-if="sessionTimer"
-                            class="hidden md:flex items-center space-x-2 text-sm text-mun-gray-600">
-                            <ClockIcon class="w-4 h-4" />
-                            <span>{{ sessionTimer }}</span>
-                        </div>
-
-                        <!-- Notifications -->
-                        <div class="relative">
-                            <button @click="showNotifications = !showNotifications"
-                                class="p-2 rounded-lg hover:bg-mun-gray-100 transition-colors relative">
-                                <BellIcon class="w-5 h-5 text-mun-gray-600" />
-                                <span v-if="notificationCount > 0"
-                                    class="absolute -top-1 -right-1 bg-mun-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                    {{ notificationCount }}
-                                </span>
-                            </button>
-
-                            <!-- Notifications Dropdown -->
-                            <div v-if="showNotifications"
-                                class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-mun-gray-200 z-50">
-                                <div class="p-4 border-b border-mun-gray-200">
-                                    <h3 class="font-medium text-mun-gray-900">Notifications</h3>
-                                </div>
-                                <div class="max-h-64 overflow-y-auto">
-                                    <div v-for="notification in notifications" :key="notification.id"
-                                        class="p-4 hover:bg-mun-gray-50 border-b border-mun-gray-100 last:border-b-0">
-                                        <p class="text-sm text-mun-gray-900">{{ notification.message }}</p>
-                                        <p class="text-xs text-mun-gray-500 mt-1">{{ formatTime(notification.timestamp)
-                                            }}</p>
-                                    </div>
-                                    <div v-if="notifications.length === 0" class="p-4 text-center text-mun-gray-500">
-                                        No new notifications
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- User Menu -->
-                        <div class="relative">
-                            <button @click="showUserMenu = !showUserMenu"
-                                class="flex items-center space-x-3 p-2 rounded-lg hover:bg-mun-gray-100 transition-colors">
-                                <div class="w-8 h-8 bg-mun-green-500 rounded-lg flex items-center justify-center">
-                                    <span class="text-white text-sm font-medium">
-                                        {{ getUserInitials() }}
-                                    </span>
-                                </div>
-                                <div class="hidden md:block text-left">
-                                    <p class="text-sm font-medium text-mun-gray-900">
-                                        {{ authStore.user?.presidiumRole || 'Presidium' }}
-                                    </p>
-                                    <p class="text-xs text-mun-gray-500">{{ committeeInfo?.name }}</p>
-                                </div>
-                                <ChevronDownIcon class="w-4 h-4 text-mun-gray-500" />
-                            </button>
-
-                            <!-- User Dropdown -->
-                            <div v-if="showUserMenu"
-                                class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-mun-gray-200 z-50">
-                                <div class="p-2">
-                                    <RouterLink to="/shared/profile"
-                                        class="flex items-center px-3 py-2 text-sm text-mun-gray-700 hover:bg-mun-gray-100 rounded-lg">
-                                        <UserIcon class="w-4 h-4 mr-3" />
-                                        Profile
-                                    </RouterLink>
-                                    <button @click="handleLogout"
-                                        class="w-full flex items-center px-3 py-2 text-sm text-mun-red-700 hover:bg-mun-red-50 rounded-lg">
-                                        <ArrowRightOnRectangleIcon class="w-4 h-4 mr-3" />
-                                        Sign Out
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
             <!-- Page Content -->
             <main class="min-h-screen">
                 <RouterView />
             </main>
         </div>
 
-        <!-- Mobile Menu Overlay -->
-        <div v-if="!appStore.sidebarCollapsed" @click="appStore.toggleSidebar"
-            class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden">
-        </div>
+        <!-- Mobile overlay -->
+        <div v-if="!appStore.sidebarCollapsed" class="fixed inset-0 bg-black bg-opacity-25 z-40 lg:hidden mt-16"
+            @click="appStore.toggleSidebar"></div>
     </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
+import { useWebSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
-import { onClickOutside } from '@vueuse/core'
+
+// Import the Universal Navbar
+import UniversalNavbar from '@/components/shared/UniversalNavbar.vue'
 
 // Icons
 import {
     UserGroupIcon,
     XMarkIcon,
-    Bars3Icon,
-    ChevronRightIcon,
-    ClockIcon,
-    BellIcon,
-    ChevronDownIcon,
-    UserIcon,
-    ArrowRightOnRectangleIcon,
-    HomeIcon,
-    PlayIcon,
+    ChartBarIcon,
+    CalendarDaysIcon,
     DocumentTextIcon,
     HandRaisedIcon,
-    UsersIcon
+    ClockIcon,
+    PlayIcon,
+    PauseIcon,
+    UserIcon
 } from '@heroicons/vue/24/outline'
 
-const route = useRoute()
+// Stores and composables
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const wsStore = useWebSocketStore()
 const toast = useToast()
 
 // State
-const showUserMenu = ref(false)
-const showNotifications = ref(false)
-const sessionTimer = ref('00:00')
+const isLoading = ref(false)
+const currentSession = ref(null)
 const committeeInfo = ref(null)
-const isSessionActive = ref(false)
-const notifications = ref([])
-const notificationCount = ref(0)
+const sessionTimer = ref('')
+const attendanceCount = ref(0)
 
-// Navigation items
-const navigationItems = [
+// Navigation items for presidium
+const navigationItems = computed(() => [
     {
         name: 'PresidiumDashboard',
-        to: '/presidium',
         label: 'Dashboard',
-        icon: HomeIcon
+        to: '/presidium',
+        icon: ChartBarIcon
     },
     {
         name: 'PresidiumSessions',
+        label: 'Session Management',
         to: '/presidium/sessions',
-        label: 'Sessions',
-        icon: PlayIcon
+        icon: CalendarDaysIcon,
+        badge: currentSession.value?.status === 'active' ? 'LIVE' : null
     },
     {
         name: 'PresidiumDocuments',
+        label: 'Document Review',
         to: '/presidium/documents',
-        label: 'Documents',
         icon: DocumentTextIcon,
-        badge: 3
+        badge: pendingDocuments.value > 0 ? pendingDocuments.value : null
     },
     {
         name: 'PresidiumVoting',
+        label: 'Voting Management',
         to: '/presidium/voting',
-        label: 'Voting',
         icon: HandRaisedIcon
     },
     {
         name: 'PresidiumAttendance',
+        label: 'Attendance Tracking',
         to: '/presidium/attendance',
-        label: 'Attendance',
-        icon: UsersIcon
+        icon: UserIcon
     }
-]
+])
 
-// Computed
+// Computed properties
+const pendingDocuments = computed(() => {
+    // This would come from your document store
+    return 0 // Placeholder
+})
+
 const pageTitle = computed(() => {
-    const currentRoute = navigationItems.find(item => item.name === route.name)
-    return currentRoute ? currentRoute.label : 'Presidium'
+    const titleMap = {
+        'PresidiumDashboard': 'Dashboard',
+        'PresidiumSessions': 'Session Management',
+        'PresidiumDocuments': 'Document Review',
+        'PresidiumVoting': 'Voting Management',
+        'PresidiumAttendance': 'Attendance Tracking'
+    }
+    return titleMap[route.name] || 'Presidium Panel'
 })
 
 // Methods
-const loadLayoutData = async () => {
+const formatSessionMode = (mode) => {
+    const modeMap = {
+        'formal': 'Formal Debate',
+        'moderated': 'Moderated Caucus',
+        'unmoderated': 'Unmoderated Caucus',
+        'informal': 'Informal Consultation',
+        'closed': 'Closed Session'
+    }
+    return modeMap[mode] || mode || 'Unknown'
+}
+
+const startSession = async () => {
+    if (isLoading.value) return
+
+    isLoading.value = true
     try {
-        // Load committee info
-        committeeInfo.value = {
-            name: "General Assembly",
-            id: authStore.user?.committeeId
+        // Implementation would depend on your session management API
+        // const response = await sessionAPI.start(committeeInfo.value.id)
+
+        // Mock implementation
+        currentSession.value = {
+            id: 'session_' + Date.now(),
+            status: 'active',
+            currentMode: 'formal',
+            startedAt: new Date().toISOString()
         }
 
-        // Load notifications
-        notifications.value = [
-            {
-                id: 1,
-                message: "New position paper submitted by United States",
-                timestamp: new Date().toISOString()
-            },
-            {
-                id: 2,
-                message: "Voting session scheduled for 15:00",
-                timestamp: new Date(Date.now() - 300000).toISOString()
-            }
-        ]
-
-        notificationCount.value = notifications.value.length
-
-        // Check session status
-        isSessionActive.value = true
-        startSessionTimer()
+        toast.success('Session started successfully')
+        await loadSessionData()
 
     } catch (error) {
-        console.error('Load layout data error:', error)
+        console.error('Failed to start session:', error)
+        toast.error('Failed to start session')
+    } finally {
+        isLoading.value = false
     }
 }
 
-const startSessionTimer = () => {
-    let seconds = 0
-    setInterval(() => {
-        seconds++
-        const hours = Math.floor(seconds / 3600)
-        const minutes = Math.floor((seconds % 3600) / 60)
-        const secs = seconds % 60
+const pauseSession = async () => {
+    if (isLoading.value) return
 
-        sessionTimer.value = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-    }, 1000)
-}
+    isLoading.value = true
+    try {
+        // Implementation would depend on your session management API
+        // const response = await sessionAPI.pause(currentSession.value.id)
 
-const getUserInitials = () => {
-    const role = authStore.user?.presidiumRole || 'P'
-    return role.substring(0, 2).toUpperCase()
-}
+        // Mock implementation
+        if (currentSession.value) {
+            currentSession.value.status = 'paused'
+        }
 
-const handleLogout = async () => {
-    const confirmed = await toast.confirm({
-        title: 'Sign Out',
-        message: 'Are you sure you want to sign out?',
-        confirmText: 'Sign Out',
-        type: 'warning'
-    })
+        toast.success('Session paused')
 
-    if (confirmed) {
-        await authStore.logout()
+    } catch (error) {
+        console.error('Failed to pause session:', error)
+        toast.error('Failed to pause session')
+    } finally {
+        isLoading.value = false
     }
 }
 
-const formatTime = (timestamp) => {
-    const date = new Date(timestamp)
-    const now = new Date()
-    const diffMs = now - date
-    const diffMins = Math.floor(diffMs / 60000)
+const loadSessionData = async () => {
+    try {
+        // This would load current session data from your API
+        // const response = await sessionAPI.getCurrent(committeeInfo.value.id)
 
-    if (diffMins < 60) {
-        return `${diffMins}m ago`
+        // Mock data for now
+        committeeInfo.value = {
+            id: 'committee_1',
+            name: 'General Assembly',
+            countries: Array.from({ length: 50 }, (_, i) => ({ id: i, name: `Country ${i + 1}` }))
+        }
+
+        attendanceCount.value = Math.floor(Math.random() * 45) + 25 // Mock attendance
+
+    } catch (error) {
+        console.error('Failed to load session data:', error)
+    }
+}
+
+const updateSessionTimer = () => {
+    if (currentSession.value?.status === 'active') {
+        const startTime = new Date(currentSession.value.startedAt)
+        const now = new Date()
+        const elapsed = Math.floor((now - startTime) / 1000)
+
+        const hours = Math.floor(elapsed / 3600)
+        const minutes = Math.floor((elapsed % 3600) / 60)
+        const seconds = elapsed % 60
+
+        sessionTimer.value = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
     } else {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        sessionTimer.value = ''
     }
 }
 
-// Close dropdowns when clicking outside
-onClickOutside(showUserMenu, () => {
-    showUserMenu.value = false
-})
+// Lifecycle
+onMounted(async () => {
+    await loadSessionData()
 
-onClickOutside(showNotifications, () => {
-    showNotifications.value = false
-})
+    // Set up timer update interval
+    const timerInterval = setInterval(updateSessionTimer, 1000)
 
-// Initialize sidebar state
-onMounted(() => {
-    appStore.initializeFromStorage()
-    loadLayoutData()
+    // Set up data refresh interval
+    const refreshInterval = setInterval(async () => {
+        await loadSessionData()
+    }, 30000) // Refresh every 30 seconds
+
+    // Cleanup on unmount
+    onUnmounted(() => {
+        clearInterval(timerInterval)
+        clearInterval(refreshInterval)
+    })
 })
 </script>
 
 <style scoped>
-/* Custom nav link hover effects */
+/* Navigation styles */
 .nav-link {
-    @apply flex items-center px-3 py-2 text-sm font-medium text-mun-gray-700 rounded-lg transition-all duration-200;
-    @apply hover:bg-mun-gray-100 hover:text-mun-gray-900;
-    position: relative;
-    overflow: hidden;
+    @apply flex items-center px-4 py-3 text-mun-gray-700 rounded-xl;
+    @apply transition-all duration-200 hover:bg-white/60 hover:text-mun-blue-600;
+    @apply relative;
 }
 
-.nav-link::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.1), transparent);
-    transition: left 0.5s;
-}
-
-.nav-link:hover::before {
-    left: 100%;
-}
-
-/* Active nav link styling */
 .nav-link.active {
-    @apply bg-mun-green-100 text-mun-green-700;
-    transform: translateX(4px);
+    @apply bg-mun-blue-600 text-white shadow-lg;
+}
+
+/* Ensure proper spacing with navbar */
+.mt-16 {
+    margin-top: 4rem;
+}
+
+/* Scrollbar styling */
+.overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Transition optimizations */
+.transition-colors {
+    transition-property: color, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+.transition-all {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+}
+
+/* Z-index management */
+.z-40 {
+    z-index: 40;
+}
+
+.z-50 {
+    z-index: 50;
 }
 </style>

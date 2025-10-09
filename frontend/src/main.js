@@ -13,6 +13,9 @@ import LoadingSpinner from './components/ui/LoadingSpinner.vue'
 import AppButton from './components/ui/AppButton.vue'
 import AppCard from './components/ui/AppCard.vue'
 
+// Import the new Universal Navbar
+import UniversalNavbar from './components/shared/UniversalNavbar.vue'
+
 // Initialize Vue app
 const app = createApp(App)
 
@@ -26,6 +29,7 @@ app.use(Modal)
 app.component('LoadingSpinner', LoadingSpinner)
 app.component('AppButton', AppButton)
 app.component('AppCard', AppCard)
+app.component('UniversalNavbar', UniversalNavbar)
 
 // Global error handler
 app.config.errorHandler = (err, vm, info) => {
@@ -35,6 +39,11 @@ app.config.errorHandler = (err, vm, info) => {
     if (import.meta.env.PROD) {
         // TODO: Send to error reporting service
     }
+}
+
+// Global performance monitoring (if needed)
+if (import.meta.env.DEV) {
+    app.config.performance = true
 }
 
 // Mount app

@@ -1,192 +1,131 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-un-blue via-mun-blue-600 to-un-blue-dark relative overflow-hidden">
-        <!-- Main Content Container -->
-        <div class="relative z-10 min-h-screen flex items-center justify-center">
-            <!-- Authentication Forms - Centered -->
-            <div class="w-full max-w-md px-6">
-                <!-- Auth Form Container -->
-                <div class="relative">
-                    <div
-                        class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-                        <!-- Loading Overlay -->
-                        <div v-if="authStore.isLoading"
-                            class="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center rounded-2xl">
-                            <div class="flex flex-col items-center">
-                                <LoadingSpinner class="w-8 h-8 text-un-blue mb-2" />
-                                <p class="text-sm text-mun-gray-600">
-                                    {{ loadingMessage }}
-                                </p>
-                            </div>
-                        </div>
+    <div class="min-h-screen bg-gradient-mun">
+        <!-- Universal Navbar for guest users -->
+        <UniversalNavbar />
 
-                        <!-- Router View for Auth Pages -->
-                        <div class="relative">
-                            <RouterView />
-                        </div>
+        <!-- Main Auth Content -->
+        <div class="pt-16 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+            <div class="sm:mx-auto sm:w-full sm:max-w-md">
+                <!-- Logo and branding -->
+                <div class="flex justify-center">
+                    <div
+                        class="w-16 h-16 bg-gradient-to-br from-mun-blue-500 to-mun-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                        <span class="text-white font-bold text-2xl">🏛️</span>
+                    </div>
+                </div>
+                <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-mun-gray-900">
+                    MUN Platform
+                </h2>
+                <p class="mt-2 text-center text-sm text-mun-gray-600">
+                    Model United Nations Management System
+                </p>
+            </div>
+
+            <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+                <div
+                    class="bg-white/80 backdrop-blur-sm py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-white/20">
+                    <!-- Dynamic route content -->
+                    <router-view />
+                </div>
+
+                <!-- Footer links for auth pages -->
+                <div class="mt-6 text-center">
+                    <div class="flex items-center justify-center space-x-6 text-sm">
+                        <router-link to="/auth/help"
+                            class="text-mun-gray-500 hover:text-mun-gray-700 transition-colors">
+                            Need Help?
+                        </router-link>
+                        <span class="text-mun-gray-300">•</span>
+                        <router-link to="/auth/support"
+                            class="text-mun-gray-500 hover:text-mun-gray-700 transition-colors">
+                            Support
+                        </router-link>
+                        <span class="text-mun-gray-300">•</span>
+                        <router-link to="/about" class="text-mun-gray-500 hover:text-mun-gray-700 transition-colors">
+                            About
+                        </router-link>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Toast Container Mount Point -->
-        <ToastContainer />
+        <!-- Background decoration -->
+        <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+            <div class="absolute -top-40 -right-32 w-80 h-80 bg-mun-blue-400/20 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-40 -left-32 w-80 h-80 bg-mun-purple-400/20 rounded-full blur-3xl"></div>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import {
-    QrCodeIcon,
-    UserIcon,
-    EnvelopeIcon,
-    LanguageIcon,
-    InformationCircleIcon
-} from '@heroicons/vue/24/outline'
+
+// Import the Universal Navbar
+import UniversalNavbar from '@/components/shared/UniversalNavbar.vue'
 
 const route = useRoute()
-const authStore = useAuthStore()
 
-// Computed properties for dynamic content based on current route
-const currentPageInfo = computed(() => {
-    switch (route.name) {
-        case 'Login':
-            return {
-                title: 'Welcome Back',
-                description: 'Choose your preferred login method',
-                icon: UserIcon
-            }
-        case 'QRLogin':
-            return {
-                title: 'QR Code Login',
-                description: 'Scan your unique access code',
-                icon: QrCodeIcon
-            }
-        case 'EmailBinding':
-            return {
-                title: 'Complete Setup',
-                description: 'Verify your email to finish registration',
-                icon: EnvelopeIcon
-            }
-        case 'LanguageSelection':
-            return {
-                title: 'Language Preference',
-                description: 'Choose your preferred language',
-                icon: LanguageIcon
-            }
-        default:
-            return {
-                title: 'Authentication',
-                description: 'Access your MUN platform',
-                icon: InformationCircleIcon
-            }
+// Set page title based on route
+onMounted(() => {
+    const titleMap = {
+        'Login': 'Sign In',
+        'QRLogin': 'QR Code Login',
+        'EmailBinding': 'Complete Registration',
+        'LanguageSelection': 'Select Language'
     }
-})
 
-const currentPageTitle = computed(() => currentPageInfo.value.title)
-const currentPageDescription = computed(() => currentPageInfo.value.description)
-const currentPageIcon = computed(() => currentPageInfo.value.icon)
-
-// Loading message based on current authentication state
-const loadingMessage = computed(() => {
-    if (authStore.isLoading) {
-        switch (route.name) {
-            case 'Login':
-                return 'Signing you in...'
-            case 'QRLogin':
-                return 'Processing QR code...'
-            case 'EmailBinding':
-                return 'Completing registration...'
-            case 'LanguageSelection':
-                return 'Saving preferences...'
-            default:
-                return 'Please wait...'
-        }
-    }
-    return ''
+    const pageTitle = titleMap[route.name] || 'Authentication'
+    document.title = `${pageTitle} | MUN Platform`
 })
 </script>
 
 <style scoped>
-/* Custom animations */
-@keyframes float-slow {
-
-    0%,
-    100% {
-        transform: translateY(0px) rotate(0deg);
-    }
-
-    33% {
-        transform: translateY(-10px) rotate(2deg);
-    }
-
-    66% {
-        transform: translateY(5px) rotate(-1deg);
-    }
+/* Ensure proper spacing with navbar */
+.pt-16 {
+    padding-top: 4rem;
 }
 
-@keyframes float-delayed {
+/* Glass morphism effect for auth card */
+.bg-white\/80 {
+    background-color: rgba(255, 255, 255, 0.8);
+}
 
-    0%,
-    100% {
-        transform: translateY(0px) rotate(0deg);
+.backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+}
+
+/* Gradient background */
+.bg-gradient-mun {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f4ff 100%);
+}
+
+/* Transition optimizations */
+.transition-colors {
+    transition-property: color, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+/* Blur effects for background decoration */
+.blur-3xl {
+    filter: blur(64px);
+}
+
+/* Z-index management */
+.-z-10 {
+    z-index: -10;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .sm\:rounded-2xl {
+        border-radius: 0;
     }
 
-    50% {
-        transform: translateY(-15px) rotate(3deg);
-    }
-}
-
-.animate-float-slow {
-    animation: float-slow 8s ease-in-out infinite;
-}
-
-.animate-float-delayed {
-    animation: float-delayed 6s ease-in-out infinite 2s;
-}
-
-/* Background gradient animation */
-.bg-gradient-to-br {
-    background-size: 400% 400%;
-    animation: gradientShift 15s ease infinite;
-}
-
-@keyframes gradientShift {
-    0% {
-        background-position: 0% 50%;
-    }
-
-    50% {
-        background-position: 100% 50%;
-    }
-
-    100% {
-        background-position: 0% 50%;
-    }
-}
-
-/* Enhanced glassmorphism effects */
-.bg-white\/10 {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.bg-white\/15 {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.bg-white\/25 {
-    background: rgba(255, 255, 255, 0.25);
-}
-
-/* Backdrop blur support fallback */
-@supports not (backdrop-filter: blur(10px)) {
-    .backdrop-blur-md {
-        background-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .backdrop-blur-sm {
-        background-color: rgba(255, 255, 255, 0.15);
+    .sm\:px-10 {
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
 }
 </style>
