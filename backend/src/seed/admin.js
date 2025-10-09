@@ -5,8 +5,8 @@ const { User } = require('../auth/model');
 
 // Default admin configuration
 const DEFAULT_ADMIN = {
-    username: 'admin',
-    password: 'admin123',
+    username: process.env.ADMIN_USER,
+    password: process.env.ADMIN_PASS,
     role: 'admin'
 };
 
