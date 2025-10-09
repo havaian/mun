@@ -10,7 +10,7 @@
                     <label class="flex items-center text-sm text-mun-gray-600">
                         <input type="checkbox" :checked="isAllSelected" :indeterminate="isIndeterminate"
                             @change="$emit('select-all')"
-                            class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded mr-2" />
+                            class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded mr-2" />
                         Select All
                     </label>
                 </div>
@@ -112,12 +112,12 @@
 
                     <tr v-else v-for="committee in committees" :key="committee._id"
                         class="hover:bg-mun-gray-50 transition-colors"
-                        :class="{ 'bg-un-blue-50': selected.includes(committee._id) }">
+                        :class="{ 'bg-mun-blue-50': selected.includes(committee._id) }">
                         <!-- Selection -->
                         <td class="px-6 py-4">
                             <input type="checkbox" :checked="selected.includes(committee._id)"
                                 @change="$emit('select', committee._id)"
-                                class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
                         </td>
 
                         <!-- Committee Name -->
@@ -134,7 +134,7 @@
                                 </div>
                                 <div class="ml-4">
                                     <div
-                                        class="text-sm font-medium text-mun-gray-900 hover:text-un-blue transition-colors">
+                                        class="text-sm font-medium text-mun-gray-900 hover:text-mun-blue transition-colors">
                                         {{ committee.name }}
                                     </div>
                                     <div class="text-sm text-mun-gray-500">
@@ -177,7 +177,7 @@
                             </div>
                             <div v-if="committee.maxCountries"
                                 class="mt-1 w-full bg-mun-gray-200 rounded-full h-1.5 max-w-[80px]">
-                                <div class="bg-un-blue h-1.5 rounded-full transition-all duration-300"
+                                <div class="bg-mun-blue h-1.5 rounded-full transition-all duration-300"
                                     :style="{ width: `${getCountryProgress(committee)}%` }"></div>
                             </div>
                         </td>
@@ -207,7 +207,7 @@
                             <div class="flex items-center justify-end space-x-2">
                                 <!-- Quick Actions -->
                                 <button @click.stop="$emit('view', committee)"
-                                    class="text-un-blue hover:text-un-blue-600 transition-colors" title="View Details">
+                                    class="text-mun-blue hover:text-mun-blue-600 transition-colors" title="View Details">
                                     <EyeIcon class="w-4 h-4" />
                                 </button>
 
@@ -393,7 +393,7 @@ const getCommitteeTypeIcon = (type) => {
 const getCommitteeTypeIconClass = (type) => {
     switch (type) {
         case 'GA':
-            return 'bg-un-blue'
+            return 'bg-mun-blue'
         case 'SC':
             return 'bg-mun-red-500'
         case 'ECOSOC':
@@ -586,7 +586,7 @@ tbody tr:hover {
 }
 
 /* Selection row highlight */
-tr.bg-un-blue-50 {
+tr.bg-mun-blue-50 {
     background-color: #f0f9ff;
 }
 

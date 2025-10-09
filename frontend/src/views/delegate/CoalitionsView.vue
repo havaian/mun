@@ -16,8 +16,8 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-un-blue/10">
-                        <UserGroupIcon class="w-6 h-6 text-un-blue" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <UserGroupIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">My Coalitions</p>
@@ -98,7 +98,7 @@
                         </div>
                         <span :class="[
                             'px-2 py-1 rounded text-xs font-medium',
-                            coalition.isHead ? 'bg-un-blue/10 text-un-blue' : 'bg-mun-gray-100 text-mun-gray-600'
+                            coalition.isHead ? 'bg-mun-blue/10 text-mun-blue' : 'bg-mun-gray-100 text-mun-gray-600'
                         ]">
                             {{ coalition.isHead ? 'Head' : 'Member' }}
                         </span>

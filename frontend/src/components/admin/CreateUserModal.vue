@@ -8,7 +8,7 @@
 
                     <!-- Header -->
                     <div
-                        class="flex items-center justify-between p-6 border-b border-mun-gray-200 bg-gradient-to-r from-un-blue to-mun-blue-600">
+                        class="flex items-center justify-between p-6 border-b border-mun-gray-200 bg-gradient-to-r from-mun-blue to-mun-blue-600">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                                 <UserPlusIcon class="w-6 h-6 text-white" />
@@ -35,7 +35,7 @@
                             <!-- Basic Information -->
                             <div class="mun-card p-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                    <InformationCircleIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Basic Information
                                 </h3>
 
@@ -112,7 +112,7 @@
                             <!-- Role & Permissions -->
                             <div class="mun-card p-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                    <ShieldCheckIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <ShieldCheckIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Role & Permissions
                                 </h3>
 
@@ -130,14 +130,14 @@
                                                 <div :class="[
                                                     'p-4 border-2 rounded-xl transition-all duration-200',
                                                     formData.role === role.value
-                                                        ? 'border-un-blue bg-un-blue/5'
+                                                        ? 'border-mun-blue bg-mun-blue/5'
                                                         : 'border-mun-gray-200 hover:border-mun-gray-300'
                                                 ]">
                                                     <div class="flex items-start space-x-3">
                                                         <component :is="role.icon" :class="[
                                                             'w-6 h-6 mt-0.5',
                                                             formData.role === role.value
-                                                                ? 'text-un-blue'
+                                                                ? 'text-mun-blue'
                                                                 : 'text-mun-gray-500'
                                                         ]" />
                                                         <div class="flex-1">
@@ -217,7 +217,7 @@
                             <!-- Account Settings -->
                             <div class="mun-card p-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                    <CogIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <CogIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Account Settings
                                 </h3>
 
@@ -320,7 +320,7 @@
                             <!-- Additional Information -->
                             <div class="mun-card p-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                    <DocumentTextIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <DocumentTextIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Additional Information
                                 </h3>
 
@@ -629,11 +629,11 @@ onMounted(() => {
 }
 
 .mun-input {
-    @apply w-full px-4 py-3 border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-un-blue focus:border-un-blue transition-colors;
+    @apply w-full px-4 py-3 border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue transition-colors;
 }
 
 .mun-checkbox {
-    @apply w-4 h-4 text-un-blue border-mun-gray-300 rounded focus:ring-un-blue focus:ring-2;
+    @apply w-4 h-4 text-mun-blue border-mun-gray-300 rounded focus:ring-mun-blue focus:ring-2;
 }
 
 /* Modal animations */

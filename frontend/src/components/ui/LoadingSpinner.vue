@@ -57,7 +57,7 @@ const spinnerClasses = computed(() => {
     }
 
     const colorMap = {
-        blue: 'text-un-blue',
+        blue: 'text-mun-blue',
         white: 'text-white',
         gray: 'text-mun-gray-500',
         green: 'text-mun-green-500',
@@ -81,7 +81,7 @@ const labelClasses = computed(() => {
     }
 
     const labelColorMap = {
-        blue: 'text-un-blue',
+        blue: 'text-mun-blue',
         white: 'text-white',
         gray: 'text-mun-gray-600',
         green: 'text-mun-green-600',

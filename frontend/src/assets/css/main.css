@@ -40,7 +40,7 @@
     }
 
     *:focus-visible {
-        @apply ring-2 ring-un-blue ring-opacity-50 ring-offset-2;
+        @apply ring-2 ring-mun-blue ring-opacity-50 ring-offset-2;
     }
 }
 
@@ -74,9 +74,9 @@
 
     /* UN Blue gradient button */
     .btn-un-primary {
-        @apply bg-un-blue hover:bg-un-blue-600 text-white font-medium px-6 py-3 rounded-xl;
+        @apply bg-mun-blue hover:bg-mun-blue-600 text-white font-medium px-6 py-3 rounded-xl;
         @apply transition-all duration-200 transform hover:shadow-mun-lg;
-        @apply focus:ring-2 focus:ring-un-blue focus:ring-opacity-50 focus:ring-offset-2;
+        @apply focus:ring-2 focus:ring-mun-blue focus:ring-opacity-50 focus:ring-offset-2;
     }
 
     .btn-un-primary:disabled {
@@ -85,17 +85,17 @@
 
     /* Secondary button */
     .btn-un-secondary {
-        @apply bg-white hover:bg-mun-gray-50 text-un-blue border border-un-blue/20;
+        @apply bg-white hover:bg-mun-gray-50 text-mun-blue border border-mun-blue/20;
         @apply font-medium px-6 py-3 rounded-xl transition-all duration-200;
-        @apply hover:border-un-blue/40 hover:shadow-mun;
-        @apply focus:ring-2 focus:ring-un-blue focus:ring-opacity-50 focus:ring-offset-2;
+        @apply hover:border-mun-blue/40 hover:shadow-mun;
+        @apply focus:ring-2 focus:ring-mun-blue focus:ring-opacity-50 focus:ring-offset-2;
     }
 
     /* Input field styles */
     .input-field {
         @apply w-full px-4 py-3 rounded-xl border border-mun-gray-200;
         @apply bg-white/80 backdrop-blur-sm placeholder-mun-gray-400;
-        @apply transition-all duration-200 focus:border-un-blue focus:ring-1 focus:ring-un-blue;
+        @apply transition-all duration-200 focus:border-mun-blue focus:ring-1 focus:ring-mun-blue;
         @apply hover:border-mun-gray-300;
     }
 
@@ -123,18 +123,18 @@
 
     .badge-info {
         @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
-        @apply bg-un-blue-50 text-un-blue-700 border border-un-blue-200;
+        @apply bg-mun-blue-50 text-mun-blue-700 border border-mun-blue-200;
     }
 
     /* Navigation styles */
     .nav-link {
         @apply flex items-center px-4 py-3 text-mun-gray-700 rounded-xl;
-        @apply transition-all duration-200 hover:bg-white/60 hover:text-un-blue;
+        @apply transition-all duration-200 hover:bg-white/60 hover:text-mun-blue;
         @apply relative;
     }
 
     .nav-link.active {
-        @apply bg-un-blue text-white shadow-mun;
+        @apply bg-mun-blue text-white shadow-mun;
     }
 
     /* Loading states */
@@ -161,7 +161,7 @@
 
     .qr-scanner::before {
         content: '';
-        @apply absolute inset-0 border-2 border-un-blue rounded-2xl;
+        @apply absolute inset-0 border-2 border-mun-blue rounded-2xl;
         animation: qrScannerPulse 2s infinite;
     }
 

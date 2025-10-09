@@ -15,8 +15,8 @@
                             <div
                                 class="modal-header flex items-center justify-between p-6 border-b border-mun-gray-200">
                                 <div class="flex items-center space-x-3">
-                                    <div class="p-3 bg-un-blue/10 rounded-xl">
-                                        <UserGroupIcon class="w-6 h-6 text-un-blue" />
+                                    <div class="p-3 bg-mun-blue/10 rounded-xl">
+                                        <UserGroupIcon class="w-6 h-6 text-mun-blue" />
                                     </div>
                                     <div>
                                         <h2 class="text-xl font-bold text-mun-gray-900">Create Coalition</h2>
@@ -46,7 +46,7 @@
                                                 </label>
                                                 <input v-model="formData.name" type="text"
                                                     placeholder="Enter coalition name..." maxlength="100"
-                                                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-transparent"
+                                                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent"
                                                     :class="{ 'border-red-300': errors.name }" />
                                                 <div class="flex items-center justify-between mt-1">
                                                     <p v-if="errors.name" class="text-sm text-red-600">{{ errors.name }}
@@ -64,7 +64,7 @@
                                                 <textarea v-model="formData.description"
                                                     placeholder="Describe the coalition's purpose and goals..." rows="3"
                                                     maxlength="500"
-                                                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-transparent resize-none"
+                                                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent resize-none"
                                                     :class="{ 'border-red-300': errors.description }"></textarea>
                                                 <div class="flex items-center justify-between mt-1">
                                                     <p v-if="errors.description" class="text-sm text-red-600">{{
@@ -84,8 +84,8 @@
                                                         @click="formData.type = type.value" :class="[
                                                             'type-option p-4 border-2 rounded-lg cursor-pointer transition-all duration-200',
                                                             formData.type === type.value
-                                                                ? 'border-un-blue bg-un-blue/5'
-                                                                : 'border-mun-gray-200 hover:border-un-blue/30'
+                                                                ? 'border-mun-blue bg-mun-blue/5'
+                                                                : 'border-mun-gray-200 hover:border-mun-blue/30'
                                                         ]">
                                                         <div class="flex items-center space-x-3">
                                                             <div :class="[
@@ -100,7 +100,7 @@
                                                             <div>
                                                                 <h4 :class="[
                                                                     'text-sm font-medium',
-                                                                    formData.type === type.value ? 'text-un-blue' : 'text-mun-gray-900'
+                                                                    formData.type === type.value ? 'text-mun-blue' : 'text-mun-gray-900'
                                                                 ]">
                                                                     {{ type.name }}
                                                                 </h4>
@@ -129,7 +129,7 @@
                                             <div class="relative">
                                                 <input v-model="countrySearch" type="text"
                                                     placeholder="Search for countries to invite..."
-                                                    class="w-full px-4 py-3 pl-10 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-transparent" />
+                                                    class="w-full px-4 py-3 pl-10 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent" />
                                                 <MagnifyingGlassIcon
                                                     class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-mun-gray-400" />
                                             </div>
@@ -143,7 +143,7 @@
                                                     :class="[
                                                         'country-option flex items-center justify-between p-3 cursor-pointer border-b border-mun-gray-100 transition-colors',
                                                         isCountrySelected(country.email)
-                                                            ? 'bg-un-blue/5 hover:bg-un-blue/10'
+                                                            ? 'bg-mun-blue/5 hover:bg-mun-blue/10'
                                                             : 'hover:bg-mun-gray-50'
                                                     ]">
                                                     <div class="flex items-center space-x-3">
@@ -155,7 +155,7 @@
                                                         </div>
                                                     </div>
 
-                                                    <div v-if="isCountrySelected(country.email)" class="text-un-blue">
+                                                    <div v-if="isCountrySelected(country.email)" class="text-mun-blue">
                                                         <CheckIcon class="w-5 h-5" />
                                                     </div>
                                                 </div>
@@ -169,12 +169,12 @@
                                             </label>
                                             <div class="flex flex-wrap gap-2">
                                                 <div v-for="member in formData.selectedMembers" :key="member.email"
-                                                    class="member-tag flex items-center space-x-2 px-3 py-2 bg-un-blue/10 border border-un-blue/20 rounded-lg">
+                                                    class="member-tag flex items-center space-x-2 px-3 py-2 bg-mun-blue/10 border border-mun-blue/20 rounded-lg">
                                                     <CountryFlag :country="member.name" size="xs" />
-                                                    <span class="text-sm font-medium text-un-blue">{{ member.name
+                                                    <span class="text-sm font-medium text-mun-blue">{{ member.name
                                                     }}</span>
                                                     <button @click="removeSelectedMember(member.email)"
-                                                        class="text-un-blue hover:text-un-blue-600 transition-colors">
+                                                        class="text-mun-blue hover:text-mun-blue-600 transition-colors">
                                                         <XMarkIcon class="w-4 h-4" />
                                                     </button>
                                                 </div>
@@ -193,7 +193,7 @@
                                                     Minimum Members Required
                                                 </label>
                                                 <select v-model="formData.minMembers"
-                                                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-transparent">
+                                                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent">
                                                     <option value="3">3 members (minimum)</option>
                                                     <option value="4">4 members</option>
                                                     <option value="5">5 members</option>
@@ -215,7 +215,7 @@
                                                 <div class="space-y-3">
                                                     <label class="flex items-center">
                                                         <input v-model="formData.isPublic" type="checkbox"
-                                                            class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                            class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                                         <span class="ml-3 text-sm text-mun-gray-700">
                                                             Make coalition publicly visible
                                                         </span>
@@ -223,7 +223,7 @@
 
                                                     <label class="flex items-center">
                                                         <input v-model="formData.allowDirectJoin" type="checkbox"
-                                                            class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                            class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                                         <span class="ml-3 text-sm text-mun-gray-700">
                                                             Allow delegates to request to join
                                                         </span>
@@ -278,7 +278,7 @@
                                     </button>
 
                                     <button @click="createCoalition" :disabled="!isFormValid || isSubmitting"
-                                        class="px-6 py-2 text-sm font-medium text-white bg-un-blue border border-un-blue rounded-lg hover:bg-un-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                        class="px-6 py-2 text-sm font-medium text-white bg-mun-blue border border-mun-blue rounded-lg hover:bg-mun-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                                         <LoadingSpinner v-if="isSubmitting" class="w-4 h-4 mr-2" />
                                         {{ isSubmitting ? 'Creating...' : 'Create Coalition' }}
                                     </button>
@@ -351,9 +351,9 @@ const coalitionTypes = [
         name: 'General Coalition',
         description: 'Standard coalition for resolution drafting',
         icon: UserGroupIcon,
-        activeBg: 'bg-un-blue/10',
+        activeBg: 'bg-mun-blue/10',
         inactiveBg: 'bg-mun-gray-100',
-        activeColor: 'text-un-blue',
+        activeColor: 'text-mun-blue',
         inactiveColor: 'text-mun-gray-600'
     },
     {

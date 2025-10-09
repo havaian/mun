@@ -42,7 +42,7 @@
                                             <div class="relative">
                                                 <input v-model="searchQuery" type="text"
                                                     placeholder="Search coalitions by name, description, or country..."
-                                                    class="w-full px-4 py-3 pl-10 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-transparent" />
+                                                    class="w-full px-4 py-3 pl-10 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent" />
                                                 <MagnifyingGlassIcon
                                                     class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-mun-gray-400" />
                                             </div>
@@ -50,7 +50,7 @@
                                             <!-- Filters -->
                                             <div class="filters flex items-center space-x-4">
                                                 <select v-model="filterType"
-                                                    class="px-3 py-2 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-un-blue">
+                                                    class="px-3 py-2 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue">
                                                     <option value="">All Types</option>
                                                     <option value="general">General Coalition</option>
                                                     <option value="regional">Regional Bloc</option>
@@ -59,7 +59,7 @@
                                                 </select>
 
                                                 <select v-model="filterStatus"
-                                                    class="px-3 py-2 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-un-blue">
+                                                    class="px-3 py-2 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue">
                                                     <option value="">All Status</option>
                                                     <option value="draft">Forming</option>
                                                     <option value="active">Active</option>
@@ -67,7 +67,7 @@
 
                                                 <label class="flex items-center text-sm text-mun-gray-700">
                                                     <input v-model="showOnlyJoinable" type="checkbox"
-                                                        class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue mr-2" />
+                                                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue mr-2" />
                                                     Only joinable
                                                 </label>
                                             </div>
@@ -91,8 +91,8 @@
                                             <div v-for="coalition in filteredCoalitions" :key="coalition._id" :class="[
                                                 'coalition-item p-4 border rounded-lg transition-all duration-200 cursor-pointer',
                                                 selectedCoalition?._id === coalition._id
-                                                    ? 'border-un-blue bg-un-blue/5 shadow-mun'
-                                                    : 'border-mun-gray-200 hover:border-un-blue/30 hover:shadow-sm'
+                                                    ? 'border-mun-blue bg-mun-blue/5 shadow-mun'
+                                                    : 'border-mun-gray-200 hover:border-mun-blue/30 hover:shadow-sm'
                                             ]" @click="selectCoalition(coalition)">
                                                 <!-- Coalition Header -->
                                                 <div class="flex items-start justify-between mb-3">
@@ -151,7 +151,7 @@
                                                             <ClockIcon class="w-5 h-5" />
                                                         </div>
                                                         <div v-else-if="getJoinStatus(coalition) === 'member'"
-                                                            class="text-un-blue">
+                                                            class="text-mun-blue">
                                                             <CheckCircleIcon class="w-5 h-5" />
                                                         </div>
                                                         <div v-else class="text-mun-gray-400">
@@ -165,11 +165,11 @@
                                                     <div class="flex items-center space-x-1 flex-wrap">
                                                         <!-- Head -->
                                                         <div
-                                                            class="member-flag flex items-center space-x-1 px-2 py-1 bg-un-blue/10 rounded">
+                                                            class="member-flag flex items-center space-x-1 px-2 py-1 bg-mun-blue/10 rounded">
                                                             <CountryFlag :country="coalition.headCountry" size="xs" />
-                                                            <span class="text-xs text-un-blue font-medium">{{
+                                                            <span class="text-xs text-mun-blue font-medium">{{
                                                                 coalition.headCountry }}</span>
-                                                            <CrownIcon class="w-3 h-3 text-un-blue" />
+                                                            <CrownIcon class="w-3 h-3 text-mun-blue" />
                                                         </div>
 
                                                         <!-- Members -->
@@ -213,7 +213,7 @@
                                             {{ searchQuery ? 'Try adjusting your search terms or filters' : 'No coalitions are currently available for joining' }}
                                         </p>
                                         <button @click="clearFilters"
-                                            class="px-4 py-2 text-sm font-medium text-un-blue bg-un-blue/10 border border-un-blue/20 rounded-lg hover:bg-un-blue/20 transition-colors">
+                                            class="px-4 py-2 text-sm font-medium text-mun-blue bg-mun-blue/10 border border-mun-blue/20 rounded-lg hover:bg-mun-blue/20 transition-colors">
                                             Clear Filters
                                         </button>
                                     </div>
@@ -223,10 +223,10 @@
                                         <h3 class="text-lg font-medium text-mun-gray-900 mb-4">Join Request</h3>
 
                                         <div
-                                            class="selected-coalition p-4 bg-un-blue/5 border border-un-blue/20 rounded-lg mb-4">
+                                            class="selected-coalition p-4 bg-mun-blue/5 border border-mun-blue/20 rounded-lg mb-4">
                                             <div class="flex items-center space-x-3 mb-3">
-                                                <div class="p-2 bg-un-blue/10 rounded-lg">
-                                                    <UserGroupIcon class="w-5 h-5 text-un-blue" />
+                                                <div class="p-2 bg-mun-blue/10 rounded-lg">
+                                                    <UserGroupIcon class="w-5 h-5 text-mun-blue" />
                                                 </div>
                                                 <div>
                                                     <h4 class="text-sm font-medium text-mun-gray-900">{{
@@ -268,7 +268,7 @@
                                             <textarea v-model="joinMessage"
                                                 placeholder="Introduce yourself and explain why you'd like to join this coalition..."
                                                 rows="3" maxlength="300"
-                                                class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-transparent resize-none"></textarea>
+                                                class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent resize-none"></textarea>
                                             <div class="flex justify-end mt-1">
                                                 <span class="text-xs text-mun-gray-500">{{ joinMessage.length
                                                 }}/300</span>
@@ -455,7 +455,7 @@ const getJoinInfoText = (coalition) => {
 const getJoinInfoClass = (coalition) => {
     const status = getJoinStatus(coalition)
     const classes = {
-        head: 'bg-un-blue/10 border border-un-blue/20',
+        head: 'bg-mun-blue/10 border border-mun-blue/20',
         member: 'bg-mun-green-50 border border-mun-green-200',
         pending: 'bg-mun-yellow-50 border border-mun-yellow-200',
         declined: 'bg-mun-red-50 border border-mun-red-200',
@@ -467,7 +467,7 @@ const getJoinInfoClass = (coalition) => {
 const getJoinInfoTextClass = (coalition) => {
     const status = getJoinStatus(coalition)
     const classes = {
-        head: 'text-un-blue',
+        head: 'text-mun-blue',
         member: 'text-mun-green-700',
         pending: 'text-mun-yellow-700',
         declined: 'text-mun-red-700',
@@ -713,7 +713,7 @@ watch(() => props.modelValue, (isOpen) => {
 }
 
 /* Selected coalition highlight */
-.coalition-item.border-un-blue {
+.coalition-item.border-mun-blue {
     box-shadow: 0 0 0 1px rgba(0, 158, 219, 0.2);
 }
 

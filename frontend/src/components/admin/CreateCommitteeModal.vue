@@ -8,7 +8,7 @@
 
                     <!-- Header -->
                     <div
-                        class="flex items-center justify-between p-6 border-b border-mun-gray-200 bg-gradient-to-r from-un-blue to-mun-blue-600">
+                        class="flex items-center justify-between p-6 border-b border-mun-gray-200 bg-gradient-to-r from-mun-blue to-mun-blue-600">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                                 <BuildingOfficeIcon class="w-6 h-6 text-white" />
@@ -35,7 +35,7 @@
                             <!-- Basic Information -->
                             <div class="mun-card p-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                    <InformationCircleIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Basic Information
                                 </h3>
 
@@ -99,7 +99,7 @@
                             <!-- Committee Settings -->
                             <div class="mun-card p-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                    <CogIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <CogIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Committee Settings
                                 </h3>
 
@@ -211,7 +211,7 @@
                             <!-- Agenda Topics -->
                             <div class="mun-card p-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                    <DocumentTextIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <DocumentTextIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Agenda Topics
                                 </h3>
 
@@ -233,7 +233,7 @@
                                     </div>
 
                                     <button type="button" @click="addAgendaTopic"
-                                        class="w-full p-3 border-2 border-dashed border-mun-gray-300 rounded-lg text-mun-gray-600 hover:border-un-blue hover:text-un-blue transition-colors">
+                                        class="w-full p-3 border-2 border-dashed border-mun-gray-300 rounded-lg text-mun-gray-600 hover:border-mun-blue hover:text-mun-blue transition-colors">
                                         <PlusIcon class="w-5 h-5 mx-auto mb-1" />
                                         Add Agenda Topic
                                     </button>
@@ -243,7 +243,7 @@
                             <!-- Presidium Assignment -->
                             <div class="mun-card p-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                    <UsersIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <UsersIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Presidium Assignment
                                 </h3>
 
@@ -299,7 +299,7 @@
                                             </div>
 
                                             <button type="button" @click="addPresidiumMember"
-                                                class="w-full p-2 border border-dashed border-mun-gray-300 rounded-lg text-mun-gray-600 hover:border-un-blue hover:text-un-blue transition-colors text-sm">
+                                                class="w-full p-2 border border-dashed border-mun-gray-300 rounded-lg text-mun-gray-600 hover:border-mun-blue hover:text-mun-blue transition-colors text-sm">
                                                 + Add Presidium Member
                                             </button>
                                         </div>
@@ -310,7 +310,7 @@
                             <!-- Additional Settings -->
                             <div class="mun-card p-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                    <AdjustmentsHorizontalIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <AdjustmentsHorizontalIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Additional Settings
                                 </h3>
 
@@ -658,11 +658,11 @@ onMounted(() => {
 }
 
 .mun-input {
-    @apply w-full px-4 py-3 border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-un-blue focus:border-un-blue transition-colors;
+    @apply w-full px-4 py-3 border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue transition-colors;
 }
 
 .mun-checkbox {
-    @apply w-4 h-4 text-un-blue border-mun-gray-300 rounded focus:ring-un-blue focus:ring-2;
+    @apply w-4 h-4 text-mun-blue border-mun-gray-300 rounded focus:ring-mun-blue focus:ring-2;
 }
 
 /* Modal animations */

@@ -4,8 +4,8 @@
         <!-- Header -->
         <div class="flex items-center justify-between mb-6">
             <div class="flex items-center space-x-3">
-                <div class="p-3 bg-un-blue/10 rounded-xl">
-                    <DocumentArrowUpIcon class="w-6 h-6 text-un-blue" />
+                <div class="p-3 bg-mun-blue/10 rounded-xl">
+                    <DocumentArrowUpIcon class="w-6 h-6 text-mun-blue" />
                 </div>
                 <div>
                     <h3 class="text-lg font-medium text-mun-gray-900">Document Upload</h3>
@@ -43,8 +43,8 @@
                 <div v-for="type in documentTypes" :key="type.value" @click="selectedType = type.value" :class="[
                     'type-card p-4 border-2 rounded-lg cursor-pointer transition-all duration-200',
                     selectedType === type.value
-                        ? 'border-un-blue bg-un-blue/5'
-                        : 'border-mun-gray-200 hover:border-un-blue/30'
+                        ? 'border-mun-blue bg-mun-blue/5'
+                        : 'border-mun-gray-200 hover:border-mun-blue/30'
                 ]">
                     <div class="flex items-center space-x-3">
                         <div :class="[
@@ -59,7 +59,7 @@
                         <div>
                             <h4 :class="[
                                 'text-sm font-medium',
-                                selectedType === type.value ? 'text-un-blue' : 'text-mun-gray-900'
+                                selectedType === type.value ? 'text-mun-blue' : 'text-mun-gray-900'
                             ]">
                                 {{ type.name }}
                             </h4>
@@ -82,7 +82,7 @@
                 @dragover="isDragOver = true" :class="[
                     'upload-dropzone border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200 cursor-pointer',
                     isDragOver
-                        ? 'border-un-blue bg-un-blue/5'
+                        ? 'border-mun-blue bg-mun-blue/5'
                         : selectedFile
                             ? 'border-mun-green-300 bg-mun-green-50'
                             : 'border-mun-gray-300 hover:border-mun-gray-400'
@@ -116,7 +116,7 @@
                             Remove
                         </button>
                         <button @click.stop="triggerFileInput"
-                            class="px-3 py-1 text-sm text-un-blue bg-un-blue/10 border border-un-blue/20 rounded hover:bg-un-blue/20 transition-colors">
+                            class="px-3 py-1 text-sm text-mun-blue bg-mun-blue/10 border border-mun-blue/20 rounded hover:bg-mun-blue/20 transition-colors">
                             Change
                         </button>
                     </div>
@@ -141,7 +141,7 @@
                 </label>
                 <input v-model="documentTitle" type="text" placeholder="Enter a descriptive title for your document..."
                     maxlength="200"
-                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-transparent"
+                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent"
                     :class="{ 'border-red-300': errors.title }" />
                 <div class="flex items-center justify-between mt-1">
                     <p v-if="errors.title" class="text-sm text-red-600">{{ errors.title }}</p>
@@ -157,7 +157,7 @@
                 <textarea v-model="documentDescription"
                     placeholder="Provide a brief description of the document's content and purpose..." rows="3"
                     maxlength="500"
-                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-transparent resize-none"></textarea>
+                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent resize-none"></textarea>
                 <div class="flex justify-end mt-1">
                     <span class="text-xs text-mun-gray-500">{{ documentDescription.length }}/500</span>
                 </div>
@@ -170,9 +170,9 @@
                 </label>
                 <div class="flex flex-wrap gap-2 mb-2">
                     <span v-for="tag in documentTags" :key="tag"
-                        class="tag inline-flex items-center px-3 py-1 bg-un-blue/10 text-un-blue text-sm rounded-full">
+                        class="tag inline-flex items-center px-3 py-1 bg-mun-blue/10 text-mun-blue text-sm rounded-full">
                         {{ tag }}
-                        <button @click="removeTag(tag)" class="ml-2 text-un-blue hover:text-un-blue-600">
+                        <button @click="removeTag(tag)" class="ml-2 text-mun-blue hover:text-mun-blue-600">
                             <XMarkIcon class="w-3 h-3" />
                         </button>
                     </span>
@@ -180,9 +180,9 @@
                 <div class="flex items-center space-x-2">
                     <input v-model="newTag" @keydown.enter.prevent="addTag" @keydown.comma.prevent="addTag" type="text"
                         placeholder="Add tags (press Enter or comma to add)..." maxlength="20"
-                        class="flex-1 px-3 py-2 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-un-blue" />
+                        class="flex-1 px-3 py-2 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
                     <button @click="addTag" :disabled="!newTag.trim() || documentTags.length >= 5"
-                        class="px-3 py-2 text-sm font-medium text-un-blue bg-un-blue/10 border border-un-blue/20 rounded hover:bg-un-blue/20 transition-colors disabled:opacity-50">
+                        class="px-3 py-2 text-sm font-medium text-mun-blue bg-mun-blue/10 border border-mun-blue/20 rounded hover:bg-mun-blue/20 transition-colors disabled:opacity-50">
                         Add
                     </button>
                 </div>
@@ -197,7 +197,7 @@
                 <span class="text-sm text-mun-gray-600">{{ uploadProgress }}%</span>
             </div>
             <div class="progress-bar w-full bg-mun-gray-200 rounded-full h-2">
-                <div class="bg-un-blue h-2 rounded-full transition-all duration-300"
+                <div class="bg-mun-blue h-2 rounded-full transition-all duration-300"
                     :style="{ width: `${uploadProgress}%` }"></div>
             </div>
         </div>
@@ -227,7 +227,7 @@
 
                     <div class="flex items-center space-x-2">
                         <button @click="viewDocument(doc)"
-                            class="p-2 text-mun-gray-600 hover:text-un-blue hover:bg-un-blue/10 rounded transition-colors"
+                            class="p-2 text-mun-gray-600 hover:text-mun-blue hover:bg-mun-blue/10 rounded transition-colors"
                             title="View document">
                             <EyeIcon class="w-4 h-4" />
                         </button>
@@ -257,7 +257,7 @@
                 </button>
 
                 <button @click="uploadDocument" :disabled="!canUpload || isUploading"
-                    class="px-6 py-2 text-sm font-medium text-white bg-un-blue border border-un-blue rounded-lg hover:bg-un-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    class="px-6 py-2 text-sm font-medium text-white bg-mun-blue border border-mun-blue rounded-lg hover:bg-mun-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     <LoadingSpinner v-if="isUploading" class="w-4 h-4 mr-2" />
                     {{ isUploading ? `Uploading... ${uploadProgress}%` : 'Upload Document' }}
                 </button>
@@ -317,9 +317,9 @@ const documentTypes = [
         description: 'Official country position on agenda topics',
         icon: DocumentTextIcon,
         required: true,
-        activeBg: 'bg-un-blue/10',
+        activeBg: 'bg-mun-blue/10',
         inactiveBg: 'bg-mun-gray-100',
-        activeColor: 'text-un-blue',
+        activeColor: 'text-mun-blue',
         inactiveColor: 'text-mun-gray-600'
     },
     {
@@ -703,7 +703,7 @@ onMounted(() => {
 }
 
 /* Drag and drop visual feedback */
-.upload-dropzone.border-un-blue {
+.upload-dropzone.border-mun-blue {
     box-shadow: 0 0 0 1px rgba(0, 158, 219, 0.2);
 }
 

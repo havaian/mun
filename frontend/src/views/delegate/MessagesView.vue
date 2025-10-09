@@ -16,8 +16,8 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-un-blue/10">
-                        <InboxIcon class="w-6 h-6 text-un-blue" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <InboxIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Inbox</p>
@@ -70,7 +70,7 @@
                     :class="[
                         'px-4 py-2 rounded-lg font-medium transition-colors',
                         selectedCategory === category.id
-                            ? 'bg-un-blue text-white'
+                            ? 'bg-mun-blue text-white'
                             : 'bg-mun-gray-100 text-mun-gray-700 hover:bg-mun-gray-200'
                     ]">
                     {{ category.name }}
@@ -110,13 +110,13 @@
                             <div v-for="message in filteredMessages" :key="message.id" @click="selectMessage(message)"
                                 :class="[
                                     'p-4 cursor-pointer hover:bg-mun-gray-50 transition-colors',
-                                    selectedMessage?.id === message.id ? 'bg-un-blue/5 border-r-2 border-un-blue' : '',
+                                    selectedMessage?.id === message.id ? 'bg-mun-blue/5 border-r-2 border-mun-blue' : '',
                                     !message.isRead ? 'bg-mun-yellow-50' : ''
                                 ]">
                                 <div class="flex items-start space-x-3">
                                     <div :class="[
                                         'w-2 h-2 rounded-full mt-2 flex-shrink-0',
-                                        !message.isRead ? 'bg-un-blue' : 'bg-mun-gray-300'
+                                        !message.isRead ? 'bg-mun-blue' : 'bg-mun-gray-300'
                                     ]"></div>
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-center justify-between mb-1">
@@ -214,7 +214,7 @@
                                         <DocumentIcon class="w-5 h-5 text-mun-gray-400" />
                                         <span class="flex-1 text-sm text-mun-gray-900">{{ attachment.name }}</span>
                                         <span class="text-xs text-mun-gray-500">{{ attachment.size }}</span>
-                                        <button class="text-un-blue hover:text-un-blue-600 text-sm">Download</button>
+                                        <button class="text-mun-blue hover:text-mun-blue-600 text-sm">Download</button>
                                     </div>
                                 </div>
                             </div>

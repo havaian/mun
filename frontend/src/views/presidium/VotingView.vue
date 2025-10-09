@@ -16,8 +16,8 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-un-blue/10">
-                        <HandRaisedIcon class="w-6 h-6 text-un-blue" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <HandRaisedIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Active Votings</p>
@@ -105,7 +105,7 @@
                         participation</span>
                 </div>
                 <div class="w-full bg-mun-gray-200 rounded-full h-2">
-                    <div class="bg-un-blue h-2 rounded-full transition-all duration-300"
+                    <div class="bg-mun-blue h-2 rounded-full transition-all duration-300"
                         :style="{ width: `${(activeVoting.results.total / stats.eligibleVoters) * 100}%` }"></div>
                 </div>
             </div>

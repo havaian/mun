@@ -107,8 +107,8 @@
                                     <div class="border border-mun-gray-200 rounded-xl p-6">
                                         <div class="flex items-center mb-4">
                                             <div
-                                                class="w-10 h-10 bg-un-blue-100 rounded-lg flex items-center justify-center mr-3">
-                                                <UserGroupIcon class="w-5 h-5 text-un-blue" />
+                                                class="w-10 h-10 bg-mun-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                                <UserGroupIcon class="w-5 h-5 text-mun-blue" />
                                             </div>
                                             <div>
                                                 <h4 class="font-medium text-mun-gray-900">Delegate QR Codes</h4>
@@ -205,7 +205,7 @@
 
                                             <div v-if="entry.downloadUrl" class="flex items-center space-x-2">
                                                 <button @click="downloadFile(entry.downloadUrl, entry.filename)"
-                                                    class="text-un-blue hover:text-un-blue-600 text-sm">
+                                                    class="text-mun-blue hover:text-mun-blue-600 text-sm">
                                                     Download
                                                 </button>
                                             </div>

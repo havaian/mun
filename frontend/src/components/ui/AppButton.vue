@@ -152,11 +152,11 @@ const buttonClasses = computed(() => {
         // Variant classes
         {
             // Primary
-            'bg-un-blue text-white hover:bg-un-blue-600 focus:ring-un-blue shadow-mun hover:shadow-mun-lg transform':
+            'bg-mun-blue text-white hover:bg-mun-blue-600 focus:ring-mun-blue shadow-mun hover:shadow-mun-lg transform':
                 props.variant === 'primary',
 
             // Secondary  
-            'bg-white text-un-blue border border-un-blue/20 hover:bg-un-blue-50 hover:border-un-blue/40 focus:ring-un-blue shadow-mun':
+            'bg-white text-mun-blue border border-mun-blue/20 hover:bg-mun-blue-50 hover:border-mun-blue/40 focus:ring-mun-blue shadow-mun':
                 props.variant === 'secondary',
 
             // Outline
@@ -217,7 +217,7 @@ const handleClick = (event) => {
 <style scoped>
 /* Custom focus styles for router-link and anchor tags */
 a:focus-visible {
-    @apply ring-2 ring-un-blue ring-opacity-50 ring-offset-2;
+    @apply ring-2 ring-mun-blue ring-opacity-50 ring-offset-2;
 }
 
 /* Loading state animation */

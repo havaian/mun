@@ -8,7 +8,7 @@
                     <h2 class="text-xl font-bold text-white">
                         {{ voting.subject || 'Voting in Progress' }}
                     </h2>
-                    <p class="text-un-blue-100 text-sm mt-1">
+                    <p class="text-mun-blue-100 text-sm mt-1">
                         {{ voting.description || `${votingTypeDisplay} • ${majorityDisplay}` }}
                     </p>
                 </div>
@@ -18,7 +18,7 @@
                         <div class="text-2xl font-bold text-white">
                             {{ progressPercentage }}%
                         </div>
-                        <div class="text-xs text-un-blue-100">
+                        <div class="text-xs text-mun-blue-100">
                             {{ votesReceived }}/{{ totalVoters }} votes
                         </div>
                     </div>
@@ -75,7 +75,7 @@
                     <span v-if="country.rollCallPosition" class="roll-call-number">
                         {{ country.rollCallPosition }}
                     </span>
-                    <ChevronRightIcon v-if="isCurrentVoter(country)" class="w-4 h-4 text-un-blue animate-pulse" />
+                    <ChevronRightIcon v-if="isCurrentVoter(country)" class="w-4 h-4 text-mun-blue animate-pulse" />
                 </div>
 
                 <!-- Veto indicator (Security Council) -->
@@ -160,7 +160,7 @@
 
                 <div v-if="isRollCall && currentVoterCountry" class="current-voter">
                     <span class="text-mun-gray-600">Current: </span>
-                    <span class="font-semibold text-un-blue">{{ currentVoterCountry }}</span>
+                    <span class="font-semibold text-mun-blue">{{ currentVoterCountry }}</span>
                 </div>
             </div>
         </div>
@@ -372,7 +372,7 @@ const boardClasses = computed(() => {
 })
 
 const headerClasses = computed(() => {
-    return 'bg-gradient-to-r from-un-blue to-un-blue-600 px-6 py-4'
+    return 'bg-gradient-to-r from-mun-blue to-mun-blue-600 px-6 py-4'
 })
 
 const statusClasses = computed(() => {
@@ -415,13 +415,13 @@ const getCountryCardClasses = (country) => {
         favour: 'border-green-200 bg-green-50',
         against: 'border-red-200 bg-red-50',
         abstention: 'border-amber-200 bg-amber-50',
-        pending: 'border-mun-gray-200 hover:border-un-blue-300',
+        pending: 'border-mun-gray-200 hover:border-mun-blue-300',
         absent: 'border-mun-gray-200 bg-mun-gray-50',
         observer: 'border-mun-gray-200 bg-mun-gray-50 opacity-75'
     }
 
     const interactiveClass = props.interactive ? 'cursor-pointer hover:shadow-md' : ''
-    const currentClass = isCurrentVoter(country) && props.highlightCurrent ? 'ring-2 ring-un-blue shadow-md' : ''
+    const currentClass = isCurrentVoter(country) && props.highlightCurrent ? 'ring-2 ring-mun-blue shadow-md' : ''
 
     return `${base} ${voteClasses[vote]} ${interactiveClass} ${currentClass}`
 }
@@ -494,7 +494,7 @@ const getMajorityClasses = () => {
     const base = 'majority-indicator border-l-4 pl-4'
     const borderClass = props.voting.status === 'completed'
         ? (results.value.passed ? 'border-green-500' : 'border-red-500')
-        : 'border-un-blue'
+        : 'border-mun-blue'
 
     return `${base} ${borderClass}`
 }

@@ -5,7 +5,7 @@
         <!-- Selection Checkbox -->
         <div class="absolute top-4 left-4 z-10">
             <input type="checkbox" :checked="selected" @click.stop="$emit('select', committee._id)"
-                class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
         </div>
 
         <!-- QR Status Indicator -->
@@ -29,7 +29,7 @@
 
             <!-- Committee Info -->
             <div class="mb-4">
-                <h3 class="text-lg font-bold text-mun-gray-900 mb-2 group-hover:text-un-blue transition-colors">
+                <h3 class="text-lg font-bold text-mun-gray-900 mb-2 group-hover:text-mun-blue transition-colors">
                     {{ committee.name }}
                 </h3>
 
@@ -86,7 +86,7 @@
                         <span class="font-medium">{{ getCountryProgress() }}%</span>
                     </div>
                     <div class="w-full bg-mun-gray-200 rounded-full h-2">
-                        <div class="bg-un-blue h-2 rounded-full transition-all duration-300"
+                        <div class="bg-mun-blue h-2 rounded-full transition-all duration-300"
                             :style="{ width: `${getCountryProgress()}%` }"></div>
                     </div>
                 </div>
@@ -174,7 +174,7 @@
         <div class="absolute top-16 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div class="flex flex-col space-y-2">
                 <button v-if="committee.countries?.length > 0" @click.stop="downloadCountryList"
-                    class="bg-un-blue text-white p-2 rounded-lg hover:bg-un-blue-600 transition-colors"
+                    class="bg-mun-blue text-white p-2 rounded-lg hover:bg-mun-blue-600 transition-colors"
                     title="Download Country List">
                     <DocumentArrowDownIcon class="w-4 h-4" />
                 </button>
@@ -269,7 +269,7 @@ const committeeTypeIcon = computed(() => {
 const committeeTypeIconClass = computed(() => {
     switch (props.committee.type) {
         case 'GA':
-            return 'bg-un-blue'
+            return 'bg-mun-blue'
         case 'SC':
             return 'bg-mun-red-500'
         case 'ECOSOC':

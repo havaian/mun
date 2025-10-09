@@ -40,7 +40,7 @@
 
                     <!-- Download -->
                     <button v-if="allowDownload" @click="downloadDocument"
-                        class="inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-mun-gray-300 text-mun-gray-700 bg-white hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors"
+                        class="inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-mun-gray-300 text-mun-gray-700 bg-white hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors"
                         :disabled="isDownloading">
                         <ArrowDownTrayIcon class="w-3 h-3 mr-1" />
                         {{ isDownloading ? 'Downloading...' : 'Download' }}
@@ -60,7 +60,7 @@
             <!-- Loading State -->
             <div v-if="isLoading" class="loading-state">
                 <div class="flex flex-col items-center justify-center h-full">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-un-blue"></div>
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
                     <p class="mt-2 text-sm text-mun-gray-500">Loading document...</p>
                 </div>
             </div>
@@ -72,7 +72,7 @@
                     <h3 class="text-lg font-medium text-mun-gray-900 mb-2">Cannot display document</h3>
                     <p class="text-sm text-mun-gray-500 text-center mb-4">{{ error }}</p>
                     <button v-if="allowDownload" @click="downloadDocument"
-                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-un-blue hover:bg-un-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors">
+                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-mun-blue hover:bg-mun-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors">
                         <ArrowDownTrayIcon class="w-4 h-4 mr-2" />
                         Download Instead
                     </button>
@@ -118,13 +118,13 @@
                     </p>
                     <div class="flex space-x-3">
                         <button v-if="allowDownload" @click="downloadDocument"
-                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-un-blue hover:bg-un-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors">
+                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-mun-blue hover:bg-mun-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors">
                             <ArrowDownTrayIcon class="w-4 h-4 mr-2" />
                             Download
                         </button>
 
                         <button v-if="documentText" @click="currentMode = 'text'"
-                            class="inline-flex items-center px-3 py-2 border border-mun-gray-300 text-sm font-medium rounded-md text-mun-gray-700 bg-white hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors">
+                            class="inline-flex items-center px-3 py-2 border border-mun-gray-300 text-sm font-medium rounded-md text-mun-gray-700 bg-white hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors">
                             <DocumentTextIcon class="w-4 h-4 mr-2" />
                             View as Text
                         </button>
@@ -343,7 +343,7 @@ const modeButtonClass = (mode) => {
     const active = currentMode.value === mode
 
     if (active) {
-        return `${base} bg-un-blue text-white`
+        return `${base} bg-mun-blue text-white`
     }
 
     return `${base} text-mun-gray-500 hover:text-mun-gray-700 hover:bg-mun-gray-100`

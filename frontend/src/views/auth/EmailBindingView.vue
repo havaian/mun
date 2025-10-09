@@ -25,27 +25,27 @@
                 </div>
 
                 <!-- User Information Display -->
-                <div class="bg-un-blue-50 rounded-xl p-4 mb-6">
-                    <h3 class="text-sm font-medium text-un-blue-800 mb-3">Verified Information:</h3>
+                <div class="bg-mun-blue-50 rounded-xl p-4 mb-6">
+                    <h3 class="text-sm font-medium text-mun-blue-800 mb-3">Verified Information:</h3>
 
                     <div class="space-y-2">
                         <div class="flex justify-between items-center">
-                            <span class="text-sm text-un-blue-600">Role:</span>
-                            <span class="text-sm font-medium text-un-blue-800">
+                            <span class="text-sm text-mun-blue-600">Role:</span>
+                            <span class="text-sm font-medium text-mun-blue-800">
                                 {{ formatUserType() }}
                             </span>
                         </div>
 
                         <div v-if="userInfo.committee" class="flex justify-between items-center">
-                            <span class="text-sm text-un-blue-600">Committee:</span>
-                            <span class="text-sm font-medium text-un-blue-800">
+                            <span class="text-sm text-mun-blue-600">Committee:</span>
+                            <span class="text-sm font-medium text-mun-blue-800">
                                 {{ userInfo.committee }}
                             </span>
                         </div>
 
                         <div v-if="userInfo.country" class="flex justify-between items-center">
-                            <span class="text-sm text-un-blue-600">Country:</span>
-                            <span class="text-sm font-medium text-un-blue-800">
+                            <span class="text-sm text-mun-blue-600">Country:</span>
+                            <span class="text-sm font-medium text-mun-blue-800">
                                 {{ userInfo.country }}
                             </span>
                         </div>
@@ -78,15 +78,15 @@
                     <!-- Terms and Conditions -->
                     <div class="flex items-start space-x-3">
                         <input id="agreedToTerms" v-model="emailForm.agreedToTerms" type="checkbox" required
-                            class="mt-1 h-4 w-4 text-un-blue border-mun-gray-300 rounded focus:ring-un-blue"
+                            class="mt-1 h-4 w-4 text-mun-blue border-mun-gray-300 rounded focus:ring-mun-blue"
                             :disabled="authStore.isLoading" />
                         <label for="agreedToTerms" class="text-sm text-mun-gray-600">
                             I agree to the
-                            <a href="#" class="text-un-blue hover:text-un-blue-600 underline">
+                            <a href="#" class="text-mun-blue hover:text-mun-blue-600 underline">
                                 Terms of Service
                             </a>
                             and
-                            <a href="#" class="text-un-blue hover:text-un-blue-600 underline">
+                            <a href="#" class="text-mun-blue hover:text-mun-blue-600 underline">
                                 Privacy Policy
                             </a>
                         </label>

@@ -2,7 +2,7 @@
 <template>
     <div :class="[
         'document-review-card bg-white border rounded-lg p-4 transition-all duration-200',
-        'hover:shadow-mun hover:border-un-blue/30',
+        'hover:shadow-mun hover:border-mun-blue/30',
         getStatusBorderClass()
     ]">
         <!-- Document Header -->
@@ -96,7 +96,7 @@
             <div class="flex items-center space-x-2">
                 <!-- View/Download Button -->
                 <button @click="$emit('view-document', document)"
-                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-un-blue bg-un-blue/10 border border-un-blue/20 rounded hover:bg-un-blue/20 transition-colors">
+                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-mun-blue bg-mun-blue/10 border border-mun-blue/20 rounded hover:bg-mun-blue/20 transition-colors">
                     <EyeIcon class="w-4 h-4 mr-1" />
                     View
                 </button>
@@ -154,7 +154,7 @@
                         </span>
                     </div>
                     <button @click="$emit('view-version', document, version)"
-                        class="text-un-blue hover:text-un-blue-600">
+                        class="text-mun-blue hover:text-mun-blue-600">
                         View
                     </button>
                 </div>
@@ -224,7 +224,7 @@ const getDocumentTypeIcon = () => {
 
 const getDocumentTypeIconBg = () => {
     const backgrounds = {
-        position_paper: 'bg-un-blue/10',
+        position_paper: 'bg-mun-blue/10',
         resolution_draft: 'bg-mun-green-100',
         public_document: 'bg-mun-yellow-100',
         amendment: 'bg-purple-100'
@@ -234,7 +234,7 @@ const getDocumentTypeIconBg = () => {
 
 const getDocumentTypeIconColor = () => {
     const colors = {
-        position_paper: 'text-un-blue',
+        position_paper: 'text-mun-blue',
         resolution_draft: 'text-mun-green-700',
         public_document: 'text-mun-yellow-700',
         amendment: 'text-purple-700'

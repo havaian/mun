@@ -44,7 +44,7 @@
                                         @click="toggleRegionFilter(region.code)" :class="[
                                             'px-3 py-1 rounded-full text-sm font-medium transition-colors',
                                             selectedRegions.includes(region.code)
-                                                ? 'bg-un-blue text-white'
+                                                ? 'bg-mun-blue text-white'
                                                 : 'bg-mun-gray-100 text-mun-gray-700 hover:bg-mun-gray-200'
                                         ]">
                                         {{ region.name }}
@@ -79,13 +79,13 @@
                                         @click="toggleCountrySelection(country)" :class="[
                                             'flex items-center p-3 rounded-lg cursor-pointer transition-colors border',
                                             selectedCountries.includes(country.code)
-                                                ? 'bg-un-blue-50 border-un-blue-200'
+                                                ? 'bg-mun-blue-50 border-mun-blue-200'
                                                 : 'hover:bg-mun-gray-50 border-transparent'
                                         ]">
                                         <!-- Selection Checkbox -->
                                         <input type="checkbox" :checked="selectedCountries.includes(country.code)"
                                             @click.stop="toggleCountrySelection(country)"
-                                            class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded mr-3" />
+                                            class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded mr-3" />
 
                                         <!-- Flag -->
                                         <div class="w-8 h-6 rounded-sm overflow-hidden mr-3 border border-mun-gray-200">
@@ -134,7 +134,7 @@
                                 <!-- Progress Bar -->
                                 <div v-if="committee?.maxCountries" class="mb-4">
                                     <div class="w-full bg-mun-gray-200 rounded-full h-2">
-                                        <div class="bg-un-blue h-2 rounded-full transition-all duration-300"
+                                        <div class="bg-mun-blue h-2 rounded-full transition-all duration-300"
                                             :style="{ width: `${getAssignmentProgress()}%` }"></div>
                                     </div>
                                     <p class="text-xs text-mun-gray-500 mt-1">
@@ -206,7 +206,7 @@
 
                                             <!-- Regenerate QR -->
                                             <button @click="regenerateQR(country)"
-                                                class="p-1 text-mun-gray-400 hover:text-un-blue transition-colors"
+                                                class="p-1 text-mun-gray-400 hover:text-mun-blue transition-colors"
                                                 title="Regenerate QR Code">
                                                 <ArrowPathIcon class="w-4 h-4" />
                                             </button>

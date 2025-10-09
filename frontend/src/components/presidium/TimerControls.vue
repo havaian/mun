@@ -5,7 +5,7 @@
         <div class="timer-section session-timer">
             <div class="timer-header">
                 <h4 class="text-sm font-medium text-mun-gray-900 flex items-center">
-                    <ClockIcon class="w-4 h-4 mr-2 text-un-blue" />
+                    <ClockIcon class="w-4 h-4 mr-2 text-mun-blue" />
                     Session Timer
                 </h4>
 
@@ -58,7 +58,7 @@
                     <div class="flex items-center space-x-2">
                         <label class="text-xs text-mun-gray-600">Duration:</label>
                         <select v-model="sessionTimerDuration"
-                            class="text-xs border border-mun-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-un-blue">
+                            class="text-xs border border-mun-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-mun-blue">
                             <option :value="60">1 hour</option>
                             <option :value="90">1.5 hours</option>
                             <option :value="120">2 hours</option>
@@ -128,7 +128,7 @@
                     <div class="flex items-center space-x-2">
                         <label class="text-xs text-mun-gray-600">Speech time:</label>
                         <select v-model="speakerTimerDuration"
-                            class="text-xs border border-mun-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-un-blue">
+                            class="text-xs border border-mun-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-mun-blue">
                             <option :value="60">1 minute</option>
                             <option :value="90">1.5 minutes</option>
                             <option :value="120">2 minutes</option>
@@ -150,7 +150,7 @@
                 </h4>
 
                 <button @click="showCreateAdditionalTimer = true"
-                    class="text-xs text-un-blue hover:text-un-blue-600 flex items-center">
+                    class="text-xs text-mun-blue hover:text-mun-blue-600 flex items-center">
                     <PlusIcon class="w-3 h-3 mr-1" />
                     Add Timer
                 </button>
@@ -226,20 +226,20 @@
                         <div>
                             <label class="block text-sm font-medium text-mun-gray-700 mb-1">Purpose</label>
                             <input v-model="newTimerForm.purpose" type="text"
-                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-un-blue"
+                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue"
                                 placeholder="e.g., Moderated Caucus" />
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-mun-gray-700 mb-1">Duration (minutes)</label>
                             <input v-model.number="newTimerForm.duration" type="number" min="1" max="120"
-                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-un-blue"
+                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue"
                                 placeholder="e.g., 20" />
                         </div>
 
                         <div class="flex items-center">
                             <input v-model="newTimerForm.startImmediately" type="checkbox"
-                                class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                             <label class="ml-2 text-sm text-mun-gray-700">Start immediately</label>
                         </div>
                     </div>
@@ -252,7 +252,7 @@
 
                         <button @click="createAdditionalTimer"
                             :disabled="!newTimerForm.purpose || !newTimerForm.duration || isUpdating"
-                            class="px-3 py-2 text-sm font-medium text-white bg-un-blue border border-transparent rounded-md hover:bg-un-blue-600 disabled:opacity-50">
+                            class="px-3 py-2 text-sm font-medium text-white bg-mun-blue border border-transparent rounded-md hover:bg-mun-blue-600 disabled:opacity-50">
                             {{ isUpdating ? 'Creating...' : 'Create Timer' }}
                         </button>
                     </div>
@@ -674,7 +674,7 @@ onUnmounted(() => {
 }
 
 .timer-btn-extend {
-    @apply text-un-blue-700 bg-un-blue-100 hover:bg-un-blue-200 focus:ring-un-blue;
+    @apply text-mun-blue-700 bg-mun-blue-100 hover:bg-mun-blue-200 focus:ring-mun-blue;
 }
 
 .timer-btn-small {
@@ -706,7 +706,7 @@ onUnmounted(() => {
 }
 
 .quick-action-btn {
-    @apply flex flex-col items-center justify-center p-3 text-xs font-medium text-mun-gray-700 bg-mun-gray-50 border border-mun-gray-200 rounded-md hover:bg-mun-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors disabled:opacity-50;
+    @apply flex flex-col items-center justify-center p-3 text-xs font-medium text-mun-gray-700 bg-mun-gray-50 border border-mun-gray-200 rounded-md hover:bg-mun-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors disabled:opacity-50;
 }
 
 .create-timer-modal {

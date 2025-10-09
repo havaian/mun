@@ -292,7 +292,7 @@ const getProgressColorClass = () => {
     } else if (timeRemaining.value <= 60) {
         return 'stroke-mun-yellow-500'
     } else {
-        return 'stroke-un-blue'
+        return 'stroke-mun-blue'
     }
 }
 

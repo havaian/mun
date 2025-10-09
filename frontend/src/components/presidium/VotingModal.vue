@@ -12,13 +12,13 @@
                         @click.stop>
 
                         <!-- Header -->
-                        <div class="bg-gradient-to-r from-un-blue to-un-blue-600 px-6 py-4">
+                        <div class="bg-gradient-to-r from-mun-blue to-mun-blue-600 px-6 py-4">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <h3 class="text-xl font-bold text-white">
                                         {{ currentView === 'create' ? 'Create New Voting' : 'Voting Management' }}
                                     </h3>
-                                    <p class="text-un-blue-100 text-sm mt-1">
+                                    <p class="text-mun-blue-100 text-sm mt-1">
                                         {{ currentView === 'create' ? 'Set up a new voting session' : 'Manage active voting and view results' }}
                                     </p>
                                 </div>
@@ -33,7 +33,7 @@
                                     </div>
 
                                     <button @click="closeModal"
-                                        class="text-white hover:text-un-blue-200 transition-colors">
+                                        class="text-white hover:text-mun-blue-200 transition-colors">
                                         <XMarkIcon class="w-6 h-6" />
                                     </button>
                                 </div>
@@ -44,14 +44,14 @@
                         <div class="border-b border-mun-gray-200">
                             <nav class="flex space-x-8 px-6">
                                 <button @click="currentView = 'create'"
-                                    :class="currentView === 'create' ? 'border-un-blue text-un-blue' : 'border-transparent text-mun-gray-500 hover:text-mun-gray-700'"
+                                    :class="currentView === 'create' ? 'border-mun-blue text-mun-blue' : 'border-transparent text-mun-gray-500 hover:text-mun-gray-700'"
                                     class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                                     <PlusIcon class="w-5 h-5 inline mr-2" />
                                     Create Voting
                                 </button>
 
                                 <button @click="currentView = 'manage'"
-                                    :class="currentView === 'manage' ? 'border-un-blue text-un-blue' : 'border-transparent text-mun-gray-500 hover:text-mun-gray-700'"
+                                    :class="currentView === 'manage' ? 'border-mun-blue text-mun-blue' : 'border-transparent text-mun-gray-500 hover:text-mun-gray-700'"
                                     class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                                     <ChartBarIcon class="w-5 h-5 inline mr-2" />
                                     Manage Voting
@@ -62,7 +62,7 @@
                                 </button>
 
                                 <button @click="currentView = 'history'"
-                                    :class="currentView === 'history' ? 'border-un-blue text-un-blue' : 'border-transparent text-mun-gray-500 hover:text-mun-gray-700'"
+                                    :class="currentView === 'history' ? 'border-mun-blue text-mun-blue' : 'border-transparent text-mun-gray-500 hover:text-mun-gray-700'"
                                     class="py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                                     <ClockIcon class="w-5 h-5 inline mr-2" />
                                     History
@@ -90,7 +90,7 @@
                                                             class="block text-sm font-medium text-mun-gray-700 mb-2">Voting
                                                             Subject *</label>
                                                         <input v-model="votingForm.subject" type="text" required
-                                                            class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-un-blue"
+                                                            class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue"
                                                             placeholder="e.g., Resolution A/77/1 on Climate Change" />
                                                     </div>
 
@@ -98,7 +98,7 @@
                                                         <label
                                                             class="block text-sm font-medium text-mun-gray-700 mb-2">Description</label>
                                                         <textarea v-model="votingForm.description" rows="4"
-                                                            class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-un-blue"
+                                                            class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue"
                                                             placeholder="Optional description..." />
                                                     </div>
 
@@ -109,11 +109,11 @@
                                                         <div class="space-y-2">
                                                             <label v-for="type in votingTypes" :key="type.value"
                                                                 class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-mun-gray-50"
-                                                                :class="votingForm.votingType === type.value ? 'border-un-blue bg-un-blue-50' : 'border-mun-gray-300'">
+                                                                :class="votingForm.votingType === type.value ? 'border-mun-blue bg-mun-blue-50' : 'border-mun-gray-300'">
                                                                 <input v-model="votingForm.votingType" type="radio"
                                                                     :value="type.value" class="sr-only" />
                                                                 <component :is="type.icon"
-                                                                    class="w-5 h-5 mr-3 text-un-blue" />
+                                                                    class="w-5 h-5 mr-3 text-mun-blue" />
                                                                 <div>
                                                                     <div class="font-medium text-sm">{{ type.name }}
                                                                     </div>
@@ -129,7 +129,7 @@
                                                             class="block text-sm font-medium text-mun-gray-700 mb-2">Majority
                                                             Required *</label>
                                                         <select v-model="votingForm.majorityType"
-                                                            class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-un-blue">
+                                                            class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue">
                                                             <option value="simple">Simple Majority (50% + 1)</option>
                                                             <option value="two-thirds">Two-Thirds Majority</option>
                                                             <option value="consensus">Consensus Required</option>
@@ -153,12 +153,12 @@
                                                             Limit</label>
                                                         <div class="flex items-center space-x-3">
                                                             <input v-model="votingForm.hasTimeLimit" type="checkbox"
-                                                                class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                                             <span class="text-sm">Set time limit</span>
                                                             <input v-if="votingForm.hasTimeLimit"
                                                                 v-model.number="votingForm.timeLimit" type="number"
                                                                 min="1" max="120"
-                                                                class="w-20 px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-un-blue" />
+                                                                class="w-20 px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
                                                             <span v-if="votingForm.hasTimeLimit"
                                                                 class="text-sm text-mun-gray-500">minutes</span>
                                                         </div>
@@ -172,18 +172,18 @@
                                                             <label class="flex items-center">
                                                                 <input v-model="votingForm.allowAbstention"
                                                                     type="checkbox"
-                                                                    class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                                    class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                                                 <span class="ml-3 text-sm">Allow Abstentions</span>
                                                             </label>
                                                             <label class="flex items-center">
                                                                 <input v-model="votingForm.allowLatecomer"
                                                                     type="checkbox"
-                                                                    class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                                    class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                                                 <span class="ml-3 text-sm">Allow Late Votes</span>
                                                             </label>
                                                             <label class="flex items-center">
                                                                 <input v-model="votingForm.showResults" type="checkbox"
-                                                                    class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                                    class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                                                 <span class="ml-3 text-sm">Show Real-time Results</span>
                                                             </label>
                                                         </div>
@@ -199,7 +199,7 @@
                                                                 <label class="flex items-center font-medium">
                                                                     <input v-model="selectAllVoters" type="checkbox"
                                                                         @change="toggleAllVoters"
-                                                                        class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                                                     <span class="ml-3 text-sm">Select All
                                                                         Countries</span>
                                                                 </label>
@@ -210,7 +210,7 @@
                                                                     :key="country.email" class="flex items-center">
                                                                     <input v-model="votingForm.eligibleVoters"
                                                                         type="checkbox" :value="country.email"
-                                                                        class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                                                     <CountryFlag :country-name="country.countryName"
                                                                         :country-code="country.countryCode" size="tiny"
                                                                         class="ml-3" />
@@ -236,13 +236,13 @@
                                 <div v-if="activeVoting" class="space-y-6">
 
                                     <!-- Voting Info Header -->
-                                    <div class="bg-un-blue-50 border border-un-blue-200 rounded-lg p-6">
+                                    <div class="bg-mun-blue-50 border border-mun-blue-200 rounded-lg p-6">
                                         <div class="flex items-start justify-between">
                                             <div>
-                                                <h4 class="text-xl font-bold text-un-blue-900">{{ activeVoting.subject
+                                                <h4 class="text-xl font-bold text-mun-blue-900">{{ activeVoting.subject
                                                 }}</h4>
-                                                <p class="text-un-blue-700 mt-1">{{ activeVoting.description }}</p>
-                                                <div class="flex items-center space-x-4 mt-3 text-sm text-un-blue-600">
+                                                <p class="text-mun-blue-700 mt-1">{{ activeVoting.description }}</p>
+                                                <div class="flex items-center space-x-4 mt-3 text-sm text-mun-blue-600">
                                                     <span class="flex items-center">
                                                         <component :is="getVotingTypeIcon()" class="w-4 h-4 mr-1" />
                                                         {{ getVotingTypeDisplay() }}
@@ -254,9 +254,9 @@
                                             </div>
 
                                             <div class="text-right">
-                                                <div class="text-3xl font-bold text-un-blue-900">{{ progressPercentage
+                                                <div class="text-3xl font-bold text-mun-blue-900">{{ progressPercentage
                                                 }}%</div>
-                                                <div class="text-sm text-un-blue-700">{{ votesReceived }}/{{ totalVoters
+                                                <div class="text-sm text-mun-blue-700">{{ votesReceived }}/{{ totalVoters
                                                 }} votes</div>
                                             </div>
                                         </div>
@@ -278,7 +278,7 @@
                                             <!-- Roll call info -->
                                             <div v-if="isRollCall && currentVoter" class="current-voter-info">
                                                 <span class="text-sm text-mun-gray-600">Current voter:</span>
-                                                <span class="ml-2 font-medium text-un-blue">{{ currentVoterCountry
+                                                <span class="ml-2 font-medium text-mun-blue">{{ currentVoterCountry
                                                 }}</span>
                                             </div>
                                         </div>
@@ -286,7 +286,7 @@
                                         <div class="flex items-center space-x-3">
                                             <button v-if="isRollCall && currentVoter" @click="nextRollCallVoter"
                                                 :disabled="isUpdating"
-                                                class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-un-blue-700 bg-un-blue-100 hover:bg-un-blue-200 focus:outline-none focus:ring-2 focus:ring-un-blue transition-colors disabled:opacity-50">
+                                                class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-mun-blue-700 bg-mun-blue-100 hover:bg-mun-blue-200 focus:outline-none focus:ring-2 focus:ring-mun-blue transition-colors disabled:opacity-50">
                                                 <ChevronRightIcon class="w-4 h-4 mr-1" />
                                                 Next Voter
                                             </button>
@@ -325,7 +325,7 @@
                                     </p>
 
                                     <button @click="currentView = 'create'"
-                                        class="inline-flex items-center px-6 py-3 text-base font-medium rounded-md text-white bg-un-blue hover:bg-un-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors">
+                                        class="inline-flex items-center px-6 py-3 text-base font-medium rounded-md text-white bg-mun-blue hover:bg-mun-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors">
                                         <PlusIcon class="w-5 h-5 mr-2" />
                                         Create New Voting
                                     </button>
@@ -391,13 +391,13 @@
 
                                 <div class="flex items-center space-x-3">
                                     <button @click="closeModal"
-                                        class="px-4 py-2 text-sm font-medium text-mun-gray-700 bg-white border border-mun-gray-300 rounded-md hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors">
+                                        class="px-4 py-2 text-sm font-medium text-mun-gray-700 bg-white border border-mun-gray-300 rounded-md hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors">
                                         Close
                                     </button>
 
                                     <button v-if="currentView === 'create'" @click="createVoting"
                                         :disabled="isUpdating || !canCreateVoting"
-                                        class="px-4 py-2 text-sm font-medium text-white bg-un-blue border border-transparent rounded-md hover:bg-un-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors disabled:opacity-50">
+                                        class="px-4 py-2 text-sm font-medium text-white bg-mun-blue border border-transparent rounded-md hover:bg-mun-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors disabled:opacity-50">
                                         {{ isUpdating ? 'Creating...' : 'Start Voting' }}
                                     </button>
                                 </div>

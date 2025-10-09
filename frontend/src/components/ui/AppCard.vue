@@ -4,7 +4,7 @@
         {
             'hover-lift': hoverable,
             'cursor-pointer': clickable,
-            'ring-2 ring-un-blue ring-opacity-50': selected
+            'ring-2 ring-mun-blue ring-opacity-50': selected
         },
         customClass
     ]" @click="handleClick">
@@ -146,7 +146,7 @@ const emit = defineEmits(['click'])
 // Computed properties
 const iconBgClass = computed(() => {
     const colorMap = {
-        blue: 'bg-un-blue-50',
+        blue: 'bg-mun-blue-50',
         green: 'bg-mun-green-50',
         red: 'bg-mun-red-50',
         yellow: 'bg-mun-yellow-50',
@@ -159,7 +159,7 @@ const iconBgClass = computed(() => {
 
 const iconColorClass = computed(() => {
     const colorMap = {
-        blue: 'text-un-blue-600',
+        blue: 'text-mun-blue-600',
         green: 'text-mun-green-600',
         red: 'text-mun-red-600',
         yellow: 'text-mun-yellow-600',

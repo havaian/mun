@@ -4,8 +4,8 @@
         <!-- Header -->
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-3">
-                <div class="p-2 bg-un-blue/10 rounded-lg">
-                    <ChartBarIcon class="w-5 h-5 text-un-blue" />
+                <div class="p-2 bg-mun-blue/10 rounded-lg">
+                    <ChartBarIcon class="w-5 h-5 text-mun-blue" />
                 </div>
                 <div>
                     <h3 class="text-sm font-medium text-mun-gray-900">Session Statistics</h3>
@@ -16,7 +16,7 @@
             <div class="flex items-center space-x-2">
                 <!-- Time Range Selector -->
                 <select v-model="timeRange"
-                    class="px-2 py-1 text-xs border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-un-blue">
+                    class="px-2 py-1 text-xs border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue">
                     <option value="session">This Session</option>
                     <option value="today">Today</option>
                     <option value="week">This Week</option>
@@ -46,10 +46,10 @@
             <!-- Core Metrics -->
             <div class="core-metrics grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <!-- Session Duration -->
-                <div class="stat-card bg-un-blue/5 border border-un-blue/20 rounded-lg p-3">
+                <div class="stat-card bg-mun-blue/5 border border-mun-blue/20 rounded-lg p-3">
                     <div class="flex items-center justify-between mb-2">
-                        <ClockIcon class="w-4 h-4 text-un-blue" />
-                        <span class="text-xs text-un-blue font-medium">DURATION</span>
+                        <ClockIcon class="w-4 h-4 text-mun-blue" />
+                        <span class="text-xs text-mun-blue font-medium">DURATION</span>
                     </div>
                     <div class="text-lg font-bold text-mun-gray-900">{{ formatDuration(stats.duration) }}</div>
                     <div class="text-xs text-mun-gray-500">{{ getSessionStatus() }}</div>
@@ -136,7 +136,7 @@
                                 </div>
                                 <div class="flex items-center space-x-2">
                                     <div class="w-16 bg-mun-gray-200 rounded-full h-1">
-                                        <div class="bg-un-blue h-1 rounded-full"
+                                        <div class="bg-mun-blue h-1 rounded-full"
                                             :style="{ width: `${(speaker.time / stats.totalSpeakingTime) * 100}%` }">
                                         </div>
                                     </div>
@@ -252,7 +252,7 @@
 
                     <!-- Productivity Index -->
                     <div class="productivity-metric text-center">
-                        <div class="text-lg font-bold text-un-blue">{{ stats.productivityIndex }}</div>
+                        <div class="text-lg font-bold text-mun-blue">{{ stats.productivityIndex }}</div>
                         <div class="text-xs text-mun-gray-600">Productivity</div>
                         <div class="text-xs text-mun-gray-500">Actions/hour</div>
                     </div>
@@ -388,7 +388,7 @@ const getAttendancePercentage = () => {
 
 const getModeIconBg = (mode) => {
     const colors = {
-        formal: 'bg-un-blue',
+        formal: 'bg-mun-blue',
         moderated: 'bg-mun-green-500',
         unmoderated: 'bg-mun-yellow-500',
         voting: 'bg-mun-red-500',
@@ -410,7 +410,7 @@ const getModeDisplayName = (mode) => {
 
 const getDocumentTypeBg = (type) => {
     const colors = {
-        position_paper: 'bg-un-blue',
+        position_paper: 'bg-mun-blue',
         resolution: 'bg-mun-green-500',
         amendment: 'bg-mun-yellow-500',
         public: 'bg-purple-500'

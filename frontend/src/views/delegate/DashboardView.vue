@@ -17,8 +17,8 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-un-blue/10">
-                        <DocumentTextIcon class="w-6 h-6 text-un-blue" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <DocumentTextIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Documents</p>
@@ -84,10 +84,10 @@
                 </div>
 
                 <!-- Speakers List Position -->
-                <div v-if="speakersPosition" class="p-4 bg-un-blue/5 border border-un-blue/20 rounded-lg">
+                <div v-if="speakersPosition" class="p-4 bg-mun-blue/5 border border-mun-blue/20 rounded-lg">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="font-medium text-un-blue">You are on the speakers list</p>
+                            <p class="font-medium text-mun-blue">You are on the speakers list</p>
                             <p class="text-sm text-mun-gray-600">Position {{ speakersPosition }} in queue</p>
                         </div>
                         <button @click="removeMeFromSpeakers" class="btn-un-secondary px-3 py-2 text-sm">
@@ -153,7 +153,7 @@
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-mun-gray-900">My Documents</h3>
                     <RouterLink to="/delegate/documents"
-                        class="text-un-blue hover:text-un-blue-600 text-sm font-medium">
+                        class="text-mun-blue hover:text-mun-blue-600 text-sm font-medium">
                         View All
                     </RouterLink>
                 </div>
@@ -176,7 +176,7 @@
                     <div v-if="recentDocuments.length === 0" class="text-center py-4 text-mun-gray-500">
                         No documents uploaded yet
                         <br>
-                        <RouterLink to="/delegate/documents" class="text-un-blue hover:text-un-blue-600">
+                        <RouterLink to="/delegate/documents" class="text-mun-blue hover:text-mun-blue-600">
                             Upload your first document
                         </RouterLink>
                     </div>
@@ -194,7 +194,7 @@
                             notification.type === 'coalition' ? 'bg-mun-green-500' :
                                 notification.type === 'voting' ? 'bg-mun-red-500' :
                                     notification.type === 'message' ? 'bg-mun-yellow-500' :
-                                        'bg-un-blue'
+                                        'bg-mun-blue'
                         ]"></div>
                         <div>
                             <p class="text-sm text-mun-gray-900">{{ notification.title }}</p>
@@ -212,7 +212,7 @@
         <div v-if="activeCoalitions.length > 0" class="mun-card p-6">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-mun-gray-900">My Coalitions</h3>
-                <RouterLink to="/delegate/coalitions" class="text-un-blue hover:text-un-blue-600 text-sm font-medium">
+                <RouterLink to="/delegate/coalitions" class="text-mun-blue hover:text-mun-blue-600 text-sm font-medium">
                     Manage All
                 </RouterLink>
             </div>
@@ -223,7 +223,7 @@
                         <h4 class="font-medium text-mun-gray-900">{{ coalition.name }}</h4>
                         <span :class="[
                             'px-2 py-1 rounded text-xs font-medium',
-                            coalition.isHead ? 'bg-un-blue/10 text-un-blue' : 'bg-mun-gray-100 text-mun-gray-600'
+                            coalition.isHead ? 'bg-mun-blue/10 text-mun-blue' : 'bg-mun-gray-100 text-mun-gray-600'
                         ]">
                             {{ coalition.isHead ? 'Head' : 'Member' }}
                         </span>

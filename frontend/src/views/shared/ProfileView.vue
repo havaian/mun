@@ -11,7 +11,7 @@
                             <p class="text-mun-gray-600 mt-1">Manage your account settings and preferences</p>
                         </div>
                         <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 bg-un-blue rounded-xl flex items-center justify-center">
+                            <div class="w-12 h-12 bg-mun-blue rounded-xl flex items-center justify-center">
                                 <span class="text-white text-lg font-semibold">
                                     {{ getUserInitials() }}
                                 </span>
@@ -27,7 +27,7 @@
                             <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id" :class="[
                                 'py-2 px-1 border-b-2 font-medium text-sm transition-colors',
                                 activeTab === tab.id
-                                    ? 'border-un-blue text-un-blue'
+                                    ? 'border-mun-blue text-mun-blue'
                                     : 'border-transparent text-mun-gray-500 hover:text-mun-gray-700 hover:border-mun-gray-300'
                             ]">
                                 <component :is="tab.icon" class="w-5 h-5 inline mr-2" />
@@ -97,7 +97,7 @@
 
                             <div class="flex justify-end">
                                 <AppButton type="submit" :loading="isUpdatingPersonal"
-                                    class="bg-un-blue hover:bg-un-blue-600">
+                                    class="bg-mun-blue hover:bg-mun-blue-600">
                                     Save Changes
                                 </AppButton>
                             </div>
@@ -164,7 +164,7 @@
 
                             <div class="flex justify-end">
                                 <AppButton type="submit" :loading="isUpdatingAccount"
-                                    class="bg-un-blue hover:bg-un-blue-600">
+                                    class="bg-mun-blue hover:bg-mun-blue-600">
                                     Save Settings
                                 </AppButton>
                             </div>
@@ -216,7 +216,7 @@
 
                                 <div class="flex justify-end">
                                     <AppButton type="submit" :loading="isChangingPassword"
-                                        class="bg-un-blue hover:bg-un-blue-600">
+                                        class="bg-mun-blue hover:bg-mun-blue-600">
                                         Change Password
                                     </AppButton>
                                 </div>
@@ -311,7 +311,7 @@
 
                             <div class="flex justify-end">
                                 <AppButton type="submit" :loading="isUpdatingNotifications"
-                                    class="bg-un-blue hover:bg-un-blue-600">
+                                    class="bg-mun-blue hover:bg-mun-blue-600">
                                     Save Preferences
                                 </AppButton>
                             </div>
@@ -597,10 +597,10 @@ onMounted(() => {
 }
 
 .mun-input {
-    @apply w-full px-4 py-3 border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-un-blue focus:border-un-blue transition-colors;
+    @apply w-full px-4 py-3 border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue transition-colors;
 }
 
 .mun-checkbox {
-    @apply w-4 h-4 text-un-blue border-mun-gray-300 rounded focus:ring-un-blue focus:ring-2;
+    @apply w-4 h-4 text-mun-blue border-mun-gray-300 rounded focus:ring-mun-blue focus:ring-2;
 }
 </style>

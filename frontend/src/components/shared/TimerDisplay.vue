@@ -86,7 +86,7 @@
 
             <!-- Extend (if allowed) -->
             <button v-if="allowExtension && !isExtended && (isRunning || isPaused)" @click="$emit('extend')"
-                class="inline-flex items-center px-3 py-1.5 border border-mun-gray-300 text-xs font-medium rounded-md text-mun-gray-700 bg-white hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors">
+                class="inline-flex items-center px-3 py-1.5 border border-mun-gray-300 text-xs font-medium rounded-md text-mun-gray-700 bg-white hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors">
                 <PlusIcon class="w-3 h-3 mr-1" />
                 Extend
             </button>
@@ -271,7 +271,7 @@ const timerClasses = computed(() => {
 
     const variantClasses = {
         default: 'bg-white border-mun-gray-200',
-        session: 'bg-un-blue-50 border-un-blue-200',
+        session: 'bg-mun-blue-50 border-mun-blue-200',
         speaker: 'bg-green-50 border-green-200',
         warning: 'bg-amber-50 border-amber-200',
         danger: 'bg-red-50 border-red-200'
@@ -293,7 +293,7 @@ const digitClass = computed(() => {
 
     const colorClasses = {
         default: 'text-mun-gray-900',
-        session: 'text-un-blue-700',
+        session: 'text-mun-blue-700',
         speaker: 'text-green-700',
         warning: 'text-amber-700',
         danger: 'text-red-700'
@@ -309,7 +309,7 @@ const digitClass = computed(() => {
 const iconColorClass = computed(() => {
     if (isDangerTime.value) return 'text-red-500'
     if (isLowTime.value) return 'text-amber-500'
-    if (props.variant === 'session') return 'text-un-blue-500'
+    if (props.variant === 'session') return 'text-mun-blue-500'
     if (props.variant === 'speaker') return 'text-green-500'
     return 'text-mun-gray-500'
 })
@@ -317,7 +317,7 @@ const iconColorClass = computed(() => {
 const headerTextClass = computed(() => {
     if (isDangerTime.value) return 'text-red-700'
     if (isLowTime.value) return 'text-amber-700'
-    if (props.variant === 'session') return 'text-un-blue-700'
+    if (props.variant === 'session') return 'text-mun-blue-700'
     if (props.variant === 'speaker') return 'text-green-700'
     return 'text-mun-gray-700'
 })
@@ -325,7 +325,7 @@ const headerTextClass = computed(() => {
 const subtitleClass = computed(() => {
     if (isDangerTime.value) return 'text-red-600'
     if (isLowTime.value) return 'text-amber-600'
-    if (props.variant === 'session') return 'text-un-blue-600'
+    if (props.variant === 'session') return 'text-mun-blue-600'
     if (props.variant === 'speaker') return 'text-green-600'
     return 'text-mun-gray-600'
 })
@@ -353,9 +353,9 @@ const mainDisplayClass = computed(() => {
 const progressColorClass = computed(() => {
     if (isDangerTime.value) return 'text-red-500'
     if (isLowTime.value) return 'text-amber-500'
-    if (props.variant === 'session') return 'text-un-blue-500'
+    if (props.variant === 'session') return 'text-mun-blue-500'
     if (props.variant === 'speaker') return 'text-green-500'
-    return 'text-un-blue-500'
+    return 'text-mun-blue-500'
 })
 
 const progressTextClass = computed(() => {

@@ -22,8 +22,8 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-un-blue/10">
-                        <CalendarDaysIcon class="w-6 h-6 text-un-blue" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <CalendarDaysIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Total Events</p>
@@ -92,13 +92,13 @@
                     <div class="flex items-center space-x-2">
                         <button @click="viewMode = 'grid'" :class="[
                             'p-2 rounded-lg transition-colors',
-                            viewMode === 'grid' ? 'bg-un-blue text-white' : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
+                            viewMode === 'grid' ? 'bg-mun-blue text-white' : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
                         ]">
                             <Squares2X2Icon class="w-5 h-5" />
                         </button>
                         <button @click="viewMode = 'list'" :class="[
                             'p-2 rounded-lg transition-colors',
-                            viewMode === 'list' ? 'bg-un-blue text-white' : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
+                            viewMode === 'list' ? 'bg-mun-blue text-white' : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
                         ]">
                             <ListBulletIcon class="w-5 h-5" />
                         </button>
@@ -138,7 +138,7 @@
             </div>
 
             <div v-if="isLoading" class="flex items-center justify-center py-12">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-un-blue"></div>
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
             </div>
 
             <div v-else-if="filteredEvents.length === 0" class="text-center py-12">
@@ -199,7 +199,7 @@
                             </span>
                             <div class="flex items-center space-x-2">
                                 <button @click.stop="editEvent(event)"
-                                    class="p-1 text-mun-gray-400 hover:text-un-blue transition-colors">
+                                    class="p-1 text-mun-gray-400 hover:text-mun-blue transition-colors">
                                     <PencilIcon class="w-4 h-4" />
                                 </button>
                                 <button @click.stop="duplicateEvent(event)"
@@ -280,7 +280,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end space-x-2">
                                     <button @click.stop="editEvent(event)"
-                                        class="text-un-blue hover:text-un-blue-600 transition-colors">
+                                        class="text-mun-blue hover:text-mun-blue-600 transition-colors">
                                         <PencilIcon class="w-4 h-4" />
                                     </button>
                                     <button @click.stop="duplicateEvent(event)"

@@ -8,7 +8,7 @@ V<template>
 
                     <!-- Header -->
                     <div
-                        class="flex items-center justify-between p-6 border-b border-mun-gray-200 bg-gradient-to-r from-un-blue to-mun-blue-600">
+                        class="flex items-center justify-between p-6 border-b border-mun-gray-200 bg-gradient-to-r from-mun-blue to-mun-blue-600">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                                 <CalendarDaysIcon class="w-6 h-6 text-white" />
@@ -43,7 +43,7 @@ V<template>
                                     <!-- Event Details Card -->
                                     <div class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <InformationCircleIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                            <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                             Event Information
                                         </h3>
 
@@ -95,7 +95,7 @@ V<template>
                                     <!-- Registration Information -->
                                     <div class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <UserPlusIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                            <UserPlusIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                             Registration Details
                                         </h3>
 
@@ -163,7 +163,7 @@ V<template>
                                     <div v-if="event.contactEmail || event.contactPhone || event.website"
                                         class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <EnvelopeIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                            <EnvelopeIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                             Contact Information
                                         </h3>
 
@@ -171,7 +171,7 @@ V<template>
                                             <div v-if="event.contactEmail" class="flex items-center space-x-3">
                                                 <EnvelopeIcon class="w-4 h-4 text-mun-gray-500" />
                                                 <a :href="`mailto:${event.contactEmail}`"
-                                                    class="text-un-blue hover:text-un-blue-dark">
+                                                    class="text-mun-blue hover:text-mun-blue-dark">
                                                     {{ event.contactEmail }}
                                                 </a>
                                             </div>
@@ -179,7 +179,7 @@ V<template>
                                             <div v-if="event.contactPhone" class="flex items-center space-x-3">
                                                 <PhoneIcon class="w-4 h-4 text-mun-gray-500" />
                                                 <a :href="`tel:${event.contactPhone}`"
-                                                    class="text-un-blue hover:text-un-blue-dark">
+                                                    class="text-mun-blue hover:text-mun-blue-dark">
                                                     {{ event.contactPhone }}
                                                 </a>
                                             </div>
@@ -187,7 +187,7 @@ V<template>
                                             <div v-if="event.website" class="flex items-center space-x-3">
                                                 <GlobeAltIcon class="w-4 h-4 text-mun-gray-500" />
                                                 <a :href="event.website" target="_blank" rel="noopener noreferrer"
-                                                    class="text-un-blue hover:text-un-blue-dark">
+                                                    class="text-mun-blue hover:text-mun-blue-dark">
                                                     {{ event.website }}
                                                 </a>
                                             </div>
@@ -200,7 +200,7 @@ V<template>
                                     <!-- Quick Stats -->
                                     <div class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <ChartBarIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                            <ChartBarIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                             Statistics
                                         </h3>
 
@@ -239,7 +239,7 @@ V<template>
                                                     </span>
                                                 </div>
                                                 <div class="w-full bg-mun-gray-200 rounded-full h-2">
-                                                    <div class="bg-un-blue rounded-full h-2 transition-all duration-300"
+                                                    <div class="bg-mun-blue rounded-full h-2 transition-all duration-300"
                                                         :style="{ width: `${getCapacityPercentage()}%` }">
                                                     </div>
                                                 </div>
@@ -327,7 +327,7 @@ V<template>
                             <!-- Internal Notes (Admin Only) -->
                             <div v-if="event.internalNotes" class="mun-card p-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                    <DocumentTextIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <DocumentTextIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Internal Notes
                                     <span class="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Admin
                                         Only</span>

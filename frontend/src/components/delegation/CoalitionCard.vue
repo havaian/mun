@@ -2,7 +2,7 @@
 <template>
     <div :class="[
         'coalition-card bg-white border rounded-lg p-4 transition-all duration-200',
-        'hover:shadow-mun hover:border-un-blue/30',
+        'hover:shadow-mun hover:border-mun-blue/30',
         getStatusBorderClass()
     ]">
         <!-- Coalition Header -->
@@ -23,7 +23,7 @@
                             {{ getStatusText() }}
                         </span>
                         <span v-if="isUserHead"
-                            class="px-2 py-1 text-xs font-medium bg-un-blue/10 text-un-blue rounded-full">
+                            class="px-2 py-1 text-xs font-medium bg-mun-blue/10 text-mun-blue rounded-full">
                             HEAD
                         </span>
                     </div>
@@ -104,10 +104,10 @@
 
             <div class="flex items-center space-x-2">
                 <!-- Head Country -->
-                <div class="member-item flex items-center space-x-1 px-2 py-1 bg-un-blue/10 rounded-full">
+                <div class="member-item flex items-center space-x-1 px-2 py-1 bg-mun-blue/10 rounded-full">
                     <CountryFlag :country="coalition.headCountry" size="xs" />
-                    <span class="text-xs font-medium text-un-blue">{{ coalition.headCountry }}</span>
-                    <CrownIcon class="w-3 h-3 text-un-blue" />
+                    <span class="text-xs font-medium text-mun-blue">{{ coalition.headCountry }}</span>
+                    <CrownIcon class="w-3 h-3 text-mun-blue" />
                 </div>
 
                 <!-- Accepted Members -->
@@ -177,7 +177,7 @@
             <div class="flex items-center space-x-2">
                 <!-- View Details Button -->
                 <button @click="viewDetails"
-                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-un-blue bg-un-blue/10 border border-un-blue/20 rounded hover:bg-un-blue/20 transition-colors">
+                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-mun-blue bg-mun-blue/10 border border-mun-blue/20 rounded hover:bg-mun-blue/20 transition-colors">
                     <EyeIcon class="w-4 h-4 mr-1" />
                     View
                 </button>
@@ -205,7 +205,7 @@
                 </button>
 
                 <button v-if="coalition.status === 'active' && !coalition.resolutionId" @click="submitResolution"
-                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-un-blue border border-un-blue rounded hover:bg-un-blue-600 transition-colors">
+                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-mun-blue border border-mun-blue rounded hover:bg-mun-blue-600 transition-colors">
                     <DocumentTextIcon class="w-4 h-4 mr-1" />
                     Submit Resolution
                 </button>
@@ -374,7 +374,7 @@ const getProgressBarClass = () => {
     } else if (progressPercentage.value >= 75) {
         return 'bg-mun-yellow-500'
     }
-    return 'bg-un-blue'
+    return 'bg-mun-blue'
 }
 
 const getResolutionStatusBadgeClass = () => {

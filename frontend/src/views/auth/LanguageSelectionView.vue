@@ -3,7 +3,7 @@
         <div class="w-full max-w-lg">
             <!-- Header -->
             <div class="text-center mb-8">
-                <div class="mx-auto w-16 h-16 bg-un-blue rounded-full flex items-center justify-center mb-4 shadow-mun">
+                <div class="mx-auto w-16 h-16 bg-mun-blue rounded-full flex items-center justify-center mb-4 shadow-mun">
                     <GlobeAltIcon class="w-8 h-8 text-white" />
                 </div>
                 <h1 class="text-2xl font-bold text-mun-gray-900 mb-2">
@@ -29,7 +29,7 @@
                 <!-- User Info Display -->
                 <div v-if="authStore.user" class="bg-mun-gray-50 rounded-xl p-4 mb-6">
                     <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-un-blue rounded-lg flex items-center justify-center">
+                        <div class="w-10 h-10 bg-mun-blue rounded-lg flex items-center justify-center">
                             <UserIcon v-if="authStore.user.role === 'delegate'" class="w-6 h-6 text-white" />
                             <ShieldCheckIcon v-else class="w-6 h-6 text-white" />
                         </div>
@@ -53,8 +53,8 @@
                             @click="selectLanguage(language.code)" :class="[
                                 'group relative p-4 rounded-xl border-2 transition-all duration-200 text-left',
                                 selectedLanguage === language.code
-                                    ? 'border-un-blue bg-un-blue-50 shadow-mun'
-                                    : 'border-mun-gray-200 hover:border-un-blue-300 hover:bg-mun-gray-50'
+                                    ? 'border-mun-blue bg-mun-blue-50 shadow-mun'
+                                    : 'border-mun-gray-200 hover:border-mun-blue-300 hover:bg-mun-gray-50'
                             ]" :disabled="isLoading">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-4">
@@ -76,8 +76,8 @@
                                 <div :class="[
                                     'w-5 h-5 rounded-full border-2 transition-all duration-200',
                                     selectedLanguage === language.code
-                                        ? 'border-un-blue bg-un-blue'
-                                        : 'border-mun-gray-300 group-hover:border-un-blue-300'
+                                        ? 'border-mun-blue bg-mun-blue'
+                                        : 'border-mun-gray-300 group-hover:border-mun-blue-300'
                                 ]">
                                     <CheckIcon v-if="selectedLanguage === language.code"
                                         class="w-3 h-3 text-white m-0.5" />

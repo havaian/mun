@@ -11,7 +11,7 @@
           <!-- Loading progress indicator -->
           <div v-if="loadingProgress > 0" class="mt-4">
             <div class="bg-mun-gray-200 rounded-full h-2">
-              <div class="bg-un-blue rounded-full h-2 transition-all duration-300"
+              <div class="bg-mun-blue rounded-full h-2 transition-all duration-300"
                 :style="{ width: `${loadingProgress}%` }"></div>
             </div>
             <p class="text-xs text-mun-gray-500 mt-2 text-center">{{ loadingProgress }}% complete</p>

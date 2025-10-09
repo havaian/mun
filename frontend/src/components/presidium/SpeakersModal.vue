@@ -63,7 +63,7 @@
 
                                         <button @click="shuffleSpeakers"
                                             :disabled="speakersList.length < 2 || isUpdating"
-                                            class="inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-mun-gray-300 text-mun-gray-700 bg-white hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors disabled:opacity-50">
+                                            class="inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-mun-gray-300 text-mun-gray-700 bg-white hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors disabled:opacity-50">
                                             <ArrowPathIcon class="w-3 h-3 mr-1" />
                                             Shuffle
                                         </button>
@@ -162,7 +162,7 @@
                                         <MagnifyingGlassIcon
                                             class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-mun-gray-400" />
                                         <input v-model="searchQuery" type="text" placeholder="Search countries..."
-                                            class="pl-10 pr-4 py-2 text-sm border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-un-blue" />
+                                            class="pl-10 pr-4 py-2 text-sm border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue" />
                                     </div>
                                 </div>
 
@@ -185,7 +185,7 @@
                                         </div>
 
                                         <button @click="addToSpeakersList(country)" :disabled="isUpdating"
-                                            class="inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-un-blue-300 text-un-blue-700 bg-un-blue-50 hover:bg-un-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors disabled:opacity-50">
+                                            class="inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-mun-blue-300 text-mun-blue-700 bg-mun-blue-50 hover:bg-mun-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors disabled:opacity-50">
                                             <PlusIcon class="w-3 h-3 mr-1" />
                                             Add to Queue
                                         </button>
@@ -229,7 +229,7 @@
                                     </button>
 
                                     <button @click="nextSpeaker" :disabled="isUpdating || nextSpeakerInQueue === null"
-                                        class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-white bg-un-blue hover:bg-un-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors disabled:opacity-50">
+                                        class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-white bg-mun-blue hover:bg-mun-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors disabled:opacity-50">
                                         <ChevronRightIcon class="w-4 h-4 mr-1" />
                                         Next Speaker
                                     </button>
@@ -250,12 +250,12 @@
                                 <!-- Actions -->
                                 <div class="flex items-center space-x-3">
                                     <button @click="$emit('update:modelValue', false)"
-                                        class="px-4 py-2 text-sm font-medium text-mun-gray-700 bg-white border border-mun-gray-300 rounded-md hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors">
+                                        class="px-4 py-2 text-sm font-medium text-mun-gray-700 bg-white border border-mun-gray-300 rounded-md hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors">
                                         Close
                                     </button>
 
                                     <button @click="saveSpeakersList" :disabled="isUpdating || !hasChanges"
-                                        class="px-4 py-2 text-sm font-medium text-white bg-un-blue border border-transparent rounded-md hover:bg-un-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors disabled:opacity-50">
+                                        class="px-4 py-2 text-sm font-medium text-white bg-mun-blue border border-transparent rounded-md hover:bg-mun-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors disabled:opacity-50">
                                         {{ isUpdating ? 'Saving...' : 'Save Changes' }}
                                     </button>
                                 </div>
@@ -369,7 +369,7 @@ const getSpeakerItemClasses = (speaker, index) => {
     }
 
     if (index === 0) {
-        return `${base} border-un-blue-300 bg-un-blue-50`
+        return `${base} border-mun-blue-300 bg-mun-blue-50`
     }
 
     return `${base} border-mun-gray-200 bg-white hover:bg-mun-gray-50`
@@ -387,7 +387,7 @@ const getPositionNumberClasses = (speaker, index) => {
     }
 
     if (index === 0) {
-        return `${base} bg-un-blue text-white`
+        return `${base} bg-mun-blue text-white`
     }
 
     return `${base} bg-mun-gray-200 text-mun-gray-600`

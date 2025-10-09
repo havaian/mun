@@ -27,7 +27,7 @@
                             <!-- Basic Information -->
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
-                                    <InformationCircleIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Basic Information
                                 </h3>
 
@@ -123,7 +123,7 @@
                             <!-- Committee Settings -->
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
-                                    <CogIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <CogIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Committee Settings
                                 </h3>
 
@@ -194,7 +194,7 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div class="flex items-center">
                                             <input id="allowObservers" v-model="formData.allowObservers" type="checkbox"
-                                                class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
                                             <label for="allowObservers" class="ml-2 text-sm text-mun-gray-700">
                                                 Allow observers
                                             </label>
@@ -202,7 +202,7 @@
 
                                         <div class="flex items-center">
                                             <input id="enableVoting" v-model="formData.enableVoting" type="checkbox"
-                                                class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
                                             <label for="enableVoting" class="ml-2 text-sm text-mun-gray-700">
                                                 Enable voting
                                             </label>
@@ -211,7 +211,7 @@
                                         <div class="flex items-center">
                                             <input id="allowAmendments" v-model="formData.allowAmendments"
                                                 type="checkbox"
-                                                class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
                                             <label for="allowAmendments" class="ml-2 text-sm text-mun-gray-700">
                                                 Allow amendments
                                             </label>
@@ -220,7 +220,7 @@
                                         <div class="flex items-center">
                                             <input id="requirePositionPapers" v-model="formData.requirePositionPapers"
                                                 type="checkbox"
-                                                class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
                                             <label for="requirePositionPapers" class="ml-2 text-sm text-mun-gray-700">
                                                 Require position papers
                                             </label>
@@ -232,7 +232,7 @@
                             <!-- Security Council Specific Settings -->
                             <div v-if="formData.type === 'SC'" class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
-                                    <ShieldCheckIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <ShieldCheckIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Security Council Settings
                                 </h3>
 
@@ -246,7 +246,7 @@
                                         <div class="flex items-center">
                                             <input id="enableVetoPower" v-model="formData.scSettings.enableVetoPower"
                                                 type="checkbox"
-                                                class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
                                             <label for="enableVetoPower" class="ml-2 text-sm text-blue-800">
                                                 Enable veto power for permanent members
                                             </label>
@@ -255,7 +255,7 @@
                                         <div class="flex items-center">
                                             <input id="requireUnanimity" v-model="formData.scSettings.requireUnanimity"
                                                 type="checkbox"
-                                                class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
                                             <label for="requireUnanimity" class="ml-2 text-sm text-blue-800">
                                                 Require unanimity for procedural votes
                                             </label>
@@ -279,7 +279,7 @@
                             <!-- Presidium Setup -->
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
-                                    <UsersIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <UsersIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Presidium Setup
                                 </h3>
 
@@ -347,7 +347,7 @@
                             <!-- Advanced Settings -->
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
-                                    <AdjustmentsHorizontalIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <AdjustmentsHorizontalIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Advanced Settings
                                 </h3>
 

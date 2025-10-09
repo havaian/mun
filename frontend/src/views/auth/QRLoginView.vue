@@ -3,7 +3,7 @@
         <div class="w-full max-w-md">
             <!-- Header -->
             <div class="text-center mb-8">
-                <div class="mx-auto w-16 h-16 bg-un-blue rounded-full flex items-center justify-center mb-4 shadow-mun">
+                <div class="mx-auto w-16 h-16 bg-mun-blue rounded-full flex items-center justify-center mb-4 shadow-mun">
                     <QrCodeIcon class="w-8 h-8 text-white" />
                 </div>
                 <h1 class="text-2xl font-bold text-mun-gray-900 mb-2">
@@ -63,16 +63,16 @@
                                 <div class="absolute inset-0 border-2 border-white rounded-xl shadow-lg">
                                     <!-- Corner indicators -->
                                     <div
-                                        class="absolute -top-1 -left-1 w-6 h-6 border-l-4 border-t-4 border-un-blue rounded-tl-xl">
+                                        class="absolute -top-1 -left-1 w-6 h-6 border-l-4 border-t-4 border-mun-blue rounded-tl-xl">
                                     </div>
                                     <div
-                                        class="absolute -top-1 -right-1 w-6 h-6 border-r-4 border-t-4 border-un-blue rounded-tr-xl">
+                                        class="absolute -top-1 -right-1 w-6 h-6 border-r-4 border-t-4 border-mun-blue rounded-tr-xl">
                                     </div>
                                     <div
-                                        class="absolute -bottom-1 -left-1 w-6 h-6 border-l-4 border-b-4 border-un-blue rounded-bl-xl">
+                                        class="absolute -bottom-1 -left-1 w-6 h-6 border-l-4 border-b-4 border-mun-blue rounded-bl-xl">
                                     </div>
                                     <div
-                                        class="absolute -bottom-1 -right-1 w-6 h-6 border-r-4 border-b-4 border-un-blue rounded-br-xl">
+                                        class="absolute -bottom-1 -right-1 w-6 h-6 border-r-4 border-b-4 border-mun-blue rounded-br-xl">
                                     </div>
                                 </div>
 
@@ -88,7 +88,7 @@
                             <div
                                 class="bg-black/70 text-white px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm">
                                 <div class="flex items-center space-x-2">
-                                    <div class="w-2 h-2 bg-un-blue rounded-full animate-pulse"></div>
+                                    <div class="w-2 h-2 bg-mun-blue rounded-full animate-pulse"></div>
                                     <span>Scanning for QR code...</span>
                                 </div>
                             </div>
@@ -171,7 +171,7 @@
                     <div>
                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">QR Code</label>
                         <input v-model="manualCode" type="text" placeholder="Enter the code from your QR slip"
-                            class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:ring-2 focus:ring-un-blue focus:border-un-blue outline-none transition-colors"
+                            class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue outline-none transition-colors"
                             @keyup.enter="processManualCode" ref="manualCodeInput" />
                     </div>
 

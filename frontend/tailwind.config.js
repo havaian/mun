@@ -8,7 +8,7 @@ export default {
         extend: {
             colors: {
                 // UN Brand Colors (extracted from landing page)
-                'un-blue': {
+                'mun-blue': {
                     DEFAULT: '#009edb',
                     50: '#f0f9ff',
                     100: '#e0f2fe',

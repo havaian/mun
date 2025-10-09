@@ -122,19 +122,19 @@
                             <div class="flex items-center space-x-6">
                                 <label class="flex items-center">
                                     <input v-model="form.isPublic" type="checkbox"
-                                        class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue">
+                                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
                                     <span class="ml-2 text-sm text-mun-gray-700">Public Event</span>
                                 </label>
 
                                 <label class="flex items-center">
                                     <input v-model="form.allowWaitlist" type="checkbox"
-                                        class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue">
+                                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
                                     <span class="ml-2 text-sm text-mun-gray-700">Enable Waitlist</span>
                                 </label>
 
                                 <label class="flex items-center">
                                     <input v-model="form.requireApproval" type="checkbox"
-                                        class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue">
+                                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
                                     <span class="ml-2 text-sm text-mun-gray-700">Require Approval</span>
                                 </label>
                             </div>
@@ -176,9 +176,9 @@
                                     @keypress.enter.prevent="addTag">
                                 <div v-if="form.tags.length > 0" class="mt-2 flex flex-wrap gap-2">
                                     <span v-for="(tag, index) in form.tags" :key="index"
-                                        class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-un-blue/10 text-un-blue">
+                                        class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-mun-blue/10 text-mun-blue">
                                         {{ tag }}
-                                        <button @click="removeTag(index)" class="ml-2 hover:text-un-blue-600">
+                                        <button @click="removeTag(index)" class="ml-2 hover:text-mun-blue-600">
                                             <XMarkIcon class="w-3 h-3" />
                                         </button>
                                     </span>

@@ -26,8 +26,8 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-un-blue/10">
-                        <UsersIcon class="w-6 h-6 text-un-blue" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <UsersIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Total Users</p>
@@ -131,7 +131,7 @@
             </div>
 
             <div v-if="isLoading" class="flex items-center justify-center py-12">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-un-blue"></div>
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
             </div>
 
             <div v-else-if="filteredUsers.length === 0" class="text-center py-12">
@@ -155,7 +155,7 @@
                         <tr>
                             <th class="px-6 py-3 text-left">
                                 <input type="checkbox" @change="toggleSelectAll" :checked="isAllSelected"
-                                    class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue">
+                                    class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
                             </th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
@@ -188,7 +188,7 @@
                             class="hover:bg-mun-gray-50 transition-colors">
                             <td class="px-6 py-4">
                                 <input type="checkbox" v-model="selectedUsers" :value="user.id"
-                                    class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue">
+                                    class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
@@ -197,7 +197,7 @@
                                             'h-10 w-10 rounded-full flex items-center justify-center text-white font-medium',
                                             user.role === 'admin' ? 'bg-mun-red-500' :
                                                 user.role === 'presidium' ? 'bg-mun-green-500' :
-                                                    'bg-un-blue'
+                                                    'bg-mun-blue'
                                         ]">
                                             {{ getUserInitials(user) }}
                                         </div>
@@ -219,7 +219,7 @@
                                         'px-2 py-1 rounded-full text-xs font-medium',
                                         user.role === 'admin' ? 'bg-mun-red-100 text-mun-red-700' :
                                             user.role === 'presidium' ? 'bg-mun-green-100 text-mun-green-700' :
-                                                'bg-un-blue/10 text-un-blue'
+                                                'bg-mun-blue/10 text-mun-blue'
                                     ]">
                                         {{ formatRole(user.role) }}
                                     </span>
@@ -247,7 +247,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end space-x-2">
                                     <button @click="viewUser(user)"
-                                        class="text-un-blue hover:text-un-blue-600 transition-colors">
+                                        class="text-mun-blue hover:text-mun-blue-600 transition-colors">
                                         <EyeIcon class="w-4 h-4" />
                                     </button>
                                     <button @click="editUser(user)"

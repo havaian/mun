@@ -17,8 +17,8 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-un-blue/10">
-                        <UsersIcon class="w-6 h-6 text-un-blue" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <UsersIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Present</p>
@@ -115,7 +115,7 @@
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-mun-gray-900">Recent Documents</h3>
                     <RouterLink to="/presidium/documents"
-                        class="text-un-blue hover:text-un-blue-600 text-sm font-medium">
+                        class="text-mun-blue hover:text-mun-blue-600 text-sm font-medium">
                         View All
                     </RouterLink>
                 </div>
@@ -146,7 +146,7 @@
                 <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Recent Activity</h3>
                 <div class="space-y-3">
                     <div v-for="activity in recentActivity" :key="activity.id" class="flex items-start space-x-3">
-                        <div class="flex-shrink-0 w-2 h-2 bg-un-blue rounded-full mt-2"></div>
+                        <div class="flex-shrink-0 w-2 h-2 bg-mun-blue rounded-full mt-2"></div>
                         <div>
                             <p class="text-sm text-mun-gray-900">{{ activity.description }}</p>
                             <p class="text-xs text-mun-gray-500">{{ formatTime(activity.timestamp) }}</p>

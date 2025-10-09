@@ -10,7 +10,7 @@
                     @error="handleFlagError" />
                 <div v-else :class="[
                     'w-5 h-3 rounded-sm flex items-center justify-center',
-                    color === 'red' ? 'bg-red-500' : 'bg-un-blue'
+                    color === 'red' ? 'bg-red-500' : 'bg-mun-blue'
                 ]">
                     <component :is="color === 'red' ? ShieldCheckIcon : FlagIcon" class="w-3 h-3 text-white" />
                 </div>

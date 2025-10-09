@@ -36,7 +36,7 @@
                 <div v-if="showPerPageSelector" class="flex items-center space-x-2 mr-4">
                     <label class="text-sm text-mun-gray-700">Show:</label>
                     <select :value="perPage" @change="changePerPage($event.target.value)"
-                        class="px-3 py-1.5 text-sm border border-mun-gray-300 rounded-md focus:ring-2 focus:ring-un-blue focus:border-un-blue">
+                        class="px-3 py-1.5 text-sm border border-mun-gray-300 rounded-md focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
                         <option v-for="option in perPageOptions" :key="option" :value="option">
                             {{ option }}
                         </option>
@@ -93,7 +93,7 @@
             <span class="text-sm text-mun-gray-700">Go to page:</span>
             <input v-model.number="jumpToPageInput" @keyup.enter="handlePageJump" type="number" :min="1"
                 :max="totalPages"
-                class="w-16 px-2 py-1 text-sm text-center border border-mun-gray-300 rounded-md focus:ring-2 focus:ring-un-blue focus:border-un-blue"
+                class="w-16 px-2 py-1 text-sm text-center border border-mun-gray-300 rounded-md focus:ring-2 focus:ring-mun-blue focus:border-mun-blue"
                 placeholder="1" />
             <AppButton @click="handlePageJump" variant="outline" size="sm" :disabled="!isValidJumpPage">
                 Go
@@ -247,14 +247,14 @@ const getPaginationButtonClasses = (isActive) => {
         'px-3 py-2 text-sm font-medium',
         'border border-mun-gray-300 rounded-md',
         'transition-colors duration-200',
-        'focus:outline-none focus:ring-2 focus:ring-un-blue focus:ring-offset-2',
+        'focus:outline-none focus:ring-2 focus:ring-mun-blue focus:ring-offset-2',
         'disabled:opacity-50 disabled:cursor-not-allowed'
     ]
 
     if (isActive) {
         baseClasses.push(
-            'bg-un-blue text-white border-un-blue',
-            'hover:bg-un-blue-dark'
+            'bg-mun-blue text-white border-mun-blue',
+            'hover:bg-mun-blue-dark'
         )
     } else {
         baseClasses.push(
@@ -296,7 +296,7 @@ watch(() => props.currentPage, () => {
 
 /* Focus styles for accessibility */
 .pagination-button:focus {
-    @apply ring-2 ring-un-blue ring-offset-2;
+    @apply ring-2 ring-mun-blue ring-offset-2;
 }
 
 .pagination-button:disabled {

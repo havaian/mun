@@ -90,16 +90,16 @@
 
                 <!-- Current Voter -->
                 <div v-if="voting.currentlyVoting"
-                    class="current-voter mb-4 p-3 bg-un-blue/5 border border-un-blue/20 rounded-lg">
+                    class="current-voter mb-4 p-3 bg-mun-blue/5 border border-mun-blue/20 rounded-lg">
                     <div class="flex items-center space-x-3">
-                        <div class="p-2 bg-un-blue/10 rounded-lg">
-                            <MicrophoneIcon class="w-5 h-5 text-un-blue" />
+                        <div class="p-2 bg-mun-blue/10 rounded-lg">
+                            <MicrophoneIcon class="w-5 h-5 text-mun-blue" />
                         </div>
                         <div>
-                            <span class="text-sm font-medium text-un-blue">
+                            <span class="text-sm font-medium text-mun-blue">
                                 Currently Voting: {{ voting.currentlyVoting }}
                             </span>
-                            <p v-if="isCurrentVoter" class="text-xs text-un-blue">
+                            <p v-if="isCurrentVoter" class="text-xs text-mun-blue">
                                 It's your turn to vote
                             </p>
                         </div>
@@ -109,7 +109,7 @@
                 <!-- Roll Call Progress -->
                 <div class="roll-call-progress">
                     <div class="progress-bar w-full bg-mun-gray-200 rounded-full h-2 mb-2">
-                        <div class="bg-un-blue h-2 rounded-full transition-all duration-500"
+                        <div class="bg-mun-blue h-2 rounded-full transition-all duration-500"
                             :style="{ width: `${getRollCallProgress()}%` }"></div>
                     </div>
                     <div class="flex justify-between text-xs text-mun-gray-600">
@@ -348,7 +348,7 @@ const getVotingStatusIconBg = () => {
     const status = props.voting.status
     const backgrounds = {
         active: 'bg-mun-green-100',
-        completed: 'bg-un-blue/10',
+        completed: 'bg-mun-blue/10',
         paused: 'bg-mun-yellow-100'
     }
     return backgrounds[status] || 'bg-mun-gray-100'
@@ -358,7 +358,7 @@ const getVotingStatusIconColor = () => {
     const status = props.voting.status
     const colors = {
         active: 'text-mun-green-700',
-        completed: 'text-un-blue',
+        completed: 'text-mun-blue',
         paused: 'text-mun-yellow-700'
     }
     return colors[status] || 'text-mun-gray-600'
@@ -368,7 +368,7 @@ const getVotingStatusBadgeClass = () => {
     const status = props.voting.status
     const classes = {
         active: 'bg-mun-green-100 text-mun-green-700',
-        completed: 'bg-un-blue/10 text-un-blue',
+        completed: 'bg-mun-blue/10 text-mun-blue',
         paused: 'bg-mun-yellow-100 text-mun-yellow-700'
     }
     return classes[status] || 'bg-mun-gray-100 text-mun-gray-700'

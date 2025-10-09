@@ -4,8 +4,8 @@
         <!-- Header -->
         <div class="composer-header flex items-center justify-between p-4 border-b border-mun-gray-200">
             <div class="flex items-center space-x-3">
-                <div class="p-2 bg-un-blue/10 rounded-lg">
-                    <PencilSquareIcon class="w-5 h-5 text-un-blue" />
+                <div class="p-2 bg-mun-blue/10 rounded-lg">
+                    <PencilSquareIcon class="w-5 h-5 text-mun-blue" />
                 </div>
                 <div>
                     <h3 class="text-sm font-medium text-mun-gray-900">Compose Message</h3>
@@ -19,7 +19,7 @@
                     <button v-for="type in messageTypes" :key="type.value" @click="messageType = type.value" :class="[
                         'px-3 py-1 text-xs font-medium rounded transition-all duration-200',
                         messageType === type.value
-                            ? 'bg-white text-un-blue shadow-sm'
+                            ? 'bg-white text-mun-blue shadow-sm'
                             : 'text-mun-gray-600 hover:text-mun-gray-900'
                     ]">
                         {{ type.name }}
@@ -48,7 +48,7 @@
                     <div class="relative">
                         <input v-model="recipientSearch" @input="filterRecipients" @focus="showRecipientDropdown = true"
                             type="text" placeholder="Search for a country..."
-                            class="w-full px-4 py-3 pl-10 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-transparent"
+                            class="w-full px-4 py-3 pl-10 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent"
                             :class="{ 'border-red-300': errors.recipients }" />
                         <MagnifyingGlassIcon
                             class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-mun-gray-400" />
@@ -56,7 +56,7 @@
 
                     <!-- Selected Recipient -->
                     <div v-if="selectedRecipient"
-                        class="selected-recipient mt-2 p-3 bg-un-blue/5 border border-un-blue/20 rounded-lg">
+                        class="selected-recipient mt-2 p-3 bg-mun-blue/5 border border-mun-blue/20 rounded-lg">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-3">
                                 <CountryFlag :country="selectedRecipient.name" size="sm" />
@@ -95,8 +95,8 @@
                         <div @click="toggleCommitteeRecipient('all')" :class="[
                             'recipient-card p-3 border-2 rounded-lg cursor-pointer transition-all duration-200',
                             recipients.includes('all')
-                                ? 'border-un-blue bg-un-blue/5'
-                                : 'border-mun-gray-200 hover:border-un-blue/30'
+                                ? 'border-mun-blue bg-mun-blue/5'
+                                : 'border-mun-gray-200 hover:border-mun-blue/30'
                         ]">
                             <div class="flex items-center space-x-3">
                                 <UserGroupIcon class="w-5 h-5 text-mun-gray-600" />
@@ -111,8 +111,8 @@
                         <div @click="toggleCommitteeRecipient('presidium')" :class="[
                             'recipient-card p-3 border-2 rounded-lg cursor-pointer transition-all duration-200',
                             recipients.includes('presidium')
-                                ? 'border-un-blue bg-un-blue/5'
-                                : 'border-mun-gray-200 hover:border-un-blue/30'
+                                ? 'border-mun-blue bg-mun-blue/5'
+                                : 'border-mun-gray-200 hover:border-mun-blue/30'
                         ]">
                             <div class="flex items-center space-x-3">
                                 <CrownIcon class="w-5 h-5 text-mun-gray-600" />
@@ -127,7 +127,7 @@
                     <!-- Custom Recipients -->
                     <div class="custom-recipients mt-3">
                         <button @click="showCustomRecipients = !showCustomRecipients"
-                            class="flex items-center space-x-2 text-sm text-un-blue hover:text-un-blue-600 transition-colors">
+                            class="flex items-center space-x-2 text-sm text-mun-blue hover:text-mun-blue-600 transition-colors">
                             <PlusIcon class="w-4 h-4" />
                             <span>Select specific countries</span>
                         </button>
@@ -138,7 +138,7 @@
                                 <label v-for="country in availableCountries" :key="country.email"
                                     class="flex items-center space-x-2 text-sm cursor-pointer">
                                     <input type="checkbox" :value="country.email" v-model="customRecipients"
-                                        class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                     <CountryFlag :country="country.name" size="xs" />
                                     <span>{{ country.name }}</span>
                                 </label>
@@ -156,7 +156,7 @@
                     Subject <span class="text-red-500">*</span>
                 </label>
                 <input v-model="messageSubject" type="text" placeholder="Enter message subject..." maxlength="200"
-                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-transparent"
+                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent"
                     :class="{ 'border-red-300': errors.subject }" />
                 <div class="flex items-center justify-between mt-1">
                     <p v-if="errors.subject" class="text-sm text-red-600">{{ errors.subject }}</p>
@@ -189,7 +189,7 @@
                     Message <span class="text-red-500">*</span>
                 </label>
                 <textarea v-model="messageContent" placeholder="Type your message here..." rows="6" maxlength="2000"
-                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-transparent resize-none"
+                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent resize-none"
                     :class="{ 'border-red-300': errors.content }"></textarea>
                 <div class="flex items-center justify-between mt-1">
                     <p v-if="errors.content" class="text-sm text-red-600">{{ errors.content }}</p>
@@ -204,7 +204,7 @@
                 </label>
                 <div class="template-buttons flex flex-wrap gap-2">
                     <button v-for="template in messageTemplates" :key="template.name" @click="applyTemplate(template)"
-                        class="template-btn px-3 py-1 text-xs font-medium text-un-blue bg-un-blue/10 border border-un-blue/20 rounded hover:bg-un-blue/20 transition-colors">
+                        class="template-btn px-3 py-1 text-xs font-medium text-mun-blue bg-mun-blue/10 border border-mun-blue/20 rounded hover:bg-mun-blue/20 transition-colors">
                         {{ template.name }}
                     </button>
                 </div>
@@ -257,7 +257,7 @@
                 </button>
 
                 <button @click="sendMessage" :disabled="!canSend || isSending"
-                    class="px-6 py-2 text-sm font-medium text-white bg-un-blue border border-un-blue rounded-lg hover:bg-un-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    class="px-6 py-2 text-sm font-medium text-white bg-mun-blue border border-mun-blue rounded-lg hover:bg-mun-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                     <LoadingSpinner v-if="isSending" class="w-4 h-4 mr-2" />
                     {{ isSending ? 'Sending...' : 'Send Message' }}
                 </button>

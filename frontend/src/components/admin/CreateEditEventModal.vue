@@ -27,7 +27,7 @@
                             <!-- Basic Information -->
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
-                                    <InformationCircleIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Basic Information
                                 </h3>
 
@@ -92,7 +92,7 @@
                             <!-- Event Details -->
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
-                                    <CalendarDaysIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <CalendarDaysIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Event Details
                                 </h3>
 
@@ -156,7 +156,7 @@
                             <!-- Registration Settings -->
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
-                                    <UserPlusIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <UserPlusIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Registration Settings
                                 </h3>
 
@@ -206,7 +206,7 @@
                                 <div class="space-y-4">
                                     <div class="flex items-center">
                                         <input id="requireApproval" v-model="formData.requireApproval" type="checkbox"
-                                            class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                            class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
                                         <label for="requireApproval" class="ml-2 text-sm text-mun-gray-700">
                                             Require approval for registrations
                                         </label>
@@ -214,7 +214,7 @@
 
                                     <div class="flex items-center">
                                         <input id="allowWaitlist" v-model="formData.allowWaitlist" type="checkbox"
-                                            class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                            class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
                                         <label for="allowWaitlist" class="ml-2 text-sm text-mun-gray-700">
                                             Allow waitlist when event is full
                                         </label>
@@ -222,7 +222,7 @@
 
                                     <div class="flex items-center">
                                         <input id="sendWelcomeEmail" v-model="formData.sendWelcomeEmail" type="checkbox"
-                                            class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                            class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
                                         <label for="sendWelcomeEmail" class="ml-2 text-sm text-mun-gray-700">
                                             Send welcome email to registrants
                                         </label>
@@ -233,7 +233,7 @@
                             <!-- Contact Information -->
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
-                                    <EnvelopeIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <EnvelopeIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Contact Information
                                 </h3>
 
@@ -279,7 +279,7 @@
                             <!-- Additional Settings -->
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
-                                    <CogIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <CogIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Additional Settings
                                 </h3>
 
@@ -319,10 +319,10 @@
                                         </label>
                                         <div class="flex flex-wrap gap-2 mb-2">
                                             <span v-for="tag in formData.tags" :key="tag"
-                                                class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-un-blue-100 text-un-blue-800">
+                                                class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-mun-blue-100 text-mun-blue-800">
                                                 {{ tag }}
                                                 <button @click="removeTag(tag)" type="button"
-                                                    class="ml-2 text-un-blue-600 hover:text-un-blue-800">
+                                                    class="ml-2 text-mun-blue-600 hover:text-mun-blue-800">
                                                     <XMarkIcon class="w-3 h-3" />
                                                 </button>
                                             </span>
@@ -344,7 +344,7 @@
                                 <div class="space-y-4">
                                     <div class="flex items-center">
                                         <input id="isPublic" v-model="formData.isPublic" type="checkbox"
-                                            class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                            class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
                                         <label for="isPublic" class="ml-2 text-sm text-mun-gray-700">
                                             Make event publicly visible
                                         </label>
@@ -352,7 +352,7 @@
 
                                     <div class="flex items-center">
                                         <input id="enableFeedback" v-model="formData.enableFeedback" type="checkbox"
-                                            class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                            class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
                                         <label for="enableFeedback" class="ml-2 text-sm text-mun-gray-700">
                                             Enable participant feedback collection
                                         </label>
@@ -361,7 +361,7 @@
                                     <div class="flex items-center">
                                         <input id="allowGuestObservers" v-model="formData.allowGuestObservers"
                                             type="checkbox"
-                                            class="h-4 w-4 text-un-blue focus:ring-un-blue border-mun-gray-300 rounded" />
+                                            class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
                                         <label for="allowGuestObservers" class="ml-2 text-sm text-mun-gray-700">
                                             Allow guest observers
                                         </label>
@@ -372,7 +372,7 @@
                             <!-- Notes/Instructions -->
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
-                                    <DocumentTextIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                    <DocumentTextIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                     Additional Information
                                 </h3>
 

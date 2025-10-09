@@ -4,8 +4,8 @@
         <!-- Header -->
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center space-x-3">
-                <div class="p-2 bg-un-blue/10 rounded-lg">
-                    <UserGroupIcon class="w-5 h-5 text-un-blue" />
+                <div class="p-2 bg-mun-blue/10 rounded-lg">
+                    <UserGroupIcon class="w-5 h-5 text-mun-blue" />
                 </div>
                 <div>
                     <h3 class="text-sm font-medium text-mun-gray-900">Attendance Tracker</h3>
@@ -69,11 +69,11 @@
         <div class="flex items-center space-x-3 mb-4">
             <div class="flex-1">
                 <input v-model="searchQuery" type="text" placeholder="Search countries..."
-                    class="w-full px-3 py-2 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-un-blue" />
+                    class="w-full px-3 py-2 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
             </div>
 
             <select v-model="filterStatus"
-                class="px-3 py-2 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-un-blue">
+                class="px-3 py-2 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue">
                 <option value="">All Status</option>
                 <option value="present">Present</option>
                 <option value="absent">Absent</option>

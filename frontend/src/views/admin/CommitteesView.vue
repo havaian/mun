@@ -26,14 +26,14 @@
                 <div class="flex items-center">
                     <div :class="[
                         'p-3 rounded-lg',
-                        stat.color === 'blue' ? 'bg-un-blue/10' :
+                        stat.color === 'blue' ? 'bg-mun-blue/10' :
                             stat.color === 'green' ? 'bg-mun-green-500/10' :
                                 stat.color === 'purple' ? 'bg-purple-500/10' :
                                     'bg-orange-500/10'
                     ]">
                         <component :is="stat.icon" :class="[
                             'w-6 h-6',
-                            stat.color === 'blue' ? 'text-un-blue' :
+                            stat.color === 'blue' ? 'text-mun-blue' :
                                 stat.color === 'green' ? 'text-mun-green-500' :
                                     stat.color === 'purple' ? 'text-purple-500' :
                                         'text-orange-500'
@@ -141,7 +141,7 @@
             <!-- Filter Actions -->
             <div class="flex items-center justify-between mt-4">
                 <button @click="showAdvancedFilters = !showAdvancedFilters"
-                    class="text-sm text-un-blue hover:text-un-blue-600 flex items-center">
+                    class="text-sm text-mun-blue hover:text-mun-blue-600 flex items-center">
                     <ChevronDownIcon v-if="!showAdvancedFilters" class="w-4 h-4 mr-1" />
                     <ChevronUpIcon v-else class="w-4 h-4 mr-1" />
                     {{ showAdvancedFilters ? 'Hide' : 'Show' }} Advanced Filters
@@ -168,7 +168,7 @@
                     <button @click="viewMode = 'grid'" :class="[
                         'p-2 rounded-lg transition-colors',
                         viewMode === 'grid'
-                            ? 'bg-un-blue text-white'
+                            ? 'bg-mun-blue text-white'
                             : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
                     ]">
                         <Squares2X2Icon class="w-4 h-4" />
@@ -176,7 +176,7 @@
                     <button @click="viewMode = 'list'" :class="[
                         'p-2 rounded-lg transition-colors',
                         viewMode === 'list'
-                            ? 'bg-un-blue text-white'
+                            ? 'bg-mun-blue text-white'
                             : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
                     ]">
                         <ListBulletIcon class="w-4 h-4" />
@@ -222,7 +222,7 @@
 
         <!-- Committees Display -->
         <div v-if="isLoading" class="flex justify-center py-12">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-un-blue"></div>
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
         </div>
 
         <div v-else-if="filteredCommittees.length === 0" class="text-center py-12">
@@ -257,7 +257,7 @@
                         <p class="text-sm text-mun-gray-600 mt-1">{{ committee.description || 'No description' }}</p>
                     </div>
                     <input type="checkbox" v-model="selectedCommittees" :value="committee._id" @click.stop
-                        class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue">
+                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
                 </div>
 
                 <!-- Committee Info -->
@@ -290,7 +290,7 @@
                     </span>
                     <div class="flex items-center space-x-2">
                         <button @click.stop="editCommittee(committee)"
-                            class="p-1 text-mun-gray-400 hover:text-un-blue transition-colors">
+                            class="p-1 text-mun-gray-400 hover:text-mun-blue transition-colors">
                             <PencilIcon class="w-4 h-4" />
                         </button>
                         <button @click.stop="duplicateCommittee(committee)"
@@ -313,7 +313,7 @@
                     <tr>
                         <th class="px-6 py-3 text-left">
                             <input type="checkbox" @change="toggleSelectAll" :checked="isAllSelected"
-                                class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue">
+                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
                             Committee
@@ -340,7 +340,7 @@
                         class="hover:bg-mun-gray-50 cursor-pointer transition-colors" @click="viewCommittee(committee)">
                         <td class="px-6 py-4">
                             <input type="checkbox" v-model="selectedCommittees" :value="committee._id" @click.stop
-                                class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue">
+                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
                         </td>
                         <td class="px-6 py-4">
                             <div>
@@ -372,7 +372,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div class="flex items-center justify-end space-x-2">
                                 <button @click.stop="editCommittee(committee)"
-                                    class="text-un-blue hover:text-un-blue-600 transition-colors">
+                                    class="text-mun-blue hover:text-mun-blue-600 transition-colors">
                                     <PencilIcon class="w-4 h-4" />
                                 </button>
                                 <button @click.stop="duplicateCommittee(committee)"

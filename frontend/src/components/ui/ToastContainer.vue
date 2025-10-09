@@ -33,7 +33,7 @@
                                 <!-- Action button if provided -->
                                 <div v-if="toast.action" class="mt-3">
                                     <button @click="handleAction(toast)"
-                                        class="text-sm font-medium text-un-blue hover:text-un-blue-dark focus:outline-none focus:underline">
+                                        class="text-sm font-medium text-mun-blue hover:text-mun-blue-dark focus:outline-none focus:underline">
                                         {{ toast.action.text }}
                                     </button>
                                 </div>
@@ -42,7 +42,7 @@
                             <!-- Close button -->
                             <div class="ml-4 flex-shrink-0 flex" v-if="toast.closable !== false">
                                 <button @click="removeToast(toast.id)"
-                                    class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors">
+                                    class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors">
                                     <span class="sr-only">Close</span>
                                     <XMarkIcon class="h-5 w-5" />
                                 </button>

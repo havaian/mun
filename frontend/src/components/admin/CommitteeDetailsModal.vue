@@ -8,7 +8,7 @@
 
                     <!-- Header -->
                     <div
-                        class="flex items-center justify-between p-6 border-b border-mun-gray-200 bg-gradient-to-r from-un-blue to-mun-blue-600">
+                        class="flex items-center justify-between p-6 border-b border-mun-gray-200 bg-gradient-to-r from-mun-blue to-mun-blue-600">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                                 <BuildingOfficeIcon class="w-6 h-6 text-white" />
@@ -46,7 +46,7 @@
                                     <!-- Basic Information -->
                                     <div class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <InformationCircleIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                            <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                             Committee Information
                                         </h3>
 
@@ -102,7 +102,7 @@
                                     <div v-if="committee.agendaTopics && committee.agendaTopics.length"
                                         class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <DocumentTextIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                            <DocumentTextIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                             Agenda Topics
                                         </h3>
 
@@ -122,7 +122,7 @@
                                     <!-- Presidium -->
                                     <div class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <UsersIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                            <UsersIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                             Presidium
                                         </h3>
 
@@ -186,7 +186,7 @@
                                     <!-- Committee Settings -->
                                     <div class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <CogIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                            <CogIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                             Committee Features
                                         </h3>
 
@@ -236,7 +236,7 @@
                                     <div v-if="committee.backgroundGuideUrl || committee.meetingRoom || committee.internalNotes"
                                         class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <AdjustmentsHorizontalIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                            <AdjustmentsHorizontalIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                             Additional Information
                                         </h3>
 
@@ -246,7 +246,7 @@
                                                     Guide</label>
                                                 <a :href="committee.backgroundGuideUrl" target="_blank"
                                                     rel="noopener noreferrer"
-                                                    class="block text-un-blue hover:text-un-blue-dark mt-1">
+                                                    class="block text-mun-blue hover:text-mun-blue-dark mt-1">
                                                     {{ committee.backgroundGuideUrl }}
                                                 </a>
                                             </div>
@@ -278,7 +278,7 @@
                                     <!-- Quick Stats -->
                                     <div class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <ChartBarIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                            <ChartBarIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                             Statistics
                                         </h3>
 
@@ -317,7 +317,7 @@
                                                     </span>
                                                 </div>
                                                 <div class="w-full bg-mun-gray-200 rounded-full h-2">
-                                                    <div class="bg-un-blue rounded-full h-2 transition-all duration-300"
+                                                    <div class="bg-mun-blue rounded-full h-2 transition-all duration-300"
                                                         :style="{ width: `${getCapacityPercentage()}%` }">
                                                     </div>
                                                 </div>

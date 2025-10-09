@@ -8,7 +8,7 @@
 
                     <!-- Header -->
                     <div
-                        class="flex items-center justify-between p-6 border-b border-mun-gray-200 bg-gradient-to-r from-un-blue to-mun-blue-600">
+                        class="flex items-center justify-between p-6 border-b border-mun-gray-200 bg-gradient-to-r from-mun-blue to-mun-blue-600">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                                 <ChartBarIcon class="w-6 h-6 text-white" />
@@ -73,13 +73,13 @@
                                                     <div :class="[
                                                         'p-3 border-2 rounded-lg text-center transition-all',
                                                         reportConfig.type === type.value
-                                                            ? 'border-un-blue bg-un-blue/5'
+                                                            ? 'border-mun-blue bg-mun-blue/5'
                                                             : 'border-mun-gray-200 hover:border-mun-gray-300'
                                                     ]">
                                                         <component :is="type.icon" :class="[
                                                             'w-5 h-5 mx-auto mb-1',
                                                             reportConfig.type === type.value
-                                                                ? 'text-un-blue'
+                                                                ? 'text-mun-blue'
                                                                 : 'text-mun-gray-500'
                                                         ]" />
                                                         <p class="text-xs font-medium">{{ type.label }}</p>
@@ -788,15 +788,15 @@ watch(() => reportFilters.value, () => {
 }
 
 .mun-input {
-    @apply w-full px-4 py-3 border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-un-blue focus:border-un-blue transition-colors;
+    @apply w-full px-4 py-3 border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue transition-colors;
 }
 
 .mun-input-sm {
-    @apply px-3 py-2 text-sm border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-un-blue focus:border-un-blue transition-colors;
+    @apply px-3 py-2 text-sm border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue transition-colors;
 }
 
 .mun-checkbox {
-    @apply w-4 h-4 text-un-blue border-mun-gray-300 rounded focus:ring-un-blue focus:ring-2;
+    @apply w-4 h-4 text-mun-blue border-mun-gray-300 rounded focus:ring-mun-blue focus:ring-2;
 }
 
 /* Modal animations */

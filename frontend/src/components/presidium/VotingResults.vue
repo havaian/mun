@@ -92,7 +92,7 @@
             <div class="flex items-center justify-between mb-3">
                 <h4 class="text-sm font-medium text-mun-gray-900">Roll Call Results</h4>
                 <button @click="showDetailedVotes = !showDetailedVotes"
-                    class="text-xs text-un-blue hover:text-un-blue-600 flex items-center">
+                    class="text-xs text-mun-blue hover:text-mun-blue-600 flex items-center">
                     {{ showDetailedVotes ? 'Hide' : 'Show' }} Details
                     <ChevronDownIcon :class="{ 'transform rotate-180': showDetailedVotes }"
                         class="w-3 h-3 ml-1 transition-transform" />
@@ -180,7 +180,7 @@
             class="flex items-center justify-between pt-3 border-t border-mun-gray-200">
             <div class="flex items-center space-x-2">
                 <button @click="shareResults"
-                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-un-blue bg-un-blue/10 border border-un-blue/20 rounded hover:bg-un-blue/20 transition-colors">
+                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-mun-blue bg-mun-blue/10 border border-mun-blue/20 rounded hover:bg-mun-blue/20 transition-colors">
                     <ShareIcon class="w-4 h-4 mr-1" />
                     Share Results
                 </button>

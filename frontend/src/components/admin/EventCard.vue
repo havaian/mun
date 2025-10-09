@@ -18,7 +18,7 @@
 
             <!-- Event Title -->
             <h3
-                class="text-lg font-bold text-mun-gray-900 mb-2 line-clamp-2 group-hover:text-un-blue transition-colors">
+                class="text-lg font-bold text-mun-gray-900 mb-2 line-clamp-2 group-hover:text-mun-blue transition-colors">
                 {{ event.name }}
             </h3>
 
@@ -60,7 +60,7 @@
         <!-- Progress Bar (if event is active) -->
         <div v-if="event.status === 'active' && eventProgress !== null" class="px-6 pb-4">
             <div class="bg-mun-gray-200 rounded-full h-2">
-                <div class="bg-un-blue rounded-full h-2 transition-all duration-300"
+                <div class="bg-mun-blue rounded-full h-2 transition-all duration-300"
                     :style="{ width: `${eventProgress}%` }"></div>
             </div>
             <p class="text-xs text-mun-gray-500 mt-1">
@@ -153,7 +153,7 @@
                 </button>
 
                 <button v-if="event.committees?.length > 0" @click.stop="goToCommittees"
-                    class="bg-un-blue text-white p-2 rounded-lg hover:bg-un-blue-600 transition-colors"
+                    class="bg-mun-blue text-white p-2 rounded-lg hover:bg-mun-blue-600 transition-colors"
                     title="Manage Committees">
                     <UserGroupIcon class="w-4 h-4" />
                 </button>
@@ -168,7 +168,7 @@
 
         <!-- Event Countdown (for upcoming events) -->
         <div v-if="showCountdown"
-            class="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-un-blue to-un-blue-600 text-white px-6 py-3 rounded-b-2xl">
+            class="absolute bottom-0 left-0 right-0 bg-gradient-to-r from-mun-blue to-mun-blue-600 text-white px-6 py-3 rounded-b-2xl">
             <div class="flex items-center justify-between text-sm">
                 <span class="font-medium">Starts in:</span>
                 <span class="font-bold">{{ countdownText }}</span>
@@ -263,7 +263,7 @@ const eventTypeIcon = computed(() => {
 const eventTypeIconClass = computed(() => {
     switch (props.event.eventType) {
         case 'conference':
-            return 'bg-un-blue'
+            return 'bg-mun-blue'
         case 'simulation':
             return 'bg-mun-green-500'
         case 'training':
@@ -271,7 +271,7 @@ const eventTypeIconClass = computed(() => {
         case 'competition':
             return 'bg-mun-yellow-500'
         default:
-            return 'bg-un-blue'
+            return 'bg-mun-blue'
     }
 })
 

@@ -111,7 +111,7 @@
                                 </div>
                                 <div class="ml-4">
                                     <div
-                                        class="text-sm font-medium text-mun-gray-900 hover:text-un-blue transition-colors">
+                                        class="text-sm font-medium text-mun-gray-900 hover:text-mun-blue transition-colors">
                                         {{ event.name }}
                                     </div>
                                     <div class="text-sm text-mun-gray-500">
@@ -162,7 +162,7 @@
                                 </div>
                             </div>
                             <div v-if="event.maxParticipants" class="mt-1 w-full bg-mun-gray-200 rounded-full h-1.5">
-                                <div class="bg-un-blue h-1.5 rounded-full transition-all duration-300"
+                                <div class="bg-mun-blue h-1.5 rounded-full transition-all duration-300"
                                     :style="{ width: `${getParticipationPercentage(event)}%` }"></div>
                             </div>
                         </td>
@@ -187,7 +187,7 @@
                             <div class="flex items-center justify-end space-x-2">
                                 <!-- Quick Actions -->
                                 <button @click.stop="$emit('view', event)"
-                                    class="text-un-blue hover:text-un-blue-600 transition-colors" title="View Details">
+                                    class="text-mun-blue hover:text-mun-blue-600 transition-colors" title="View Details">
                                     <EyeIcon class="w-4 h-4" />
                                 </button>
 
@@ -316,7 +316,7 @@ const getEventTypeIcon = (type) => {
 const getEventTypeIconClass = (type) => {
     switch (type) {
         case 'conference':
-            return 'bg-un-blue'
+            return 'bg-mun-blue'
         case 'simulation':
             return 'bg-mun-green-500'
         case 'training':
@@ -324,7 +324,7 @@ const getEventTypeIconClass = (type) => {
         case 'competition':
             return 'bg-mun-yellow-500'
         default:
-            return 'bg-un-blue'
+            return 'bg-mun-blue'
     }
 }
 

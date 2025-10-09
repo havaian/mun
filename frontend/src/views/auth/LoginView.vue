@@ -4,11 +4,11 @@
             <!-- Logo and Title -->
             <div class="text-center mb-4">
                 <div
-                    class="mx-auto w-16 h-16 bg-un-blue rounded-full flex items-center justify-center mb-4 animate-float">
+                    class="mx-auto w-16 h-16 bg-mun-blue rounded-full flex items-center justify-center mb-4 animate-float">
                     <img src="/logo.svg" alt="" class="w-8 h-8 text-white">
                 </div>
                 <h1 class="text-3xl font-bold text-mun-gray-900 mb-2">
-                    MUN<span class="text-un-blue">.UZ</span>
+                    MUN<span class="text-mun-blue">.UZ</span>
                 </h1>
                 <p class="text-mun-gray-600">Model United Nations Platform</p>
             </div>
@@ -104,8 +104,8 @@
                             </AppButton>
                         </form>
 
-                        <div class="mt-4 p-4 bg-un-blue-50 rounded-xl">
-                            <p class="text-sm text-un-blue-700">
+                        <div class="mt-4 p-4 bg-mun-blue-50 rounded-xl">
+                            <p class="text-sm text-mun-blue-700">
                                 <InformationCircleIcon class="w-4 h-4 inline mr-1 mb-1" />Use the email you registered
                                 with
                             </p>

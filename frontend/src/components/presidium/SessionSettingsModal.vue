@@ -47,7 +47,7 @@
                                             </label>
                                             <input v-model.number="settings.sessionDuration" type="number" min="30"
                                                 max="480" step="15"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-un-blue"
+                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue"
                                                 placeholder="e.g., 120" />
                                             <p class="text-xs text-mun-gray-500 mt-1">Total time allocated for this
                                                 session</p>
@@ -60,7 +60,7 @@
                                             </label>
                                             <input v-model.number="settings.breakDuration" type="number" min="5"
                                                 max="60" step="5"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-un-blue"
+                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue"
                                                 placeholder="e.g., 15" />
                                             <p class="text-xs text-mun-gray-500 mt-1">Standard break length</p>
                                         </div>
@@ -71,7 +71,7 @@
                                                 Quorum Percentage
                                             </label>
                                             <select v-model="settings.quorumPercentage"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-un-blue">
+                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
                                                 <option value="0.33">33% (One-third)</option>
                                                 <option value="0.5">50% (Simple majority)</option>
                                                 <option value="0.67">67% (Two-thirds)</option>
@@ -87,7 +87,7 @@
                                                 Working Language
                                             </label>
                                             <select v-model="settings.language"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-un-blue">
+                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
                                                 <option value="en">English</option>
                                                 <option value="fr">French</option>
                                                 <option value="es">Spanish</option>
@@ -111,7 +111,7 @@
                                             </label>
                                             <input v-model.number="settings.defaultSpeechTime" type="number" min="30"
                                                 max="600" step="30"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-un-blue"
+                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue"
                                                 placeholder="e.g., 120" />
                                         </div>
 
@@ -122,7 +122,7 @@
                                             </label>
                                             <input v-model.number="settings.extensionTime" type="number" min="15"
                                                 max="120" step="15"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-un-blue"
+                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue"
                                                 placeholder="e.g., 30" />
                                         </div>
 
@@ -133,14 +133,14 @@
                                             </label>
                                             <input v-model.number="settings.maxSpeakerListSize" type="number" min="5"
                                                 max="50"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-un-blue"
+                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue"
                                                 placeholder="e.g., 20" />
                                         </div>
 
                                         <!-- Auto-advance speakers -->
                                         <div class="flex items-center">
                                             <input v-model="settings.autoAdvanceSpeakers" type="checkbox"
-                                                class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                             <label class="ml-2 text-sm text-mun-gray-700">
                                                 Auto-advance to next speaker
                                             </label>
@@ -166,12 +166,12 @@
                                                     (seconds)</label>
                                                 <input v-model.number="settings.formalDebate.speechTime" type="number"
                                                     min="60" max="300"
-                                                    class="w-full px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-un-blue" />
+                                                    class="w-full px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
                                             </div>
 
                                             <div class="flex items-center">
                                                 <input v-model="settings.formalDebate.allowQuestions" type="checkbox"
-                                                    class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                    class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                                 <label class="ml-2 text-xs text-mun-gray-700">Allow questions</label>
                                             </div>
                                         </div>
@@ -187,7 +187,7 @@
                                                     (minutes)</label>
                                                 <input v-model.number="settings.moderatedCaucus.totalTime" type="number"
                                                     min="5" max="60"
-                                                    class="w-full px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-un-blue" />
+                                                    class="w-full px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
                                             </div>
 
                                             <div>
@@ -195,12 +195,12 @@
                                                     (seconds)</label>
                                                 <input v-model.number="settings.moderatedCaucus.speechTime"
                                                     type="number" min="30" max="180"
-                                                    class="w-full px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-un-blue" />
+                                                    class="w-full px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
                                             </div>
 
                                             <div class="flex items-center">
                                                 <input v-model="settings.moderatedCaucus.requireTopic" type="checkbox"
-                                                    class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                    class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                                 <label class="ml-2 text-xs text-mun-gray-700">Require topic</label>
                                             </div>
                                         </div>
@@ -216,7 +216,7 @@
                                                     (minutes)</label>
                                                 <input v-model.number="settings.unmoderatedCaucus.defaultDuration"
                                                     type="number" min="5" max="30"
-                                                    class="w-full px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-un-blue" />
+                                                    class="w-full px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
                                             </div>
 
                                             <div>
@@ -224,7 +224,7 @@
                                                     (minutes)</label>
                                                 <input v-model.number="settings.unmoderatedCaucus.maxDuration"
                                                     type="number" min="10" max="60"
-                                                    class="w-full px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-un-blue" />
+                                                    class="w-full px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
                                             </div>
                                         </div>
                                     </div>
@@ -242,7 +242,7 @@
                                             </label>
                                             <input v-model.number="settings.defaultVotingTime" type="number" min="2"
                                                 max="30"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-un-blue"
+                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue"
                                                 placeholder="e.g., 5" />
                                         </div>
 
@@ -252,7 +252,7 @@
                                                 Default Majority Type
                                             </label>
                                             <select v-model="settings.defaultMajorityType"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-un-blue">
+                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
                                                 <option value="simple">Simple Majority</option>
                                                 <option value="two-thirds">Two-Thirds Majority</option>
                                                 <option value="consensus">Consensus Required</option>
@@ -262,7 +262,7 @@
                                         <!-- Allow Abstentions -->
                                         <div class="flex items-center">
                                             <input v-model="settings.allowAbstentions" type="checkbox"
-                                                class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                             <label class="ml-2 text-sm text-mun-gray-700">
                                                 Allow abstentions by default
                                             </label>
@@ -271,7 +271,7 @@
                                         <!-- Show real-time results -->
                                         <div class="flex items-center">
                                             <input v-model="settings.showRealTimeResults" type="checkbox"
-                                                class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                             <label class="ml-2 text-sm text-mun-gray-700">
                                                 Show real-time voting results
                                             </label>
@@ -286,7 +286,7 @@
                                     <div class="space-y-3">
                                         <div class="flex items-center">
                                             <input v-model="settings.notifications.timerWarnings" type="checkbox"
-                                                class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                             <label class="ml-2 text-sm text-mun-gray-700">
                                                 Timer warnings (30 seconds remaining)
                                             </label>
@@ -294,7 +294,7 @@
 
                                         <div class="flex items-center">
                                             <input v-model="settings.notifications.quorumAlerts" type="checkbox"
-                                                class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                             <label class="ml-2 text-sm text-mun-gray-700">
                                                 Quorum status alerts
                                             </label>
@@ -302,7 +302,7 @@
 
                                         <div class="flex items-center">
                                             <input v-model="settings.notifications.voteReminders" type="checkbox"
-                                                class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                             <label class="ml-2 text-sm text-mun-gray-700">
                                                 Vote reminders for delegates
                                             </label>
@@ -310,7 +310,7 @@
 
                                         <div class="flex items-center">
                                             <input v-model="settings.notifications.soundEffects" type="checkbox"
-                                                class="rounded border-mun-gray-300 text-un-blue focus:ring-un-blue" />
+                                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
                                             <label class="ml-2 text-sm text-mun-gray-700">
                                                 Sound effects for timers and alerts
                                             </label>
@@ -332,12 +332,12 @@
                                 <!-- Actions -->
                                 <div class="flex items-center space-x-3">
                                     <button @click="$emit('update:modelValue', false)"
-                                        class="px-4 py-2 text-sm font-medium text-mun-gray-700 bg-white border border-mun-gray-300 rounded-md hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors">
+                                        class="px-4 py-2 text-sm font-medium text-mun-gray-700 bg-white border border-mun-gray-300 rounded-md hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors">
                                         Cancel
                                     </button>
 
                                     <button @click="saveSettings" :disabled="isUpdating"
-                                        class="px-4 py-2 text-sm font-medium text-white bg-un-blue border border-transparent rounded-md hover:bg-un-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors disabled:opacity-50">
+                                        class="px-4 py-2 text-sm font-medium text-white bg-mun-blue border border-transparent rounded-md hover:bg-mun-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors disabled:opacity-50">
                                         {{ isUpdating ? 'Saving...' : 'Save Settings' }}
                                     </button>
                                 </div>

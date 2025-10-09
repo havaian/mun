@@ -106,7 +106,7 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-2">
                     <button v-if="!hasQuorum" @click="$emit('request-roll-call')"
-                        class="inline-flex items-center px-2 py-1 text-xs font-medium text-un-blue bg-un-blue/10 border border-un-blue/20 rounded hover:bg-un-blue/20 transition-colors">
+                        class="inline-flex items-center px-2 py-1 text-xs font-medium text-mun-blue bg-mun-blue/10 border border-mun-blue/20 rounded hover:bg-mun-blue/20 transition-colors">
                         <ClipboardDocumentListIcon class="w-3 h-3 mr-1" />
                         Roll Call
                     </button>

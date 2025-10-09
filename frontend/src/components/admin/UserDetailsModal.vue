@@ -8,7 +8,7 @@
 
                     <!-- Header -->
                     <div
-                        class="flex items-center justify-between p-6 border-b border-mun-gray-200 bg-gradient-to-r from-un-blue to-mun-blue-600">
+                        class="flex items-center justify-between p-6 border-b border-mun-gray-200 bg-gradient-to-r from-mun-blue to-mun-blue-600">
                         <div class="flex items-center space-x-4">
                             <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                                 <span class="text-white text-lg font-semibold">
@@ -48,7 +48,7 @@
                                     <!-- Basic Information -->
                                     <div class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <InformationCircleIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                            <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                             Personal Information
                                         </h3>
 
@@ -69,7 +69,7 @@
                                                 <label class="text-sm font-medium text-mun-gray-600">Email
                                                     Address</label>
                                                 <a :href="`mailto:${user.email}`"
-                                                    class="text-un-blue hover:text-un-blue-dark">
+                                                    class="text-mun-blue hover:text-mun-blue-dark">
                                                     {{ user.email }}
                                                 </a>
                                             </div>
@@ -78,7 +78,7 @@
                                                 <label class="text-sm font-medium text-mun-gray-600">Phone
                                                     Number</label>
                                                 <a :href="`tel:${user.phone}`"
-                                                    class="text-un-blue hover:text-un-blue-dark">
+                                                    class="text-mun-blue hover:text-mun-blue-dark">
                                                     {{ user.phone }}
                                                 </a>
                                             </div>
@@ -99,7 +99,7 @@
                                     <!-- Role & Assignment Information -->
                                     <div class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <ShieldCheckIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                            <ShieldCheckIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                             Role & Assignment
                                         </h3>
 
@@ -156,7 +156,7 @@
                                     <!-- Account Information -->
                                     <div class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <CogIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                            <CogIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                             Account Settings
                                         </h3>
 
@@ -229,7 +229,7 @@
                                     <!-- Additional Information -->
                                     <div v-if="user.emergencyContact || user.adminNotes" class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <DocumentTextIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                            <DocumentTextIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                             Additional Information
                                         </h3>
 
@@ -261,7 +261,7 @@
                                     <!-- Quick Stats -->
                                     <div class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <ChartBarIcon class="w-5 h-5 mr-2 text-un-blue" />
+                                            <ChartBarIcon class="w-5 h-5 mr-2 text-mun-blue" />
                                             Activity Statistics
                                         </h3>
 

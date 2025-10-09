@@ -4,14 +4,14 @@
         <ChevronUpIcon :class="[
             'w-3 h-3 transition-colors',
             isActive && currentDirection === 'asc'
-                ? 'text-un-blue'
+                ? 'text-mun-blue'
                 : 'text-mun-gray-400 group-hover:text-mun-gray-600'
         ]" />
         <!-- Down arrow -->
         <ChevronDownIcon :class="[
             'w-3 h-3 -mt-1 transition-colors',
             isActive && currentDirection === 'desc'
-                ? 'text-un-blue'
+                ? 'text-mun-blue'
                 : 'text-mun-gray-400 group-hover:text-mun-gray-600'
         ]" />
     </div>

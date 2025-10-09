@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-un-blue to-mun-blue-600 flex items-center justify-center px-4">
+    <div class="min-h-screen bg-gradient-to-br from-mun-blue to-mun-blue-600 flex items-center justify-center px-4">
         <div class="max-w-lg w-full text-center">
             <!-- 404 Animation -->
             <div class="mb-8">
@@ -13,7 +13,7 @@
                     <div class="absolute inset-0 flex items-center justify-center">
                         <div
                             class="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-xl animate-bounce">
-                            <svg class="w-12 h-12 text-un-blue" fill="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-12 h-12 text-mun-blue" fill="currentColor" viewBox="0 0 24 24">
                                 <path
                                     d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                             </svg>
@@ -40,7 +40,7 @@
                 <!-- Primary Action - Go to Dashboard -->
                 <div>
                     <AppButton @click="goToDashboard"
-                        class="bg-white text-un-blue hover:bg-mun-gray-50 font-semibold px-8 py-3 text-lg">
+                        class="bg-white text-mun-blue hover:bg-mun-gray-50 font-semibold px-8 py-3 text-lg">
                         <HomeIcon class="w-5 h-5 mr-2" />
                         {{ getDashboardText() }}
                     </AppButton>

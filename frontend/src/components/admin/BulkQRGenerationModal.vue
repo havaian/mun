@@ -69,7 +69,7 @@
                                                 <div :class="[
                                                     'flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all',
                                                     selectedOperations.delegates
-                                                        ? 'border-un-blue bg-un-blue'
+                                                        ? 'border-mun-blue bg-mun-blue'
                                                         : 'border-mun-gray-300'
                                                 ]">
                                                     <CheckIcon v-if="selectedOperations.delegates"
@@ -78,7 +78,7 @@
                                             </div>
                                             <div class="ml-3">
                                                 <div class="flex items-center">
-                                                    <FlagIcon class="w-5 h-5 text-un-blue mr-2" />
+                                                    <FlagIcon class="w-5 h-5 text-mun-blue mr-2" />
                                                     <span class="text-sm font-medium text-mun-gray-900">Delegate
                                                         QRs</span>
                                                 </div>
@@ -153,7 +153,7 @@
                                         <span>{{ Math.round(overallProgress) }}%</span>
                                     </div>
                                     <div class="w-full bg-mun-gray-200 rounded-full h-3">
-                                        <div class="bg-gradient-to-r from-un-blue to-mun-green h-3 rounded-full transition-all duration-500"
+                                        <div class="bg-gradient-to-r from-mun-blue to-mun-green h-3 rounded-full transition-all duration-500"
                                             :style="{ width: `${overallProgress}%` }"></div>
                                     </div>
                                 </div>
@@ -206,9 +206,9 @@
                                             <div class="text-sm text-mun-red-600">Errors</div>
                                         </div>
                                         <div>
-                                            <div class="text-2xl font-bold text-un-blue-700">{{ totalQRsGenerated }}
+                                            <div class="text-2xl font-bold text-mun-blue-700">{{ totalQRsGenerated }}
                                             </div>
-                                            <div class="text-sm text-un-blue-600">QRs Generated</div>
+                                            <div class="text-sm text-mun-blue-600">QRs Generated</div>
                                         </div>
                                         <div>
                                             <div class="text-2xl font-bold text-mun-gray-700">{{ totalPDFsGenerated }}
@@ -489,7 +489,7 @@ const getLogStatusColor = (status) => {
     const colorMap = {
         'success': 'bg-mun-green',
         'error': 'bg-mun-red',
-        'info': 'bg-un-blue'
+        'info': 'bg-mun-blue'
     }
     return colorMap[status] || 'bg-mun-gray-400'
 }
@@ -498,7 +498,7 @@ const getLogTextColor = (status) => {
     const colorMap = {
         'success': 'text-mun-green-700',
         'error': 'text-mun-red-700',
-        'info': 'text-un-blue-700'
+        'info': 'text-mun-blue-700'
     }
     return colorMap[status] || 'text-mun-gray-700'
 }

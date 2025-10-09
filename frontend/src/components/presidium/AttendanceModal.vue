@@ -53,12 +53,12 @@
                                         <MagnifyingGlassIcon
                                             class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-mun-gray-400" />
                                         <input v-model="searchQuery" type="text" placeholder="Search countries..."
-                                            class="pl-10 pr-4 py-2 text-sm border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-un-blue" />
+                                            class="pl-10 pr-4 py-2 text-sm border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue" />
                                     </div>
 
                                     <!-- Filter -->
                                     <select v-model="statusFilter"
-                                        class="text-sm border border-mun-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-un-blue focus:border-un-blue">
+                                        class="text-sm border border-mun-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
                                         <option value="">All Countries</option>
                                         <option value="present">Present Only</option>
                                         <option value="absent">Absent Only</option>
@@ -82,7 +82,7 @@
 
                                     <!-- Auto-detect (QR scanning placeholder) -->
                                     <button @click="startQRDetection" :disabled="isScanning"
-                                        class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-un-blue-700 bg-un-blue-100 hover:bg-un-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors disabled:opacity-50">
+                                        class="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md text-mun-blue-700 bg-mun-blue-100 hover:bg-mun-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors disabled:opacity-50">
                                         <QrCodeIcon class="w-4 h-4 mr-1" />
                                         {{ isScanning ? 'Scanning...' : 'QR Scan' }}
                                     </button>
@@ -196,12 +196,12 @@
                                 <!-- Actions -->
                                 <div class="flex items-center space-x-3">
                                     <button @click="$emit('update:modelValue', false)"
-                                        class="px-4 py-2 text-sm font-medium text-mun-gray-700 bg-white border border-mun-gray-300 rounded-md hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors">
+                                        class="px-4 py-2 text-sm font-medium text-mun-gray-700 bg-white border border-mun-gray-300 rounded-md hover:bg-mun-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors">
                                         Close
                                     </button>
 
                                     <button @click="saveAttendance" :disabled="isUpdating || !hasChanges"
-                                        class="px-4 py-2 text-sm font-medium text-white bg-un-blue border border-transparent rounded-md hover:bg-un-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors disabled:opacity-50">
+                                        class="px-4 py-2 text-sm font-medium text-white bg-mun-blue border border-transparent rounded-md hover:bg-mun-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors disabled:opacity-50">
                                         {{ isUpdating ? 'Saving...' : 'Save Changes' }}
                                     </button>
                                 </div>

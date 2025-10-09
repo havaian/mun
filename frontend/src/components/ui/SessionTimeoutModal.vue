@@ -179,7 +179,7 @@ const formatLastActivity = () => {
 const getProgressColorClass = () => {
     if (timeRemaining.value <= 30) return 'stroke-mun-red-500'
     if (timeRemaining.value <= 60) return 'stroke-mun-yellow-500'
-    return 'stroke-un-blue'
+    return 'stroke-mun-blue'
 }
 
 const getWarningMessage = () => {
@@ -367,7 +367,7 @@ defineExpose({
 /* Progress circle animation */
 .stroke-mun-red-500,
 .stroke-mun-yellow-500,
-.stroke-un-blue {
+.stroke-mun-blue {
     transition: stroke 0.3s ease;
 }
 
