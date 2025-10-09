@@ -4,7 +4,6 @@ import { useAuthStore } from '@/stores/auth'
 // Import layouts
 import AuthLayout from '@/layouts/AuthLayout.vue'
 
-
 // Import views
 import LoginView from '@/views/auth/LoginView.vue'
 import QRLoginView from '@/views/auth/QRLoginView.vue'
@@ -16,6 +15,8 @@ import AdminEvents from '@/views/admin/Events.vue'
 import AdminUsers from '@/views/admin/Users.vue'
 import PresidiumDashboard from '@/views/presidium/Dashboard.vue'
 import DelegateHome from '@/views/delegate/Home.vue'
+
+import NotFoundView from '@/views/NotFoundView.vue'
 
 // Router configuration
 const routes = [
