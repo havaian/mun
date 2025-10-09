@@ -101,7 +101,7 @@
                             <!-- Default actions -->
                             <template v-else-if="modal.showDefaultActions">
                                 <button @click="handleCancel(modal)" :disabled="modal.loading"
-                                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue transition-colors">
+                                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-un-blue transition-colors">
                                     {{ modal.cancelText || 'Cancel' }}
                                 </button>
                                 <button @click="handleConfirm(modal)" :disabled="modal.loading" :class="[
@@ -178,18 +178,18 @@ const getConfirmButtonClass = (type) => {
         error: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
         warning: 'bg-yellow-600 hover:bg-yellow-700 focus:ring-yellow-500',
         info: 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500',
-        question: 'bg-blue hover:bg-blue-dark focus:ring-blue'
+        question: 'bg-un-blue hover:bg-un-blue-dark focus:ring-un-blue'
     }
     return classMap[type] || classMap.question
 }
 
 const getDefaultActionClass = (variant) => {
     const classMap = {
-        primary: 'bg-blue text-white hover:bg-blue-dark focus:ring-blue',
+        primary: 'bg-un-blue text-white hover:bg-un-blue-dark focus:ring-un-blue',
         secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500',
         success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
         danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-        outline: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-blue'
+        outline: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-un-blue'
     }
     return classMap[variant] || classMap.outline
 }

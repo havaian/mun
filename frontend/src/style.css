@@ -1,275 +1,79 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
 
-/* Import Inter font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
 
-@layer base {
-    html {
-        font-family: 'Inter', system-ui, sans-serif;
-        scroll-behavior: smooth;
-    }
-
-    body {
-        @apply bg-gradient-mun text-mun-gray-900 antialiased;
-        line-height: 1.6;
-    }
-
-    /* Custom scrollbar */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-        @apply bg-mun-gray-100;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        @apply bg-mun-gray-300 rounded-full;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        @apply bg-mun-gray-400;
-    }
-
-    /* Focus styles */
-    *:focus {
-        outline: none;
-    }
-
-    *:focus-visible {
-        @apply ring-2 ring-un-blue ring-opacity-50 ring-offset-2;
-    }
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@layer components {
-
-    /* Glass card component */
-    .glass-card {
-        @apply bg-white/50 backdrop-blur-sm border border-white/20 shadow-glass;
-    }
-
-    /* Animated gradient background */
-    .gradient-bg {
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        background-size: 400% 400%;
-        animation: gradientShift 15s ease infinite;
-    }
-
-    @keyframes gradientShift {
-        0% {
-            background-position: 0% 50%;
-        }
-
-        50% {
-            background-position: 100% 50%;
-        }
-
-        100% {
-            background-position: 0% 50%;
-        }
-    }
-
-    /* UN Blue gradient button */
-    .btn-un-primary {
-        @apply bg-un-blue hover:bg-un-blue-600 text-white font-medium px-6 py-3 rounded-xl;
-        @apply transition-all duration-200 transform hover:shadow-mun-lg;
-        @apply focus:ring-2 focus:ring-un-blue focus:ring-opacity-50 focus:ring-offset-2;
-    }
-
-    .btn-un-primary:disabled {
-        @apply opacity-50 cursor-not-allowed transform-none;
-    }
-
-    /* Secondary button */
-    .btn-un-secondary {
-        @apply bg-white hover:bg-mun-gray-50 text-un-blue border border-un-blue/20;
-        @apply font-medium px-6 py-3 rounded-xl transition-all duration-200;
-        @apply hover:border-un-blue/40 hover:shadow-mun;
-        @apply focus:ring-2 focus:ring-un-blue focus:ring-opacity-50 focus:ring-offset-2;
-    }
-
-    /* Input field styles */
-    .input-field {
-        @apply w-full px-4 py-3 rounded-xl border border-mun-gray-200;
-        @apply bg-white/80 backdrop-blur-sm placeholder-mun-gray-400;
-        @apply transition-all duration-200 focus:border-un-blue focus:ring-1 focus:ring-un-blue;
-        @apply hover:border-mun-gray-300;
-    }
-
-    /* Card component */
-    .mun-card {
-        @apply bg-white/80 backdrop-blur-sm rounded-2xl shadow-mun border border-white/20;
-        @apply transition-all duration-300;
-    }
-
-    /* Status badges */
-    .badge-success {
-        @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
-        @apply bg-mun-green-50 text-mun-green-700 border border-mun-green-200;
-    }
-
-    .badge-warning {
-        @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
-        @apply bg-mun-yellow-50 text-mun-yellow-700 border border-mun-yellow-200;
-    }
-
-    .badge-error {
-        @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
-        @apply bg-mun-red-50 text-mun-red-700 border border-mun-red-200;
-    }
-
-    .badge-info {
-        @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
-        @apply bg-un-blue-50 text-un-blue-700 border border-un-blue-200;
-    }
-
-    /* Navigation styles */
-    .nav-link {
-        @apply flex items-center px-4 py-3 text-mun-gray-700 rounded-xl;
-        @apply transition-all duration-200 hover:bg-white/60 hover:text-un-blue;
-        @apply relative;
-    }
-
-    .nav-link.active {
-        @apply bg-un-blue text-white shadow-mun;
-    }
-
-    /* Loading states */
-    .loading-shimmer {
-        @apply animate-pulse bg-gradient-to-r from-mun-gray-200 via-mun-gray-100 to-mun-gray-200;
-        background-size: 200% 100%;
-        animation: shimmer 1.5s infinite;
-    }
-
-    @keyframes shimmer {
-        0% {
-            background-position: -200% 0;
-        }
-
-        100% {
-            background-position: 200% 0;
-        }
-    }
-
-    /* QR Scanner styles */
-    .qr-scanner {
-        @apply relative overflow-hidden rounded-2xl;
-    }
-
-    .qr-scanner::before {
-        content: '';
-        @apply absolute inset-0 border-2 border-un-blue rounded-2xl;
-        animation: qrScannerPulse 2s infinite;
-    }
-
-    @keyframes qrScannerPulse {
-
-        0%,
-        100% {
-            opacity: 1;
-        }
-
-        50% {
-            opacity: 0.3;
-        }
-    }
-
-    /* Country flag styles */
-    .country-flag {
-        @apply w-8 h-6 rounded-sm object-cover border border-mun-gray-200;
-        @apply shadow-sm transition-transform hover:scale-110;
-    }
-
-    /* Voting result display */
-    .voting-bar {
-        @apply h-2 rounded-full overflow-hidden bg-mun-gray-100;
-    }
-
-    .voting-bar-fill {
-        @apply h-full transition-all duration-500 ease-out;
-    }
-
-    .vote-for {
-        @apply bg-mun-green;
-    }
-
-    .vote-against {
-        @apply bg-mun-red;
-    }
-
-    .vote-abstain {
-        @apply bg-mun-yellow;
-    }
-
-    /* Document preview */
-    .document-preview {
-        @apply max-h-96 overflow-y-auto border border-mun-gray-200 rounded-xl p-4;
-        @apply bg-white/90 backdrop-blur-sm;
-    }
-
-    /* Committee type indicators */
-    .committee-ga {
-        @apply bg-blue-500;
-    }
-
-    .committee-sc {
-        @apply bg-red-500;
-    }
-
-    .committee-other {
-        @apply bg-mun-gray-500;
-    }
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
 }
 
-@layer utilities {
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
 
-    /* Text utilities */
-    .text-balance {
-        text-wrap: balance;
-    }
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
 
-    /* Scrollbar utilities */
-    .scrollbar-thin {
-        scrollbar-width: thin;
-    }
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
 
-    .scrollbar-none {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
+.card {
+  padding: 2em;
+}
 
-    .scrollbar-none::-webkit-scrollbar {
-        display: none;
-    }
+#app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
 
-    /* Animation utilities */
-    .animate-fade-in-up {
-        animation: fadeInUp 0.5s ease-out;
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    /* Print utilities */
-    @media print {
-        .print-hidden {
-            display: none !important;
-        }
-
-        .print-page-break {
-            page-break-before: always;
-        }
-    }
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
 }

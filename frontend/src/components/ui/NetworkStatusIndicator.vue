@@ -2,7 +2,7 @@
     <teleport to="body">
         <!-- Offline Banner -->
         <transition name="slide-down">
-            <div v-if="isOffline" class="fixed top-0 left-0 right-0 z-50 bg-red-600 text-white shadow-lg">
+            <div v-if="isOffline" class="fixed top-0 left-0 right-0 z-50 bg-mun-red-600 text-white shadow-lg">
                 <div class="max-w-7xl mx-auto px-4 py-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-3">
@@ -16,7 +16,7 @@
                                 <p class="font-medium text-sm">
                                     No Internet Connection
                                 </p>
-                                <p class="text-xs text-red-100">
+                                <p class="text-xs text-mun-red-100">
                                     Some features may not work properly. Trying to reconnect...
                                 </p>
                             </div>
@@ -24,13 +24,13 @@
 
                         <!-- Connection Attempts -->
                         <div class="flex items-center space-x-4">
-                            <div v-if="reconnectAttempts > 0" class="text-xs text-red-100">
+                            <div v-if="reconnectAttempts > 0" class="text-xs text-mun-red-100">
                                 Attempt {{ reconnectAttempts }}
                             </div>
 
                             <!-- Manual Retry Button -->
                             <button @click="checkConnection" :disabled="isChecking"
-                                class="text-xs font-medium text-white hover:text-red-100 focus:outline-none focus:underline disabled:opacity-50 transition-colors">
+                                class="text-xs font-medium text-white hover:text-mun-red-100 focus:outline-none focus:underline disabled:opacity-50 transition-colors">
                                 <ArrowPathIcon v-if="isChecking" class="w-4 h-4 animate-spin" />
                                 <span v-else>Retry</span>
                             </button>
@@ -39,7 +39,7 @@
 
                     <!-- Progress Bar for Auto-retry -->
                     <div v-if="showProgress" class="mt-2">
-                        <div class="w-full bg-red-700 rounded-full h-1">
+                        <div class="w-full bg-mun-red-700 rounded-full h-1">
                             <div class="bg-white h-1 rounded-full transition-all duration-1000 ease-linear"
                                 :style="{ width: `${progressPercentage}%` }"></div>
                         </div>
@@ -51,15 +51,15 @@
         <!-- Connection Restored Toast -->
         <transition name="slide-up">
             <div v-if="showReconnectedToast"
-                class="fixed bottom-4 right-4 z-50 bg-green-600 text-white rounded-lg shadow-lg p-4 max-w-sm">
+                class="fixed bottom-4 right-4 z-50 bg-mun-green-600 text-white rounded-lg shadow-lg p-4 max-w-sm">
                 <div class="flex items-center space-x-3">
                     <CheckCircleIcon class="w-6 h-6 text-white flex-shrink-0" />
                     <div>
                         <p class="font-medium text-sm">Connection Restored</p>
-                        <p class="text-xs text-green-100">You're back online!</p>
+                        <p class="text-xs text-mun-green-100">You're back online!</p>
                     </div>
                     <button @click="hideReconnectedToast"
-                        class="text-green-100 hover:text-white focus:outline-none transition-colors">
+                        class="text-mun-green-100 hover:text-white focus:outline-none transition-colors">
                         <XMarkIcon class="w-4 h-4" />
                     </button>
                 </div>
@@ -69,17 +69,17 @@
         <!-- Poor Connection Warning -->
         <transition name="slide-up">
             <div v-if="showSlowConnectionWarning"
-                class="fixed bottom-4 left-4 z-50 bg-yellow-600 text-white rounded-lg shadow-lg p-4 max-w-sm">
+                class="fixed bottom-4 left-4 z-50 bg-mun-yellow-600 text-white rounded-lg shadow-lg p-4 max-w-sm">
                 <div class="flex items-center space-x-3">
                     <ExclamationTriangleIcon class="w-6 h-6 text-white flex-shrink-0" />
                     <div>
                         <p class="font-medium text-sm">Slow Connection</p>
-                        <p class="text-xs text-yellow-100">
+                        <p class="text-xs text-mun-yellow-100">
                             Network is slow. Some features may be delayed.
                         </p>
                     </div>
                     <button @click="hideSlowConnectionWarning"
-                        class="text-yellow-100 hover:text-white focus:outline-none transition-colors">
+                        class="text-mun-yellow-100 hover:text-white focus:outline-none transition-colors">
                         <XMarkIcon class="w-4 h-4" />
                     </button>
                 </div>
@@ -123,7 +123,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
-import { useSocketStore } from '@/stores/websocket'
+import { useWebSocketStore } from '@/stores/websocket'
 import {
     WifiIcon,
     ArrowPathIcon,
@@ -133,7 +133,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const appStore = useAppStore()
-const wsStore = useSocketStore()
+const wsStore = useWebSocketStore()
 
 // State
 const isOnline = ref(navigator.onLine)
@@ -469,9 +469,9 @@ if (isDevelopment) {
 /* High contrast mode support */
 @media (prefers-contrast: high) {
 
-    .bg-red-600,
-    .bg-green-600,
-    .bg-yellow-600 {
+    .bg-mun-red-600,
+    .bg-mun-green-600,
+    .bg-mun-yellow-600 {
         border: 2px solid white;
     }
 }

@@ -1,29 +1,43 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-
-// Import layouts
-import AuthLayout from '@/layouts/AuthLayout.vue'
+import { useAppStore } from '@/stores/app'
 
 // Import views
-import LoginView from '@/views/auth/LoginView.vue'
-import QRLoginView from '@/views/auth/QRLoginView.vue'
-import EmailBindingView from '@/views/auth/EmailBindingView.vue'
-import LanguageSelectionView from '@/views/auth/LanguageSelectionView.vue'
+const LoginView = () => import('@/views/auth/LoginView.vue')
+const QRLoginView = () => import('@/views/auth/QRLoginView.vue')
+const EmailBindingView = () => import('@/views/auth/EmailBindingView.vue')
+const LanguageSelectionView = () => import('@/views/auth/LanguageSelectionView.vue')
 
-import AdminDashboard from '@/views/admin/Dashboard.vue'
-import AdminEvents from '@/views/admin/Events.vue'
-import AdminUsers from '@/views/admin/Users.vue'
-import PresidiumDashboard from '@/views/presidium/Dashboard.vue'
-import DelegateHome from '@/views/delegate/Home.vue'
+// Admin views
+const AdminDashboard = () => import('@/views/admin/DashboardView.vue')
+const AdminEvents = () => import('@/views/admin/EventsView.vue')
+const AdminCommittees = () => import('@/views/admin/CommitteesView.vue')
+const AdminUsers = () => import('@/views/admin/UsersView.vue')
+const AdminReports = () => import('@/views/admin/ReportsView.vue')
 
-import NotFoundView from '@/views/NotFoundView.vue'
+// Presidium views
+const PresidiumDashboard = () => import('@/views/presidium/DashboardView.vue')
+const PresidiumSessions = () => import('@/views/presidium/SessionsView.vue')
+const PresidiumDocuments = () => import('@/views/presidium/DocumentsView.vue')
+const PresidiumVoting = () => import('@/views/presidium/VotingView.vue')
+const PresidiumAttendance = () => import('@/views/presidium/AttendanceView.vue')
 
-// Router configuration
+// Delegate views
+const DelegateDashboard = () => import('@/views/delegate/DashboardView.vue')
+const DelegateDocuments = () => import('@/views/delegate/DocumentsView.vue')
+const DelegateCoalitions = () => import('@/views/delegate/CoalitionsView.vue')
+const DelegateMessages = () => import('@/views/delegate/MessagesView.vue')
+const DelegateVoting = () => import('@/views/delegate/VotingView.vue')
+
+// Shared views
+const ProfileView = () => import('@/views/shared/ProfileView.vue')
+const NotFoundView = () => import('@/views/NotFoundView.vue')
+
 const routes = [
   // Authentication routes
   {
     path: '/auth',
-    component: AuthLayout,
+    component: () => import('@/layouts/AuthLayout.vue'),
     children: [
       {
         path: 'login',
@@ -68,6 +82,134 @@ const routes = [
     ]
   },
 
+  // Admin routes
+  {
+    path: '/admin',
+    component: () => import('@/layouts/AdminLayout.vue'),
+    meta: { requiresAuth: true, roles: ['admin'] },
+    children: [
+      {
+        path: '',
+        name: 'AdminDashboard',
+        component: AdminDashboard,
+        meta: { title: 'Admin Dashboard' }
+      },
+      {
+        path: 'events',
+        name: 'AdminEvents',
+        component: AdminEvents,
+        meta: { title: 'Event Management' }
+      },
+      {
+        path: 'committees',
+        name: 'AdminCommittees',
+        component: AdminCommittees,
+        meta: { title: 'Committee Management' }
+      },
+      {
+        path: 'users',
+        name: 'AdminUsers',
+        component: AdminUsers,
+        meta: { title: 'User Management' }
+      },
+      {
+        path: 'reports',
+        name: 'AdminReports',
+        component: AdminReports,
+        meta: { title: 'Reports & Analytics' }
+      }
+    ]
+  },
+
+  // Presidium routes
+  {
+    path: '/presidium',
+    component: () => import('@/layouts/PresidiumLayout.vue'),
+    meta: { requiresAuth: true, roles: ['presidium'] },
+    children: [
+      {
+        path: '',
+        name: 'PresidiumDashboard',
+        component: PresidiumDashboard,
+        meta: { title: 'Presidium Dashboard' }
+      },
+      {
+        path: 'sessions',
+        name: 'PresidiumSessions',
+        component: PresidiumSessions,
+        meta: { title: 'Session Management' }
+      },
+      {
+        path: 'documents',
+        name: 'PresidiumDocuments',
+        component: PresidiumDocuments,
+        meta: { title: 'Document Review' }
+      },
+      {
+        path: 'voting',
+        name: 'PresidiumVoting',
+        component: PresidiumVoting,
+        meta: { title: 'Voting Management' }
+      },
+      {
+        path: 'attendance',
+        name: 'PresidiumAttendance',
+        component: PresidiumAttendance,
+        meta: { title: 'Attendance Tracking' }
+      }
+    ]
+  },
+
+  // Delegate routes
+  {
+    path: '/delegate',
+    component: () => import('@/layouts/DelegateLayout.vue'),
+    meta: { requiresAuth: true, roles: ['delegate'] },
+    children: [
+      {
+        path: '',
+        name: 'DelegateDashboard',
+        component: DelegateDashboard,
+        meta: { title: 'Delegate Dashboard' }
+      },
+      {
+        path: 'documents',
+        name: 'DelegateDocuments',
+        component: DelegateDocuments,
+        meta: { title: 'My Documents' }
+      },
+      {
+        path: 'coalitions',
+        name: 'DelegateCoalitions',
+        component: DelegateCoalitions,
+        meta: { title: 'Coalitions' }
+      },
+      {
+        path: 'messages',
+        name: 'DelegateMessages',
+        component: DelegateMessages,
+        meta: { title: 'Messages' }
+      },
+      {
+        path: 'voting',
+        name: 'DelegateVoting',
+        component: DelegateVoting,
+        meta: { title: 'Voting' }
+      }
+    ]
+  },
+
+  // Shared routes
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: ProfileView,
+    meta: {
+      title: 'Profile',
+      requiresAuth: true
+    }
+  },
+
   // Root redirect
   {
     path: '/',
@@ -79,45 +221,17 @@ const routes = [
       }
 
       // Redirect based on user role
-      switch (authStore.user?.role) { }
+      switch (authStore.user?.role) {
+        case 'admin':
+          return { name: 'AdminDashboard' }
+        case 'presidium':
+          return { name: 'PresidiumDashboard' }
+        case 'delegate':
+          return { name: 'DelegateDashboard' }
+        default:
+          return { name: 'Login' }
+      }
     }
-  },
-
-  {
-    path: '/admin',
-    name: 'admin',
-    redirect: '/admin/dashboard',
-    meta: { requiresAuth: true, role: 'admin' }
-  },
-  {
-    path: '/admin/dashboard',
-    name: 'admin-dashboard',
-    component: AdminDashboard,
-    meta: { requiresAuth: true, role: 'admin' }
-  },
-  {
-    path: '/admin/events',
-    name: 'admin-events',
-    component: AdminEvents,
-    meta: { requiresAuth: true, role: 'admin' }
-  },
-  {
-    path: '/admin/users',
-    name: 'admin-users',
-    component: AdminUsers,
-    meta: { requiresAuth: true, role: 'admin' }
-  },
-  {
-    path: '/presidium',
-    name: 'presidium-dashboard',
-    component: PresidiumDashboard,
-    meta: { requiresAuth: true, role: 'presidium' }
-  },
-  {
-    path: '/delegate',
-    name: 'delegate-home',
-    component: DelegateHome,
-    meta: { requiresAuth: true, role: 'delegate' }
   },
 
   // 404 route
@@ -126,7 +240,7 @@ const routes = [
     name: 'NotFound',
     component: NotFoundView,
     meta: { title: 'Page Not Found' }
-  },
+  }
 ]
 
 const router = createRouter({
@@ -144,30 +258,45 @@ const router = createRouter({
 // Navigation guards
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+  const appStore = useAppStore()
 
-  // Check if user is authenticated
-  if (!authStore.isAuthenticated && !authStore.isLoading) {
-    await authStore.checkAuth()
-  }
+  // Show loading for slow transitions
+  appStore.setLoading(true)
 
-  // Handle guest-only routes
-  if (to.meta.requiresGuest && authStore.isAuthenticated) {
-    return next(authStore.getDefaultRoute())
-  }
+  try {
+    // Check if route requires authentication
+    if (to.meta.requiresAuth) {
+      if (!authStore.isAuthenticated) {
+        return next({ name: 'Login', query: { redirect: to.fullPath } })
+      }
 
-  // Handle protected routes
-  if (to.meta.requiresAuth) {
-    if (!authStore.isAuthenticated) {
-      return next('/')
+      // Check role permissions
+      if (to.meta.roles && !to.meta.roles.includes(authStore.user?.role)) {
+        return next({ name: 'NotFound' })
+      }
+
+      // Check for new user language selection
+      if (to.meta.newUserOnly && authStore.user?.hasSelectedLanguage) {
+        return next({ name: authStore.getDashboardRoute() })
+      }
     }
 
-    // Check role permissions
-    if (to.meta.role && !authStore.hasRole(to.meta.role)) {
-      return next(authStore.getDefaultRoute())
+    // Hide auth pages from authenticated users
+    if (to.meta.hideForAuthenticated && authStore.isAuthenticated) {
+      return next({ name: authStore.getDashboardRoute() })
     }
-  }
 
-  next()
+    next()
+
+  } catch (error) {
+    console.error('Navigation error:', error)
+    next({ name: 'Login' })
+  }
+})
+
+router.afterEach(() => {
+  const appStore = useAppStore()
+  appStore.setLoading(false)
 })
 
 export default router

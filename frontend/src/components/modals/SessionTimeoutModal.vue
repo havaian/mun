@@ -1,485 +1,422 @@
 <template>
-  <!-- Non-closable modal overlay -->
-  <div
-    v-if="isVisible"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-  >
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
-      <!-- Header -->
-      <div class="p-6 border-b border-gray-200">
-        <div class="flex items-center space-x-3">
-          <div class="p-2 bg-amber-100 rounded-full">
-            <ClockIcon class="w-6 h-6 text-amber-600" />
-          </div>
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900">Session Timeout Warning</h3>
-            <p class="text-sm text-gray-500">Your session is about to expire</p>
-          </div>
-        </div>
-      </div>
+    <Teleport to="body">
+        <transition name="modal" appear>
+            <div v-if="showWarning"
+                class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300"
+                    :class="{ 'animate-pulse': timeRemaining <= 30 }">
 
-      <!-- Content -->
-      <div class="p-6">
-        <!-- Countdown Display -->
-        <div class="text-center mb-6">
-          <div class="relative inline-flex items-center justify-center">
-            <!-- Countdown Circle -->
-            <svg class="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
-              <!-- Background circle -->
-              <circle
-                cx="50"
-                cy="50"
-                r="42"
-                stroke="currentColor"
-                stroke-width="8"
-                fill="none"
-                class="text-gray-200"
-              />
-              <!-- Progress circle -->
-              <circle
-                cx="50"
-                cy="50"
-                r="42"
-                stroke="currentColor"
-                stroke-width="8"
-                fill="none"
-                stroke-linecap="round"
-                :class="[
-                  timeRemaining > 30 ? 'text-blue-500' :
-                  timeRemaining > 10 ? 'text-amber-500' : 'text-red-500'
-                ]"
-                :stroke-dasharray="circumference"
-                :stroke-dashoffset="strokeDashoffset"
-                class="transition-all duration-1000 ease-linear"
-              />
-            </svg>
-            
-            <!-- Countdown number -->
-            <div class="absolute inset-0 flex items-center justify-center">
-              <span
-                :class="[
-                  'text-2xl font-bold',
-                  timeRemaining > 30 ? 'text-blue-600' :
-                  timeRemaining > 10 ? 'text-amber-600' : 'text-red-600'
-                ]"
-              >
-                {{ timeRemaining }}
-              </span>
+                    <!-- Header -->
+                    <div class="flex items-center space-x-3 p-6 border-b border-mun-gray-100">
+                        <div class="w-12 h-12 bg-mun-yellow-100 rounded-full flex items-center justify-center">
+                            <ClockIcon class="w-6 h-6 text-mun-yellow-600" />
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-mun-gray-900">
+                                Session Timeout Warning
+                            </h3>
+                            <p class="text-sm text-mun-gray-600">
+                                Your session will expire soon
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="p-6">
+                        <!-- Countdown Display -->
+                        <div class="text-center mb-6">
+                            <div class="relative w-24 h-24 mx-auto mb-4">
+                                <!-- Circular Progress -->
+                                <svg class="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
+                                    <!-- Background circle -->
+                                    <path class="stroke-mun-gray-200" stroke-width="3" fill="none"
+                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <!-- Progress circle -->
+                                    <path :class="getProgressColorClass()" stroke-width="3" fill="none"
+                                        stroke-linecap="round" :stroke-dasharray="circumference"
+                                        :stroke-dashoffset="strokeDashoffset"
+                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                        style="transition: stroke-dashoffset 1s ease-in-out" />
+                                </svg>
+
+                                <!-- Time Display -->
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="text-center">
+                                        <div :class="[
+                                            'text-2xl font-bold',
+                                            timeRemaining <= 30 ? 'text-mun-red-600' :
+                                                timeRemaining <= 60 ? 'text-mun-yellow-600' : 'text-mun-gray-900'
+                                        ]">
+                                            {{ formatTime(timeRemaining) }}
+                                        </div>
+                                        <div class="text-xs text-mun-gray-500 mt-1">
+                                            remaining
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <p class="text-mun-gray-800 font-medium">
+                                    Your session will expire due to inactivity
+                                </p>
+                                <p class="text-sm text-mun-gray-600">
+                                    Click "Stay Logged In" to continue your session, or you'll be automatically logged
+                                    out.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Warning Message -->
+                        <div v-if="timeRemaining <= 30"
+                            class="bg-mun-red-50 border border-mun-red-200 rounded-xl p-4 mb-6">
+                            <div class="flex items-center space-x-2">
+                                <ExclamationTriangleIcon class="w-5 h-5 text-mun-red-600 flex-shrink-0" />
+                                <p class="text-sm text-mun-red-800 font-medium">
+                                    Critical: Session expires in {{ timeRemaining }} seconds!
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Activity Info -->
+                        <div class="bg-mun-gray-50 rounded-xl p-4 mb-6">
+                            <div class="flex items-start space-x-3">
+                                <InformationCircleIcon class="w-5 h-5 text-mun-gray-600 flex-shrink-0 mt-0.5" />
+                                <div class="text-sm text-mun-gray-700">
+                                    <p class="font-medium mb-1">Session Information</p>
+                                    <p>Last activity: {{ formatLastActivity() }}</p>
+                                    <p>Session started: {{ formatSessionStart() }}</p>
+                                    <p class="mt-2 text-xs text-mun-gray-600">
+                                        For security, sessions expire after {{ sessionTimeoutMinutes }} minutes of
+                                        inactivity.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex space-x-3 p-6 bg-mun-gray-50 rounded-b-2xl">
+                        <AppButton variant="primary" size="lg" @click="extendSession" :loading="isExtending"
+                            class="flex-1">
+                            <ClockIcon class="w-5 h-5 mr-2" />
+                            Stay Logged In
+                        </AppButton>
+
+                        <AppButton variant="outline" size="lg" @click="logoutNow" :disabled="isExtending"
+                            class="flex-1">
+                            <ArrowRightOnRectangleIcon class="w-5 h-5 mr-2" />
+                            Logout Now
+                        </AppButton>
+                    </div>
+                </div>
             </div>
-          </div>
-          
-          <p class="text-gray-600 mt-4">
-            Your session will expire in <strong>{{ timeRemaining }}</strong> second{{ timeRemaining !== 1 ? 's' : '' }}
-          </p>
-        </div>
-
-        <!-- Session Info -->
-        <div v-if="sessionInfo" class="bg-gray-50 rounded-lg p-4 mb-6">
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span class="text-gray-600">Current Session:</span>
-              <p class="font-medium text-gray-900">{{ sessionInfo.duration }}</p>
-            </div>
-            <div>
-              <span class="text-gray-600">Last Activity:</span>
-              <p class="font-medium text-gray-900">{{ sessionInfo.lastActivity }}</p>
-            </div>
-            <div v-if="sessionInfo.role">
-              <span class="text-gray-600">Role:</span>
-              <p class="font-medium text-gray-900">{{ sessionInfo.role }}</p>
-            </div>
-            <div v-if="sessionInfo.committee">
-              <span class="text-gray-600">Committee:</span>
-              <p class="font-medium text-gray-900">{{ sessionInfo.committee }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Warning Message -->
-        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-          <div class="flex items-start space-x-3">
-            <ExclamationTriangleIcon class="w-5 h-5 text-amber-600 mt-0.5" />
-            <div>
-              <p class="text-sm text-amber-800">
-                <strong>Session about to expire!</strong>
-              </p>
-              <p class="text-sm text-amber-700 mt-1">
-                To continue your work, please extend your session. All unsaved changes will be lost if your session expires.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Auto-logout warning -->
-        <div v-if="timeRemaining <= 10" class="bg-red-50 border border-red-200 rounded-lg p-3 mb-6">
-          <div class="flex items-center space-x-2">
-            <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-            <p class="text-sm text-red-800 font-medium">
-              Automatic logout in {{ timeRemaining }} second{{ timeRemaining !== 1 ? 's' : '' }}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="px-6 py-4 bg-gray-50 rounded-b-2xl border-t border-gray-200">
-        <div class="flex items-center justify-between space-x-3">
-          <!-- Logout Button -->
-          <button
-            @click="handleLogout"
-            :disabled="isExtending"
-            class="text-gray-500 hover:text-gray-700 text-sm font-medium px-4 py-2 transition-colors disabled:opacity-50"
-          >
-            Logout Now
-          </button>
-
-          <!-- Extend Session Button -->
-          <button
-            @click="handleExtendSession"
-            :disabled="isExtending || timeRemaining === 0"
-            :class="[
-              'px-6 py-2 text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed',
-              timeRemaining > 10
-                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-red-600 hover:bg-red-700 text-white animate-pulse'
-            ]"
-          >
-            <span v-if="isExtending" class="flex items-center space-x-2">
-              <LoadingSpinner class="w-4 h-4" />
-              <span>Extending...</span>
-            </span>
-            <span v-else>
-              {{ timeRemaining > 10 ? 'Extend Session' : 'Extend Now!' }}
-            </span>
-          </button>
-        </div>
-
-        <!-- Session Extension Info -->
-        <div v-if="!isExtending" class="mt-3 text-center">
-          <p class="text-xs text-gray-500">
-            Extending will give you an additional {{ extensionDuration }} minutes
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
+        </transition>
+    </Teleport>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
-import { apiMethods } from '@/utils/api'
-import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
-
-// Icons
 import {
-  ClockIcon,
-  ExclamationTriangleIcon
+    ClockIcon,
+    ExclamationTriangleIcon,
+    InformationCircleIcon,
+    ArrowRightOnRectangleIcon
 } from '@heroicons/vue/24/outline'
 
-// Props
-const props = defineProps({
-  warningTime: {
-    type: Number,
-    default: 300 // 5 minutes in seconds
-  },
-  extensionDuration: {
-    type: Number,
-    default: 30 // 30 minutes
-  }
-})
-
-// Emits
-const emit = defineEmits(['sessionExtended', 'sessionExpired'])
-
-// Composables
 const authStore = useAuthStore()
 const toast = useToast()
 
 // State
-const isVisible = ref(false)
-const timeRemaining = ref(0)
+const showWarning = ref(false)
+const timeRemaining = ref(300) // 5 minutes in seconds
 const isExtending = ref(false)
-const intervalId = ref(null)
-const timeoutId = ref(null)
-const warningShown = ref(false)
+const countdownInterval = ref(null)
 
-// Session info
-const sessionInfo = ref(null)
+// Configuration
+const sessionTimeoutMinutes = ref(30)
+const warningTimeMinutes = ref(5)
 
-// Circle animation calculations
-const circumference = 2 * Math.PI * 42 // radius = 42
+// Computed
+const circumference = computed(() => 2 * Math.PI * 15.9155)
+
 const strokeDashoffset = computed(() => {
-  const progress = timeRemaining.value / props.warningTime
-  return circumference * (1 - progress)
+    const progress = timeRemaining.value / (warningTimeMinutes.value * 60)
+    return circumference.value * (1 - progress)
 })
 
 // Methods
-const checkSessionTimeout = () => {
-  const token = localStorage.getItem('mun_token')
-  if (!token || !authStore.isAuthenticated) {
-    hideModal()
-    return
-  }
+const startSessionMonitoring = () => {
+    // Check session status every minute
+    const checkInterval = setInterval(() => {
+        if (!authStore.isAuthenticated) {
+            clearInterval(checkInterval)
+            return
+        }
 
-  try {
-    // Decode JWT to get expiration time
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    const expirationTime = payload.exp * 1000 // Convert to milliseconds
-    const currentTime = Date.now()
-    const timeUntilExpiration = Math.max(0, Math.floor((expirationTime - currentTime) / 1000))
+        const timeoutDuration = sessionTimeoutMinutes.value * 60 * 1000 // 30 minutes
+        const warningDuration = warningTimeMinutes.value * 60 * 1000 // 5 minutes
+        const now = Date.now()
+        const timeSinceActivity = now - authStore.lastActivity
 
-    // Show warning if within warning time and not already shown
-    if (timeUntilExpiration <= props.warningTime && timeUntilExpiration > 0 && !warningShown.value) {
-      showModal(timeUntilExpiration)
-    } else if (timeUntilExpiration === 0) {
-      // Session expired
-      handleSessionExpired()
-    }
-  } catch (error) {
-    console.error('Error checking session timeout:', error)
-    // If we can't decode the token, assume it's invalid
-    handleSessionExpired()
-  }
+        // Show warning if approaching timeout
+        if (timeSinceActivity >= timeoutDuration - warningDuration && !showWarning.value) {
+            showSessionWarning()
+        }
+
+        // Auto logout if session expired
+        if (timeSinceActivity >= timeoutDuration) {
+            handleSessionExpiry()
+        }
+    }, 60000) // Check every minute
+
+    // Return cleanup function
+    return () => clearInterval(checkInterval)
 }
 
-const showModal = (remainingTime) => {
-  timeRemaining.value = remainingTime
-  isVisible.value = true
-  warningShown.value = true
-  
-  // Load session info
-  loadSessionInfo()
-  
-  // Start countdown
-  startCountdown()
-  
-  // Play warning sound (if supported)
-  playWarningSound()
-}
+const showSessionWarning = () => {
+    showWarning.value = true
+    authStore.sessionWarningShown = true
 
-const hideModal = () => {
-  isVisible.value = false
-  warningShown.value = false
-  stopCountdown()
+    // Calculate initial time remaining
+    const timeoutDuration = sessionTimeoutMinutes.value * 60 * 1000
+    const now = Date.now()
+    const timeSinceActivity = now - authStore.lastActivity
+    const timeUntilExpiry = timeoutDuration - timeSinceActivity
+
+    timeRemaining.value = Math.max(0, Math.floor(timeUntilExpiry / 1000))
+
+    // Start countdown
+    startCountdown()
+
+    // Play warning sound (optional)
+    playWarningSound()
 }
 
 const startCountdown = () => {
-  stopCountdown() // Clear any existing interval
-  
-  intervalId.value = setInterval(() => {
-    timeRemaining.value = Math.max(0, timeRemaining.value - 1)
-    
-    if (timeRemaining.value === 0) {
-      handleSessionExpired()
+    if (countdownInterval.value) {
+        clearInterval(countdownInterval.value)
     }
-  }, 1000)
+
+    countdownInterval.value = setInterval(() => {
+        timeRemaining.value--
+
+        if (timeRemaining.value <= 0) {
+            handleSessionExpiry()
+        }
+    }, 1000)
 }
 
 const stopCountdown = () => {
-  if (intervalId.value) {
-    clearInterval(intervalId.value)
-    intervalId.value = null
-  }
-  if (timeoutId.value) {
-    clearTimeout(timeoutId.value)
-    timeoutId.value = null
-  }
+    if (countdownInterval.value) {
+        clearInterval(countdownInterval.value)
+        countdownInterval.value = null
+    }
 }
 
-const handleExtendSession = async () => {
-  isExtending.value = true
-  
-  try {
-    // Call API to refresh/extend session
-    const response = await apiMethods.auth.validateSession()
-    
-    if (response.data.token) {
-      // Update the token in storage
-      localStorage.setItem('mun_token', response.data.token)
-      
-      // Update auth store
-      authStore.updateToken(response.data.token)
-      
-      toast.success(`Session extended by ${props.extensionDuration} minutes`)
-      
-      emit('sessionExtended', props.extensionDuration)
-      hideModal()
+const extendSession = async () => {
+    try {
+        isExtending.value = true
+
+        // Update last activity time
+        authStore.updateActivity()
+
+        // Validate session with backend
+        const isValid = await authStore.validateSession()
+
+        if (isValid) {
+            hideWarning()
+            toast.success('Session extended successfully')
+        } else {
+            throw new Error('Session validation failed')
+        }
+
+    } catch (error) {
+        console.error('Session extension error:', error)
+        toast.error('Failed to extend session')
+        handleSessionExpiry()
+    } finally {
+        isExtending.value = false
+    }
+}
+
+const logoutNow = () => {
+    hideWarning()
+    authStore.logout(true)
+}
+
+const handleSessionExpiry = () => {
+    hideWarning()
+    authStore.logout(false)
+    toast.error('Session expired due to inactivity')
+}
+
+const hideWarning = () => {
+    showWarning.value = false
+    authStore.sessionWarningShown = false
+    stopCountdown()
+}
+
+const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+const formatLastActivity = () => {
+    const now = Date.now()
+    const diff = now - authStore.lastActivity
+    const minutes = Math.floor(diff / 60000)
+
+    if (minutes < 1) {
+        return 'Less than a minute ago'
+    } else if (minutes === 1) {
+        return '1 minute ago'
     } else {
-      throw new Error('Failed to extend session')
+        return `${minutes} minutes ago`
     }
-  } catch (error) {
-    console.error('Session extension error:', error)
-    toast.error('Failed to extend session. Please log in again.')
-    handleLogout()
-  } finally {
-    isExtending.value = false
-  }
 }
 
-const handleLogout = () => {
-  authStore.logout()
-  hideModal()
-  toast.info('You have been logged out')
+const formatSessionStart = () => {
+    // This would need to be tracked when user logs in
+    // For now, we'll estimate based on token creation time
+    const sessionStart = new Date(authStore.lastActivity - (20 * 60 * 1000)) // Assume 20 mins ago
+    return sessionStart.toLocaleTimeString()
 }
 
-const handleSessionExpired = () => {
-  emit('sessionExpired')
-  authStore.logout()
-  hideModal()
-  toast.error('Your session has expired. Please log in again.')
-}
-
-const loadSessionInfo = () => {
-  const user = authStore.user
-  const sessionStart = localStorage.getItem('mun_session_start')
-  const lastActivity = localStorage.getItem('mun_last_activity')
-  
-  if (user) {
-    sessionInfo.value = {
-      duration: sessionStart ? formatSessionDuration(new Date(sessionStart)) : 'Unknown',
-      lastActivity: lastActivity ? formatRelativeTime(new Date(lastActivity)) : 'Unknown',
-      role: user.role ? formatRole(user.role) : undefined,
-      committee: user.committee || undefined
+const getProgressColorClass = () => {
+    if (timeRemaining.value <= 30) {
+        return 'stroke-mun-red-500'
+    } else if (timeRemaining.value <= 60) {
+        return 'stroke-mun-yellow-500'
+    } else {
+        return 'stroke-un-blue'
     }
-  }
-}
-
-const formatSessionDuration = (startTime) => {
-  const duration = Date.now() - startTime.getTime()
-  const hours = Math.floor(duration / (1000 * 60 * 60))
-  const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60))
-  
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`
-  }
-  return `${minutes}m`
-}
-
-const formatRelativeTime = (time) => {
-  const diff = Date.now() - time.getTime()
-  const minutes = Math.floor(diff / (1000 * 60))
-  
-  if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes}m ago`
-  
-  const hours = Math.floor(minutes / 60)
-  return `${hours}h ago`
-}
-
-const formatRole = (role) => {
-  const roleMap = {
-    'delegate': 'Delegate',
-    'observer': 'Observer',
-    'chair': 'Chairperson',
-    'co_chair': 'Co-Chair',
-    'rapporteur': 'Rapporteur',
-    'admin': 'Administrator'
-  }
-  return roleMap[role] || role.charAt(0).toUpperCase() + role.slice(1)
 }
 
 const playWarningSound = () => {
-  try {
-    // Create a simple beep sound
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)()
-    const oscillator = audioContext.createOscillator()
-    const gainNode = audioContext.createGain()
-    
-    oscillator.connect(gainNode)
-    gainNode.connect(audioContext.destination)
-    
-    oscillator.frequency.value = 800
-    oscillator.type = 'sine'
-    
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime)
-    gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01)
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
-    
-    oscillator.start(audioContext.currentTime)
-    oscillator.stop(audioContext.currentTime + 0.3)
-  } catch (error) {
-    // Sound not supported or permission denied
-    console.warn('Warning sound not available:', error)
-  }
+    // Create a subtle warning sound
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+        const oscillator = audioContext.createOscillator()
+        const gainNode = audioContext.createGain()
+
+        oscillator.connect(gainNode)
+        gainNode.connect(audioContext.destination)
+
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime)
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1)
+
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2)
+
+        oscillator.start(audioContext.currentTime)
+        oscillator.stop(audioContext.currentTime + 0.2)
+    } catch (error) {
+        console.warn('Could not play warning sound:', error)
+    }
 }
 
-// Watch for authentication changes
-watch(() => authStore.isAuthenticated, (isAuthenticated) => {
-  if (!isAuthenticated) {
-    hideModal()
-  }
-})
+// Handle user activity to reset warning
+const handleUserActivity = () => {
+    if (showWarning.value) {
+        // User is active, extend the warning time
+        const timeoutDuration = sessionTimeoutMinutes.value * 60 * 1000
+        const warningDuration = warningTimeMinutes.value * 60 * 1000
+        const now = Date.now()
 
-// Expose methods for parent component
-defineExpose({
-  showModal,
-  hideModal,
-  checkSessionTimeout
-})
+        authStore.updateActivity()
 
-// Lifecycle
+        // Recalculate time remaining
+        const timeSinceActivity = now - authStore.lastActivity
+        const timeUntilExpiry = timeoutDuration - timeSinceActivity
+        timeRemaining.value = Math.max(0, Math.floor(timeUntilExpiry / 1000))
+
+        // If user activity reset the timeout, hide warning
+        if (timeUntilExpiry > warningDuration) {
+            hideWarning()
+        }
+    }
+}
+
+// Lifecycle hooks
 onMounted(() => {
-  // Check session timeout periodically
-  timeoutId.value = setInterval(checkSessionTimeout, 30000) // Check every 30 seconds
-  
-  // Initial check
-  checkSessionTimeout()
-  
-  // Update last activity timestamp
-  const updateLastActivity = () => {
-    localStorage.setItem('mun_last_activity', new Date().toISOString())
-  }
-  
-  // Listen for user activity
-  const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
-  activityEvents.forEach(event => {
-    document.addEventListener(event, updateLastActivity, { passive: true })
-  })
-  
-  // Store session start time if not already stored
-  if (!localStorage.getItem('mun_session_start') && authStore.isAuthenticated) {
-    localStorage.setItem('mun_session_start', new Date().toISOString())
-  }
+    // Start session monitoring
+    const cleanup = startSessionMonitoring()
+
+    // Track user activity
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
+
+    activityEvents.forEach(event => {
+        document.addEventListener(event, handleUserActivity, true)
+    })
+
+    // Cleanup on unmount
+    onUnmounted(() => {
+        cleanup()
+        stopCountdown()
+
+        activityEvents.forEach(event => {
+            document.removeEventListener(event, handleUserActivity, true)
+        })
+    })
 })
 
-onUnmounted(() => {
-  stopCountdown()
-  
-  if (timeoutId.value) {
-    clearInterval(timeoutId.value)
-  }
-  
-  // Clean up activity listeners
-  const updateLastActivity = () => {
-    localStorage.setItem('mun_last_activity', new Date().toISOString())
-  }
-  
-  const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
-  activityEvents.forEach(event => {
-    document.removeEventListener(event, updateLastActivity)
-  })
+// Watch for auth state changes
+watch(() => authStore.isAuthenticated, (newVal) => {
+    if (!newVal) {
+        hideWarning()
+    }
+})
+
+// Expose for external triggering if needed
+defineExpose({
+    showSessionWarning,
+    hideWarning,
+    extendSession
 })
 </script>
 
 <style scoped>
-/* Pulse animation for urgent states */
-.animate-pulse {
-  animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+/* Modal animation */
+.modal-enter-active,
+.modal-leave-active {
+    transition: all 0.3s ease;
 }
 
+.modal-enter-from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+}
+
+.modal-leave-to {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+}
+
+/* Pulse animation for critical state */
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+
+    0%,
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
 }
 
-/* Smooth transitions for circle progress */
-circle {
-  transition: stroke-dashoffset 1s ease-in-out;
+.animate-pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Progress circle styling */
+.stroke-transition {
+    transition: stroke-dashoffset 1s ease-in-out;
 }
 </style>
