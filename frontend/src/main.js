@@ -1,17 +1,41 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import App from './App.vue'
-import './style.css'
 import router from './router'
-import toastPlugin from '@/plugins/toast'
+import App from './App.vue'
 
-// Create Vue app and pinia instance
+// Import CSS
+import './assets/css/main.css'
+
+// Import global components and plugins
+import Toast from './plugins/toast'
+import Modal from './plugins/modal'
+import LoadingSpinner from './components/ui/LoadingSpinner.vue'
+import AppButton from './components/ui/AppButton.vue'
+import AppCard from './components/ui/AppCard.vue'
+
+// Initialize Vue app
 const app = createApp(App)
-const pinia = createPinia()
 
-// Register plugins in correct order
-app.use(pinia) 
+// Install plugins
+app.use(createPinia())
 app.use(router)
-app.use(toastPlugin)
+app.use(Toast)
+app.use(Modal)
 
+// Register global components
+app.component('LoadingSpinner', LoadingSpinner)
+app.component('AppButton', AppButton)
+app.component('AppCard', AppCard)
+
+// Global error handler
+app.config.errorHandler = (err, vm, info) => {
+    console.error('Global error:', err, info)
+
+    // In production, send to error reporting service
+    if (import.meta.env.PROD) {
+        // TODO: Send to error reporting service
+    }
+}
+
+// Mount app
 app.mount('#app')

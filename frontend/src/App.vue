@@ -6,15 +6,15 @@
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
         <div class="bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full mx-4">
           <LoadingSpinner size="lg" />
-          <p class="mt-4 text-gray-600 text-center font-medium">{{ loadingMessage }}</p>
+          <p class="mt-4 text-mun-gray-600 text-center font-medium">{{ loadingMessage }}</p>
 
           <!-- Loading progress indicator -->
           <div v-if="loadingProgress > 0" class="mt-4">
-            <div class="bg-gray-200 rounded-full h-2">
-              <div class="bg-blue-600 rounded-full h-2 transition-all duration-300"
+            <div class="bg-mun-gray-200 rounded-full h-2">
+              <div class="bg-un-blue rounded-full h-2 transition-all duration-300"
                 :style="{ width: `${loadingProgress}%` }"></div>
             </div>
-            <p class="text-xs text-gray-500 mt-2 text-center">{{ loadingProgress }}% complete</p>
+            <p class="text-xs text-mun-gray-500 mt-2 text-center">{{ loadingProgress }}% complete</p>
           </div>
         </div>
       </div>
@@ -44,21 +44,21 @@
       :class="webSocketStatusClass">
       <div class="bg-white rounded-lg shadow-lg border p-3 flex items-center space-x-2">
         <div :class="['w-2 h-2 rounded-full', webSocketIndicatorClass]"></div>
-        <span class="text-sm font-medium text-gray-700">
+        <span class="text-sm font-medium text-mun-gray-700">
           {{ webSocketStatusText }}
         </span>
       </div>
     </div>
 
     <!-- Maintenance Mode Notice -->
-    <div v-if="isMaintenanceMode" class="fixed top-0 left-0 right-0 z-50 bg-yellow-500 text-white p-3">
+    <div v-if="isMaintenanceMode" class="fixed top-0 left-0 right-0 z-50 bg-mun-yellow-500 text-white p-3">
       <div class="max-w-7xl mx-auto flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <ExclamationTriangleIcon class="w-5 h-5" />
           <span class="font-medium">Maintenance Mode</span>
-          <span class="text-yellow-100">{{ maintenanceMessage }}</span>
+          <span class="text-mun-yellow-100">{{ maintenanceMessage }}</span>
         </div>
-        <button @click="dismissMaintenance" class="text-yellow-100 hover:text-white">
+        <button @click="dismissMaintenance" class="text-mun-yellow-100 hover:text-white">
           <XMarkIcon class="w-5 h-5" />
         </button>
       </div>
@@ -107,7 +107,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
-import { useSocketStore } from '@/stores/websocket'
+import { useWebSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
 
 // Components
@@ -126,7 +126,7 @@ import {
 const router = useRouter()
 const authStore = useAuthStore()
 const appStore = useAppStore()
-const wsStore = useSocketStore()
+const wsStore = useWebSocketStore()
 const toast = useToast()
 
 // Refs
@@ -151,9 +151,9 @@ const webSocketStatusClass = computed(() => ({
 }))
 
 const webSocketIndicatorClass = computed(() => {
-  if (wsStore.isConnected) return 'bg-green-500 animate-pulse'
-  if (wsStore.isConnecting) return 'bg-yellow-500 animate-spin'
-  return 'bg-red-500'
+  if (wsStore.isConnected) return 'bg-mun-green-500 animate-pulse'
+  if (wsStore.isConnecting) return 'bg-mun-yellow-500 animate-spin'
+  return 'bg-mun-red-500'
 })
 
 const webSocketStatusText = computed(() => {
@@ -405,19 +405,8 @@ onMounted(async () => {
   // Set up router guards
   router.afterEach(handleRouteChange)
 
-  // Check if user is already authenticated on app load
-  if (authStore.isAuthenticated && authStore.user && authStore.token) {
-    wsStore.connect()
-  }
-
-  // Set up subscription to auth state changes
-  authStore.$subscribe((mutation, state) => {
-    if (state.isAuthenticated && state.user && state.token) {
-      wsStore.connect()
-    } else {
-      wsStore.disconnect()
-    }
-  })
+  // Set up store watchers
+  authStore.$subscribe(handleAuthStateChange)
 
   // Watch WebSocket state
   watch(() => wsStore.connectionState, handleWebSocketStateChange)
@@ -442,18 +431,19 @@ onUnmounted(() => {
   wsStore.disconnect()
 })
 
-// Watch for auth state changes (alternative to $subscribe for more control)
-watch(
-  () => [authStore.isAuthenticated, authStore.user, authStore.token],
-  ([isAuth, user, token]) => {
-    if (isAuth && user && token) {
-      wsStore.connect()
-    } else {
-      wsStore.disconnect()
+// Watch for authentication changes to handle redirects
+watch(() => authStore.isAuthenticated, async (newVal, oldVal) => {
+  if (newVal && !oldVal) {
+    // User just logged in
+    const currentRoute = router.currentRoute.value
+
+    // If on auth page, redirect to dashboard
+    if (currentRoute.path.startsWith('/auth')) {
+      await nextTick()
+      router.push({ name: authStore.getDashboardRoute() })
     }
-  },
-  { immediate: true }
-)
+  }
+})
 
 // Watch for language changes to update document
 watch(() => appStore.currentLanguage, (newLang) => {
