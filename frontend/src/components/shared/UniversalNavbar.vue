@@ -9,7 +9,9 @@
                         class="flex items-center space-x-3 text-mun-gray-900 hover:text-mun-blue-600 transition-colors">
                         <div
                             class="w-8 h-8 bg-gradient-to-br from-mun-blue-500 to-mun-blue-600 rounded-lg flex items-center justify-center">
-                            <span class="text-white font-bold text-sm">🏛️</span>
+                            <span class="text-white font-bold text-sm">
+                                <img src="/logo.svg" alt="" class="w-8 h-8 text-white">
+                            </span>
                         </div>
                         <span class="font-bold text-lg hidden sm:block">MUN Platform</span>
                     </router-link>

@@ -15,7 +15,9 @@
                 <div class="flex items-center space-x-3">
                     <div class="flex-shrink-0">
                         <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                            <span class="text-white font-bold text-lg">🏛️</span>
+                            <span class="text-white font-bold text-lg">
+                                <img src="/logo.svg" alt="" class="w-8 h-8 text-white">
+                            </span>
                         </div>
                     </div>
                     <div class="text-white">
