@@ -2,9 +2,11 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/utils/api'
+import { useToast } from '@/plugins/toast'
 
 export const useAuthStore = defineStore('auth', () => {
     const router = useRouter()
+    const toast = useToast()
 
     // State
     const user = ref(null)
@@ -12,23 +14,6 @@ export const useAuthStore = defineStore('auth', () => {
     const isLoading = ref(false)
     const lastActivity = ref(Date.now())
     const sessionWarningShown = ref(false)
-
-    // Helper function to safely use toast
-    const showToast = (type, message) => {
-        try {
-            // Use dynamic import to avoid initialization issues
-            import('@/plugins/toast').then(toastModule => {
-                const { useToast } = toastModule
-                const toast = useToast()
-                toast[type](message)
-            }).catch(() => {
-                console.log(`${type.toUpperCase()}: ${message}`)
-            })
-        } catch (error) {
-            // Fallback to console if toast is not available
-            console.log(`${type.toUpperCase()}: ${message}`)
-        }
-    }
 
     // Computed
     const isAuthenticated = computed(() => !!token.value && !!user.value)
@@ -84,40 +69,62 @@ export const useAuthStore = defineStore('auth', () => {
 
                 localStorage.setItem('mun_token', token.value)
 
-                showToast('success', 'Welcome back, Administrator!')
-
-                // Navigate to dashboard
-                router.push({ name: 'AdminDashboard' })
+                toast.success('Welcome back, Administrator!')
 
                 return { success: true }
-            } else {
-                throw new Error(response.data.message || 'Login failed')
             }
+
+            return { success: false, error: 'Login failed' }
 
         } catch (error) {
-            console.error('Admin login error:', error)
-
-            const errorMessage = error.response?.data?.message ||
-                error.message ||
-                'Login failed. Please check your credentials.'
-
-            showToast('error', errorMessage)
-
-            return {
-                success: false,
-                message: errorMessage
-            }
+            const message = error.response?.data?.error || 'Login failed'
+            toast.error(message)
+            return { success: false, error: message }
         } finally {
             isLoading.value = false
         }
     }
 
-    // Presidium login
-    const presidiumLogin = async (credentials) => {
+    // QR login (first step for presidium/delegates)
+    const qrLogin = async (qrToken) => {
         try {
             isLoading.value = true
 
-            const response = await api.post('/auth/presidium-login', credentials)
+            const response = await api.post('/auth/qr-login', { token: qrToken })
+
+            if (response.data.success) {
+                return {
+                    success: true,
+                    data: {
+                        userType: response.data.userType,
+                        country: response.data.country,
+                        presidiumRole: response.data.presidiumRole,
+                        committee: response.data.committee,
+                        qrToken: response.data.qrToken,
+                        message: response.data.message
+                    }
+                }
+            }
+
+            return { success: false, error: 'QR code verification failed' }
+
+        } catch (error) {
+            const message = error.response?.data?.error || 'QR verification failed'
+            return { success: false, error: message }
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+    // Email binding (second step for presidium/delegates)
+    const bindEmail = async (qrToken, email) => {
+        try {
+            isLoading.value = true
+
+            const response = await api.post('/auth/bind-email', {
+                token: qrToken,
+                email
+            })
 
             if (response.data.success) {
                 token.value = response.data.token
@@ -125,39 +132,29 @@ export const useAuthStore = defineStore('auth', () => {
 
                 localStorage.setItem('mun_token', token.value)
 
-                showToast('success', `Welcome, ${formatPresidiumRole(user.value.presidiumRole)}!`)
-
-                router.push({ name: 'PresidiumDashboard' })
+                const userType = user.value.role === 'delegate' ? user.value.countryName : formatPresidiumRole(user.value.presidiumRole)
+                toast.success(`Welcome, ${userType}! Registration completed.`)
 
                 return { success: true }
-            } else {
-                throw new Error(response.data.message || 'Login failed')
             }
+
+            return { success: false, error: 'Email binding failed' }
 
         } catch (error) {
-            console.error('Presidium login error:', error)
-
-            const errorMessage = error.response?.data?.message ||
-                error.message ||
-                'Login failed. Please check your credentials.'
-
-            showToast('error', errorMessage)
-
-            return {
-                success: false,
-                message: errorMessage
-            }
+            const message = error.response?.data?.error || 'Email binding failed'
+            toast.error(message)
+            return { success: false, error: message }
         } finally {
             isLoading.value = false
         }
     }
 
-    // QR Code login
-    const qrLogin = async (qrCode) => {
+    // Email login (for users who have already bound email)
+    const emailLogin = async (email) => {
         try {
             isLoading.value = true
 
-            const response = await api.post('/auth/qr-login', { qrCode })
+            const response = await api.post('/auth/email-login', { email })
 
             if (response.data.success) {
                 token.value = response.data.token
@@ -165,34 +162,18 @@ export const useAuthStore = defineStore('auth', () => {
 
                 localStorage.setItem('mun_token', token.value)
 
-                const welcomeMessage = user.value.role === 'delegate'
-                    ? `Welcome, ${user.value.countryName}!`
-                    : `Welcome to MUN.UZ!`
-
-                showToast('success', welcomeMessage)
-
-                // Navigate based on role
-                const dashboardRoute = getDashboardRoute()
-                router.push({ name: dashboardRoute })
+                const userType = user.value.role === 'delegate' ? user.value.countryName : formatPresidiumRole(user.value.presidiumRole)
+                toast.success(`Welcome back, ${userType}!`)
 
                 return { success: true }
-            } else {
-                throw new Error(response.data.message || 'Invalid QR code')
             }
+
+            return { success: false, error: 'Login failed' }
 
         } catch (error) {
-            console.error('QR login error:', error)
-
-            const errorMessage = error.response?.data?.message ||
-                error.message ||
-                'Invalid QR code. Please try again.'
-
-            showToast('error', errorMessage)
-
-            return {
-                success: false,
-                message: errorMessage
-            }
+            const message = error.response?.data?.error || 'Login failed'
+            toast.error(message)
+            return { success: false, error: message }
         } finally {
             isLoading.value = false
         }
@@ -200,26 +181,21 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Validate existing session
     const validateSession = async () => {
-        try {
-            if (!token.value) {
-                return false
-            }
+        if (!token.value) return false
 
-            const response = await api.get('/auth/validate')
+        try {
+            const response = await api.get('/auth/validate-session')
 
             if (response.data.success && response.data.user) {
                 user.value = response.data.user
-                updateActivity()
                 return true
-            } else {
-                throw new Error('Session validation failed')
             }
 
-        } catch (error) {
-            console.warn('Session validation failed:', error)
+            return false
 
-            // Clear invalid session
-            logout(false)
+        } catch (error) {
+            console.error('Session validation failed:', error)
+            logout()
             return false
         }
     }
@@ -231,48 +207,53 @@ export const useAuthStore = defineStore('auth', () => {
                 await api.post('/auth/logout')
             }
         } catch (error) {
-            console.warn('Logout API call failed:', error)
+            console.error('Logout API error:', error)
         } finally {
-            // Clear local state regardless of API response
-            user.value = null
+            // Clear state regardless of API success
             token.value = null
+            user.value = null
+            sessionWarningShown.value = false
+
             localStorage.removeItem('mun_token')
 
             if (showMessage) {
-                showToast('info', 'You have been logged out successfully')
+                toast.info('You have been logged out')
             }
 
-            // Navigate to login
             router.push({ name: 'Login' })
         }
     }
 
-    // Update last activity
+    // Update user activity
     const updateActivity = () => {
         lastActivity.value = Date.now()
+        sessionWarningShown.value = false
     }
 
-    // Session monitoring
-    const startSessionMonitoring = () => {
-        // Check session every 5 minutes
-        setInterval(() => {
-            if (isAuthenticated.value) {
-                validateSession()
-            }
-        }, 5 * 60 * 1000)
+    // Check for session timeout
+    const checkSessionTimeout = () => {
+        const timeout = 30 * 60 * 1000 // 30 minutes
+        const warningTime = 5 * 60 * 1000 // 5 minutes before timeout
+        const now = Date.now()
+        const timeSinceActivity = now - lastActivity.value
 
-        // Update activity on user interactions
-        const events = ['click', 'keydown', 'mousemove', 'scroll']
-        events.forEach(event => {
-            document.addEventListener(event, updateActivity, { passive: true })
-        })
+        if (timeSinceActivity > timeout) {
+            logout(false)
+            toast.warning('Session expired due to inactivity')
+            return 'expired'
+        }
+
+        if (timeSinceActivity > timeout - warningTime && !sessionWarningShown.value) {
+            sessionWarningShown.value = true
+            return 'warning'
+        }
+
+        return 'active'
     }
 
-    // Get appropriate dashboard route based on user role
+    // Get dashboard route based on user role
     const getDashboardRoute = () => {
-        if (!user.value) return 'Login'
-
-        switch (user.value.role) {
+        switch (user.value?.role) {
             case 'admin':
                 return 'AdminDashboard'
             case 'presidium':
@@ -288,71 +269,54 @@ export const useAuthStore = defineStore('auth', () => {
     const hasPermission = (permission) => {
         if (!user.value) return false
 
-        // Admins have all permissions
-        if (user.value.role === 'admin') return true
-
-        // Check user's specific permissions
-        return user.value.permissions?.includes(permission) || false
-    }
-
-    // Check if user can access committee
-    const canAccessCommittee = (committeeId) => {
-        if (!user.value) return false
-
-        // Admins can access all committees
-        if (user.value.role === 'admin') return true
-
-        // Check if user belongs to this committee
-        return user.value.committeeId === committeeId ||
-            user.value.committeeId?._id === committeeId
-    }
-
-    // Check authentication status
-    const checkAuth = async () => {
-        if (!token.value) {
-            return false
+        const rolePermissions = {
+            admin: ['*'], // Admin has all permissions
+            presidium: [
+                'manage_sessions',
+                'review_documents',
+                'manage_voting',
+                'track_attendance',
+                'view_committee_stats'
+            ],
+            delegate: [
+                'submit_documents',
+                'join_coalitions',
+                'send_messages',
+                'cast_votes',
+                'view_session_info'
+            ]
         }
 
-        try {
-            const response = await api.get('/auth/verify-token')
+        const userPermissions = rolePermissions[user.value.role] || []
+        return userPermissions.includes('*') || userPermissions.includes(permission)
+    }
 
-            if (response.data.success) {
-                user.value = response.data.user
-                return true
-            } else {
-                // Invalid token, clear it
-                logout()
-                return false
+    // Start session monitoring
+    const startSessionMonitoring = () => {
+        // Check session every minute
+        setInterval(() => {
+            if (isAuthenticated.value) {
+                const status = checkSessionTimeout()
+
+                if (status === 'warning') {
+                    // Show warning modal (handled in App.vue)
+                    // This could trigger a global event or state change
+                }
             }
-        } catch (error) {
-            console.error('Token verification failed:', error)
-            logout()
-            return false
+        }, 60000) // 1 minute
+
+        // Track user activity
+        const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart']
+
+        const handleActivity = () => {
+            updateActivity()
         }
+
+        activityEvents.forEach(event => {
+            document.addEventListener(event, handleActivity, true)
+        })
     }
 
-    // Get default route based on user role
-    const getDefaultRoute = () => {
-        if (!user.value) return '/'
-
-        switch (user.value.role) {
-            case 'admin':
-                return '/admin/dashboard'
-            case 'presidium':
-                return '/presidium'
-            case 'delegate':
-                return '/delegate'
-            default:
-                return '/'
-        }
-    }
-
-    // Check if user has specific role
-    const hasRole = (role) => {
-        return user.value?.role === role
-    }
-
-    // Return all methods and computed properties
     return {
         // State
         user,
@@ -369,11 +333,15 @@ export const useAuthStore = defineStore('auth', () => {
 
         // Actions
         adminLogin,
-        presidiumLogin,
         qrLogin,
-        checkAuth,
-        getDefaultRoute,
-        hasRole,
-        logout
+        bindEmail,
+        emailLogin,
+        validateSession,
+        logout,
+        updateActivity,
+        checkSessionTimeout,
+        getDashboardRoute,
+        hasPermission,
+        startSessionMonitoring
     }
 })
