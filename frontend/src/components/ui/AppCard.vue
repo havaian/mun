@@ -64,7 +64,7 @@
         <!-- Loading Overlay -->
         <transition name="fade">
             <div v-if="processing"
-                class="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center z-10">
+                class="absolute inset-0 bg-white backdrop-blur-sm rounded-2xl flex items-center justify-center z-10">
                 <div class="text-center">
                     <LoadingSpinner size="lg" />
                     <p class="mt-3 text-sm text-mun-gray-600">{{ processingMessage }}</p>

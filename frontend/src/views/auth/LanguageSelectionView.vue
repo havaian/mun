@@ -15,7 +15,7 @@
             </div>
 
             <!-- Welcome Message -->
-            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-mun border border-white/20 p-6 mb-6">
+            <div class="bg-white backdrop-blur-sm rounded-2xl shadow-mun border border-white/20 p-6 mb-6">
                 <div class="text-center mb-6">
                     <CheckCircleIcon class="w-12 h-12 text-mun-green-500 mx-auto mb-3" />
                     <h2 class="text-lg font-semibold text-mun-gray-900 mb-2">

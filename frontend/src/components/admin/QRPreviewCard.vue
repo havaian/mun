@@ -1,6 +1,6 @@
 <template>
     <div :class="[
-        'bg-white/80 backdrop-blur-sm rounded-xl border border-white/20 p-4 transition-all duration-300',
+        'bg-white backdrop-blur-sm rounded-xl border border-white/20 p-4 transition-all duration-300',
         'hover:bg-white/90 hover:shadow-mun hover:transform'
     ]">
         <!-- Card Header -->

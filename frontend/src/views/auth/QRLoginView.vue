@@ -15,7 +15,7 @@
             </div>
 
             <!-- QR Scanner Card -->
-            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-mun border border-white/20 p-6 mb-6">
+            <div class="bg-white backdrop-blur-sm rounded-2xl shadow-mun border border-white/20 p-6 mb-6">
                 <!-- Camera View -->
                 <div class="relative mb-6">
                     <!-- Camera Not Active State -->

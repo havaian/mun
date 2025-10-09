@@ -1,11 +1,11 @@
 <template>
   <div class="min-h-screen bg-gradient-mun">
     <!-- Simple Auth Content - No navbar needed for guests -->
-    <div class="flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div class="sm:mx-auto sm:w-full sm:max-w-md">
         <!-- Logo and branding -->
         <div class="flex justify-center">
-          <div class="w-16 h-16 bg-gradient-to-br from-mun-blue-500 to-mun-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+          <div class="w-16 h-16 bg-mun-blue rounded-2xl flex items-center justify-center shadow-lg">
             <span class="text-white font-bold text-2xl">
                 <img src="/logo.svg" alt="" class="w-8 h-8 text-white">
             </span>
@@ -20,7 +20,7 @@
       </div>
 
       <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div class="bg-white/80 backdrop-blur-sm py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-white/20">
+        <div class="bg-white backdrop-blur-sm py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-white/20">
           <!-- Dynamic route content -->
           <router-view />
         </div>
