@@ -3,13 +3,12 @@
         <!-- Delegate Sidebar -->
         <div :class="[
             'fixed inset-y-0 left-0 z-50 w-64 bg-white/90 backdrop-blur-sm border-r border-white/20 shadow-mun-lg transition-transform duration-300',
-            'mt-16', // Add margin top for navbar
             { '-translate-x-full': appStore.sidebarCollapsed }
         ]">
             <!-- Sidebar Header -->
             <div class="flex items-center justify-between p-6 border-b border-mun-gray-100">
                 <div class="flex items-center space-x-3">
-                    <!-- Country Flag Placeholder -->
+                    <!-- Country Flag -->
                     <div
                         class="w-10 h-8 bg-mun-red-500 rounded-lg flex items-center justify-center border border-mun-gray-300">
                         <span class="text-white text-xs font-bold">
@@ -30,20 +29,21 @@
 
             <!-- Navigation Menu -->
             <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-                <RouterLink v-for="item in navigationItems" :key="item.name" :to="item.to" class="nav-link group"
-                    :class="{ 'active': $route.name === item.name }">
-                    <component :is="item.icon" class="w-5 h-5 mr-3 flex-shrink-0" />
-                    <span>{{ item.label }}</span>
-                    <span v-if="item.badge"
-                        class="ml-auto px-2 py-1 text-xs font-medium bg-mun-red-500 text-white rounded-full">
-                        {{ item.badge }}
-                    </span>
-                </RouterLink>
-            </nav>
+                <!-- Main Navigation -->
+                <div class="space-y-1">
+                    <RouterLink v-for="item in navigationItems" :key="item.name" :to="item.to" class="nav-link group"
+                        :class="{ 'active': $route.name === item.name }">
+                        <component :is="item.icon" class="w-5 h-5 mr-3 flex-shrink-0" />
+                        <span>{{ item.label }}</span>
+                        <span v-if="item.badge"
+                            class="ml-auto px-2 py-1 text-xs font-medium bg-mun-red-500 text-white rounded-full">
+                            {{ item.badge }}
+                        </span>
+                    </RouterLink>
+                </div>
 
-            <!-- Quick Actions -->
-            <div class="p-4 border-t border-mun-gray-100">
-                <div class="space-y-2">
+                <!-- Delegate Quick Actions -->
+                <div class="pt-4 border-t border-mun-gray-100">
                     <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wider mb-3">
                         Quick Actions
                     </h4>
@@ -58,19 +58,26 @@
 
                     <!-- Submit Motion -->
                     <button @click="openMotionModal" :disabled="!canSubmitMotion"
-                        class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-mun-purple-700 bg-mun-purple-100 hover:bg-mun-purple-200 rounded-lg transition-colors disabled:opacity-50">
+                        class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-mun-purple-700 bg-mun-purple-100 hover:bg-mun-purple-200 rounded-lg transition-colors disabled:opacity-50 mt-2">
                         <DocumentPlusIcon class="w-4 h-4 mr-2" />
                         Submit Motion
                     </button>
 
                     <!-- Quick Vote -->
                     <button v-if="activeVoting" @click="$router.push('/delegate/voting')"
-                        class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors animate-pulse">
+                        class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors animate-pulse mt-2">
                         <ExclamationTriangleIcon class="w-4 h-4 mr-2" />
                         Vote Now!
                     </button>
+
+                    <!-- Create/Join Coalition -->
+                    <button @click="manageCoalition" :disabled="!canManageCoalition"
+                        class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-mun-green-700 bg-mun-green-100 hover:bg-mun-green-200 rounded-lg transition-colors disabled:opacity-50 mt-2">
+                        <UserGroupIcon class="w-4 h-4 mr-2" />
+                        {{ userCoalition ? 'Manage Coalition' : 'Join Coalition' }}
+                    </button>
                 </div>
-            </div>
+            </nav>
 
             <!-- Current Status -->
             <div class="border-t border-mun-gray-100 p-4">
@@ -80,10 +87,9 @@
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-mun-gray-600">Session Status</span>
                             <div class="flex items-center space-x-2">
-                                <div :class="[
-                                    'w-2 h-2 rounded-full',
-                                    isSessionActive ? 'bg-green-500' : 'bg-gray-400'
-                                ]"></div>
+                                <div
+                                    :class="['w-2 h-2 rounded-full', isSessionActive ? 'bg-green-500' : 'bg-gray-400']">
+                                </div>
                                 <span class="text-xs font-medium">
                                     {{ isSessionActive ? 'Active' : 'Inactive' }}
                                 </span>
@@ -111,6 +117,21 @@
                         </div>
                     </div>
 
+                    <!-- Coalition Status -->
+                    <div v-if="userCoalition" class="text-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-mun-gray-600">Coalition</span>
+                            <span class="text-xs font-medium text-mun-green-600">
+                                {{ userCoalition.status }}
+                            </span>
+                        </div>
+
+                        <div class="text-xs text-mun-gray-500">
+                            <div>{{ userCoalition.name }}</div>
+                            <div>{{ userCoalition.memberCount }} members</div>
+                        </div>
+                    </div>
+
                     <!-- Personal Stats -->
                     <div class="text-xs text-mun-gray-500">
                         <div class="grid grid-cols-2 gap-2">
@@ -127,58 +148,102 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Committee Info -->
+            <div class="border-t border-mun-gray-100 p-4">
+                <div class="text-sm text-mun-gray-600 mb-2">
+                    Committee: {{ committeeInfo?.name || 'Loading...' }}
+                </div>
+                <div class="text-xs text-mun-gray-500">
+                    Topic: {{ committeeInfo?.topic || 'No topic set' }}
+                </div>
+                <div class="text-xs text-mun-gray-500 mt-1">
+                    {{ committeeInfo?.countries?.length || 0 }} delegates present
+                </div>
+            </div>
+
+            <!-- User Profile -->
+            <div class="border-t border-mun-gray-200 p-4">
+                <div class="space-y-3">
+                    <!-- User Info -->
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-mun-red-500 rounded-full flex items-center justify-center">
+                            <UserIcon class="w-5 h-5 text-white" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-mun-gray-900 truncate">
+                                {{ authStore.user?.fullName || 'Delegate' }}
+                            </p>
+                            <p class="text-xs text-mun-gray-500 truncate">
+                                {{ userCountry?.name || 'Country' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- User Actions -->
+                    <div class="space-y-1">
+                        <router-link to="/shared/profile"
+                            class="flex items-center px-3 py-2 text-sm text-mun-gray-700 hover:bg-mun-gray-100 rounded-lg transition-colors">
+                            <UserIcon class="w-4 h-4 mr-3" />
+                            Profile Settings
+                        </router-link>
+
+                        <button @click="handleLogout"
+                            class="w-full flex items-center px-3 py-2 text-sm text-red-700 hover:bg-red-50 rounded-lg transition-colors">
+                            <ArrowRightOnRectangleIcon class="w-4 h-4 mr-3" />
+                            Sign Out
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Main Content Area -->
         <div :class="[
             'transition-all duration-300',
-            'mt-16', // Add margin top for navbar
             appStore.sidebarCollapsed ? 'lg:ml-0' : 'lg:ml-64'
         ]">
-            <!-- Page Content -->
             <main class="min-h-screen">
                 <RouterView />
             </main>
         </div>
 
         <!-- Mobile overlay -->
-        <div v-if="!appStore.sidebarCollapsed" class="fixed inset-0 bg-black bg-opacity-25 z-40 lg:hidden mt-16"
+        <div v-if="!appStore.sidebarCollapsed" class="fixed inset-0 bg-black bg-opacity-25 z-40 lg:hidden"
             @click="appStore.toggleSidebar"></div>
 
-        <!-- Motion Submission Modal -->
-        <div v-if="showMotionModal"
-            class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-                <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Submit Procedural Motion</h3>
+        <!-- Motion Modal -->
+        <div v-if="showMotionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 w-96 max-w-full mx-4">
+                <h3 class="text-lg font-semibold mb-4">Submit Motion</h3>
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">Motion Type</label>
-                        <select v-model="motionForm.type"
-                            class="w-full border border-mun-gray-300 rounded-lg px-3 py-2">
-                            <option value="">Select motion type...</option>
-                            <option value="extension">Extension of Debate</option>
-                            <option value="closure">Closure of Debate</option>
-                            <option value="recess">Recess</option>
-                            <option value="adjournment">Adjournment</option>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Motion Type</label>
+                        <select v-model="motionForm.type" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            <option value="">Select motion type</option>
+                            <option value="moderated_caucus">Moderated Caucus</option>
+                            <option value="unmoderated_caucus">Unmoderated Caucus</option>
+                            <option value="previous_question">Previous Question</option>
+                            <option value="extend_debate">Extend Debate Time</option>
                         </select>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">Justification</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Justification</label>
                         <textarea v-model="motionForm.justification" rows="3"
-                            class="w-full border border-mun-gray-300 rounded-lg px-3 py-2"
-                            placeholder="Provide justification for this motion..."></textarea>
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2"
+                            placeholder="Provide justification for your motion..."></textarea>
                     </div>
                 </div>
 
-                <div class="flex items-center justify-end space-x-3 mt-6">
+                <div class="flex justify-end space-x-3 mt-6">
                     <button @click="showMotionModal = false"
-                        class="px-4 py-2 text-sm font-medium text-mun-gray-700 hover:bg-mun-gray-100 rounded-lg transition-colors">
+                        class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                         Cancel
                     </button>
                     <button @click="submitMotion" :disabled="!motionForm.type || !motionForm.justification"
-                        class="px-4 py-2 text-sm font-medium text-white bg-mun-blue-600 hover:bg-mun-blue-700 rounded-lg transition-colors disabled:opacity-50">
+                        class="px-4 py-2 bg-mun-blue-600 text-white rounded-lg hover:bg-mun-blue-700 transition-colors disabled:opacity-50">
                         Submit Motion
                     </button>
                 </div>
@@ -192,19 +257,13 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
-import { useWebSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
 
 // Icons
 import {
-    XMarkIcon,
-    ChartBarIcon,
-    DocumentTextIcon,
-    HandRaisedIcon,
-    UserIcon,
-    DocumentPlusIcon,
-    ExclamationTriangleIcon,
-    ChatBubbleLeftRightIcon
+    XMarkIcon, ChartBarIcon, DocumentTextIcon, HandRaisedIcon, UserIcon,
+    DocumentPlusIcon, ExclamationTriangleIcon, ChatBubbleLeftRightIcon,
+    UserGroupIcon, ArrowRightOnRectangleIcon
 } from '@heroicons/vue/24/outline'
 
 // Stores and composables
@@ -212,7 +271,6 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const appStore = useAppStore()
-const wsStore = useWebSocketStore()
 const toast = useToast()
 
 // State
@@ -223,6 +281,8 @@ const committeeInfo = ref(null)
 const userCountry = ref(null)
 const activeVoting = ref(null)
 const currentSpeaker = ref('')
+const userCoalition = ref(null)
+
 const delegateStats = ref({
     speechesGiven: 0,
     votesCast: 0,
@@ -262,18 +322,23 @@ const navigationItems = computed(() => [
         to: '/delegate/messaging',
         icon: ChatBubbleLeftRightIcon,
         badge: unreadMessages.value > 0 ? unreadMessages.value : null
+    },
+    {
+        name: 'DelegateCoalitions',
+        label: 'Coalitions',
+        to: '/delegate/coalitions',
+        icon: UserGroupIcon,
+        badge: userCoalition.value ? 'ACTIVE' : null
     }
 ])
 
 // Computed properties
 const pendingDocuments = computed(() => {
-    // This would come from your document store
-    return 0 // Placeholder
+    return 0 // This would come from your document store
 })
 
 const unreadMessages = computed(() => {
-    // This would come from your messaging store
-    return 0 // Placeholder
+    return 0 // This would come from your messaging store
 })
 
 const isSessionActive = computed(() => {
@@ -288,14 +353,8 @@ const canSubmitMotion = computed(() => {
     return isSessionActive.value
 })
 
-const pageTitle = computed(() => {
-    const titleMap = {
-        'DelegateDashboard': 'Dashboard',
-        'DelegateDocuments': 'Documents',
-        'DelegateVoting': 'Voting',
-        'DelegateMessaging': 'Messages'
-    }
-    return titleMap[route.name] || 'Delegate Panel'
+const canManageCoalition = computed(() => {
+    return true // Always allow coalition management
 })
 
 // Methods
@@ -319,12 +378,8 @@ const joinSpeakersList = async () => {
 
     try {
         // Implementation would depend on your speakers list API
-        // const response = await speakersAPI.join(currentSession.value.id)
-
-        // Mock implementation
         isInSpeakersList.value = true
         toast.success('Added to speakers list')
-
     } catch (error) {
         console.error('Failed to join speakers list:', error)
         toast.error('Failed to join speakers list')
@@ -341,62 +396,64 @@ const submitMotion = async () => {
 
     try {
         // Implementation would depend on your motion API
-        // const response = await motionAPI.submit({
-        //   type: motionForm.value.type,
-        //   justification: motionForm.value.justification,
-        //   sessionId: currentSession.value.id
-        // })
-
-        // Mock implementation
         toast.success('Motion submitted successfully')
         showMotionModal.value = false
         motionForm.value = { type: '', justification: '' }
-
     } catch (error) {
         console.error('Failed to submit motion:', error)
         toast.error('Failed to submit motion')
     }
 }
 
+const manageCoalition = () => {
+    router.push('/delegate/coalitions')
+}
+
+const handleLogout = async () => {
+    try {
+        await authStore.logout()
+        toast.success('Logged out successfully')
+        router.push('/login')
+    } catch (error) {
+        console.error('Logout error:', error)
+        toast.error('Failed to logout')
+    }
+}
+
 const loadDelegateData = async () => {
     try {
-        // This would load delegate-specific data from your API
-        // const [sessionData, countryData, statsData] = await Promise.all([
-        //   sessionAPI.getCurrent(),
-        //   countryAPI.get(authStore.user.countryId),
-        //   statsAPI.getDelegate(authStore.user.email)
-        // ])
+        // Load delegate-specific data
+        userCountry.value = {
+            name: 'United States',
+            code: 'US'
+        }
 
-        // Mock data for now
+        committeeInfo.value = {
+            name: 'General Assembly',
+            topic: 'Climate Change and Sustainable Development',
+            countries: Array.from({ length: 25 }, (_, i) => ({ id: i + 1, name: `Country ${i + 1}` }))
+        }
+
+        delegateStats.value = {
+            speechesGiven: 3,
+            votesCast: 7,
+            documentsSubmitted: 2
+        }
+
+        // Mock session data
         currentSession.value = {
             id: 'session_1',
             status: 'active',
             currentMode: 'formal',
-            currentSpeaker: 'United States'
+            currentSpeaker: 'France'
         }
 
-        userCountry.value = {
-            name: authStore.user?.countryName || 'Your Country',
-            code: authStore.user?.countryCode || 'XX'
+        // Mock coalition data
+        userCoalition.value = {
+            name: 'Climate Action Coalition',
+            status: 'Active',
+            memberCount: 8
         }
-
-        committeeInfo.value = {
-            id: 'committee_1',
-            name: authStore.user?.committeeName || 'General Assembly'
-        }
-
-        delegateStats.value = {
-            speechesGiven: Math.floor(Math.random() * 10),
-            votesCast: Math.floor(Math.random() * 20),
-            documentsSubmitted: Math.floor(Math.random() * 5)
-        }
-
-        // Check for active voting
-        activeVoting.value = Math.random() > 0.7 ? {
-            id: 'voting_1',
-            title: 'Resolution A/77/1',
-            status: 'active'
-        } : null
 
         currentSpeaker.value = currentSession.value.currentSpeaker
 
@@ -408,14 +465,6 @@ const loadDelegateData = async () => {
 // Lifecycle
 onMounted(async () => {
     await loadDelegateData()
-
-    // Set up real-time updates
-    if (wsStore?.isConnected) {
-        // Subscribe to relevant WebSocket events
-        // wsStore.on('session_update', handleSessionUpdate)
-        // wsStore.on('voting_started', handleVotingStarted)
-        // wsStore.on('speaker_changed', handleSpeakerChanged)
-    }
 
     // Set up data refresh interval
     const refreshInterval = setInterval(async () => {
@@ -439,11 +488,6 @@ onMounted(async () => {
 
 .nav-link.active {
     @apply bg-mun-blue-600 text-white shadow-lg;
-}
-
-/* Ensure proper spacing with navbar */
-.mt-16 {
-    margin-top: 4rem;
 }
 
 /* Scrollbar styling */
@@ -491,14 +535,5 @@ onMounted(async () => {
 
 .animate-pulse {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Z-index management */
-.z-40 {
-    z-index: 40;
-}
-
-.z-50 {
-    z-index: 50;
 }
 </style>
