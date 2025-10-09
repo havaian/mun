@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 // Import layouts
-import AuthLayout from '@/views/auth/AuthLayout.vue'
+import AuthLayout from '@/layouts/AuthLayout.vue'
 
 
 // Import views
