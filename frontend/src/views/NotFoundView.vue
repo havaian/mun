@@ -49,9 +49,9 @@
 
                     <!-- Secondary actions -->
                     <div class="flex flex-col sm:flex-row gap-3 justify-center max-w-sm mx-auto">
-                        <button v-if="!authStore.isAuthenticated" @click="goToLogin"
-                            class="text-white/80 hover:text-white font-medium py-2 px-4 rounded-lg hover:bg-white/10 transition-colors">
-                            Login
+                        <button @click="goToDashboard"
+                            class="bg-mun-blue-600 hover:bg-mun-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-200 hover:scale-105 shadow-lg">
+                            {{ getDashboardText() }}
                         </button>
                     </div>
                 </div>
@@ -72,7 +72,6 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -82,19 +81,10 @@ const authStore = useAuthStore()
 // Methods
 const getDashboardText = () => {
     if (!authStore.isAuthenticated) {
-        return 'Go to Login'
+        return 'Login'
     }
 
-    switch (authStore.user?.role) {
-        case 'admin':
-            return 'Admin Dashboard'
-        case 'presidium':
-            return 'Presidium Dashboard'
-        case 'delegate':
-            return 'Delegate Dashboard'
-        default:
-            return 'Dashboard'
-    }
+    return 'Dashboard'
 }
 
 const goToDashboard = () => {
