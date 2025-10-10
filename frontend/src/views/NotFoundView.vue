@@ -50,7 +50,7 @@
                     <!-- Secondary actions -->
                     <div class="flex flex-col sm:flex-row gap-3 justify-center max-w-sm mx-auto">
                         <button @click="goToDashboard"
-                            class="bg-mun-blue-600 hover:bg-mun-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-200 hover:scale-105 shadow-lg">
+                            class="text-white/80 hover:text-white font-medium py-2 px-4 rounded-lg hover:bg-white/10 transition-colors">
                             {{ getDashboardText() }}
                         </button>
                     </div>
