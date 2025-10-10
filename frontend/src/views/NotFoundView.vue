@@ -23,22 +23,6 @@
                             class="text-8xl sm:text-9xl lg:text-[10rem] font-black text-white/90 select-none leading-none">
                             404
                         </h1>
-
-                        <!-- UN emblem in center -->
-                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                            <div
-                                class="w-16 h-16 sm:w-20 sm:h-20 bg-white/95 rounded-full flex items-center justify-center shadow-lg border-2 border-white/20">
-                                <!-- Simple UN-style globe -->
-                                <svg class="w-8 h-8 sm:w-10 sm:h-10 text-mun-blue-600" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="8" stroke-width="1.5" />
-                                    <path d="M8 12h8" stroke-width="1" />
-                                    <path d="M12 8v8" stroke-width="1" />
-                                    <path d="M9.5 9.5l5 5" stroke-width="0.5" opacity="0.6" />
-                                    <path d="M14.5 9.5l-5 5" stroke-width="0.5" opacity="0.6" />
-                                </svg>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -57,19 +41,14 @@
                 <div class="space-y-4">
                     <!-- Primary button -->
                     <div class="flex justify-center">
-                        <button @click="goToDashboard"
-                            class="bg-mun-blue-600 hover:bg-mun-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-200 hover:scale-105 shadow-lg">
-                            {{ getDashboardText() }}
+                        <button @click="goBack"
+                            class="bg-mun-blue-600 hover:bg-mun-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-200 shadow-lg">
+                            ← Go Back
                         </button>
                     </div>
 
                     <!-- Secondary actions -->
                     <div class="flex flex-col sm:flex-row gap-3 justify-center max-w-sm mx-auto">
-                        <button @click="goBack"
-                            class="text-white/80 hover:text-white font-medium py-2 px-4 rounded-lg hover:bg-white/10 transition-colors">
-                            ← Go Back
-                        </button>
-
                         <button v-if="!authStore.isAuthenticated" @click="goToLogin"
                             class="text-white/80 hover:text-white font-medium py-2 px-4 rounded-lg hover:bg-white/10 transition-colors">
                             Login
@@ -79,6 +58,10 @@
 
                 <!-- Footer -->
                 <div class="mt-16 text-center">
+                    <div
+                        class="mx-auto w-16 h-16 bg-mun-blue rounded-full flex items-center justify-center mb-4 animate-float">
+                        <img src="/logo.svg" alt="" class="w-8 h-8 text-white">
+                    </div>
                     <div class="text-white/40 text-sm font-medium">
                         MUN.UZ
                     </div>
