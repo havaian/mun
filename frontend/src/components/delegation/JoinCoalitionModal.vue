@@ -656,7 +656,7 @@ watch(() => props.modelValue, (isOpen) => {
 .modal-content-enter-from,
 .modal-content-leave-to {
     opacity: 0;
-    transform: scale(0.9) translateY(-20px);
+    transform: translateY(-20px);
 }
 
 /* Coalition item animations */
@@ -676,12 +676,10 @@ watch(() => props.modelValue, (isOpen) => {
 @keyframes flag-appear {
     from {
         opacity: 0;
-        transform: scale(0.8);
     }
 
     to {
         opacity: 1;
-        transform: scale(1);
     }
 }
 
@@ -720,10 +718,6 @@ watch(() => props.modelValue, (isOpen) => {
 /* Status indicators */
 .join-status {
     transition: all 0.2s ease;
-}
-
-.coalition-item:hover .join-status {
-    transform: scale(1.1);
 }
 
 /* Responsive adjustments */

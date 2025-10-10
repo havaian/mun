@@ -219,23 +219,4 @@ const handleClick = (event) => {
 a:focus-visible {
     @apply ring-2 ring-mun-blue ring-opacity-50 ring-offset-2;
 }
-
-/* Loading state animation */
-@keyframes button-loading {
-    0% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(0.95);
-    }
-
-    100% {
-        transform: scale(1);
-    }
-}
-
-.loading {
-    animation: button-loading 1s ease-in-out infinite;
-}
 </style>

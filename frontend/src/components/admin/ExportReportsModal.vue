@@ -697,7 +697,6 @@ onMounted(() => {
 .modal-enter-from,
 .modal-leave-to {
     opacity: 0;
-    transform: scale(0.95);
 }
 
 /* Custom scrollbar */
@@ -734,13 +733,6 @@ select[multiple] option {
 select[multiple] option:checked {
     background: #009edb;
     color: white;
-}
-
-/* Radio and checkbox animations */
-input[type="radio"]:checked+div,
-input[type="checkbox"]:checked+div {
-    transform: scale(1.02);
-    transition: transform 0.1s ease;
 }
 
 /* Date input styling */

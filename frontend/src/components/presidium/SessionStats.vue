@@ -629,10 +629,6 @@ watch(() => wsStore.isConnected, (connected) => {
     transition: all 0.3s ease;
 }
 
-.stat-card:hover .text-lg {
-    transform: scale(1.05);
-}
-
 /* Progress bar animations */
 .attendance-bar>div,
 .timeline-container .w-16>div {

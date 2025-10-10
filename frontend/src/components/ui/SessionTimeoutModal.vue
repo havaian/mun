@@ -344,7 +344,6 @@ defineExpose({
 .modal-enter-from,
 .modal-leave-to {
     opacity: 0;
-    transform: scale(0.9);
 }
 
 /* Subtle pulse animation for critical state */

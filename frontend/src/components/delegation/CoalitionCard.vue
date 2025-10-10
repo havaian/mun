@@ -534,10 +534,6 @@ onUnmounted(() => {
     transition: all 0.2s ease;
 }
 
-.member-item:hover {
-    transform: scale(1.05);
-}
-
 /* Progress bar animation */
 .progress-bar>div {
     transition: width 0.5s ease;
@@ -552,12 +548,12 @@ onUnmounted(() => {
 @keyframes dropdown-enter {
     from {
         opacity: 0;
-        transform: scale(0.95) translateY(-10px);
+        transform: translateY(-10px);
     }
 
     to {
         opacity: 1;
-        transform: scale(1) translateY(0);
+        transform: translateY(0);
     }
 }
 
@@ -611,12 +607,10 @@ onUnmounted(() => {
 @keyframes member-appear {
     from {
         opacity: 0;
-        transform: scale(0.8);
     }
 
     to {
         opacity: 1;
-        transform: scale(1);
     }
 }
 </style>

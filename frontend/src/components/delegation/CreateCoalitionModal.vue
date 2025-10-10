@@ -540,7 +540,7 @@ onMounted(() => {
 .modal-content-enter-from,
 .modal-content-leave-to {
     opacity: 0;
-    transform: scale(0.9) translateY(-20px);
+    transform: translateY(-20px);
 }
 
 /* Type option animations */
@@ -570,12 +570,10 @@ onMounted(() => {
 @keyframes tag-appear {
     from {
         opacity: 0;
-        transform: scale(0.8);
     }
 
     to {
         opacity: 1;
-        transform: scale(1);
     }
 }
 

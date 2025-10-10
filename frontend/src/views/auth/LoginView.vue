@@ -50,7 +50,7 @@
                         <div class="flex items-center justify-center mb-4">
                             <button @click="currentView = 'selection'"
                                 class="text-mun-gray-400 hover:text-mun-gray-600 transition-colors">
-                                <ArrowLongLeftIcon class="w-5 h-5" />
+                                <ArrowLongLeftIcon class="w-6 h-6" />
                             </button>
                         </div>
 
@@ -85,7 +85,7 @@
                         <div class="flex items-center justify-center mb-4">
                             <button @click="currentView = 'selection'"
                                 class="text-mun-gray-400 hover:text-mun-gray-600 transition-colors">
-                                <ArrowLongLeftIcon class="w-5 h-5" />
+                                <ArrowLongLeftIcon class="w-6 h-6" />
                             </button>
                         </div>
 

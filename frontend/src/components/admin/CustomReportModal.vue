@@ -808,7 +808,6 @@ watch(() => reportFilters.value, () => {
 .modal-enter-from,
 .modal-leave-to {
     opacity: 0;
-    transform: scale(0.95);
 }
 
 /* Custom scrollbar */

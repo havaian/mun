@@ -585,12 +585,12 @@ onMounted(() => {
 
 .modal-enter-from {
     opacity: 0;
-    transform: scale(0.9) translateY(-20px);
+    transform: translateY(-20px);
 }
 
 .modal-leave-to {
     opacity: 0;
-    transform: scale(0.9) translateY(20px);
+    transform: translateY(20px);
 }
 
 /* Custom scrollbar */

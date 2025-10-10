@@ -722,25 +722,6 @@ const formatDuration = (seconds) => {
     }
 }
 
-/* Animation for real-time updates */
-@keyframes vote-update {
-    0% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.05);
-    }
-
-    100% {
-        transform: scale(1);
-    }
-}
-
-.country-vote-card.vote-updated {
-    animation: vote-update 0.3s ease-in-out;
-}
-
 /* Accessibility */
 .country-vote-card:focus {
     outline: 2px solid rgb(59 130 246);
