@@ -1,6 +1,6 @@
 <template>
     <div class="admin-dashboard">
-        <!-- Performance Loading State -->
+        <!-- Loading State -->
         <div v-if="isInitialLoading" class="flex items-center justify-center min-h-screen">
             <div class="text-center">
                 <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-mun-blue-600 mx-auto mb-4"></div>
@@ -10,19 +10,19 @@
 
         <!-- Dashboard Content -->
         <div v-else class="space-y-6 p-6">
-            <!-- Dashboard Header -->
+            <!-- Header -->
             <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                     <div>
                         <h1 class="text-2xl font-bold text-mun-gray-900">Admin Dashboard</h1>
                         <p class="text-mun-gray-600 mt-1">
-                            Welcome back, {{ authStore.user?.username || 'Administrator' }}. Here's what's happening
-                            today.
+                            Welcome back, {{ authStore.user?.username || 'Administrator' }}. System overview and
+                            controls.
                         </p>
                     </div>
                     <div class="flex items-center space-x-3">
                         <div class="text-sm text-mun-gray-600">
-                            Last updated: {{ formatTime(lastUpdated) }}
+                            Last updated: {{ format.time(lastUpdated) }}
                         </div>
                         <button @click="refreshAll" :disabled="isRefreshing"
                             class="inline-flex items-center px-4 py-2 border border-mun-gray-300 rounded-lg text-sm font-medium text-mun-gray-700 bg-white hover:bg-mun-gray-50 disabled:opacity-50 transition-colors">
@@ -33,14 +33,13 @@
                 </div>
             </div>
 
-            <!-- Key Metrics Cards -->
+            <!-- Key Metrics -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Total Events -->
                 <div
                     class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6 hover:shadow-md transition-shadow">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-mun-gray-600">Total Events</p>
+                            <p class="text-sm font-medium text-mun-gray-600">Events</p>
                             <p class="text-3xl font-bold text-mun-gray-900 mt-2">{{ stats.totalEvents || 0 }}</p>
                             <div class="flex items-center mt-2">
                                 <span class="text-sm text-green-600 font-medium">{{ stats.activeEvents || 0 }}
@@ -53,7 +52,6 @@
                     </div>
                 </div>
 
-                <!-- Total Committees -->
                 <div
                     class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6 hover:shadow-md transition-shadow">
                     <div class="flex items-center justify-between">
@@ -71,12 +69,11 @@
                     </div>
                 </div>
 
-                <!-- Registered Users -->
                 <div
                     class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6 hover:shadow-md transition-shadow">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-mun-gray-600">Registered Users</p>
+                            <p class="text-sm font-medium text-mun-gray-600">Users</p>
                             <p class="text-3xl font-bold text-mun-gray-900 mt-2">{{ stats.registeredUsers || 0 }}</p>
                             <div class="flex items-center mt-2">
                                 <span class="text-sm text-green-600 font-medium">{{ stats.activeUsers || 0 }}
@@ -89,7 +86,6 @@
                     </div>
                 </div>
 
-                <!-- Documents -->
                 <div
                     class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6 hover:shadow-md transition-shadow">
                     <div class="flex items-center justify-between">
@@ -97,7 +93,8 @@
                             <p class="text-sm font-medium text-mun-gray-600">Documents</p>
                             <p class="text-3xl font-bold text-mun-gray-900 mt-2">{{ stats.documentsUploaded || 0 }}</p>
                             <div class="flex items-center mt-2">
-                                <span class="text-sm text-orange-600 font-medium">{{ pendingModeration }} pending</span>
+                                <span class="text-sm text-orange-600 font-medium">{{ stats.pendingModeration || 0 }}
+                                    pending</span>
                             </div>
                         </div>
                         <div class="p-3 bg-orange-100 rounded-lg">
@@ -107,211 +104,226 @@
                 </div>
             </div>
 
-            <!-- Quick Actions & System Status Row -->
+            <!-- System Health & Recent Activity & Active Events -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Quick Actions -->
+                <!-- Comprehensive System Health Monitor -->
                 <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Quick Actions</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button @click="$router.push('/admin/events')"
-                            class="flex items-center p-4 border border-mun-gray-200 rounded-lg hover:bg-mun-gray-50 transition-colors text-left">
-                            <PlusIcon class="w-5 h-5 text-mun-blue-600 mr-3" />
-                            <div>
-                                <div class="font-medium text-mun-gray-900">Create Event</div>
-                                <div class="text-sm text-mun-gray-600">Set up new MUN event</div>
-                            </div>
-                        </button>
-
-                        <button @click="$router.push('/admin/committees')"
-                            class="flex items-center p-4 border border-mun-gray-200 rounded-lg hover:bg-mun-gray-50 transition-colors text-left">
-                            <PlusIcon class="w-5 h-5 text-mun-purple-600 mr-3" />
-                            <div>
-                                <div class="font-medium text-mun-gray-900">Add Committee</div>
-                                <div class="text-sm text-mun-gray-600">Create new committee</div>
-                            </div>
-                        </button>
-
-                        <button @click="generateQRCodes" :disabled="isGeneratingQR"
-                            class="flex items-center p-4 border border-mun-gray-200 rounded-lg hover:bg-mun-gray-50 transition-colors text-left disabled:opacity-50">
-                            <QrCodeIcon
-                                :class="['w-5 h-5 text-mun-green-600 mr-3', { 'animate-spin': isGeneratingQR }]" />
-                            <div>
-                                <div class="font-medium text-mun-gray-900">Generate QR Codes</div>
-                                <div class="text-sm text-mun-gray-600">Bulk QR generation</div>
-                            </div>
-                        </button>
-
-                        <button @click="$router.push('/admin/reports')"
-                            class="flex items-center p-4 border border-mun-gray-200 rounded-lg hover:bg-mun-gray-50 transition-colors text-left">
-                            <DocumentChartBarIcon class="w-5 h-5 text-mun-orange-600 mr-3" />
-                            <div>
-                                <div class="font-medium text-mun-gray-900">View Reports</div>
-                                <div class="text-sm text-mun-gray-600">Analytics & insights</div>
-                            </div>
-                        </button>
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-mun-gray-900">System Health Monitor</h3>
+                        <div class="flex items-center space-x-2">
+                            <div :class="['w-3 h-3 rounded-full', getOverallHealthColor()]"></div>
+                            <span :class="['text-sm font-medium', getOverallHealthTextColor()]">
+                                {{ getOverallHealthStatus() }}
+                            </span>
+                        </div>
                     </div>
-                </div>
 
-                <!-- System Status -->
-                <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">System Status</h3>
-                    <div class="space-y-4">
-                        <!-- API Status -->
-                        <div class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg">
-                            <div class="flex items-center space-x-3">
-                                <div
-                                    :class="['w-3 h-3 rounded-full', systemHealth.api ? 'bg-green-500' : 'bg-red-500']">
+                    <div class="space-y-6">
+                        <!-- Core Services -->
+                        <div>
+                            <h4 class="font-medium text-mun-gray-900 mb-3 flex items-center">
+                                <ServerIcon class="w-4 h-4 mr-2" />
+                                Core Services
+                            </h4>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div
+                                            :class="['w-3 h-3 rounded-full', systemHealth.api ? 'bg-green-500' : 'bg-red-500']">
+                                        </div>
+                                        <span class="font-medium text-mun-gray-900">API Server</span>
+                                    </div>
+                                    <span
+                                        :class="['text-sm font-medium', systemHealth.api ? 'text-green-700' : 'text-red-700']">
+                                        {{ systemHealth.api ? 'Healthy' : 'Down' }}
+                                    </span>
                                 </div>
-                                <span class="font-medium text-mun-gray-900">API Server</span>
+
+                                <div class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div
+                                            :class="['w-3 h-3 rounded-full', systemHealth.database ? 'bg-green-500' : 'bg-red-500']">
+                                        </div>
+                                        <span class="font-medium text-mun-gray-900">Database</span>
+                                    </div>
+                                    <span
+                                        :class="['text-sm font-medium', systemHealth.database ? 'text-green-700' : 'text-red-700']">
+                                        {{ systemHealth.database ? 'Connected' : 'Disconnected' }}
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <div
+                                            :class="['w-3 h-3 rounded-full', wsStatus.connected ? 'bg-green-500' : 'bg-yellow-500']">
+                                        </div>
+                                        <span class="font-medium text-mun-gray-900">WebSocket</span>
+                                    </div>
+                                    <span
+                                        :class="['text-sm font-medium', wsStatus.connected ? 'text-green-700' : 'text-yellow-700']">
+                                        {{ wsStatus.text }}
+                                    </span>
+                                </div>
                             </div>
-                            <span
-                                :class="['text-sm font-medium', systemHealth.api ? 'text-green-700' : 'text-red-700']">
-                                {{ systemHealth.api ? 'Healthy' : 'Issues Detected' }}
-                            </span>
                         </div>
 
-                        <!-- Database Status -->
-                        <div class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg">
-                            <div class="flex items-center space-x-3">
-                                <div
-                                    :class="['w-3 h-3 rounded-full', systemHealth.database ? 'bg-green-500' : 'bg-red-500']">
+                        <!-- Application Modules -->
+                        <div>
+                            <h4 class="font-medium text-mun-gray-900 mb-3 flex items-center">
+                                <PuzzlePieceIcon class="w-4 h-4 mr-2" />
+                                Application Modules
+                            </h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div v-for="(status, module) in healthData.modules" :key="module"
+                                    class="flex items-center justify-between p-2 bg-mun-gray-50 rounded text-xs">
+                                    <span class="text-mun-gray-700 capitalize">{{ module }}</span>
+                                    <div class="flex items-center space-x-1">
+                                        <div :class="['w-1.5 h-1.5 rounded-full', getModuleStatusColor(status)]"></div>
+                                        <span :class="['font-medium', getModuleStatusTextColor(status)]">
+                                            {{ status }}
+                                        </span>
+                                    </div>
                                 </div>
-                                <span class="font-medium text-mun-gray-900">Database</span>
                             </div>
-                            <span
-                                :class="['text-sm font-medium', systemHealth.database ? 'text-green-700' : 'text-red-700']">
-                                {{ systemHealth.database ? 'Connected' : 'Connection Issues' }}
-                            </span>
                         </div>
 
-                        <!-- WebSocket Status -->
-                        <div class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg">
-                            <div class="flex items-center space-x-3">
-                                <div
-                                    :class="['w-3 h-3 rounded-full', wsStatus.connected ? 'bg-green-500' : 'bg-yellow-500']">
+                        <!-- External Services -->
+                        <div>
+                            <h4 class="font-medium text-mun-gray-900 mb-3 flex items-center">
+                                <CloudIcon class="w-4 h-4 mr-2" />
+                                External Services
+                            </h4>
+                            <div class="space-y-2">
+                                <div v-for="(status, service) in healthData.services" :key="service"
+                                    class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg">
+                                    <span class="text-sm text-mun-gray-700 capitalize">{{ service }}</span>
+                                    <div class="flex items-center space-x-2">
+                                        <div :class="['w-2 h-2 rounded-full', getServiceStatusColor(status)]"></div>
+                                        <span :class="['text-xs font-medium', getServiceStatusTextColor(status)]">
+                                            {{ status }}
+                                        </span>
+                                    </div>
                                 </div>
-                                <span class="font-medium text-mun-gray-900">Real-time Services</span>
                             </div>
-                            <span
-                                :class="['text-sm font-medium', wsStatus.connected ? 'text-green-700' : 'text-yellow-700']">
-                                {{ wsStatus.text }}
-                            </span>
                         </div>
 
                         <!-- Performance Metrics -->
-                        <div class="pt-2 border-t border-mun-gray-200">
-                            <div class="grid grid-cols-2 gap-4 text-center">
+                        <div class="pt-4 border-t border-mun-gray-200">
+                            <div class="grid grid-cols-3 gap-4 text-center">
                                 <div>
-                                    <div class="text-2xl font-bold text-mun-gray-900">{{ responseTime }}ms</div>
-                                    <div class="text-sm text-mun-gray-600">Avg Response</div>
+                                    <div class="text-lg font-bold text-mun-gray-900">{{ responseTime }}ms</div>
+                                    <div class="text-xs text-mun-gray-600">Response Time</div>
                                 </div>
                                 <div>
-                                    <div class="text-2xl font-bold text-mun-gray-900">{{ uptime }}%</div>
-                                    <div class="text-sm text-mun-gray-600">Uptime</div>
+                                    <div class="text-lg font-bold text-mun-gray-900">{{ formatUptime(healthData.uptime)
+                                    }}</div>
+                                    <div class="text-xs text-mun-gray-600">Uptime</div>
+                                </div>
+                                <div>
+                                    <div class="text-lg font-bold text-mun-gray-900">{{ healthData.version || '1.0.0' }}
+                                    </div>
+                                    <div class="text-xs text-mun-gray-600">Version</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Recent Activity & Active Events -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Recent Activity -->
-                <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-mun-gray-900">Recent Activity</h3>
-                        <router-link to="/admin/logs"
-                            class="text-sm text-mun-blue-600 hover:text-mun-blue-700 font-medium">
-                            View all logs →
-                        </router-link>
-                    </div>
+                <!-- Recent Activity & Active Events -->
+                <div
+                    class="grid grid-rows-1 lg:grid-rows-2 gap-6 bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
+                    <!-- Recent Activity -->
+                    <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-mun-gray-900">Recent Activity</h3>
+                            <router-link to="/admin/logs"
+                                class="text-sm text-mun-blue-600 hover:text-mun-blue-700 font-medium">
+                                View all logs →
+                            </router-link>
+                        </div>
 
-                    <div v-if="isLoadingActivity" class="space-y-3">
-                        <div v-for="i in 5" :key="i" class="animate-pulse">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 bg-mun-gray-200 rounded-full"></div>
-                                <div class="flex-1">
-                                    <div class="h-4 bg-mun-gray-200 rounded w-3/4 mb-2"></div>
-                                    <div class="h-3 bg-mun-gray-200 rounded w-1/2"></div>
+                        <div v-if="isLoadingActivity" class="space-y-3">
+                            <div v-for="i in 5" :key="i" class="animate-pulse">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-mun-gray-200 rounded-full"></div>
+                                    <div class="flex-1">
+                                        <div class="h-4 bg-mun-gray-200 rounded w-3/4 mb-2"></div>
+                                        <div class="h-3 bg-mun-gray-200 rounded w-1/2"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div v-else-if="recentActivity.length > 0" class="space-y-4">
-                        <div v-for="activity in recentActivity.slice(0, 5)" :key="activity.id"
-                            class="flex items-start space-x-3 p-3 hover:bg-mun-gray-50 rounded-lg transition-colors">
-                            <div class="flex-shrink-0">
-                                <div
-                                    :class="['w-8 h-8 rounded-full flex items-center justify-center', getActivityIconClass(activity.type)]">
-                                    <component :is="getActivityIcon(activity.type)" class="w-4 h-4" />
+                        <div v-else-if="recentActivity.length > 0" class="space-y-4">
+                            <div v-for="activity in recentActivity.slice(0, 5)" :key="activity.id"
+                                class="flex items-start space-x-3 p-3 hover:bg-mun-gray-50 rounded-lg transition-colors">
+                                <div class="flex-shrink-0">
+                                    <div
+                                        :class="['w-8 h-8 rounded-full flex items-center justify-center', getActivityIconClass(activity.type)]">
+                                        <component :is="getActivityIcon(activity.type)" class="w-4 h-4" />
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm text-mun-gray-900">{{ activity.description }}</p>
+                                    <div class="flex items-center space-x-2 mt-1">
+                                        <span class="text-xs text-mun-gray-500">{{ formatTimeAgo(activity.timestamp)
+                                            }}</span>
+                                        <span v-if="activity.user" class="text-xs text-mun-gray-500">by {{ activity.user
+                                            }}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm text-mun-gray-900">
-                                    {{ activity.description }}
-                                </p>
-                                <div class="flex items-center space-x-2 mt-1">
-                                    <span class="text-xs text-mun-gray-500">
-                                        {{ formatTimeAgo(activity.timestamp) }}
+                        </div>
+
+                        <div v-else class="text-center py-8">
+                            <ClockIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-3" />
+                            <p class="text-mun-gray-500">No recent activity</p>
+                        </div>
+                    </div>
+
+                    <!-- Active Events -->
+                    <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-mun-gray-900">Active Events</h3>
+                            <router-link to="/admin/events"
+                                class="text-sm text-mun-blue-600 hover:text-mun-blue-700 font-medium">
+                                Manage events →
+                            </router-link>
+                        </div>
+
+                        <div v-if="isLoadingEvents" class="space-y-3">
+                            <div v-for="i in 3" :key="i" class="animate-pulse">
+                                <div class="h-16 bg-mun-gray-200 rounded-lg"></div>
+                            </div>
+                        </div>
+
+                        <div v-else-if="activeEvents.length > 0" class="space-y-3">
+                            <div v-for="event in activeEvents" :key="event._id"
+                                class="border border-mun-gray-200 rounded-lg p-4 hover:border-mun-blue-300 transition-colors">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-semibold text-mun-gray-900">{{ event.name }}</h4>
+                                        <p class="text-sm text-mun-gray-600 mt-1">
+                                            {{ event.committees?.length || 0 }} committees •
+                                            {{ formatEventDate(event.startDate) }}
+                                        </p>
+                                    </div>
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Active
                                     </span>
-                                    <span v-if="activity.user" class="text-xs text-mun-gray-500">
-                                        by {{ activity.user }}
-                                    </span>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div v-else class="text-center py-8">
-                        <ClockIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-3" />
-                        <p class="text-mun-gray-500">No recent activity</p>
-                    </div>
-                </div>
-
-                <!-- Active Events -->
-                <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-mun-gray-900">Active Events</h3>
-                        <router-link to="/admin/events"
-                            class="text-sm text-mun-blue-600 hover:text-mun-blue-700 font-medium">
-                            Manage events →
-                        </router-link>
-                    </div>
-
-                    <div v-if="isLoadingEvents" class="space-y-3">
-                        <div v-for="i in 3" :key="i" class="animate-pulse">
-                            <div class="h-16 bg-mun-gray-200 rounded-lg"></div>
+                        <div v-else class="text-center py-8">
+                            <CalendarDaysIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-3" />
+                            <p class="text-mun-gray-500 mb-2">No active events</p>
+                            <button @click="$router.push('/admin/events')"
+                                class="text-sm text-mun-blue-600 hover:text-mun-blue-700 font-medium">
+                                Create your first event
+                            </button>
                         </div>
-                    </div>
-
-                    <div v-else-if="activeEvents.length > 0" class="space-y-3">
-                        <div v-for="event in activeEvents" :key="event._id"
-                            class="border border-mun-gray-200 rounded-lg p-4 hover:border-mun-blue-300 transition-colors">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="font-semibold text-mun-gray-900">{{ event.name }}</h4>
-                                    <p class="text-sm text-mun-gray-600 mt-1">
-                                        {{ event.committees?.length || 0 }} committees •
-                                        {{ formatEventDate(event.startDate) }}
-                                    </p>
-                                </div>
-                                <span
-                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    Active
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div v-else class="text-center py-8">
-                        <CalendarDaysIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-3" />
-                        <p class="text-mun-gray-500 mb-2">No active events</p>
-                        <button @click="$router.push('/admin/events')"
-                            class="text-sm text-mun-blue-600 hover:text-mun-blue-700 font-medium">
-                            Create your first event
-                        </button>
                     </div>
                 </div>
             </div>
@@ -325,6 +337,8 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useWebSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
+import { apiMethods } from '@/utils/api'
+import format from '@/utils/time'
 
 // Icons
 import {
@@ -340,10 +354,13 @@ import {
     UserIcon,
     CogIcon,
     HandRaisedIcon,
-    DocumentIcon
+    DocumentIcon,
+    ServerIcon,
+    PuzzlePieceIcon,
+    CloudIcon
 } from '@heroicons/vue/24/outline'
 
-// Stores and composables
+// Stores
 const router = useRouter()
 const authStore = useAuthStore()
 const wsStore = useWebSocketStore()
@@ -365,7 +382,8 @@ const stats = ref({
     activeCommittees: 0,
     registeredUsers: 0,
     activeUsers: 0,
-    documentsUploaded: 0
+    documentsUploaded: 0,
+    pendingModeration: 0
 })
 
 const systemHealth = ref({
@@ -374,9 +392,15 @@ const systemHealth = ref({
     websocket: true
 })
 
+const healthData = ref({
+    status: 'healthy',
+    uptime: 0,
+    version: '1.0.0',
+    modules: {},
+    services: {}
+})
+
 const responseTime = ref(0)
-const uptime = ref(99.9)
-const pendingModeration = ref(0)
 const recentActivity = ref([])
 const activeEvents = ref([])
 
@@ -389,20 +413,61 @@ const wsStatus = computed(() => {
     }
 })
 
-// Methods
+// Health status methods
+const getOverallHealthColor = () => {
+    if (healthData.value.status === 'healthy') return 'bg-green-500'
+    if (healthData.value.status === 'degraded') return 'bg-yellow-500'
+    return 'bg-red-500'
+}
+
+const getOverallHealthTextColor = () => {
+    if (healthData.value.status === 'healthy') return 'text-green-700'
+    if (healthData.value.status === 'degraded') return 'text-yellow-700'
+    return 'text-red-700'
+}
+
+const getOverallHealthStatus = () => {
+    if (healthData.value.status === 'healthy') return 'All Systems Operational'
+    if (healthData.value.status === 'degraded') return 'Some Issues Detected'
+    return 'Major Issues'
+}
+
+const getModuleStatusColor = (status) => {
+    return status === 'active' ? 'bg-green-500' : 'bg-red-500'
+}
+
+const getModuleStatusTextColor = (status) => {
+    return status === 'active' ? 'text-green-700' : 'text-red-700'
+}
+
+const getServiceStatusColor = (status) => {
+    const statusMap = {
+        'connected': 'bg-green-500',
+        'available': 'bg-green-500',
+        'cached': 'bg-blue-500',
+        'disconnected': 'bg-red-500',
+        'unavailable': 'bg-red-500'
+    }
+    return statusMap[status] || 'bg-gray-500'
+}
+
+const getServiceStatusTextColor = (status) => {
+    const statusMap = {
+        'connected': 'text-green-700',
+        'available': 'text-green-700',
+        'cached': 'text-blue-700',
+        'disconnected': 'text-red-700',
+        'unavailable': 'text-red-700'
+    }
+    return statusMap[status] || 'text-gray-700'
+}
+
+// API Methods
 const loadDashboardStats = async () => {
     try {
-        const response = await fetch('/api/admin/dashboard/stats', {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`
-            }
-        })
-
-        if (response.ok) {
-            const data = await response.json()
-            if (data.success) {
-                stats.value = { ...stats.value, ...data.stats }
-            }
+        const response = await apiMethods.get('/admin/dashboard/stats')
+        if (response?.data?.success) {
+            stats.value = { ...stats.value, ...response.data.stats }
         }
     } catch (error) {
         console.error('Failed to load dashboard stats:', error)
@@ -413,17 +478,9 @@ const loadDashboardStats = async () => {
 const loadRecentActivity = async () => {
     isLoadingActivity.value = true
     try {
-        const response = await fetch('/api/admin/dashboard/activity?limit=10', {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`
-            }
-        })
-
-        if (response.ok) {
-            const data = await response.json()
-            if (data.success) {
-                recentActivity.value = data.activities || []
-            }
+        const response = await apiMethods.get('/admin/dashboard/activity', { limit: 10 })
+        if (response?.data?.success) {
+            recentActivity.value = response.data.activities || []
         }
     } catch (error) {
         console.error('Failed to load recent activity:', error)
@@ -435,15 +492,9 @@ const loadRecentActivity = async () => {
 const loadActiveEvents = async () => {
     isLoadingEvents.value = true
     try {
-        const response = await fetch('/api/events?status=active', {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`
-            }
-        })
-
-        if (response.ok) {
-            const data = await response.json()
-            activeEvents.value = Array.isArray(data) ? data : data.events || []
+        const response = await apiMethods.get('/events', { status: 'active' })
+        if (response?.data) {
+            activeEvents.value = Array.isArray(response.data) ? response.data : response.data.events || []
         }
     } catch (error) {
         console.error('Failed to load active events:', error)
@@ -455,17 +506,20 @@ const loadActiveEvents = async () => {
 const loadSystemHealth = async () => {
     try {
         const startTime = Date.now()
-
-        const response = await fetch('/api/health', {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`
-            }
-        })
-
+        const response = await apiMethods.health.check()
         responseTime.value = Date.now() - startTime
 
-        if (response.ok) {
-            const data = await response.json()
+        if (response?.data) {
+            const data = response.data
+
+            healthData.value = {
+                status: data.status || 'unknown',
+                uptime: data.uptime || 0,
+                version: data.version || '1.0.0',
+                modules: data.modules || {},
+                services: data.services || {}
+            }
+
             systemHealth.value = {
                 api: true,
                 database: data.services?.database === 'connected',
@@ -477,6 +531,13 @@ const loadSystemHealth = async () => {
             api: false,
             database: false,
             websocket: false
+        }
+        healthData.value = {
+            status: 'unhealthy',
+            uptime: 0,
+            version: 'unknown',
+            modules: {},
+            services: {}
         }
     }
 }
@@ -506,18 +567,13 @@ const generateQRCodes = async () => {
 
     isGeneratingQR.value = true
     try {
-        // Get active committees first
-        const committeesResponse = await fetch('/api/committees?status=active', {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`
-            }
-        })
+        const committeesResponse = await apiMethods.get('/committees', { status: 'active' })
 
-        if (!committeesResponse.ok) {
+        if (!committeesResponse?.data) {
             throw new Error('Failed to fetch committees')
         }
 
-        const committeesData = await committeesResponse.json()
+        const committeesData = committeesResponse.data
         const committees = Array.isArray(committeesData) ? committeesData : committeesData.committees || []
 
         if (committees.length === 0) {
@@ -526,20 +582,10 @@ const generateQRCodes = async () => {
         }
 
         const committeeIds = committees.map(c => c._id)
+        const response = await apiMethods.post('/admin/committees/bulk-qr', { committeeIds })
 
-        // Bulk generate QR codes
-        const response = await fetch('/api/admin/committees/bulk-qr', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`
-            },
-            body: JSON.stringify({ committeeIds })
-        })
-
-        if (response.ok) {
-            const data = await response.json()
-            toast.success(`Generated QR codes for ${data.totalQRGenerated} countries`)
+        if (response?.data) {
+            toast.success(`Generated QR codes for ${response.data.totalQRGenerated} countries`)
         } else {
             throw new Error('QR generation failed')
         }
@@ -549,15 +595,6 @@ const generateQRCodes = async () => {
     } finally {
         isGeneratingQR.value = false
     }
-}
-
-// Utility functions
-const formatTime = (date) => {
-    return new Intl.DateTimeFormat('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    }).format(date)
 }
 
 const formatTimeAgo = (timestamp) => {
@@ -578,6 +615,19 @@ const formatEventDate = (dateString) => {
         day: 'numeric',
         year: 'numeric'
     }).format(date)
+}
+
+const formatUptime = (uptime) => {
+    if (!uptime) return '0s'
+
+    const days = Math.floor(uptime / 86400)
+    const hours = Math.floor((uptime % 86400) / 3600)
+    const minutes = Math.floor((uptime % 3600) / 60)
+
+    if (days > 0) return `${days}d ${hours}h`
+    if (hours > 0) return `${hours}h ${minutes}m`
+    if (minutes > 0) return `${minutes}m`
+    return `${Math.floor(uptime)}s`
 }
 
 const getActivityIcon = (type) => {
@@ -607,14 +657,12 @@ const getActivityIconClass = (type) => {
 // Lifecycle
 onMounted(async () => {
     try {
-        // Load all data in parallel for faster initial load
         await Promise.all([
             loadDashboardStats(),
             loadRecentActivity(),
             loadActiveEvents(),
             loadSystemHealth()
         ])
-
         lastUpdated.value = new Date()
     } catch (error) {
         console.error('Dashboard initialization error:', error)
@@ -623,7 +671,7 @@ onMounted(async () => {
         isInitialLoading.value = false
     }
 
-    // Set up auto-refresh interval (every 60 seconds)
+    // Auto-refresh interval (every 60 seconds)
     const refreshInterval = setInterval(async () => {
         if (!isRefreshing.value) {
             await loadSystemHealth()
@@ -631,7 +679,6 @@ onMounted(async () => {
         }
     }, 60000)
 
-    // Cleanup on unmount
     onUnmounted(() => {
         clearInterval(refreshInterval)
     })
@@ -644,7 +691,6 @@ onMounted(async () => {
     background: #f9fafb;
 }
 
-/* Performance optimized transitions */
 .transition-colors {
     transition: color 150ms ease-in-out, background-color 150ms ease-in-out, border-color 150ms ease-in-out;
 }
@@ -653,12 +699,10 @@ onMounted(async () => {
     transition: box-shadow 150ms ease-in-out;
 }
 
-/* Hover effects */
 .hover\:shadow-md:hover {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-/* Loading animations */
 @keyframes pulse {
 
     0%,
@@ -689,7 +733,6 @@ onMounted(async () => {
     animation: spin 1s linear infinite;
 }
 
-/* Responsive design */
 @media (max-width: 640px) {
     .admin-dashboard {
         padding: 1rem;

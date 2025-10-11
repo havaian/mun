@@ -1,46 +1,43 @@
 <template>
     <teleport to="body">
-        <div class="toast-container fixed top-4 right-4 z-50 space-y-2">
-            <transition-group name="toast" tag="div" class="space-y-2">
-                <div v-for="toast in toasts" :key="toast.id" :class="[
-                    'toast-item bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300',
-                    getToastClasses(toast.type),
-                    // Dynamic width based on content length
-                    getToastWidth(toast)
-                ]" @mouseenter="pauseTimer(toast.id)" @mouseleave="resumeTimer(toast.id)">
+        <div class="toast-container fixed top-4 right-4 z-50 space-y-3 pointer-events-none">
+            <transition-group name="toast" tag="div">
+                <div v-for="toast in toasts" :key="toast.id"
+                    class="toast-item pointer-events-auto relative max-w-sm w-full bg-white shadow-lg rounded-lg border overflow-hidden"
+                    :class="getBorderClass(toast.type)" @mouseenter="pauseTimer(toast.id)"
+                    @mouseleave="resumeTimer(toast.id)">
                     <div class="p-4">
-                        <div class="flex items-start">
+                        <div class="flex items-start space-x-3">
                             <!-- Icon -->
-                            <div class="flex-shrink-0" v-if="toast.showIcon !== false">
-                                <component :is="getToastIcon(toast.type)" :class="[
-                                    'h-5 w-5',
-                                    getIconClasses(toast.type)
+                            <div class="flex-shrink-0">
+                                <component :is="getIconComponent(toast.type)" :class="[
+                                    'h-6 w-6',
+                                    getIconClass(toast.type)
                                 ]" />
                             </div>
 
-                            <!-- Content - Fixed width constraint issue -->
-                            <div class="ml-3 flex-1 min-w-0">
-                                <p v-if="toast.title" class="text-sm font-medium text-gray-900 break-words">
-                                    {{ toast.title }}
-                                </p>
-                                <p :class="[
-                                    'text-sm text-gray-500 break-words',
-                                    { 'mt-1': toast.title }
-                                ]">
+                            <!-- Content -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between mb-1" v-if="toast.title">
+                                    <h4 class="text-sm font-semibold text-gray-900">{{ toast.title }}</h4>
+                                </div>
+                                <p class="text-sm text-gray-700" :class="{ 'font-medium': !toast.title }">
                                     {{ toast.message }}
                                 </p>
 
-                                <!-- Action button if provided -->
+                                <!-- Action button -->
                                 <div v-if="toast.action" class="mt-3">
-                                    <button @click="handleAction(toast)"
-                                        class="text-sm font-medium text-mun-blue hover:text-mun-blue-dark focus:outline-none focus:underline">
-                                        {{ toast.action.text }}
+                                    <button @click="handleAction(toast)" :class="[
+                                        'text-sm font-medium rounded-md px-3 py-1.5 transition-colors',
+                                        getActionButtonClass(toast.type)
+                                    ]">
+                                        {{ toast.action.label }}
                                     </button>
                                 </div>
                             </div>
 
                             <!-- Close button -->
-                            <div class="ml-4 flex-shrink-0 flex" v-if="toast.closable !== false">
+                            <div class="flex-shrink-0 flex" v-if="toast.closable !== false">
                                 <button @click="removeToast(toast.id)"
                                     class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-mun-blue transition-colors">
                                     <span class="sr-only">Close</span>
@@ -49,14 +46,14 @@
                             </div>
                         </div>
 
-                        <!-- Progress bar for timed toasts - Fixed real-time updates -->
-                        <div v-if="toast.duration > 0 && toast.showProgress !== false" class="mt-2 -mb-1 -mx-4">
+                        <!-- Progress bar for timed toasts - Fixed timing and hover behavior -->
+                        <div v-if="toast.duration > 0 && toast.showProgress !== false" class="mt-3 -mb-1 -mx-4">
                             <div class="h-1 bg-gray-100">
                                 <div :class="[
                                     'h-1 transition-all ease-linear',
                                     getProgressClasses(toast.type)
                                 ]" :style="{
-                                    width: `${Math.max(0, currentProgress[toast.id] || 0)}%`,
+                                    width: `${Math.max(0, Math.min(100, currentProgress[toast.id] || 100))}%`,
                                     transitionDuration: toast.paused ? '0ms' : '100ms'
                                 }"></div>
                             </div>
@@ -84,7 +81,7 @@ const { toast: toastService } = useToast()
 // Access reactive toasts from the service
 const toasts = computed(() => toastService.toasts)
 
-// Reactive progress tracking - Fixed status bar updates
+// Reactive progress tracking - Fixed for proper timing and hover behavior
 const currentProgress = ref({})
 
 // Toast type configurations
@@ -93,70 +90,56 @@ const toastConfig = {
         borderClass: 'border-l-4 border-green-400',
         iconComponent: CheckCircleIcon,
         iconClass: 'text-green-400',
-        progressClass: 'bg-green-400'
+        progressClass: 'bg-green-400',
+        actionClass: 'bg-green-50 hover:bg-green-100 text-green-700'
     },
     error: {
         borderClass: 'border-l-4 border-red-400',
         iconComponent: ExclamationCircleIcon,
         iconClass: 'text-red-400',
-        progressClass: 'bg-red-400'
+        progressClass: 'bg-red-400',
+        actionClass: 'bg-red-50 hover:bg-red-100 text-red-700'
     },
     warning: {
         borderClass: 'border-l-4 border-yellow-400',
         iconComponent: ExclamationTriangleIcon,
         iconClass: 'text-yellow-400',
-        progressClass: 'bg-yellow-400'
+        progressClass: 'bg-yellow-400',
+        actionClass: 'bg-yellow-50 hover:bg-yellow-100 text-yellow-700'
     },
     info: {
         borderClass: 'border-l-4 border-blue-400',
         iconComponent: InformationCircleIcon,
         iconClass: 'text-blue-400',
-        progressClass: 'bg-blue-400'
+        progressClass: 'bg-blue-400',
+        actionClass: 'bg-blue-50 hover:bg-blue-100 text-blue-700'
     }
 }
 
-// Methods
-const getToastClasses = (type) => {
-    return toastConfig[type]?.borderClass || toastConfig.info.borderClass
-}
+// Helper functions for styling
+const getBorderClass = (type) => toastConfig[type]?.borderClass || toastConfig.info.borderClass
+const getIconComponent = (type) => toastConfig[type]?.iconComponent || toastConfig.info.iconComponent
+const getIconClass = (type) => toastConfig[type]?.iconClass || toastConfig.info.iconClass
+const getProgressClasses = (type) => toastConfig[type]?.progressClass || toastConfig.info.progressClass
+const getActionButtonClass = (type) => toastConfig[type]?.actionClass || toastConfig.info.actionClass
 
-const getToastIcon = (type) => {
-    return toastConfig[type]?.iconComponent || toastConfig.info.iconComponent
-}
-
-const getIconClasses = (type) => {
-    return toastConfig[type]?.iconClass || toastConfig.info.iconClass
-}
-
-const getProgressClasses = (type) => {
-    return toastConfig[type]?.progressClass || toastConfig.info.progressClass
-}
-
-// Fixed: Dynamic width calculation based on content
-const getToastWidth = (toast) => {
-    const messageLength = (toast.title || '').length + (toast.message || '').length
-
-    if (messageLength > 120) {
-        return 'w-96 max-w-md' // Wider for longer messages
-    } else if (messageLength > 60) {
-        return 'w-80 max-w-sm' // Medium width
-    } else {
-        return 'w-72 max-w-xs' // Compact for short messages
-    }
-}
-
-// Fixed: Progress calculation with proper real-time updates
+// Progress calculation - Fixed for accurate timing and hover behavior
 const calculateProgress = (toast) => {
-    if (!toast.duration || toast.duration <= 0) return 0
+    if (!toast.duration || toast.duration <= 0) return 100
 
-    const elapsed = Date.now() - toast.timestamp - (toast.pausedTime || 0)
-    const progress = Math.max(0, Math.min(100, (elapsed / toast.duration) * 100))
+    const now = Date.now()
 
-    // Ensure progress goes all the way to 0 before removal
-    const remainingProgress = 100 - progress
+    // If toast is paused, calculate progress up to pause time
+    if (toast.paused) {
+        const elapsedBeforePause = (toast.pausedAt || now) - toast.timestamp - (toast.previousPausedTime || 0)
+        return Math.max(0, Math.min(100, ((toast.duration - elapsedBeforePause) / toast.duration) * 100))
+    }
 
-    // If less than 1% remaining, show 0 to ensure smooth completion
-    return remainingProgress < 1 ? 0 : Math.round(remainingProgress)
+    // Calculate total elapsed time including previous pauses
+    const elapsed = now - toast.timestamp - (toast.totalPausedTime || 0)
+    const remainingProgress = ((toast.duration - elapsed) / toast.duration) * 100
+
+    return Math.max(0, Math.min(100, remainingProgress))
 }
 
 const removeToast = (id) => {
@@ -178,7 +161,7 @@ const handleAction = (toast) => {
 
 const pauseTimer = (id) => {
     const toast = toasts.value.find(t => t.id === id)
-    if (toast && toast.duration > 0) {
+    if (toast && toast.duration > 0 && !toast.paused) {
         toast.paused = true
         toast.pausedAt = Date.now()
     }
@@ -187,12 +170,14 @@ const pauseTimer = (id) => {
 const resumeTimer = (id) => {
     const toast = toasts.value.find(t => t.id === id)
     if (toast && toast.paused) {
+        const pauseDuration = Date.now() - (toast.pausedAt || 0)
+        toast.totalPausedTime = (toast.totalPausedTime || 0) + pauseDuration
         toast.paused = false
-        toast.pausedTime = (toast.pausedTime || 0) + (Date.now() - (toast.pausedAt || 0))
+        toast.pausedAt = null
     }
 }
 
-// Fixed: Progress update interval with proper cleanup
+// Progress update with accurate timing and proper hover behavior
 let progressInterval = null
 
 const updateProgress = () => {
@@ -201,15 +186,10 @@ const updateProgress = () => {
             const progress = calculateProgress(toast)
             currentProgress.value[toast.id] = progress
 
-            // Remove toast when progress reaches 0 OR time has actually expired
-            const elapsed = Date.now() - toast.timestamp - (toast.pausedTime || 0)
-            const hasExpired = elapsed >= toast.duration
-
-            if ((progress <= 0 || hasExpired) && !toast.paused) {
-                // Small delay to ensure progress bar reaches 0 visually
-                setTimeout(() => {
-                    removeToast(toast.id)
-                }, 50)
+            // Only remove toast if NOT paused AND progress has reached 0
+            // This prevents removal during hover even if time has technically elapsed
+            if (!toast.paused && progress <= 0) {
+                removeToast(toast.id)
             }
         }
     })
@@ -220,6 +200,10 @@ watch(toasts, (newToasts, oldToasts) => {
     newToasts.forEach(toast => {
         if (toast.duration > 0 && !(toast.id in currentProgress.value)) {
             currentProgress.value[toast.id] = 100
+            // Initialize pause tracking properties
+            toast.paused = false
+            toast.totalPausedTime = 0
+            toast.pausedAt = null
         }
     })
 
@@ -235,7 +219,7 @@ watch(toasts, (newToasts, oldToasts) => {
 }, { immediate: true })
 
 onMounted(() => {
-    // Update progress bars every 50ms for smoother animation
+    // Update progress bars every 50ms for smooth animation
     progressInterval = setInterval(updateProgress, 50)
 })
 
@@ -247,7 +231,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Toast animations */
+/* Toast animations - avoiding transform: scale per user preference */
 .toast-enter-active {
     transition: all 0.3s ease-out;
 }
@@ -258,25 +242,25 @@ onUnmounted(() => {
 
 .toast-enter-from {
     opacity: 0;
-    transform: translateX(100%) scale(0.95);
+    transform: translateX(100%);
 }
 
 .toast-leave-to {
     opacity: 0;
-    transform: translateX(100%) scale(0.95);
+    transform: translateX(100%);
 }
 
 .toast-move {
     transition: transform 0.3s ease;
 }
 
-/* Hover effects */
+/* Hover effects - avoiding transform: scale as per user preference */
 .toast-item {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .toast-item:hover {
-    transform: translateX(-4px) scale(1.02);
+    transform: translateX(-4px);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 

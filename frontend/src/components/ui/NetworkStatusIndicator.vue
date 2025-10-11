@@ -6,29 +6,21 @@
                 <div class="max-w-7xl mx-auto px-4 py-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-3">
-                            <!-- Offline Icon -->
                             <div class="flex-shrink-0">
                                 <WifiIcon class="w-5 h-5 text-white animate-pulse" />
                             </div>
-
-                            <!-- Status Message -->
                             <div>
-                                <p class="font-medium text-sm">
-                                    No Internet Connection
-                                </p>
+                                <p class="font-medium text-sm">No Internet Connection</p>
                                 <p class="text-xs text-mun-red-100">
                                     Some features may not work properly. Trying to reconnect...
                                 </p>
                             </div>
                         </div>
 
-                        <!-- Connection Attempts -->
                         <div class="flex items-center space-x-4">
                             <div v-if="reconnectAttempts > 0" class="text-xs text-mun-red-100">
                                 Attempt {{ reconnectAttempts }}
                             </div>
-
-                            <!-- Manual Retry Button -->
                             <button @click="checkConnection" :disabled="isChecking"
                                 class="text-xs font-medium text-white hover:text-mun-red-100 focus:outline-none focus:underline disabled:opacity-50 transition-colors">
                                 <ArrowPathIcon v-if="isChecking" class="w-4 h-4 animate-spin" />
@@ -124,6 +116,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAppStore } from '@/stores/app'
 import { useWebSocketStore } from '@/stores/websocket'
+import { apiMethods } from '@/utils/api'
 import {
     WifiIcon,
     ArrowPathIcon,
@@ -176,24 +169,15 @@ const checkConnection = async () => {
     isChecking.value = true
 
     try {
-        // Try to fetch a small resource to test connectivity
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 5000)
-
         const startTime = Date.now()
 
-        const response = await fetch('/api/health', {
-            method: 'GET',
-            signal: controller.signal,
-            cache: 'no-cache'
-        })
-
-        clearTimeout(timeoutId)
+        // Use the proper API method instead of fetch
+        const response = await apiMethods.health.check()
 
         const endTime = Date.now()
         roundTripTime.value = endTime - startTime
 
-        if (response.ok) {
+        if (response?.data) {
             handleConnectionRestored()
         } else {
             throw new Error('Health check failed')
@@ -326,11 +310,8 @@ const performSpeedTest = async () => {
     try {
         const startTime = Date.now()
 
-        // Try to fetch a small test resource
-        await fetch('/api/ping', {
-            method: 'GET',
-            cache: 'no-cache'
-        })
+        // Use API method for speed test instead of fetch
+        await apiMethods.health.check()
 
         const endTime = Date.now()
         roundTripTime.value = endTime - startTime

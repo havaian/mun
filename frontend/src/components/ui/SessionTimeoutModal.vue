@@ -47,7 +47,7 @@
                                             timeRemaining <= 30 ? 'text-mun-red-600' :
                                                 timeRemaining <= 60 ? 'text-mun-yellow-600' : 'text-mun-gray-700'
                                         ]">
-                                            {{ formatTime(timeRemaining) }}
+                                            {{ format.time(timeRemaining) }}
                                         </div>
                                         <div class="text-xs text-mun-gray-500 mt-1">
                                             remaining
@@ -123,6 +123,7 @@ import {
     ExclamationTriangleIcon,
     ArrowRightOnRectangleIcon
 } from '@heroicons/vue/24/outline'
+import format from '@/utils/time'
 
 const authStore = useAuthStore()
 const toast = useToast()
@@ -154,13 +155,6 @@ const strokeDashoffset = computed(() => {
     const progress = timeRemaining.value / (props.warningMinutes * 60)
     return circumference.value * (1 - progress)
 })
-
-// Methods
-const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-}
 
 const formatSessionDuration = () => {
     const duration = Math.floor((Date.now() - sessionStartTime.value) / 1000 / 60)
