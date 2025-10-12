@@ -1,10 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gradient-mun relative overflow-hidden">
-    <!-- Grid Pattern Background -->
-    <div class="absolute inset-0 bg-grid-pattern opacity-3"></div>
-
+  <div class="min-h-screen bg-gradient-mun">
     <!-- Simple Auth Content - No navbar needed for guests -->
-    <div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative z-10">
+    <div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div class="bg-white backdrop-blur-sm py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-white/20">
           <!-- Dynamic route content -->
@@ -35,20 +32,14 @@ onMounted(() => {
     'EmailBinding': 'Complete Registration',
     'LanguageSelection': 'Select Language'
   }
-
+  
   const pageTitle = titleMap[route.name] || 'Authentication'
   document.title = `${pageTitle} | MUN Platform`
 })
 </script>
 
 <style scoped>
-/* Grid Pattern Background - Exact same as 404 page */
-.bg-grid-pattern {
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
+/* Removed pt-16 since no navbar */
 
 /* Glass morphism effect for auth card */
 .bg-white\/80 {
@@ -86,7 +77,7 @@ onMounted(() => {
   .sm\:rounded-2xl {
     border-radius: 0;
   }
-
+  
   .sm\:px-10 {
     padding-left: 1rem;
     padding-right: 1rem;
