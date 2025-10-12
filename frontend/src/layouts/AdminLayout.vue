@@ -224,7 +224,7 @@ const toast = useToast()
 
 // State
 const sidebarCollapsed = ref(false)
-const unreadNotifications = ref(2)
+const unreadNotifications = ref(0)
 
 // System data
 const stats = ref({
@@ -243,8 +243,8 @@ const systemHealth = ref({
     websocket: true
 })
 
-const responseTime = ref(45)
-const activeConnections = ref(12)
+const responseTime = ref(0)
+const activeConnections = ref(0)
 
 // Methods
 const toggleSidebar = () => {
@@ -274,13 +274,13 @@ const loadAdminData = async () => {
         // Load admin-specific data
         // This would typically come from your API
         stats.value = {
-            totalEvents: 15,
-            activeEvents: 3,
-            totalCommittees: 8,
-            activeCommittees: 5,
-            totalUsers: 245,
-            activeUsers: 67,
-            documentsUploaded: 156
+            totalEvents: 0,
+            activeEvents: 0,
+            totalCommittees: 0,
+            activeCommittees: 0,
+            totalUsers: 0,
+            activeUsers: 0,
+            documentsUploaded: 0
         }
     } catch (error) {
         console.error('Failed to load admin data:', error)

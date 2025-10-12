@@ -2,53 +2,10 @@
   <div class="min-h-screen bg-gradient-mun">
     <!-- Simple Auth Content - No navbar needed for guests -->
     <div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div class="sm:mx-auto sm:w-full sm:max-w-md">
-        <!-- Logo and branding -->
-        <div class="flex justify-center">
-          <div class="w-16 h-16 bg-mun-blue rounded-2xl flex items-center justify-center shadow-lg">
-            <span class="text-white font-bold text-2xl">
-                <img src="/logo.svg" alt="" class="w-8 h-8 text-white">
-            </span>
-          </div>
-        </div>
-        <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-mun-gray-900">
-          MUN Platform
-        </h2>
-        <p class="mt-2 text-center text-sm text-mun-gray-600">
-          Model United Nations Management System
-        </p>
-      </div>
-
       <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div class="bg-white backdrop-blur-sm py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-white/20">
           <!-- Dynamic route content -->
           <router-view />
-        </div>
-        
-        <!-- Footer links for auth pages -->
-        <div class="mt-6 text-center">
-          <div class="flex items-center justify-center space-x-6 text-sm">
-            <router-link
-              to="/auth/help"
-              class="text-mun-gray-500 hover:text-mun-gray-700 transition-colors"
-            >
-              Need Help?
-            </router-link>
-            <span class="text-mun-gray-300">•</span>
-            <router-link
-              to="/auth/support"
-              class="text-mun-gray-500 hover:text-mun-gray-700 transition-colors"
-            >
-              Support
-            </router-link>
-            <span class="text-mun-gray-300">•</span>
-            <router-link
-              to="/about"
-              class="text-mun-gray-500 hover:text-mun-gray-700 transition-colors"
-            >
-              About
-            </router-link>
-          </div>
         </div>
       </div>
     </div>

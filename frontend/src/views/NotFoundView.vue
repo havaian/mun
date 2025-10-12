@@ -1,117 +1,49 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-slate-900 via-mun-blue-900 to-indigo-900 relative overflow-hidden">
-        <!-- Subtle Background Elements -->
-        <div class="absolute inset-0">
-            <!-- Clean floating orbs -->
-            <div class="absolute top-1/4 left-1/4 w-32 h-32 bg-mun-blue-400/10 rounded-full blur-xl animate-float-slow">
-            </div>
-            <div class="absolute top-3/4 right-1/4 w-48 h-48 bg-blue-400/8 rounded-full blur-2xl animate-float-slower">
-            </div>
-            <div class="absolute top-1/2 left-3/4 w-24 h-24 bg-cyan-400/12 rounded-full blur-lg animate-float"></div>
+    <div class="min-h-screen bg-gradient-mun relative overflow-hidden">
+        <!-- Grid Pattern Background -->
+        <div class="absolute inset-0 bg-grid-pattern opacity-3"></div>
 
-            <!-- Minimal grid -->
-            <div class="absolute inset-0 bg-grid-pattern opacity-3"></div>
+        <!-- Simple Auth Content - No navbar needed for guests -->
+        <div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative z-10">
+            <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+                <div
+                    class="bg-white backdrop-blur-sm py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-white/20">
+                    <!-- Dynamic route content -->
+                    <router-view />
+                </div>
+            </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="relative z-10 min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
-            <div class="max-w-2xl w-full text-center">
-                <!-- 404 Display -->
-                <div class="mb-12">
-                    <div class="relative inline-block">
-                        <h1
-                            class="text-8xl sm:text-9xl lg:text-[10rem] font-black text-white/90 select-none leading-none">
-                            404
-                        </h1>
-                    </div>
-                </div>
-
-                <!-- Simple message -->
-                <div class="mb-12 space-y-4">
-                    <h2 class="text-3xl sm:text-4xl font-bold text-white">
-                        Page Not Found
-                    </h2>
-
-                    <p class="text-lg sm:text-xl text-white/80 max-w-md mx-auto">
-                        The page you're looking for doesn't exist or has been moved.
-                    </p>
-                </div>
-
-                <!-- Clean actions -->
-                <div class="space-y-4">
-                    <!-- Primary button -->
-                    <div class="flex justify-center">
-                        <button @click="goBack"
-                            class="bg-mun-blue-600 hover:bg-mun-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-200 shadow-lg">
-                            ← Go Back
-                        </button>
-                    </div>
-
-                    <!-- Secondary actions -->
-                    <div class="flex flex-col sm:flex-row gap-3 justify-center max-w-sm mx-auto">
-                        <button @click="goToDashboard"
-                            class="text-white/80 hover:text-white font-medium py-2 px-4 rounded-lg hover:bg-white/10 transition-colors">
-                            {{ getDashboardText() }}
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="mt-16 text-center">
-                    <div
-                        class="mx-auto w-16 h-16 bg-mun-blue rounded-full flex items-center justify-center mb-4 animate-float">
-                        <img src="/logo.svg" alt="" class="w-8 h-8 text-white">
-                    </div>
-                    <div class="text-white/40 text-sm font-medium">
-                        MUN.UZ
-                    </div>
-                </div>
-            </div>
+        <!-- Background decoration -->
+        <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+            <div class="absolute -top-40 -right-32 w-80 h-80 bg-mun-blue-400/20 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-40 -left-32 w-80 h-80 bg-mun-purple-400/20 rounded-full blur-3xl"></div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 
-const router = useRouter()
-const authStore = useAuthStore()
+const route = useRoute()
 
-// Methods
-const getDashboardText = () => {
-    if (!authStore.isAuthenticated) {
-        return 'Login'
+// Set page title based on route
+onMounted(() => {
+    const titleMap = {
+        'Login': 'Sign In',
+        'QRLogin': 'QR Code Login',
+        'EmailBinding': 'Complete Registration',
+        'LanguageSelection': 'Select Language'
     }
 
-    return 'Dashboard'
-}
-
-const goToDashboard = () => {
-    if (!authStore.isAuthenticated) {
-        router.push({ name: 'Login' })
-        return
-    }
-
-    const dashboardRoute = authStore.getDashboardRoute()
-    router.push({ name: dashboardRoute })
-}
-
-const goBack = () => {
-    if (window.history.length > 2) {
-        router.go(-1)
-    } else {
-        goToDashboard()
-    }
-}
-
-const goToLogin = () => {
-    router.push({ name: 'Login' })
-}
+    const pageTitle = titleMap[route.name] || 'Authentication'
+    document.title = `${pageTitle} | MUN Platform`
+})
 </script>
 
 <style scoped>
-/* Grid Pattern Background */
+/* Grid Pattern Background - Exact same as 404 page */
 .bg-grid-pattern {
     background-image:
         linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
@@ -119,62 +51,46 @@ const goToLogin = () => {
     background-size: 40px 40px;
 }
 
-/* Simple animations */
-@keyframes float {
-
-    0%,
-    100% {
-        transform: translateY(0px);
-    }
-
-    50% {
-        transform: translateY(-10px);
-    }
+/* Glass morphism effect for auth card */
+.bg-white\/80 {
+    background-color: rgba(255, 255, 255, 0.8);
 }
 
-@keyframes float-slow {
+.backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+}
 
-    0%,
-    100% {
-        transform: translateY(0px);
+/* Gradient background */
+.bg-gradient-mun {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f4ff 100%);
+}
+
+/* Transition optimizations */
+.transition-colors {
+    transition-property: color, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}
+
+/* Blur effects for background decoration */
+.blur-3xl {
+    filter: blur(64px);
+}
+
+/* Z-index management */
+.-z-10 {
+    z-index: -10;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .sm\:rounded-2xl {
+        border-radius: 0;
     }
 
-    50% {
-        transform: translateY(-15px);
-    }
-}
-
-@keyframes float-slower {
-
-    0%,
-    100% {
-        transform: translateY(0px);
-    }
-
-    50% {
-        transform: translateY(-20px);
-    }
-}
-
-.animate-float {
-    animation: float 6s ease-in-out infinite;
-}
-
-.animate-float-slow {
-    animation: float-slow 8s ease-in-out infinite;
-}
-
-.animate-float-slower {
-    animation: float-slower 10s ease-in-out infinite;
-}
-
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-
-    .animate-float,
-    .animate-float-slow,
-    .animate-float-slower {
-        animation: none;
+    .sm\:px-10 {
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
 }
 </style>
