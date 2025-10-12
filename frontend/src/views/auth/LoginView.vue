@@ -91,9 +91,6 @@
                         </div>
 
                         <div class="text-center">
-                            <h2 class="text-xl font-semibold text-mun-gray-900 mb-2">Scan QR Code</h2>
-                            <p class="text-mun-gray-600 mb-6">Point your camera at the QR code to authenticate</p>
-
                             <!-- QR Scanner -->
                             <div class="mb-6">
                                 <!-- Camera Not Active State -->
