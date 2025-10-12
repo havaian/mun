@@ -573,7 +573,7 @@ const getFlagUrl = (countryCode) => {
 }
 
 const handleFlagError = (event) => {
-    event.target.src = '/placeholder-flag.svg'
+    event.target.src = '/placeholder-flag.png'
 }
 
 const generateQRToken = () => {
