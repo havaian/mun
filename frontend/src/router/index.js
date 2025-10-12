@@ -4,7 +4,6 @@ import { useAppStore } from '@/stores/app'
 
 // Import views
 const LoginView = () => import('@/views/auth/LoginView.vue')
-const QRLoginView = () => import('@/views/auth/QRLoginView.vue')
 const EmailBindingView = () => import('@/views/auth/EmailBindingView.vue')
 const LanguageSelectionView = () => import('@/views/auth/LanguageSelectionView.vue')
 
@@ -45,16 +44,6 @@ const routes = [
         component: LoginView,
         meta: {
           title: 'Login',
-          requiresAuth: false,
-          hideForAuthenticated: true
-        }
-      },
-      {
-        path: 'qr-login',
-        name: 'QRLogin',
-        component: QRLoginView,
-        meta: {
-          title: 'QR Login',
           requiresAuth: false,
           hideForAuthenticated: true
         }
