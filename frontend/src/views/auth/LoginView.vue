@@ -413,15 +413,12 @@ const startCamera = async () => {
         await nextTick()
 
         if (videoElement.value) {
-            console.log('Video element found, setting stream')
             videoElement.value.srcObject = stream.value
 
             // Wait for video to be ready
             await new Promise((resolve) => {
                 videoElement.value.onloadedmetadata = () => {
-                    console.log('Video metadata loaded, starting playback')
                     videoElement.value.play().then(() => {
-                        console.log('Video playing successfully')
                         startScanning()
                         resolve()
                     }).catch(err => {
@@ -504,9 +501,7 @@ const tryFallbackCamera = async () => {
             videoElement.value.srcObject = stream.value
             await new Promise((resolve) => {
                 videoElement.value.onloadedmetadata = () => {
-                    console.log('Fallback video metadata loaded')
                     videoElement.value.play().then(() => {
-                        console.log('Fallback video playing successfully')
                         isCameraActive.value = true
                         startScanning()
                         resolve()
@@ -593,7 +588,7 @@ const processQRCode = async (code) => {
         isQRProcessing.value = true
 
         // Process the QR code with your authentication logic
-        const response = await authStore.authenticateWithQRCode(code)
+        const response = await authStore.qrLogin(code)
 
         if (response.success) {
             toast.success('Authentication successful!')
