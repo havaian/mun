@@ -12,6 +12,7 @@ import Modal from './plugins/modal'
 import LoadingSpinner from './components/ui/LoadingSpinner.vue'
 import AppButton from './components/ui/AppButton.vue'
 import AppCard from './components/ui/AppCard.vue'
+import SleekSelect from './components/ui/SleekSelect.vue'
 
 // Initialize Vue app
 const app = createApp(App)
@@ -26,6 +27,7 @@ app.use(Modal)
 app.component('LoadingSpinner', LoadingSpinner)
 app.component('AppButton', AppButton)
 app.component('AppCard', AppCard)
+app.component('SleekSelect', SleekSelect)
 
 // Make toast globally available on window object for easy access
 window.toast = {
