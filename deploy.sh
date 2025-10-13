@@ -7,7 +7,6 @@ echo "🚀 Starting deployment process..."
 
 # NFS Media Setup Function
 setup_nfs_media() {
-    # Extract project path from current directory
     PROJECT_PATH=$(pwd | sed 's|.*/projects/||')
     
     if [ -z "$PROJECT_PATH" ]; then
@@ -15,44 +14,31 @@ setup_nfs_media() {
         return 1
     fi
     
-    # Check NFS mount
     if ! mountpoint -q /app-media; then
         echo "WARNING: NFS media mount not available, skipping media setup"
         return 0
     fi
     
-    # Create project media directory on NFS
     NFS_PROJECT_DIR="/app-media/${PROJECT_PATH}"
     mkdir -p "$NFS_PROJECT_DIR"
     
-    echo "Created NFS media directory: $NFS_PROJECT_DIR"
-    
-    # Setup media symlinks for /uploads structure
-    if [ -d "./uploads" ]; then
-        # Check if already symlinked
-        if [ -L "./uploads" ] && [ "$(readlink ./uploads)" = "$NFS_PROJECT_DIR" ]; then
-            echo "Media symlink already configured: ./uploads -> $NFS_PROJECT_DIR"
-        else
-            # If it's a regular directory with files, migrate them first
-            if [ -d "./uploads" ] && [ ! -L "./uploads" ]; then
-                echo "Migrating existing files from ./uploads to NFS..."
-                # Copy all contents to NFS, preserving structure
-                cp -r ./uploads/* "$NFS_PROJECT_DIR/" 2>/dev/null || true
-                # Remove the original directory
-                sudo rm -rf "./uploads"
-                echo "Files migrated to $NFS_PROJECT_DIR"
-            fi
-            
-            # Create the symlink
-            ln -sf "$NFS_PROJECT_DIR" "./uploads"
-            echo "Linked media: ./uploads -> $NFS_PROJECT_DIR"
-        fi
-        
-        # Ensure any subdirectories that exist in the project are also on NFS
-        if [ -d "$NFS_PROJECT_DIR" ]; then
-            echo "NFS media directory ready with subdirectories preserved"
-        fi
+    # Check if uploads is already properly symlinked
+    if [ -L "./uploads" ] && [ "$(readlink ./uploads)" = "$NFS_PROJECT_DIR" ]; then
+        echo "NFS media already configured: ./uploads -> $NFS_PROJECT_DIR"
+        return 0
     fi
+    
+    # Only migrate if it's a regular directory
+    if [ -d "./uploads" ] && [ ! -L "./uploads" ]; then
+        echo "Migrating uploads directory to NFS"
+        cp -r ./uploads/* "$NFS_PROJECT_DIR/"
+        rm -rf "./uploads"
+    fi
+    
+    # Create/fix symlink
+    rm -f "./uploads" 2>/dev/null || true
+    ln -sf "$NFS_PROJECT_DIR" "./uploads"
+    echo "Linked media: ./uploads -> $NFS_PROJECT_DIR"
 }
 
 # Setup NFS media storage
