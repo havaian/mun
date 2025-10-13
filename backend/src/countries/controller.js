@@ -14,7 +14,7 @@ const {
 const logger = require('../utils/logger');
 
 // Flag storage configuration
-const FLAG_DIR = path.join(__dirname, '../../upload/flags');
+const FLAG_DIR = path.join(__dirname, '../../../uploads/flags');
 const FALLBACK_SVG_URL = 'https://flagcdn.com'; // Primary fallback
 const FALLBACK_SVG_URL_ALT = 'https://restcountries.com/data'; // Alternative fallback
 
@@ -250,7 +250,7 @@ const getAllFlags = async (req, res) => {
         if (!allFlagsCache || Object.keys(allFlagsCache).length === 0) {
             return res.status(503).json({
                 error: 'Flag cache not available. Please ensure flags are properly installed.',
-                hint: 'Upload SVG flags to the /upload/flags/ directory'
+                hint: 'Upload SVG flags to the /uploads/flags/ directory'
             });
         }
 
