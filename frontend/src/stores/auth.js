@@ -14,6 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
     const isLoading = ref(false)
     const lastActivity = ref(Date.now())
     const sessionWarningShown = ref(false)
+    const _isValidating = ref(false)
 
     // Computed
     const isAuthenticated = computed(() => !!token.value && !!user.value)
@@ -324,6 +325,7 @@ export const useAuthStore = defineStore('auth', () => {
         isLoading,
         lastActivity,
         sessionWarningShown,
+        _isValidating,
 
         // Computed
         isAuthenticated,

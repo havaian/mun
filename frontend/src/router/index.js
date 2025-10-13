@@ -255,6 +255,21 @@ router.beforeEach(async (to, from, next) => {
   try {
     // Check if route requires authentication
     if (to.meta.requiresAuth) {
+      // If we have a token but aren't authenticated yet, validate the session first
+      const token = localStorage.getItem('mun_token')
+      if (token && !authStore.isAuthenticated) {
+        console.log('🍻 Token exists but needs revalidation. Proceeding...')
+
+        try {
+          await authStore.validateSession()
+        } catch (error) {
+          console.error('Session validation failed:', error)
+          // Remove invalid token
+          localStorage.removeItem('mun_token')
+        }
+      }
+
+      // Now check authentication after validation
       if (!authStore.isAuthenticated) {
         return next({ name: 'Login', query: { redirect: to.fullPath } })
       }
