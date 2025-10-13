@@ -39,7 +39,7 @@ setup_nfs_media() {
                 # Copy all contents to NFS, preserving structure
                 cp -r ./uploads/* "$NFS_PROJECT_DIR/" 2>/dev/null || true
                 # Remove the original directory
-                rm -rf "./uploads"
+                sudo rm -rf "./uploads"
                 echo "Files migrated to $NFS_PROJECT_DIR"
             fi
             
