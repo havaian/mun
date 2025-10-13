@@ -7,6 +7,7 @@ const {
     authenticateToken,
     requirePresidium,
     requireDelegate,
+    requireAdmin,
     requireSameCommittee
 } = require('../auth/middleware');
 
