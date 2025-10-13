@@ -341,7 +341,7 @@ watch(() => props.modelValue, () => {
 
 /* Focus styles for better accessibility */
 .sleek-select__option:focus {
-    outline: 2px solid theme('colors.mun.blue.300');
+    outline: 2px solid #93c5fd;
     outline-offset: -2px;
 }
 
