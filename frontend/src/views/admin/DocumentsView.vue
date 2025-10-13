@@ -99,19 +99,35 @@
 
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Document Type</label>
-                    <DropdownSelect v-model="filters.type" :options="documentTypes" placeholder="All Types" size="md" />
+                    <select v-model="filters.type" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
+                        <option value="">All Types</option>
+                        <option v-for="type in documentTypes" :key="type.value" :value="type.value">
+                            {{ type.label }}
+                        </option>
+                    </select>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Committee</label>
-                    <DropdownSelect v-model="filters.committee" :options="committees" label-key="name" value-key="_id"
-                        placeholder="All Committees" size="md" />
+                    <select v-model="filters.committee" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
+                        <option value="">All Committees</option>
+                        <option v-for="committee in committees" :key="committee._id" :value="committee._id">
+                            {{ committee.name }}
+                        </option>
+                    </select>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Date Range</label>
-                    <DropdownSelect v-model="filters.dateRange" :options="dateRangeOptions" placeholder="All Time"
-                        size="md" />
+                    <select v-model="filters.dateRange" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
+                        <option value="">All Time</option>
+                        <option v-for="range in dateRangeOptions" :key="range.value" :value="range.value">
+                            {{ range.label }}
+                        </option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -147,28 +163,22 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Document
                                 </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Committee
                                 </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Delegate
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Author
                                 </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Status
                                 </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Uploaded
                                 </th>
-                                <th
-                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Actions
                                 </th>
                             </tr>
@@ -178,26 +188,23 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
-                                            <div
-                                                class="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                                            <div class="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
                                                 <DocumentTextIcon class="h-6 w-6 text-gray-500" />
                                             </div>
                                         </div>
                                         <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">{{ document.title ||
-                                                'Untitled' }}</div>
-                                            <div class="text-sm text-gray-500">{{ getDocumentTypeLabel(document.type) }}
-                                            </div>
+                                            <div class="text-sm font-medium text-gray-900">{{ document.title || document.filename || 'Untitled' }}</div>
+                                            <div class="text-sm text-gray-500">{{ getDocumentTypeLabel(document.type) }}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ document.committee?.name || 'N/A' }}
+                                    {{ document.committeeId?.name || 'N/A' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     <div>
-                                        <div class="font-medium">{{ document.delegate?.fullName || 'Unknown' }}</div>
-                                        <div class="text-gray-500">{{ document.delegate?.countryName || 'N/A' }}</div>
+                                        <div class="font-medium">{{ document.authorEmail || document.uploadedBy?.username || 'Unknown' }}</div>
+                                        <div class="text-gray-500">{{ document.countryName || 'N/A' }}</div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -209,21 +216,21 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ formatDate(document.createdAt) }}
+                                    {{ formatDate(document.createdAt || document.uploadedAt) }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
                                         <button @click="viewDocument(document)"
                                             class="text-mun-blue-600 hover:text-mun-blue-900 transition-colors">
-                                            View
-                                        </button>
-                                        <button v-if="document.status === 'pending'" @click="moderateDocument(document)"
-                                            class="text-purple-600 hover:text-purple-900 transition-colors">
-                                            Review
+                                            <EyeIcon class="w-4 h-4" />
                                         </button>
                                         <button @click="downloadDocument(document)"
                                             class="text-gray-600 hover:text-gray-900 transition-colors">
-                                            Download
+                                            <ArrowDownTrayIcon class="w-4 h-4" />
+                                        </button>
+                                        <button v-if="document.status === 'pending'" @click="moderateDocument(document)"
+                                            class="text-purple-600 hover:text-purple-900 transition-colors">
+                                            <CheckCircleIcon class="w-4 h-4" />
                                         </button>
                                     </div>
                                 </td>
@@ -275,11 +282,15 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useToast } from '@/plugins/toast'
 import { apiMethods } from '@/utils/api'
-import DropdownSelect from '@/components/ui/DropdownSelect.vue'
 
 // Icons
 import {
-    DocumentTextIcon, ArrowPathIcon, ClockIcon, CheckCircleIcon
+    DocumentTextIcon, 
+    ArrowPathIcon, 
+    ClockIcon, 
+    CheckCircleIcon, 
+    EyeIcon, 
+    ArrowDownTrayIcon
 } from '@heroicons/vue/24/outline'
 
 // Composables
@@ -317,10 +328,10 @@ const stats = ref({
 
 // Options
 const documentTypes = [
-    { label: 'Position Paper', value: 'position-paper' },
+    { label: 'Position Paper', value: 'position_paper' },
+    { label: 'Public Document', value: 'public_document' },
     { label: 'Resolution', value: 'resolution' },
-    { label: 'Amendment', value: 'amendment' },
-    { label: 'Working Paper', value: 'working-paper' }
+    { label: 'Amendment', value: 'amendment' }
 ]
 
 const dateRangeOptions = [
@@ -336,22 +347,38 @@ const loadDocuments = async () => {
     try {
         const params = {
             page: pagination.value.currentPage,
-            limit: pagination.value.pageSize,
-            ...filters.value
+            limit: pagination.value.pageSize
         }
 
-        const response = await apiMethods.get('/api/admin/documents', { params })
+        // Add filters to params
+        if (filters.value.search) {
+            params.search = filters.value.search
+        }
+        if (filters.value.type) {
+            params.type = filters.value.type
+        }
+        if (filters.value.committee) {
+            params.committeeId = filters.value.committee
+        }
+        if (filters.value.status && filters.value.status !== 'all') {
+            params.status = filters.value.status
+        }
+        if (filters.value.dateRange) {
+            params.dateRange = filters.value.dateRange
+        }
+
+        const response = await apiMethods.get('/api/documents', { params })
         if (response?.data) {
-            documents.value = response.data.documents || []
+            documents.value = response.data.documents || response.data || []
             pagination.value.total = response.data.total || 0
             pagination.value.totalPages = Math.ceil(pagination.value.total / pagination.value.pageSize)
 
-            // Update stats
-            stats.value = response.data.stats || stats.value
+            // Calculate stats from documents
+            calculateStats()
         }
     } catch (error) {
-        toast.error('Failed to load documents:', error)
         toast.error('Failed to load documents')
+        console.error('Failed to load documents:', error)
     } finally {
         isLoading.value = false
     }
@@ -364,7 +391,16 @@ const loadCommittees = async () => {
             committees.value = response.data.committees || response.data || []
         }
     } catch (error) {
-        toast.error('Failed to load committees:', error)
+        console.error('Failed to load committees:', error)
+    }
+}
+
+const calculateStats = () => {
+    stats.value = {
+        total: documents.value.length,
+        pending: documents.value.filter(d => d.status === 'pending').length,
+        approved: documents.value.filter(d => d.status === 'approved').length,
+        rejected: documents.value.filter(d => d.status === 'rejected').length
     }
 }
 
@@ -390,8 +426,8 @@ const nextPage = () => {
 }
 
 const viewDocument = (document) => {
-    // Open document in new tab or modal
-    window.open(`/api/documents/${document._id}/view`, '_blank')
+    // Open document preview in new tab
+    window.open(`/api/documents/${document._id}/preview`, '_blank')
 }
 
 const moderateDocument = (document) => {
@@ -407,7 +443,7 @@ const downloadDocument = (document) => {
 // Utility functions
 const getDocumentTypeLabel = (type) => {
     const typeObj = documentTypes.find(t => t.value === type)
-    return typeObj?.label || type
+    return typeObj?.label || type?.replace('_', ' ') || 'Document'
 }
 
 const getStatusLabel = (status) => {

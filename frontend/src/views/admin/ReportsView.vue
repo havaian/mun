@@ -26,8 +26,8 @@
                         <ChartBarIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-mun-gray-600">Total Reports</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.totalReports || 0 }}</p>
+                        <p class="text-sm font-medium text-mun-gray-600">Total Documents</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.totalDocuments || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -38,8 +38,8 @@
                         <DocumentArrowDownIcon class="w-6 h-6 text-mun-green-500" />
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-mun-gray-600">Downloads</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.totalDownloads || 0 }}</p>
+                        <p class="text-sm font-medium text-mun-gray-600">Active Users</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.activeUsers || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -50,8 +50,8 @@
                         <ClockIcon class="w-6 h-6 text-mun-yellow-500" />
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-mun-gray-600">Processing</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.processing || 0 }}</p>
+                        <p class="text-sm font-medium text-mun-gray-600">Active Events</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.activeEvents || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -62,51 +62,51 @@
                         <CalendarDaysIcon class="w-6 h-6 text-mun-red-500" />
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-mun-gray-600">This Month</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.thisMonth || 0 }}</p>
+                        <p class="text-sm font-medium text-mun-gray-600">Committees</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.totalCommittees || 0 }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Report Categories -->
+        <!-- Export Actions -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Event Reports -->
+            <!-- System Exports -->
             <div class="mun-card p-6">
-                <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Event Reports</h3>
+                <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">System Exports</h3>
                 <div class="space-y-3">
-                    <div v-for="report in eventReports" :key="report.id"
+                    <div v-for="exportItem in systemExports" :key="exportItem.id"
                         class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg hover:bg-mun-gray-100 transition-colors">
                         <div>
-                            <h4 class="font-medium text-mun-gray-900">{{ report.title }}</h4>
-                            <p class="text-sm text-mun-gray-600">{{ report.description }}</p>
+                            <h4 class="font-medium text-mun-gray-900">{{ exportItem.title }}</h4>
+                            <p class="text-sm text-mun-gray-600">{{ exportItem.description }}</p>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <button @click="generateReport(report)" :disabled="isGenerating[report.id]"
+                            <button @click="downloadExport(exportItem)" :disabled="isGenerating[exportItem.id]"
                                 class="btn-un-secondary px-3 py-2">
-                                <component :is="isGenerating[report.id] ? ArrowPathIcon : DocumentArrowDownIcon"
-                                    :class="['w-4 h-4', isGenerating[report.id] ? 'animate-spin' : '']" />
+                                <component :is="isGenerating[exportItem.id] ? ArrowPathIcon : DocumentArrowDownIcon"
+                                    :class="['w-4 h-4', isGenerating[exportItem.id] ? 'animate-spin' : '']" />
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- User Reports -->
+            <!-- Committee Exports -->
             <div class="mun-card p-6">
-                <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">User Reports</h3>
+                <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Committee Reports</h3>
                 <div class="space-y-3">
-                    <div v-for="report in userReports" :key="report.id"
+                    <div v-for="committee in committees" :key="committee._id"
                         class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg hover:bg-mun-gray-100 transition-colors">
                         <div>
-                            <h4 class="font-medium text-mun-gray-900">{{ report.title }}</h4>
-                            <p class="text-sm text-mun-gray-600">{{ report.description }}</p>
+                            <h4 class="font-medium text-mun-gray-900">{{ committee.name }}</h4>
+                            <p class="text-sm text-mun-gray-600">{{ committee.countries?.length || 0 }} countries</p>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <button @click="generateReport(report)" :disabled="isGenerating[report.id]"
+                            <button @click="exportCommitteeReport(committee)" :disabled="isGenerating[committee._id]"
                                 class="btn-un-secondary px-3 py-2">
-                                <component :is="isGenerating[report.id] ? ArrowPathIcon : DocumentArrowDownIcon"
-                                    :class="['w-4 h-4', isGenerating[report.id] ? 'animate-spin' : '']" />
+                                <component :is="isGenerating[committee._id] ? ArrowPathIcon : DocumentArrowDownIcon"
+                                    :class="['w-4 h-4', isGenerating[committee._id] ? 'animate-spin' : '']" />
                             </button>
                         </div>
                     </div>
@@ -116,65 +116,78 @@
 
         <!-- System Analytics -->
         <div class="mun-card p-6">
-            <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">System Analytics</h3>
+            <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">System Health</h3>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Usage Chart -->
+                <!-- System Status -->
                 <div>
-                    <h4 class="font-medium text-mun-gray-900 mb-3">Usage Over Time</h4>
-                    <div class="h-64 bg-mun-gray-50 rounded-lg flex items-center justify-center">
-                        <div class="text-center">
-                            <ChartBarIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-2" />
-                            <p class="text-mun-gray-500">Chart would be rendered here</p>
-                            <p class="text-sm text-mun-gray-400">Using Chart.js or similar</p>
+                    <h4 class="font-medium text-mun-gray-900 mb-3">System Status</h4>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-mun-gray-600">API Status</span>
+                            <span
+                                :class="['text-sm font-medium', systemHealth.api ? 'text-green-700' : 'text-red-700']">
+                                {{ systemHealth.api ? 'Healthy' : 'Issues' }}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-mun-gray-600">Database</span>
+                            <span
+                                :class="['text-sm font-medium', systemHealth.database ? 'text-green-700' : 'text-red-700']">
+                                {{ systemHealth.database ? 'Connected' : 'Disconnected' }}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-mun-gray-600">WebSocket</span>
+                            <span
+                                :class="['text-sm font-medium', systemHealth.websocket ? 'text-green-700' : 'text-red-700']">
+                                {{ systemHealth.websocket ? 'Active' : 'Inactive' }}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-mun-gray-600">Memory Usage</span>
+                            <span class="font-medium text-mun-gray-900">{{ systemHealth.memoryUsage || '--' }}%</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Performance Metrics -->
                 <div>
-                    <h4 class="font-medium text-mun-gray-900 mb-3">Performance Metrics</h4>
+                    <h4 class="font-medium text-mun-gray-900 mb-3">Performance</h4>
                     <div class="space-y-4">
                         <div class="flex items-center justify-between">
-                            <span class="text-sm text-mun-gray-600">Average Response Time</span>
-                            <span class="font-medium text-mun-gray-900">{{ performanceMetrics.avgResponseTime || '--'
-                            }}ms</span>
-                        </div>
-                        <div>
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="text-sm text-mun-gray-600">Server Uptime</span>
-                                <span class="font-medium text-mun-gray-900">{{ performanceMetrics.uptime || 0 }}%</span>
-                            </div>
-                            <div class="w-full bg-mun-gray-200 rounded-full h-2">
-                                <div class="bg-mun-green-500 h-2 rounded-full transition-all duration-300"
-                                    :style="{ width: `${performanceMetrics.uptime || 0}%` }"></div>
-                            </div>
+                            <span class="text-sm text-mun-gray-600">Uptime</span>
+                            <span class="font-medium text-mun-gray-900">{{ formatUptime(systemHealth.uptime) }}</span>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-mun-gray-600">Active Sessions</span>
-                            <span class="font-medium text-mun-gray-900">{{ performanceMetrics.activeSessions || 0
-                            }}</span>
+                            <span class="font-medium text-mun-gray-900">{{ stats.activeSessions || 0 }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-mun-gray-600">Avg Response Time</span>
+                            <span class="font-medium text-mun-gray-900">{{ systemHealth.avgResponseTime || '--'
+                                }}ms</span>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-mun-gray-600">Error Rate</span>
-                            <span class="font-medium text-mun-gray-900">{{ performanceMetrics.errorRate || 0 }}%</span>
+                            <span class="font-medium text-mun-gray-900">{{ systemHealth.errorRate || 0 }}%</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Reports History -->
+        <!-- Recent Activity -->
         <div class="mun-card">
             <div class="px-6 py-4 border-b border-mun-gray-200">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-mun-gray-900">Recent Reports</h3>
+                    <h3 class="text-lg font-semibold text-mun-gray-900">Recent Activity</h3>
                     <div class="flex items-center space-x-3">
-                        <select v-model="historyFilter" class="input-field max-w-xs">
-                            <option value="">All Reports</option>
-                            <option value="event">Event Reports</option>
-                            <option value="user">User Reports</option>
-                            <option value="system">System Reports</option>
-                            <option value="custom">Custom Reports</option>
+                        <select v-model="activityFilter" class="input-field max-w-xs" @change="loadActivity">
+                            <option value="">All Activities</option>
+                            <option value="login">Logins</option>
+                            <option value="document">Documents</option>
+                            <option value="voting">Voting</option>
+                            <option value="system">System</option>
                         </select>
                     </div>
                 </div>
@@ -184,103 +197,26 @@
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
             </div>
 
-            <div v-else-if="filteredReportHistory.length === 0" class="text-center py-12">
+            <div v-else-if="recentActivity.length === 0" class="text-center py-12">
                 <DocumentChartBarIcon class="mx-auto h-12 w-12 text-mun-gray-300" />
-                <h3 class="mt-4 text-lg font-medium text-mun-gray-900">No Reports Found</h3>
-                <p class="mt-2 text-mun-gray-600">Generate your first report to get started</p>
+                <h3 class="mt-4 text-lg font-medium text-mun-gray-900">No Recent Activity</h3>
+                <p class="mt-2 text-mun-gray-600">Activity will appear here as users interact with the system</p>
             </div>
 
-            <div v-else class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-mun-gray-200">
-                    <thead class="bg-mun-gray-50">
-                        <tr>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                                Report
-                            </th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                                Type
-                            </th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                                Generated
-                            </th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                                Status
-                            </th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                                Size
-                            </th>
-                            <th
-                                class="px-6 py-3 text-right text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-mun-gray-200">
-                        <tr v-for="report in paginatedReportHistory" :key="report.id"
-                            class="hover:bg-mun-gray-50 transition-colors">
-                            <td class="px-6 py-4">
-                                <div>
-                                    <div class="text-sm font-medium text-mun-gray-900">{{ report.name }}</div>
-                                    <div class="text-sm text-mun-gray-500">{{ report.description }}</div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span :class="[
-                                    'px-2 py-1 rounded-full text-xs font-medium',
-                                    report.type === 'event' ? 'bg-blue-100 text-blue-700' :
-                                        report.type === 'user' ? 'bg-green-100 text-green-700' :
-                                            report.type === 'system' ? 'bg-purple-100 text-purple-700' :
-                                                'bg-orange-100 text-orange-700'
-                                ]">
-                                    {{ formatReportType(report.type) }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-500">
-                                {{ formatDate(report.generatedAt) }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span :class="[
-                                    'px-2 py-1 rounded-full text-xs font-medium',
-                                    report.status === 'completed' ? 'bg-mun-green-100 text-mun-green-700' :
-                                        report.status === 'processing' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
-                                            'bg-mun-red-100 text-mun-red-700'
-                                ]">
-                                    {{ formatStatus(report.status) }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-500">
-                                {{ report.fileSize || '--' }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex items-center justify-end space-x-2">
-                                    <button v-if="report.status === 'completed'" @click="downloadReport(report)"
-                                        class="text-mun-blue hover:text-mun-blue-600 transition-colors">
-                                        <ArrowDownTrayIcon class="w-4 h-4" />
-                                    </button>
-                                    <button @click="viewReport(report)"
-                                        class="text-mun-gray-400 hover:text-mun-gray-600 transition-colors">
-                                        <EyeIcon class="w-4 h-4" />
-                                    </button>
-                                    <button @click="deleteReport(report)"
-                                        class="text-mun-red-400 hover:text-mun-red-600 transition-colors">
-                                        <TrashIcon class="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div v-if="totalPages > 1" class="px-6 py-4 border-t border-mun-gray-200">
-                <Pagination :current-page="pagination.currentPage" :total-pages="totalPages"
-                    @page-change="handlePageChange" />
+            <div v-else class="divide-y divide-mun-gray-200">
+                <div v-for="activity in recentActivity" :key="activity._id"
+                    class="px-6 py-4 hover:bg-mun-gray-50 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-mun-gray-900">{{ activity.action }}</p>
+                            <p class="text-sm text-mun-gray-600">{{ activity.details }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-mun-gray-500">{{ formatDate(activity.timestamp) }}</p>
+                            <p class="text-xs text-mun-gray-400">{{ activity.user || 'System' }}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -312,7 +248,6 @@ import {
 
 // Components
 import CustomReportModal from '@/components/admin/CustomReportModal.vue'
-import Pagination from '@/components/ui/Pagination.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -323,146 +258,146 @@ const toast = useToast()
 const isLoading = ref(false)
 const isGenerating = ref({})
 const showCustomReportModal = ref(false)
-const historyFilter = ref('')
+const activityFilter = ref('')
 
 const stats = ref({
-    totalReports: null,
-    totalDownloads: null,
-    processing: null,
-    thisMonth: null
+    totalDocuments: 0,
+    activeUsers: 0,
+    activeEvents: 0,
+    totalCommittees: 0,
+    activeSessions: 0
 })
 
-const performanceMetrics = ref({
-    avgResponseTime: null,
+const systemHealth = ref({
+    api: true,
+    database: true,
+    websocket: true,
+    memoryUsage: null,
     uptime: null,
-    activeSessions: null,
+    avgResponseTime: null,
     errorRate: null
 })
 
-const reportHistory = ref([])
+const recentActivity = ref([])
+const committees = ref([])
 
-// Pagination
-const pagination = ref({
-    currentPage: 1,
-    pageSize: 10
-})
-
-// Report Templates
-const eventReports = [
+// System Exports
+const systemExports = [
     {
-        id: 'event_summary',
-        title: 'Event Summary',
-        description: 'Complete overview of all events and their statistics'
+        id: 'all_stats',
+        title: 'System Statistics',
+        description: 'Complete system statistics export',
+        endpoint: '/api/admin/dashboard/stats'
     },
-    {
-        id: 'committee_performance',
-        title: 'Committee Performance',
-        description: 'Detailed analysis of committee activities and outcomes'
-    },
-    {
-        id: 'participant_engagement',
-        title: 'Participant Engagement',
-        description: 'Metrics on delegate participation and activity levels'
-    },
-    {
-        id: 'document_analysis',
-        title: 'Document Analysis',
-        description: 'Statistics on submitted documents and approval rates'
-    }
-]
-
-const userReports = [
     {
         id: 'user_activity',
-        title: 'User Activity',
-        description: 'Login patterns and system usage statistics'
+        title: 'User Activity Report',
+        description: 'Detailed user activity logs',
+        endpoint: '/api/admin/dashboard/activity'
     },
     {
-        id: 'role_distribution',
-        title: 'Role Distribution',
-        description: 'Breakdown of users by role and committee assignment'
-    },
-    {
-        id: 'registration_trends',
-        title: 'Registration Trends',
-        description: 'Analysis of user registration patterns over time'
-    },
-    {
-        id: 'access_logs',
-        title: 'Access Logs',
-        description: 'Detailed logs of user access and actions'
+        id: 'system_config',
+        title: 'System Configuration',
+        description: 'Current system configuration export',
+        endpoint: '/api/admin/export/config'
     }
 ]
-
-// Computed
-const filteredReportHistory = computed(() => {
-    if (!historyFilter.value) return reportHistory.value
-    return reportHistory.value.filter(report => report.type === historyFilter.value)
-})
-
-const totalPages = computed(() => {
-    return Math.ceil(filteredReportHistory.value.length / pagination.value.pageSize)
-})
-
-const paginatedReportHistory = computed(() => {
-    const start = (pagination.value.currentPage - 1) * pagination.value.pageSize
-    const end = start + pagination.value.pageSize
-    return filteredReportHistory.value.slice(start, end)
-})
 
 // Methods
 const loadReportsData = async () => {
     try {
         isLoading.value = true
 
-        // Load all reports data in parallel
-        const [reportsResponse, analyticsResponse] = await Promise.all([
-            apiMethods.get('/api/admin/reports'),
-            apiMethods.get('/api/admin/analytics')
+        // Load dashboard stats and system health
+        const [statsResponse, healthResponse, activityResponse] = await Promise.all([
+            apiMethods.get('/api/admin/dashboard/stats'),
+            apiMethods.get('/api/admin/system/health'),
+            apiMethods.get('/api/admin/dashboard/activity', { params: { limit: 10 } })
         ])
 
         // Update stats
-        if (reportsResponse?.data) {
+        if (statsResponse?.data) {
             stats.value = {
-                totalReports: reportsResponse.data.stats?.totalReports || 0,
-                totalDownloads: reportsResponse.data.stats?.totalDownloads || 0,
-                processing: reportsResponse.data.stats?.processing || 0,
-                thisMonth: reportsResponse.data.stats?.thisMonth || 0
-            }
-
-            reportHistory.value = reportsResponse.data.reports || []
-        }
-
-        // Update performance metrics
-        if (analyticsResponse?.data) {
-            performanceMetrics.value = {
-                avgResponseTime: analyticsResponse.data.avgResponseTime || null,
-                uptime: analyticsResponse.data.uptime || null,
-                activeSessions: analyticsResponse.data.activeSessions || null,
-                errorRate: analyticsResponse.data.errorRate || null
+                totalDocuments: statsResponse.data.stats?.totalDocuments || 0,
+                activeUsers: statsResponse.data.stats?.activeUsers || 0,
+                activeEvents: statsResponse.data.stats?.activeEvents || 0,
+                totalCommittees: statsResponse.data.stats?.totalCommittees || 0,
+                activeSessions: statsResponse.data.stats?.activeSessions || 0
             }
         }
+
+        // Update system health
+        if (healthResponse?.data) {
+            systemHealth.value = {
+                api: healthResponse.data.services?.api || true,
+                database: healthResponse.data.services?.database || true,
+                websocket: healthResponse.data.services?.websocket || true,
+                memoryUsage: healthResponse.data.memory?.usage || null,
+                uptime: healthResponse.data.uptime || null,
+                avgResponseTime: healthResponse.data.performance?.avgResponseTime || null,
+                errorRate: healthResponse.data.performance?.errorRate || null
+            }
+        }
+
+        // Update activity
+        if (activityResponse?.data?.activities) {
+            recentActivity.value = activityResponse.data.activities
+        }
+
+        // Load committees for exports
+        await loadCommittees()
 
     } catch (error) {
-        toast.error('Load reports error:', error)
         toast.error('Failed to load reports data')
+        console.error('Load reports error:', error)
 
         // Set defaults on error
         stats.value = {
-            totalReports: 0,
-            totalDownloads: 0,
-            processing: 0,
-            thisMonth: 0
+            totalDocuments: 0,
+            activeUsers: 0,
+            activeEvents: 0,
+            totalCommittees: 0,
+            activeSessions: 0
         }
-        performanceMetrics.value = {
-            avgResponseTime: null,
+        systemHealth.value = {
+            api: false,
+            database: false,
+            websocket: false,
+            memoryUsage: null,
             uptime: null,
-            activeSessions: null,
+            avgResponseTime: null,
             errorRate: null
         }
-        reportHistory.value = []
+        recentActivity.value = []
     } finally {
         isLoading.value = false
+    }
+}
+
+const loadCommittees = async () => {
+    try {
+        const response = await apiMethods.get('/api/committees')
+        if (response?.data) {
+            committees.value = response.data.committees || response.data || []
+        }
+    } catch (error) {
+        console.error('Failed to load committees:', error)
+    }
+}
+
+const loadActivity = async () => {
+    try {
+        const params = { limit: 20 }
+        if (activityFilter.value) {
+            params.type = activityFilter.value
+        }
+
+        const response = await apiMethods.get('/api/admin/dashboard/activity', { params })
+        if (response?.data?.activities) {
+            recentActivity.value = response.data.activities
+        }
+    } catch (error) {
+        console.error('Failed to load activity:', error)
     }
 }
 
@@ -471,117 +406,81 @@ const refreshData = async () => {
     toast.success('Reports data refreshed')
 }
 
-const generateReport = async (reportTemplate) => {
+const downloadExport = async (exportItem) => {
     try {
-        isGenerating.value[reportTemplate.id] = true
+        isGenerating.value[exportItem.id] = true
 
-        const response = await apiMethods.post('/api/admin/reports/generate', {
-            type: reportTemplate.id,
-            title: reportTemplate.title,
-            description: reportTemplate.description
+        const response = await apiMethods.get(exportItem.endpoint, {
+            responseType: 'json' // We'll handle the download differently
         })
 
         if (response?.data) {
-            reportHistory.value.unshift(response.data)
-            stats.value.totalReports++
-            toast.success(`${reportTemplate.title} generation started`)
+            // Create downloadable JSON file
+            const dataStr = JSON.stringify(response.data, null, 2)
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
+
+            const exportFileDefaultName = `${exportItem.title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`
+
+            const linkElement = document.createElement('a')
+            linkElement.setAttribute('href', dataUri)
+            linkElement.setAttribute('download', exportFileDefaultName)
+            linkElement.click()
+
+            toast.success(`Downloaded ${exportItem.title}`)
         }
 
     } catch (error) {
-        toast.error('Generate report error:', error)
-        toast.error('Failed to generate report')
+        toast.error(`Failed to download ${exportItem.title}`)
+        console.error('Download export error:', error)
     } finally {
-        isGenerating.value[reportTemplate.id] = false
+        isGenerating.value[exportItem.id] = false
     }
 }
 
-const downloadReport = async (report) => {
+const exportCommitteeReport = async (committee) => {
     try {
-        const response = await apiMethods.get(`/api/admin/reports/${report.id}/download`, {
+        isGenerating.value[committee._id] = true
+
+        const response = await apiMethods.get(`/api/export/committee-report/${committee._id}`, {
             responseType: 'blob'
         })
 
         if (response) {
-            // Create download link
+            // Create download link for PDF
             const url = window.URL.createObjectURL(new Blob([response]))
             const link = document.createElement('a')
             link.href = url
-            link.setAttribute('download', `${report.name.replace(/\s+/g, '_')}.pdf`)
+            link.setAttribute('download', `${committee.name.replace(/\s+/g, '_')}_Report.pdf`)
             document.body.appendChild(link)
             link.click()
             link.remove()
             window.URL.revokeObjectURL(url)
 
-            // Update download count
-            stats.value.totalDownloads++
-            toast.success(`Downloaded ${report.name}`)
+            toast.success(`Downloaded ${committee.name} report`)
         }
     } catch (error) {
-        toast.error('Download report error:', error)
-        toast.error('Failed to download report')
-    }
-}
-
-const viewReport = async (report) => {
-    try {
-        // Navigate to report viewer or open in new window
-        const response = await apiMethods.get(`/api/admin/reports/${report.id}/view`)
-        if (response?.data?.url) {
-            window.open(response.data.url, '_blank')
-        } else {
-            toast.log(`Viewing ${report.name}`)
-        }
-    } catch (error) {
-        toast.error('View report error:', error)
-        toast.error('Failed to view report')
-    }
-}
-
-const deleteReport = async (report) => {
-    try {
-        const confirmed = confirm(`Are you sure you want to delete "${report.name}"?`)
-        if (!confirmed) return
-
-        const response = await apiMethods.delete(`/api/admin/reports/${report.id}`)
-        if (response?.success) {
-            reportHistory.value = reportHistory.value.filter(r => r.id !== report.id)
-            stats.value.totalReports--
-            toast.success('Report deleted successfully')
-        }
-    } catch (error) {
-        toast.error('Delete report error:', error)
-        toast.error('Failed to delete report')
+        toast.error(`Failed to export ${committee.name} report`)
+        console.error('Export committee report error:', error)
+    } finally {
+        isGenerating.value[committee._id] = false
     }
 }
 
 const handleCustomReportGenerated = (report) => {
-    reportHistory.value.unshift(report)
-    stats.value.totalReports++
     toast.success('Custom report generated successfully')
 }
 
-const handlePageChange = (page) => {
-    pagination.value.currentPage = page
-}
-
 // Utility functions
-const formatReportType = (type) => {
-    const typeMap = {
-        'event': 'Event',
-        'user': 'User',
-        'system': 'System',
-        'custom': 'Custom'
-    }
-    return typeMap[type] || type
-}
+const formatUptime = (seconds) => {
+    if (!seconds) return '--'
 
-const formatStatus = (status) => {
-    const statusMap = {
-        'completed': 'Completed',
-        'processing': 'Processing',
-        'failed': 'Failed'
-    }
-    return statusMap[status] || status
+    const days = Math.floor(seconds / 86400)
+    const hours = Math.floor((seconds % 86400) / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+
+    if (days > 0) return `${days}d ${hours}h`
+    if (hours > 0) return `${hours}h ${minutes}m`
+    return `${minutes}m`
 }
 
 const formatDate = (dateString) => {
