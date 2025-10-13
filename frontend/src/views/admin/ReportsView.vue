@@ -114,10 +114,10 @@
             </div>
         </div>
 
-        <!-- System Health - FIXED ALIGNMENT -->
+        <!-- System Health -->
         <div class="mun-card p-6">
             <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">System Health</h3>
-            <!-- FIXED: Made both columns consistent with equal height and proper alignment -->
+            <!-- Made both columns consistent with equal height and proper alignment -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- System Status -->
                 <div class="space-y-4">

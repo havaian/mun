@@ -10,6 +10,15 @@
                     </p>
                 </div>
                 <div class="flex items-center space-x-3">
+                    <!-- Quick Filter Select -->
+                    <select v-model="filters.status" @change="handleStatusFilterChange"
+                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
+                        <option value="all">All Documents</option>
+                        <option value="pending">Pending Review</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+
                     <button @click="refreshDocuments" :disabled="isLoading"
                         class="inline-flex items-center px-4 py-2 bg-mun-blue-600 text-white text-sm font-medium rounded-lg hover:bg-mun-blue-700 focus:ring-2 focus:ring-mun-blue-500 disabled:opacity-50 transition-colors">
                         <ArrowPathIcon :class="['w-4 h-4 mr-2', { 'animate-spin': isLoading }]" />
@@ -19,72 +28,52 @@
             </div>
         </div>
 
-        <!-- FIXED: Stats Cards & Filters - Now Same Size as Reports View -->
-        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <!-- Document Stats Cards - FIXED: Now 4 equal columns like Reports view -->
-            <div class="lg:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="mun-card p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-lg bg-blue-100">
-                            <DocumentTextIcon class="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-mun-gray-600">Total Documents</p>
-                            <p class="text-2xl font-bold text-mun-gray-900">{{ stats.total }}</p>
-                        </div>
+        <!-- Document Stats Cards - Now 4 Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="mun-card p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-lg bg-blue-100">
+                        <DocumentTextIcon class="w-6 h-6 text-blue-600" />
                     </div>
-                </div>
-
-                <div class="mun-card p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-lg bg-yellow-100">
-                            <ClockIcon class="w-6 h-6 text-yellow-600" />
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-mun-gray-600">Pending Review</p>
-                            <p class="text-2xl font-bold text-mun-gray-900">{{ stats.pending }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mun-card p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-lg bg-green-100">
-                            <CheckCircleIcon class="w-6 h-6 text-green-600" />
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-mun-gray-600">Approved</p>
-                            <p class="text-2xl font-bold text-mun-gray-900">{{ stats.approved }}</p>
-                        </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-mun-gray-600">Total Documents</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.total }}</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Filters - FIXED: Compact sidebar -->
-            <div class="lg:col-span-1">
-                <div class="mun-card p-4">
-                    <h3 class="text-sm font-semibold text-mun-gray-900 mb-3">Quick Filters</h3>
-                    <div class="space-y-2">
-                        <button @click="setFilter('all')"
-                            :class="['w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
-                                filters.status === 'all' ? 'bg-mun-blue-50 text-mun-blue-700' : 'text-mun-gray-600 hover:bg-gray-50']">
-                            All Documents
-                        </button>
-                        <button @click="setFilter('pending')"
-                            :class="['w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
-                                filters.status === 'pending' ? 'bg-yellow-50 text-yellow-700' : 'text-mun-gray-600 hover:bg-gray-50']">
-                            Pending Review
-                        </button>
-                        <button @click="setFilter('approved')"
-                            :class="['w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
-                                filters.status === 'approved' ? 'bg-green-50 text-green-700' : 'text-mun-gray-600 hover:bg-gray-50']">
-                            Approved
-                        </button>
-                        <button @click="setFilter('rejected')"
-                            :class="['w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
-                                filters.status === 'rejected' ? 'bg-red-50 text-red-700' : 'text-mun-gray-600 hover:bg-gray-50']">
-                            Rejected
-                        </button>
+            <div class="mun-card p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-lg bg-yellow-100">
+                        <ClockIcon class="w-6 h-6 text-yellow-600" />
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-mun-gray-600">Pending Review</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.pending }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mun-card p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-lg bg-green-100">
+                        <CheckCircleIcon class="w-6 h-6 text-green-600" />
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-mun-gray-600">Approved</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.approved }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mun-card p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-lg bg-red-100">
+                        <XCircleIcon class="w-6 h-6 text-red-600" />
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-mun-gray-600">Rejected</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.rejected }}</p>
                     </div>
                 </div>
             </div>
@@ -303,6 +292,7 @@ import {
     ArrowPathIcon,
     ClockIcon,
     CheckCircleIcon,
+    XCircleIcon,
     EyeIcon,
     ArrowDownTrayIcon
 } from '@heroicons/vue/24/outline'
@@ -380,12 +370,12 @@ const loadDocuments = async () => {
             params.dateRange = filters.value.dateRange
         }
 
-        // FIXED: Use the correct API method - now calls the new general documents endpoint
+        // Use the correct API method - now calls the new general documents endpoint
         const response = await apiMethods.documents.getAll(params)
         if (response?.data) {
             documents.value = response.data.documents || []
 
-            // FIXED: Use backend-provided stats if available, otherwise calculate
+            // Use backend-provided stats if available, otherwise calculate
             if (response.data.stats) {
                 stats.value = response.data.stats
             } else {
@@ -427,9 +417,9 @@ const refreshDocuments = () => {
     loadDocuments()
 }
 
-const setFilter = (status) => {
-    filters.value.status = status
+const handleStatusFilterChange = () => {
     pagination.value.currentPage = 1
+    loadDocuments()
 }
 
 const previousPage = () => {
@@ -555,4 +545,5 @@ tbody tr:hover {
         transform: rotate(360deg);
     }
 }
+
 </style>

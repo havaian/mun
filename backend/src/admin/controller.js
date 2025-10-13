@@ -107,7 +107,8 @@ const getDashboardStats = async (req, res) => {
                     }
                 ]).then(result => result[0] || { total: 0, active: 0, byRole: [] }),
 
-                // Document statistics - FIXED: Added totalDocuments and better stats
+                // Document statistics
+                // Added totalDocuments and better stats
                 Document.aggregate([
                     {
                         $group: {
@@ -174,7 +175,8 @@ const getDashboardStats = async (req, res) => {
                 usersByRole[role] = (usersByRole[role] || 0) + 1;
             });
 
-            // Process document data - FIXED: Added proper document stats
+            // Process document data
+            // Added proper document stats
             const totalDocuments = documentStats.total;
             const documentsByStatus = {};
             const documentsByType = {};
@@ -221,7 +223,7 @@ const getDashboardStats = async (req, res) => {
                 activeUsers: activeUsers,
                 usersByRole: usersByRole,
 
-                // FIXED: Added totalDocuments for the Reports View
+                // Added totalDocuments for the Reports View
                 totalDocuments: totalDocuments,
                 documentsUploaded: totalDocuments, // Keep for backward compatibility
                 documentsByStatus: documentsByStatus,
