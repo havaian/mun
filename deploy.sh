@@ -32,7 +32,7 @@ setup_nfs_media() {
 
     # # Only migrate if it's a regular directory
     if [ -d "./uploads" ] && [ ! -L "./uploads" ]; then
-        echo "./uploads directory is not symlinked! Needs manual confiration"
+        echo "./uploads directory is not symlinked! Needs manual configuration"
     #     echo "Migrating uploads directory to NFS"
     #     cp -r ./uploads/* "$NFS_PROJECT_DIR/"
     #     rm -rf "./uploads"
