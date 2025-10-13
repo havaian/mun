@@ -192,7 +192,7 @@ const initializeApplication = async () => {
         try {
           await wsStore.connect()
         } catch (wsError) {
-          console.warn('WebSocket connection failed:', wsError)
+          toast.warn('WebSocket connection failed:', wsError)
           // Continue without WebSocket - not critical for basic functionality
         }
       }
@@ -217,7 +217,7 @@ const initializeApplication = async () => {
     }
 
   } catch (error) {
-    console.error('App initialization error:', error)
+    toast.error('App initialization error:', error)
 
     // Clear potentially corrupted state
     authStore.logout(false)
@@ -252,7 +252,7 @@ const loadUserPreferences = async () => {
     }
 
   } catch (error) {
-    console.warn('Failed to load user preferences:', error)
+    toast.warn('Failed to load user preferences:', error)
   }
 }
 
@@ -300,7 +300,7 @@ const handleAuthStateChange = (mutation, state) => {
   if (state.isAuthenticated && !wsStore.isConnected) {
     // Connect WebSocket when user logs in
     wsStore.connect().catch(error => {
-      console.warn('Failed to connect WebSocket after login:', error)
+      toast.warn('Failed to connect WebSocket after login:', error)
     })
   } else if (!state.isAuthenticated && wsStore.isConnected) {
     // Disconnect WebSocket when user logs out
@@ -333,7 +333,7 @@ const handleKeyboardShortcuts = (event) => {
   if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
     event.preventDefault()
     // TODO: Open global search when implemented
-    console.log('Global search shortcut triggered')
+    toast.log('Global search shortcut triggered')
   }
 
   // Escape key to close modals
@@ -367,7 +367,7 @@ const handleWindowBlur = () => {
   // Could pause real-time updates when window loses focus to save bandwidth
   // For now, just log the event in development
   if (isDevelopment) {
-    console.log('Window lost focus')
+    toast.log('Window lost focus')
   }
 }
 
@@ -386,7 +386,7 @@ const handleOnlineOffline = () => {
     }
   } else {
     appStore.setNetworkStatus('offline')
-    toast.warning('Connection lost - working offline')
+    toast.warn('Connection lost - working offline')
   }
 }
 

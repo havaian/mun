@@ -327,7 +327,7 @@ const loadAttendanceData = async () => {
         updateStats()
 
     } catch (error) {
-        console.error('Load attendance error:', error)
+        toast.error('Load attendance error:', error)
         toast.error('Failed to load attendance data')
     } finally {
         isLoading.value = false
@@ -354,7 +354,7 @@ const markPresent = async (delegate) => {
 
         toast.success(`${delegate.country} marked as present`)
     } catch (error) {
-        console.error('Mark present error:', error)
+        toast.error('Mark present error:', error)
         toast.error('Failed to mark delegate as present')
     }
 }
@@ -369,13 +369,13 @@ const markAbsent = async (delegate) => {
 
         toast.success(`${delegate.country} marked as absent`)
     } catch (error) {
-        console.error('Mark absent error:', error)
+        toast.error('Mark absent error:', error)
         toast.error('Failed to mark delegate as absent')
     }
 }
 
 const takeAttendance = () => {
-    toast.info('QR-based attendance taking would start here')
+    toast.log('QR-based attendance taking would start here')
     // TODO: Open QR scanner or attendance modal
 }
 

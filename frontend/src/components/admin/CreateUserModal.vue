@@ -530,7 +530,7 @@ const loadAvailableData = async () => {
         availableCommittees.value = committeesResponse.data.committees || []
 
     } catch (error) {
-        console.error('Failed to load available data:', error)
+        toast.error('Failed to load available data:', error)
         toast.error('Failed to load form options')
     }
 }
@@ -603,7 +603,7 @@ const handleSubmit = async () => {
         closeModal()
 
     } catch (error) {
-        console.error('Failed to create user:', error)
+        toast.error('Failed to create user:', error)
 
         if (error.response?.data?.errors) {
             errors.value = error.response.data.errors

@@ -439,7 +439,7 @@ const markAttendance = async (email, present) => {
         }
 
     } catch (error) {
-        console.error('Mark attendance error:', error)
+        toast.error('Mark attendance error:', error)
         toast.error('Failed to update attendance')
     } finally {
         isUpdating.value = false
@@ -479,7 +479,7 @@ const markAllPresent = async () => {
         }
 
     } catch (error) {
-        console.error('Mark all present error:', error)
+        toast.error('Mark all present error:', error)
         toast.error('Failed to mark all present')
     } finally {
         isUpdating.value = false
@@ -531,7 +531,7 @@ const bulkMarkAttendance = async (present) => {
         }
 
     } catch (error) {
-        console.error('Bulk mark attendance error:', error)
+        toast.error('Bulk mark attendance error:', error)
         toast.error('Failed to update attendance')
     } finally {
         isUpdating.value = false
@@ -553,7 +553,7 @@ const refreshAttendance = async () => {
         }
 
     } catch (error) {
-        console.error('Refresh attendance error:', error)
+        toast.error('Refresh attendance error:', error)
         toast.error('Failed to refresh attendance')
     } finally {
         isLoading.value = false
@@ -575,7 +575,7 @@ const exportAttendance = async () => {
         toast.success('Attendance exported successfully')
 
     } catch (error) {
-        console.error('Export attendance error:', error)
+        toast.error('Export attendance error:', error)
         toast.error('Failed to export attendance')
     }
 }
@@ -595,7 +595,7 @@ const handleQRScan = async (qrData) => {
         }
 
     } catch (error) {
-        console.error('QR scan error:', error)
+        toast.error('QR scan error:', error)
         toast.error('Failed to process QR check-in')
     }
 }

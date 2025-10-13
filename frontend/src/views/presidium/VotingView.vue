@@ -326,7 +326,7 @@ const loadVotingData = async () => {
         stats.eligibleVoters = 48
 
     } catch (error) {
-        console.error('Load voting data error:', error)
+        toast.error('Load voting data error:', error)
         toast.error('Failed to load voting data')
     } finally {
         isLoading.value = false
@@ -334,7 +334,7 @@ const loadVotingData = async () => {
 }
 
 const createNewVoting = () => {
-    toast.info('Create voting modal would open here')
+    toast.log('Create voting modal would open here')
     // TODO: Open create voting modal
 }
 
@@ -353,13 +353,13 @@ const endVoting = async (voting) => {
 
         toast.success('Voting ended successfully')
     } catch (error) {
-        console.error('End voting error:', error)
+        toast.error('End voting error:', error)
         toast.error('Failed to end voting')
     }
 }
 
 const viewVotingDetails = (voting) => {
-    toast.info(`Viewing details for ${voting.title}`)
+    toast.log(`Viewing details for ${voting.title}`)
     // TODO: Open voting details modal
 }
 

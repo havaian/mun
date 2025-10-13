@@ -566,7 +566,7 @@ const exportData = async () => {
         toast.success('Committee data exported successfully')
 
     } catch (error) {
-        console.error('Export failed:', error)
+        toast.error('Export failed:', error)
         toast.error('Failed to export committee data')
     } finally {
         isExporting.value = false

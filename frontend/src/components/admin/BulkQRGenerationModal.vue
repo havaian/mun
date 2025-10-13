@@ -422,7 +422,7 @@ const startBulkGeneration = async () => {
                 addLog(`All operations completed for ${committee?.name}`, 'success')
 
             } catch (error) {
-                console.error(`Error processing committee ${committeeId}:`, error)
+                toast.error(`Error processing committee ${committeeId}:`, error)
                 result.status = 'error'
                 result.error = error.message
                 addLog(`Error processing ${committee?.name}: ${error.message}`, 'error')
@@ -439,7 +439,7 @@ const startBulkGeneration = async () => {
         appStore.showSuccessMessage('Bulk QR generation completed')
 
     } catch (error) {
-        console.error('Bulk generation error:', error)
+        toast.error('Bulk generation error:', error)
         addLog(`Bulk generation failed: ${error.message}`, 'error')
         appStore.showErrorMessage('Bulk generation failed')
     } finally {

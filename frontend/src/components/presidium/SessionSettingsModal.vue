@@ -427,7 +427,7 @@ const settings = reactive({ ...defaultSettings })
 // Methods
 const resetToDefaults = () => {
     Object.assign(settings, defaultSettings)
-    toast.info('Settings reset to defaults')
+    toast.log('Settings reset to defaults')
 }
 
 const saveSettings = async () => {
@@ -442,7 +442,7 @@ const saveSettings = async () => {
         toast.success('Session settings saved')
 
     } catch (error) {
-        console.error('Save settings error:', error)
+        toast.error('Save settings error:', error)
         toast.error('Failed to save settings')
     } finally {
         isUpdating.value = false
@@ -459,7 +459,7 @@ const loadSettings = async () => {
         }
 
     } catch (error) {
-        console.error('Load settings error:', error)
+        toast.error('Load settings error:', error)
         // Use defaults if loading fails
     }
 }

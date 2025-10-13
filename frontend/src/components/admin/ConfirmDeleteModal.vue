@@ -288,7 +288,7 @@ const confirmDelete = async () => {
         emit('update:modelValue', false)
 
     } catch (error) {
-        console.error('Delete failed:', error)
+        toast.error('Delete failed:', error)
         // Error handling is done in parent component
     } finally {
         isDeleting.value = false

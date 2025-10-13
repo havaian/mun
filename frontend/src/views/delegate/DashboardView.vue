@@ -368,7 +368,7 @@ const loadDashboardData = async () => {
         ]
 
     } catch (error) {
-        console.error('Load dashboard error:', error)
+        toast.error('Load dashboard error:', error)
         toast.error('Failed to load dashboard data')
     } finally {
         isLoading.value = false
@@ -417,7 +417,7 @@ const joinSpeakersList = async () => {
         speakersPosition.value = 8 // Example position
         toast.success('Added to speakers list')
     } catch (error) {
-        console.error('Join speakers error:', error)
+        toast.error('Join speakers error:', error)
         toast.error('Failed to join speakers list')
     }
 }
@@ -427,7 +427,7 @@ const removeMeFromSpeakers = async () => {
         speakersPosition.value = null
         toast.success('Removed from speakers list')
     } catch (error) {
-        console.error('Remove speakers error:', error)
+        toast.error('Remove speakers error:', error)
         toast.error('Failed to remove from speakers list')
     }
 }

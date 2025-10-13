@@ -475,7 +475,7 @@ const loadUsers = async () => {
         }
 
     } catch (error) {
-        console.error('Load users error:', error)
+        toast.error('Load users error:', error)
         toast.error('Failed to load users')
         users.value = []
         committees.value = []
@@ -535,7 +535,7 @@ const bulkAction = async (action) => {
         selectedUsers.value = []
 
     } catch (error) {
-        console.error('Bulk action error:', error)
+        toast.error('Bulk action error:', error)
         toast.error('Failed to perform bulk action')
     }
 }
@@ -569,7 +569,7 @@ const toggleUserStatus = async (user) => {
             toast.success(`User ${user.isActive ? 'activated' : 'deactivated'}`)
         }
     } catch (error) {
-        console.error('Toggle user status error:', error)
+        toast.error('Toggle user status error:', error)
         toast.error('Failed to update user status')
     }
 }
@@ -581,7 +581,7 @@ const resetUserQR = async (user) => {
             toast.success('QR code reset successfully')
         }
     } catch (error) {
-        console.error('Reset QR error:', error)
+        toast.error('Reset QR error:', error)
         toast.error('Failed to reset QR code')
     }
 }
@@ -602,7 +602,7 @@ const confirmDelete = async () => {
         showDeleteConfirm.value = false
         selectedUser.value = null
     } catch (error) {
-        console.error('Delete user error:', error)
+        toast.error('Delete user error:', error)
         toast.error('Failed to delete user')
     }
 }
@@ -627,7 +627,7 @@ const exportUsers = async () => {
             toast.success('Users exported successfully')
         }
     } catch (error) {
-        console.error('Export users error:', error)
+        toast.error('Export users error:', error)
         toast.error('Failed to export users')
     }
 }

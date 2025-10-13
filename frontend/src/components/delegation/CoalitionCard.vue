@@ -433,7 +433,7 @@ const requestToJoin = async () => {
         }
 
     } catch (error) {
-        console.error('Request to join error:', error)
+        toast.error('Request to join error:', error)
         toast.error('Failed to send join request')
     } finally {
         isUpdating.value = false
@@ -455,7 +455,7 @@ const leaveCoalition = async () => {
         }
 
     } catch (error) {
-        console.error('Leave coalition error:', error)
+        toast.error('Leave coalition error:', error)
         toast.error('Failed to leave coalition')
     } finally {
         isUpdating.value = false
@@ -482,7 +482,7 @@ const activateCoalition = async () => {
         }
 
     } catch (error) {
-        console.error('Activate coalition error:', error)
+        toast.error('Activate coalition error:', error)
         toast.error('Failed to activate coalition')
     } finally {
         isUpdating.value = false

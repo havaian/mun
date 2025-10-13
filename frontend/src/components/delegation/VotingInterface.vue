@@ -565,7 +565,7 @@ const confirmVote = async () => {
         }
 
     } catch (error) {
-        console.error('Cast vote error:', error)
+        toast.error('Cast vote error:', error)
         toast.error('Failed to cast vote')
     } finally {
         isVoting.value = false

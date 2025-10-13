@@ -512,7 +512,7 @@ const exportData = async () => {
         toast.success('Event data exported successfully')
 
     } catch (error) {
-        console.error('Export failed:', error)
+        toast.error('Export failed:', error)
         toast.error('Failed to export event data')
     } finally {
         isExporting.value = false

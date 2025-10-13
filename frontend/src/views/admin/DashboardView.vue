@@ -216,7 +216,7 @@
                                 </div>
                                 <div>
                                     <div class="text-lg font-bold text-mun-gray-900">{{ formatUptime(healthData.uptime)
-                                    }}</div>
+                                        }}</div>
                                     <div class="text-xs text-mun-gray-600">Uptime</div>
                                 </div>
                                 <div>
@@ -230,8 +230,7 @@
                 </div>
 
                 <!-- Recent Activity & Active Events -->
-                <div
-                    class="grid grid-rows-1 lg:grid-rows-2 gap-6 bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
+                <div class="space-y-6">
                     <!-- Recent Activity -->
                     <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
                         <div class="flex items-center justify-between mb-4">
@@ -267,9 +266,9 @@
                                     <p class="text-sm text-mun-gray-900">{{ activity.description }}</p>
                                     <div class="flex items-center space-x-2 mt-1">
                                         <span class="text-xs text-mun-gray-500">{{ formatTimeAgo(activity.timestamp)
-                                            }}</span>
+                                        }}</span>
                                         <span v-if="activity.user" class="text-xs text-mun-gray-500">by {{ activity.user
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -337,7 +336,6 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useWebSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
-import { apiMethods } from '@/utils/api'
 import format from '@/utils/time'
 
 // Icons
@@ -462,15 +460,28 @@ const getServiceStatusTextColor = (status) => {
     return statusMap[status] || 'text-gray-700'
 }
 
-// API Methods
+// API Methods - Using direct fetch calls based on project knowledge patterns
 const loadDashboardStats = async () => {
     try {
-        const response = await apiMethods.get('/admin/dashboard/stats')
-        if (response?.data?.success) {
-            stats.value = { ...stats.value, ...response.data.stats }
+        const response = await fetch('/api/admin/dashboard/stats', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`,
+                'Content-Type': 'application/json'
+            }
+        })
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+        const data = await response.json()
+        if (data.success) {
+            stats.value = { ...stats.value, ...data.stats }
+        } else {
+            throw new Error(data.error || 'Failed to load stats')
         }
     } catch (error) {
-        console.error('Failed to load dashboard stats:', error)
+        toast.error('Failed to load dashboard stats:', error)
         toast.error('Failed to load dashboard statistics')
     }
 }
@@ -478,12 +489,26 @@ const loadDashboardStats = async () => {
 const loadRecentActivity = async () => {
     isLoadingActivity.value = true
     try {
-        const response = await apiMethods.get('/admin/dashboard/activity', { limit: 10 })
-        if (response?.data?.success) {
-            recentActivity.value = response.data.activities || []
+        const response = await fetch('/api/admin/dashboard/activity?limit=10', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`,
+                'Content-Type': 'application/json'
+            }
+        })
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+        const data = await response.json()
+        if (data.success) {
+            recentActivity.value = data.activities || []
+        } else {
+            throw new Error(data.error || 'Failed to load activity')
         }
     } catch (error) {
-        console.error('Failed to load recent activity:', error)
+        toast.error('Failed to load recent activity:', error)
+        toast.error('Failed to load recent activity')
     } finally {
         isLoadingActivity.value = false
     }
@@ -492,12 +517,22 @@ const loadRecentActivity = async () => {
 const loadActiveEvents = async () => {
     isLoadingEvents.value = true
     try {
-        const response = await apiMethods.get('/events', { status: 'active' })
-        if (response?.data) {
-            activeEvents.value = Array.isArray(response.data) ? response.data : response.data.events || []
+        const response = await fetch('/api/events?status=active', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`,
+                'Content-Type': 'application/json'
+            }
+        })
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
+
+        const data = await response.json()
+        activeEvents.value = Array.isArray(data) ? data : data.events || []
     } catch (error) {
-        console.error('Failed to load active events:', error)
+        toast.error('Failed to load active events:', error)
+        toast.error('Failed to load active events')
     } finally {
         isLoadingEvents.value = false
     }
@@ -506,11 +541,16 @@ const loadActiveEvents = async () => {
 const loadSystemHealth = async () => {
     try {
         const startTime = Date.now()
-        const response = await apiMethods.health.check()
+        const response = await fetch('/api/health', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`,
+                'Content-Type': 'application/json'
+            }
+        })
         responseTime.value = Date.now() - startTime
 
-        if (response?.data) {
-            const data = response.data
+        if (response.ok) {
+            const data = await response.json()
 
             healthData.value = {
                 status: data.status || 'unknown',
@@ -525,8 +565,11 @@ const loadSystemHealth = async () => {
                 database: data.services?.database === 'connected',
                 websocket: wsStore?.isConnected || false
             }
+        } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
     } catch (error) {
+        toast.error('Failed to load system health:', error)
         systemHealth.value = {
             api: false,
             database: false,
@@ -539,6 +582,7 @@ const loadSystemHealth = async () => {
             modules: {},
             services: {}
         }
+        toast.error('Failed to load system health')
     }
 }
 
@@ -567,30 +611,43 @@ const generateQRCodes = async () => {
 
     isGeneratingQR.value = true
     try {
-        const committeesResponse = await apiMethods.get('/committees', { status: 'active' })
+        const committeesResponse = await fetch('/api/committees?status=active', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`,
+                'Content-Type': 'application/json'
+            }
+        })
 
-        if (!committeesResponse?.data) {
+        if (!committeesResponse.ok) {
             throw new Error('Failed to fetch committees')
         }
 
-        const committeesData = committeesResponse.data
+        const committeesData = await committeesResponse.json()
         const committees = Array.isArray(committeesData) ? committeesData : committeesData.committees || []
 
         if (committees.length === 0) {
-            toast.info('No active committees found')
+            toast.log('No active committees found')
             return
         }
 
         const committeeIds = committees.map(c => c._id)
-        const response = await apiMethods.post('/admin/committees/bulk-qr', { committeeIds })
+        const response = await fetch('/api/admin/committees/bulk-qr', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ committeeIds })
+        })
 
-        if (response?.data) {
-            toast.success(`Generated QR codes for ${response.data.totalQRGenerated} countries`)
+        if (response.ok) {
+            const data = await response.json()
+            toast.success(`Generated QR codes for ${data.totalQRGenerated || committees.length} countries`)
         } else {
             throw new Error('QR generation failed')
         }
     } catch (error) {
-        console.error('QR generation error:', error)
+        toast.error('QR generation error:', error)
         toast.error('Failed to generate QR codes')
     } finally {
         isGeneratingQR.value = false
@@ -665,7 +722,7 @@ onMounted(async () => {
         ])
         lastUpdated.value = new Date()
     } catch (error) {
-        console.error('Dashboard initialization error:', error)
+        toast.error('Dashboard initialization error:', error)
         toast.error('Failed to load dashboard')
     } finally {
         isInitialLoading.value = false

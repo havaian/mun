@@ -442,7 +442,7 @@ const loadMessagesData = async () => {
         messageCategories[3].count = messages.value.filter(m => m.type === 'coalition').length
 
     } catch (error) {
-        console.error('Load messages error:', error)
+        toast.error('Load messages error:', error)
         toast.error('Failed to load messages')
     } finally {
         isLoading.value = false
@@ -489,7 +489,7 @@ const sendMessage = async () => {
         toast.success('Message sent successfully')
 
     } catch (error) {
-        console.error('Send message error:', error)
+        toast.error('Send message error:', error)
         toast.error('Failed to send message')
     } finally {
         isSending.value = false

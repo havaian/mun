@@ -433,7 +433,7 @@ const startQRDetection = () => {
     // Simulate QR scanning
     setTimeout(() => {
         isScanning.value = false
-        toast.info('QR scanning functionality would be implemented here')
+        toast.log('QR scanning functionality would be implemented here')
     }, 2000)
 }
 
@@ -459,7 +459,7 @@ const saveAttendance = async () => {
         toast.success('Attendance updated successfully')
 
     } catch (error) {
-        console.error('Save attendance error:', error)
+        toast.error('Save attendance error:', error)
         toast.error('Failed to save attendance')
     } finally {
         isUpdating.value = false

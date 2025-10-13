@@ -143,7 +143,7 @@ const generateQRCode = async () => {
         qrContainer.value.appendChild(img)
 
     } catch (error) {
-        console.error('QR code generation error:', error)
+        toast.error('QR code generation error:', error)
 
         // Show error state
         qrContainer.value.innerHTML = `

@@ -255,7 +255,7 @@ const continueWithLanguage = async () => {
         try {
             await updateUserLanguagePreference(selectedLanguage.value)
         } catch (error) {
-            console.warn('Failed to save language preference to backend:', error)
+            toast.warn('Failed to save language preference to backend:', error)
             // Continue anyway as language is saved locally
         }
 
@@ -265,7 +265,7 @@ const continueWithLanguage = async () => {
         await navigateToUserDashboard()
 
     } catch (error) {
-        console.error('Language selection error:', error)
+        toast.error('Language selection error:', error)
         toast.error('Failed to set language preference')
     } finally {
         isLoading.value = false
@@ -279,13 +279,13 @@ const skipLanguageSelection = async () => {
         // Use default language
         appStore.setLanguage(defaultLanguage.value)
 
-        toast.info(`Using default language: ${getLanguageName(defaultLanguage.value)}`)
+        toast.log(`Using default language: ${getLanguageName(defaultLanguage.value)}`)
 
         // Navigate to appropriate dashboard
         await navigateToUserDashboard()
 
     } catch (error) {
-        console.error('Skip language selection error:', error)
+        toast.error('Skip language selection error:', error)
         toast.error('Navigation failed')
     } finally {
         isLoading.value = false

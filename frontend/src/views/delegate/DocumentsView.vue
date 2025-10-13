@@ -352,7 +352,7 @@ const loadDocuments = async () => {
         stats.total = documents.value.length
 
     } catch (error) {
-        console.error('Load documents error:', error)
+        toast.error('Load documents error:', error)
         toast.error('Failed to load documents')
     } finally {
         isLoading.value = false
@@ -400,7 +400,7 @@ const uploadDocument = async () => {
         toast.success('Document uploaded successfully')
 
     } catch (error) {
-        console.error('Upload error:', error)
+        toast.error('Upload error:', error)
         toast.error('Failed to upload document')
     } finally {
         isUploading.value = false
@@ -408,7 +408,7 @@ const uploadDocument = async () => {
 }
 
 const viewDocument = (document) => {
-    toast.info(`Viewing ${document.title}`)
+    toast.log(`Viewing ${document.title}`)
     // TODO: Open document viewer
 }
 
@@ -418,7 +418,7 @@ const downloadDocument = (document) => {
 }
 
 const uploadNewVersion = (document) => {
-    toast.info(`Upload new version for ${document.title}`)
+    toast.log(`Upload new version for ${document.title}`)
     // TODO: Open new version upload
 }
 

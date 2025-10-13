@@ -599,7 +599,7 @@ const sendPasswordReset = async () => {
         toast.success('Password reset email sent successfully')
 
     } catch (error) {
-        console.error('Failed to send password reset:', error)
+        toast.error('Failed to send password reset:', error)
         toast.error('Failed to send password reset email')
     } finally {
         isSendingReset.value = false

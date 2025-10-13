@@ -71,7 +71,7 @@ class ToastService {
         })
     }
 
-    warning(message, options = {}) {
+    warn(message, options = {}) {
         return this.add({
             type: TOAST_TYPES.WARNING,
             message,
@@ -79,7 +79,7 @@ class ToastService {
         })
     }
 
-    info(message, options = {}) {
+    log(message, options = {}) {
         return this.add({
             type: TOAST_TYPES.INFO,
             message,
@@ -178,8 +178,8 @@ export function useToast() {
         toast: toastService,
         success: toastService.success.bind(toastService),
         error: toastService.error.bind(toastService),
-        warning: toastService.warning.bind(toastService),
-        info: toastService.info.bind(toastService),
+        warn: toastService.warning.bind(toastService),
+        log: toastService.info.bind(toastService),
         clear: toastService.clear.bind(toastService)
     }
 }

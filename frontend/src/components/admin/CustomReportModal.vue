@@ -538,7 +538,7 @@ const loadAvailableFields = async () => {
         })
 
     } catch (error) {
-        console.error('Failed to load fields:', error)
+        toast.error('Failed to load fields:', error)
         toast.error('Failed to load available fields')
     }
 }
@@ -698,7 +698,7 @@ const previewReport = async () => {
         previewData.value = response.data.data || []
 
     } catch (error) {
-        console.error('Failed to generate preview:', error)
+        toast.error('Failed to generate preview:', error)
         toast.error('Failed to generate report preview')
     } finally {
         isGeneratingPreview.value = false
@@ -725,7 +725,7 @@ const saveReportTemplate = async () => {
         toast.success('Report template saved successfully')
 
     } catch (error) {
-        console.error('Failed to save template:', error)
+        toast.error('Failed to save template:', error)
         toast.error('Failed to save report template')
     } finally {
         isSavingTemplate.value = false
@@ -765,7 +765,7 @@ const generateReport = async () => {
         closeModal()
 
     } catch (error) {
-        console.error('Failed to generate report:', error)
+        toast.error('Failed to generate report:', error)
         toast.error('Failed to generate report')
     } finally {
         isGenerating.value = false

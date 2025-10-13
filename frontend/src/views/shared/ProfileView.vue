@@ -422,7 +422,7 @@ const loadProfileData = async () => {
         Object.assign(notificationData, response.data.notifications || {})
 
     } catch (error) {
-        console.error('Failed to load profile data:', error)
+        toast.error('Failed to load profile data:', error)
         toast.error('Failed to load profile data')
     }
 }
@@ -462,7 +462,7 @@ const updatePersonalInfo = async () => {
         toast.success('Profile updated successfully')
 
     } catch (error) {
-        console.error('Failed to update profile:', error)
+        toast.error('Failed to update profile:', error)
         toast.error('Failed to update profile')
     } finally {
         isUpdatingPersonal.value = false
@@ -480,7 +480,7 @@ const updateAccountSettings = async () => {
         toast.success('Account settings updated successfully')
 
     } catch (error) {
-        console.error('Failed to update account settings:', error)
+        toast.error('Failed to update account settings:', error)
         toast.error('Failed to update account settings')
     } finally {
         isUpdatingAccount.value = false
@@ -526,7 +526,7 @@ const changePassword = async () => {
         toast.success('Password changed successfully')
 
     } catch (error) {
-        console.error('Failed to change password:', error)
+        toast.error('Failed to change password:', error)
         toast.error(error.response?.data?.message || 'Failed to change password')
     } finally {
         isChangingPassword.value = false
@@ -549,7 +549,7 @@ const toggle2FA = async () => {
         )
 
     } catch (error) {
-        console.error('Failed to toggle 2FA:', error)
+        toast.error('Failed to toggle 2FA:', error)
         toast.error('Failed to update two-factor authentication')
     } finally {
         isToggling2FA.value = false
@@ -567,7 +567,7 @@ const updateNotificationSettings = async () => {
         toast.success('Notification preferences updated successfully')
 
     } catch (error) {
-        console.error('Failed to update notifications:', error)
+        toast.error('Failed to update notifications:', error)
         toast.error('Failed to update notification preferences')
     } finally {
         isUpdatingNotifications.value = false

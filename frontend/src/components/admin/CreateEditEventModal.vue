@@ -711,7 +711,7 @@ const submitForm = async () => {
         }
 
     } catch (error) {
-        console.error('Submit event error:', error)
+        toast.error('Submit event error:', error)
         toast.error(error.message || 'Failed to save event')
     } finally {
         isSubmitting.value = false
@@ -741,7 +741,7 @@ const saveDraft = async () => {
         }
 
     } catch (error) {
-        console.error('Save draft error:', error)
+        toast.error('Save draft error:', error)
         toast.error('Failed to save draft')
     } finally {
         isDraftSaving.value = false

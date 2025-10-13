@@ -184,7 +184,7 @@ const checkConnection = async () => {
         }
 
     } catch (error) {
-        console.warn('Connection check failed:', error)
+        toast.warn('Connection check failed:', error)
 
         if (!isOffline.value) {
             // Browser thinks we're online but API is unreachable
@@ -237,7 +237,7 @@ const handleConnectionRestored = () => {
 
 const scheduleRetry = () => {
     if (reconnectAttempts.value >= maxRetryAttempts) {
-        console.warn('Max retry attempts reached')
+        toast.warn('Max retry attempts reached')
         return
     }
 
@@ -323,7 +323,7 @@ const performSpeedTest = async () => {
 
     } catch (error) {
         // Speed test failed, might indicate connection issues
-        console.warn('Speed test failed:', error)
+        toast.warn('Speed test failed:', error)
     }
 }
 

@@ -563,7 +563,7 @@ const loadEvents = async () => {
         }
 
     } catch (error) {
-        console.error('Load events error:', error)
+        toast.error('Load events error:', error)
     }
 }
 
@@ -765,7 +765,7 @@ const submitForm = async () => {
         }
 
     } catch (error) {
-        console.error('Submit committee error:', error)
+        toast.error('Submit committee error:', error)
         toast.error(error.message || 'Failed to save committee')
     } finally {
         isSubmitting.value = false
@@ -795,7 +795,7 @@ const saveDraft = async () => {
         }
 
     } catch (error) {
-        console.error('Save draft error:', error)
+        toast.error('Save draft error:', error)
         toast.error('Failed to save draft')
     } finally {
         isDraftSaving.value = false

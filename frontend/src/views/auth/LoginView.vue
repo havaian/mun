@@ -422,19 +422,19 @@ const startCamera = async () => {
                         startScanning()
                         resolve()
                     }).catch(err => {
-                        console.error('Video play failed:', err)
+                        toast.error('Video play failed:', err)
                         resolve()
                     })
                 }
             })
         } else {
-            console.error('Video element not found after nextTick')
+            toast.error('Video element not found after nextTick')
         }
 
         toast.success('Camera started successfully')
 
     } catch (err) {
-        console.error('Camera start error:', err)
+        toast.error('Camera start error:', err)
         handleCameraError(err)
     } finally {
         isStartingCamera.value = false
@@ -506,7 +506,7 @@ const tryFallbackCamera = async () => {
                         startScanning()
                         resolve()
                     }).catch(err => {
-                        console.error('Fallback video play failed:', err)
+                        toast.error('Fallback video play failed:', err)
                         resolve()
                     })
                 }
@@ -516,7 +516,7 @@ const tryFallbackCamera = async () => {
         toast.success('Camera started with fallback settings')
 
     } catch (fallbackErr) {
-        console.error('Fallback camera error:', fallbackErr)
+        toast.error('Fallback camera error:', fallbackErr)
         qrError.value = 'Unable to access camera with any settings'
         toast.error('Unable to access camera')
     }
@@ -527,7 +527,7 @@ const getAvailableCameras = async () => {
         const devices = await navigator.mediaDevices.enumerateDevices()
         availableCameras.value = devices.filter(device => device.kind === 'videoinput')
     } catch (err) {
-        console.error('Failed to enumerate cameras:', err)
+        toast.error('Failed to enumerate cameras:', err)
     }
 }
 
@@ -600,7 +600,7 @@ const processQRCode = async (code) => {
         }
 
     } catch (err) {
-        console.error('QR processing error:', err)
+        toast.error('QR processing error:', err)
         toast.error(err.message || 'Failed to process QR code')
 
         // Reset state to allow retry

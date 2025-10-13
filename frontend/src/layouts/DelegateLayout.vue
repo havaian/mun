@@ -381,7 +381,7 @@ const joinSpeakersList = async () => {
         isInSpeakersList.value = true
         toast.success('Added to speakers list')
     } catch (error) {
-        console.error('Failed to join speakers list:', error)
+        toast.error('Failed to join speakers list:', error)
         toast.error('Failed to join speakers list')
     }
 }
@@ -400,7 +400,7 @@ const submitMotion = async () => {
         showMotionModal.value = false
         motionForm.value = { type: '', justification: '' }
     } catch (error) {
-        console.error('Failed to submit motion:', error)
+        toast.error('Failed to submit motion:', error)
         toast.error('Failed to submit motion')
     }
 }
@@ -415,7 +415,7 @@ const handleLogout = async () => {
         toast.success('Logged out successfully')
         router.push('/auth/login')
     } catch (error) {
-        console.error('Logout error:', error)
+        toast.error('Logout error:', error)
         toast.error('Failed to logout')
     }
 }
@@ -458,7 +458,7 @@ const loadDelegateData = async () => {
         currentSpeaker.value = currentSession.value.currentSpeaker
 
     } catch (error) {
-        console.error('Failed to load delegate data:', error)
+        toast.error('Failed to load delegate data:', error)
     }
 }
 

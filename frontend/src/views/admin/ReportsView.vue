@@ -444,7 +444,7 @@ const loadReportsData = async () => {
         }
 
     } catch (error) {
-        console.error('Load reports error:', error)
+        toast.error('Load reports error:', error)
         toast.error('Failed to load reports data')
 
         // Set defaults on error
@@ -488,7 +488,7 @@ const generateReport = async (reportTemplate) => {
         }
 
     } catch (error) {
-        console.error('Generate report error:', error)
+        toast.error('Generate report error:', error)
         toast.error('Failed to generate report')
     } finally {
         isGenerating.value[reportTemplate.id] = false
@@ -517,7 +517,7 @@ const downloadReport = async (report) => {
             toast.success(`Downloaded ${report.name}`)
         }
     } catch (error) {
-        console.error('Download report error:', error)
+        toast.error('Download report error:', error)
         toast.error('Failed to download report')
     }
 }
@@ -529,10 +529,10 @@ const viewReport = async (report) => {
         if (response?.data?.url) {
             window.open(response.data.url, '_blank')
         } else {
-            toast.info(`Viewing ${report.name}`)
+            toast.log(`Viewing ${report.name}`)
         }
     } catch (error) {
-        console.error('View report error:', error)
+        toast.error('View report error:', error)
         toast.error('Failed to view report')
     }
 }
@@ -549,7 +549,7 @@ const deleteReport = async (report) => {
             toast.success('Report deleted successfully')
         }
     } catch (error) {
-        console.error('Delete report error:', error)
+        toast.error('Delete report error:', error)
         toast.error('Failed to delete report')
     }
 }

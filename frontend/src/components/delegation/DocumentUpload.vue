@@ -475,7 +475,7 @@ const uploadDocument = async () => {
         }
 
     } catch (error) {
-        console.error('Upload document error:', error)
+        toast.error('Upload document error:', error)
         toast.error('Failed to upload document')
     } finally {
         isUploading.value = false
@@ -508,7 +508,7 @@ const loadExistingDocuments = async () => {
         }
 
     } catch (error) {
-        console.error('Load existing documents error:', error)
+        toast.error('Load existing documents error:', error)
     }
 }
 

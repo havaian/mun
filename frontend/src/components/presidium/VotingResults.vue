@@ -440,7 +440,7 @@ const exportResults = async () => {
         toast.success('Results exported successfully')
 
     } catch (error) {
-        console.error('Export error:', error)
+        toast.error('Export error:', error)
         toast.error('Failed to export results')
     }
 }
@@ -462,7 +462,7 @@ const generateReport = async () => {
         }
 
     } catch (error) {
-        console.error('Generate report error:', error)
+        toast.error('Generate report error:', error)
         toast.error('Failed to generate report')
     }
 }
@@ -474,7 +474,7 @@ const archiveVoting = async () => {
         toast.success('Voting archived successfully')
 
     } catch (error) {
-        console.error('Archive error:', error)
+        toast.error('Archive error:', error)
         toast.error('Failed to archive voting')
     }
 }

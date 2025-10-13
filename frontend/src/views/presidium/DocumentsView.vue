@@ -293,7 +293,7 @@ const loadDocuments = async () => {
         stats.total = documents.value.length
 
     } catch (error) {
-        console.error('Load documents error:', error)
+        toast.error('Load documents error:', error)
         toast.error('Failed to load documents')
     } finally {
         isLoading.value = false
@@ -306,7 +306,7 @@ const refreshDocuments = async () => {
 }
 
 const viewDocument = (document) => {
-    toast.info(`Viewing ${document.title}`)
+    toast.log(`Viewing ${document.title}`)
     // TODO: Open document viewer
 }
 
@@ -316,12 +316,12 @@ const downloadDocument = (document) => {
 }
 
 const reviewDocument = (document) => {
-    toast.info(`Opening review for ${document.title}`)
+    toast.log(`Opening review for ${document.title}`)
     // TODO: Open review modal
 }
 
 const uploadPublicDocument = () => {
-    toast.info('Public document upload modal would open here')
+    toast.log('Public document upload modal would open here')
     // TODO: Open upload modal
 }
 

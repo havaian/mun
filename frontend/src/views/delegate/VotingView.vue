@@ -345,7 +345,7 @@ const loadVotingData = async () => {
         stats.hasVotingRights = true
 
     } catch (error) {
-        console.error('Load voting data error:', error)
+        toast.error('Load voting data error:', error)
         toast.error('Failed to load voting data')
     } finally {
         isLoading.value = false
@@ -379,7 +379,7 @@ const castVote = async (voteChoice) => {
         toast.success(`Vote cast successfully: ${formatVoteChoice(voteChoice)}`)
 
     } catch (error) {
-        console.error('Cast vote error:', error)
+        toast.error('Cast vote error:', error)
         toast.error('Failed to cast vote')
     } finally {
         isVoting.value = false
@@ -387,7 +387,7 @@ const castVote = async (voteChoice) => {
 }
 
 const viewVoteDetails = (vote) => {
-    toast.info(`Viewing details for ${vote.title}`)
+    toast.log(`Viewing details for ${vote.title}`)
     // TODO: Open vote details modal
 }
 

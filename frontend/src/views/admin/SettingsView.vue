@@ -371,7 +371,7 @@ const loadSettings = async () => {
             originalSettings.value = JSON.parse(JSON.stringify(settings.value))
         }
     } catch (error) {
-        console.error('Failed to load settings:', error)
+        toast.error('Failed to load settings:', error)
         // Keep default values on error
         originalSettings.value = JSON.parse(JSON.stringify(settings.value))
     }
@@ -389,7 +389,7 @@ const saveAllSettings = async () => {
             toast.success('Settings saved successfully')
         }
     } catch (error) {
-        console.error('Failed to save settings:', error)
+        toast.error('Failed to save settings:', error)
         toast.error('Failed to save settings')
     } finally {
         isSaving.value = false
@@ -407,7 +407,7 @@ const testEmailSettings = async () => {
             toast.success('Test email sent successfully')
         }
     } catch (error) {
-        console.error('Failed to test email:', error)
+        toast.error('Failed to test email:', error)
         toast.error('Failed to send test email')
     } finally {
         isTestingEmail.value = false
@@ -423,7 +423,7 @@ const clearCaches = async () => {
             toast.success('System caches cleared successfully')
         }
     } catch (error) {
-        console.error('Failed to clear caches:', error)
+        toast.error('Failed to clear caches:', error)
         toast.error('Failed to clear system caches')
     } finally {
         isClearingCache.value = false
@@ -439,7 +439,7 @@ const createBackup = async () => {
             toast.success('Database backup initiated successfully')
         }
     } catch (error) {
-        console.error('Failed to create backup:', error)
+        toast.error('Failed to create backup:', error)
         toast.error('Failed to create database backup')
     } finally {
         isCreatingBackup.value = false

@@ -373,7 +373,7 @@ const loadDocument = async () => {
                     documentText.value = response.data.text
                 }
             } catch (textError) {
-                console.warn('Text preview not available:', textError)
+                toast.warn('Text preview not available:', textError)
             }
         }
 

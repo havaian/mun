@@ -567,7 +567,7 @@ const loadCoalitions = async () => {
         }
 
     } catch (error) {
-        console.error('Load coalitions error:', error)
+        toast.error('Load coalitions error:', error)
         toast.error('Failed to load coalitions')
     } finally {
         isLoading.value = false
@@ -598,7 +598,7 @@ const sendJoinRequest = async () => {
         }
 
     } catch (error) {
-        console.error('Send join request error:', error)
+        toast.error('Send join request error:', error)
         toast.error('Failed to send join request')
     } finally {
         isSubmitting.value = false

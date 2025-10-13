@@ -520,7 +520,7 @@ const loadAvailableData = async () => {
         availableCommittees.value = committeesResponse.data.committees || []
 
     } catch (error) {
-        console.error('Failed to load available data:', error)
+        toast.error('Failed to load available data:', error)
         toast.error('Failed to load form options')
     }
 }
@@ -633,7 +633,7 @@ const sendPasswordReset = async () => {
         toast.success('Password reset email sent successfully')
 
     } catch (error) {
-        console.error('Failed to send password reset:', error)
+        toast.error('Failed to send password reset:', error)
         toast.error('Failed to send password reset email')
     } finally {
         isSendingReset.value = false
@@ -656,7 +656,7 @@ const handleSubmit = async () => {
         closeModal()
 
     } catch (error) {
-        console.error('Failed to update user:', error)
+        toast.error('Failed to update user:', error)
 
         if (error.response?.data?.errors) {
             errors.value = error.response.data.errors

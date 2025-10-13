@@ -684,7 +684,7 @@ const loadCommittees = async () => {
         }
 
     } catch (error) {
-        console.error('Load committees error:', error)
+        toast.error('Load committees error:', error)
         toast.error('Failed to load committees')
         committees.value = []
         totalCommittees.value = 0
@@ -709,7 +709,7 @@ const loadEvents = async () => {
         }
 
     } catch (error) {
-        console.error('Load events error:', error)
+        toast.error('Load events error:', error)
         availableEvents.value = []
     }
 }
@@ -801,7 +801,7 @@ const confirmDelete = async () => {
         selectedCommittee.value = null
 
     } catch (error) {
-        console.error('Delete committee error:', error)
+        toast.error('Delete committee error:', error)
         toast.error('Failed to delete committee')
     }
 }
@@ -830,7 +830,7 @@ const duplicateCommittee = async (committee) => {
         }
 
     } catch (error) {
-        console.error('Duplicate committee error:', error)
+        toast.error('Duplicate committee error:', error)
         toast.error('Failed to duplicate committee')
     }
 }
@@ -853,7 +853,7 @@ const toggleCommitteeStatus = async (committee) => {
         }
 
     } catch (error) {
-        console.error('Toggle committee status error:', error)
+        toast.error('Toggle committee status error:', error)
         toast.error('Failed to update committee status')
     }
 }
@@ -891,7 +891,7 @@ const bulkGenerateQR = async () => {
         }
 
     } catch (error) {
-        console.error('Bulk generate QR error:', error)
+        toast.error('Bulk generate QR error:', error)
         toast.error('Failed to generate QR codes')
     } finally {
         isBulkGenerating.value = false
@@ -919,7 +919,7 @@ const bulkExport = async () => {
             toast.success('Committees exported successfully')
         }
     } catch (error) {
-        console.error('Bulk export error:', error)
+        toast.error('Bulk export error:', error)
         toast.error('Failed to export committees')
     }
 }

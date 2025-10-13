@@ -521,7 +521,7 @@ const sendMessage = async () => {
         }
 
     } catch (error) {
-        console.error('Send message error:', error)
+        toast.error('Send message error:', error)
         toast.error('Failed to send message')
     } finally {
         isSending.value = false
@@ -552,7 +552,7 @@ const saveDraft = async () => {
         }
 
     } catch (error) {
-        console.error('Save draft error:', error)
+        toast.error('Save draft error:', error)
         toast.error('Failed to save draft')
     }
 }

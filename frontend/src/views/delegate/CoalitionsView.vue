@@ -372,7 +372,7 @@ const loadCoalitionsData = async () => {
         stats.invitations = pendingInvitations.value.length
 
     } catch (error) {
-        console.error('Load coalitions error:', error)
+        toast.error('Load coalitions error:', error)
         toast.error('Failed to load coalitions data')
     } finally {
         isLoading.value = false
@@ -400,7 +400,7 @@ const acceptInvitation = async (invitation) => {
 
         toast.success(`Joined ${invitation.coalitionName}`)
     } catch (error) {
-        console.error('Accept invitation error:', error)
+        toast.error('Accept invitation error:', error)
         toast.error('Failed to accept invitation')
     }
 }
@@ -411,7 +411,7 @@ const declineInvitation = async (invitation) => {
         stats.invitations--
         toast.success('Invitation declined')
     } catch (error) {
-        console.error('Decline invitation error:', error)
+        toast.error('Decline invitation error:', error)
         toast.error('Failed to decline invitation')
     }
 }
@@ -421,7 +421,7 @@ const requestToJoin = async (coalition) => {
         toast.success(`Join request sent to ${coalition.name}`)
         // TODO: API call to request joining
     } catch (error) {
-        console.error('Request to join error:', error)
+        toast.error('Request to join error:', error)
         toast.error('Failed to send join request')
     }
 }
@@ -452,7 +452,7 @@ const createCoalition = async () => {
         toast.success('Coalition created successfully')
 
     } catch (error) {
-        console.error('Create coalition error:', error)
+        toast.error('Create coalition error:', error)
         toast.error('Failed to create coalition')
     } finally {
         isCreating.value = false
@@ -460,12 +460,12 @@ const createCoalition = async () => {
 }
 
 const viewCoalition = (coalition) => {
-    toast.info(`Viewing details for ${coalition.name}`)
+    toast.log(`Viewing details for ${coalition.name}`)
     // TODO: Open coalition details modal
 }
 
 const manageCoalition = (coalition) => {
-    toast.info(`Managing ${coalition.name}`)
+    toast.log(`Managing ${coalition.name}`)
     // TODO: Open coalition management modal
 }
 

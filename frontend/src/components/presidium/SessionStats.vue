@@ -455,7 +455,7 @@ const refreshStats = async () => {
         }
 
     } catch (error) {
-        console.error('Failed to load session statistics:', error)
+        toast.error('Failed to load session statistics:', error)
         toast.error('Failed to load statistics')
     } finally {
         isLoading.value = false
@@ -480,7 +480,7 @@ const exportStats = async () => {
         toast.success('Statistics exported successfully')
 
     } catch (error) {
-        console.error('Export statistics error:', error)
+        toast.error('Export statistics error:', error)
         toast.error('Failed to export statistics')
     }
 }

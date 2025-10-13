@@ -238,7 +238,7 @@ const extendSession = async () => {
         }
 
     } catch (error) {
-        console.error('Failed to extend session:', error)
+        toast.error('Failed to extend session:', error)
         toast.error('Failed to extend session. Please log in again.')
 
         // Force logout on extension failure
@@ -252,13 +252,13 @@ const extendSession = async () => {
 const logoutNow = () => {
     hide()
     authStore.logout(true)
-    toast.info('You have been logged out')
+    toast.log('You have been logged out')
 }
 
 const handleAutoLogout = () => {
     hide()
     authStore.logout(true)
-    toast.warning('Session expired. Please log in again.')
+    toast.warn('Session expired. Please log in again.')
 }
 
 // Public methods for external use

@@ -270,7 +270,7 @@ const startSession = async () => {
 
         toast.success('Session started successfully')
     } catch (error) {
-        console.error('Failed to start session:', error)
+        toast.error('Failed to start session:', error)
         toast.error('Failed to start session')
     } finally {
         isLoading.value = false
@@ -292,7 +292,7 @@ const pauseSession = async () => {
 
         toast.success('Session paused')
     } catch (error) {
-        console.error('Failed to pause session:', error)
+        toast.error('Failed to pause session:', error)
         toast.error('Failed to pause session')
     } finally {
         isLoading.value = false
@@ -307,7 +307,7 @@ const takeAttendance = async () => {
         // Navigate to attendance page or open modal
         router.push('/presidium/attendance')
     } catch (error) {
-        console.error('Failed to take attendance:', error)
+        toast.error('Failed to take attendance:', error)
         toast.error('Failed to access attendance')
     } finally {
         isLoading.value = false
@@ -320,7 +320,7 @@ const handleLogout = async () => {
         toast.success('Logged out successfully')
         router.push('/auth/login')
     } catch (error) {
-        console.error('Logout error:', error)
+        toast.error('Logout error:', error)
         toast.error('Failed to logout')
     }
 }
@@ -345,7 +345,7 @@ const loadPresidiumData = async () => {
         }
 
     } catch (error) {
-        console.error('Failed to load presidium data:', error)
+        toast.error('Failed to load presidium data:', error)
     }
 }
 

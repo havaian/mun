@@ -350,7 +350,7 @@ const loadDocuments = async () => {
             stats.value = response.data.stats || stats.value
         }
     } catch (error) {
-        console.error('Failed to load documents:', error)
+        toast.error('Failed to load documents:', error)
         toast.error('Failed to load documents')
     } finally {
         isLoading.value = false
@@ -364,7 +364,7 @@ const loadCommittees = async () => {
             committees.value = response.data.committees || response.data || []
         }
     } catch (error) {
-        console.error('Failed to load committees:', error)
+        toast.error('Failed to load committees:', error)
     }
 }
 
@@ -396,7 +396,7 @@ const viewDocument = (document) => {
 
 const moderateDocument = (document) => {
     // Navigate to moderation page or open modal
-    toast.info('Document moderation feature coming soon')
+    toast.log('Document moderation feature coming soon')
 }
 
 const downloadDocument = (document) => {

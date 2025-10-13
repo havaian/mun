@@ -549,7 +549,7 @@ const loadAvailableData = async () => {
         availableCommittees.value = committeesResponse.data.committees || []
 
     } catch (error) {
-        console.error('Failed to load available data:', error)
+        toast.error('Failed to load available data:', error)
         toast.error('Failed to load filter options')
     }
 }
@@ -659,7 +659,7 @@ const generateExport = async () => {
         closeModal()
 
     } catch (error) {
-        console.error('Export failed:', error)
+        toast.error('Export failed:', error)
         toast.error(error.response?.data?.message || 'Failed to generate export')
     } finally {
         isExporting.value = false

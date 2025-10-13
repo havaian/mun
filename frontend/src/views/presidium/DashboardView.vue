@@ -253,7 +253,7 @@ const loadDashboardData = async () => {
         sessionStartTime.value = new Date()
 
     } catch (error) {
-        console.error('Load dashboard error:', error)
+        toast.error('Load dashboard error:', error)
         toast.error('Failed to load dashboard data')
     } finally {
         isLoading.value = false

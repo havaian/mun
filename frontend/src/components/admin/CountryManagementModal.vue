@@ -372,7 +372,7 @@ const loadCountries = async () => {
         }
 
     } catch (error) {
-        console.error('Load countries error:', error)
+        toast.error('Load countries error:', error)
         toast.error('Failed to load countries')
     } finally {
         isLoading.value = false
@@ -423,7 +423,7 @@ const toggleCountrySelection = (country) => {
 const assignCountry = (country) => {
     if (props.committee?.maxCountries &&
         assignedCountries.value.length >= props.committee.maxCountries) {
-        toast.warning(`Maximum of ${props.committee.maxCountries} countries allowed`)
+        toast.warn(`Maximum of ${props.committee.maxCountries} countries allowed`)
         return
     }
 
@@ -465,7 +465,7 @@ const selectAllVisible = () => {
     })
 
     if (availableSlots < visibleCodes.length) {
-        toast.warning(`Only ${availableSlots} slots available`)
+        toast.warn(`Only ${availableSlots} slots available`)
     }
 }
 
@@ -528,7 +528,7 @@ const regenerateAllQRs = async () => {
         toast.success('All QR codes regenerated')
 
     } catch (error) {
-        console.error('Regenerate all QRs error:', error)
+        toast.error('Regenerate all QRs error:', error)
         toast.error('Failed to regenerate QR codes')
     } finally {
         isRegeneratingQRs.value = false
@@ -538,7 +538,7 @@ const regenerateAllQRs = async () => {
 const resetChanges = () => {
     assignedCountries.value = [...originalAssigned.value]
     selectedCountries.value = []
-    toast.info('Changes reset')
+    toast.log('Changes reset')
 }
 
 const saveCountries = async () => {
@@ -556,7 +556,7 @@ const saveCountries = async () => {
         }
 
     } catch (error) {
-        console.error('Save countries error:', error)
+        toast.error('Save countries error:', error)
         toast.error('Failed to save countries')
     } finally {
         isSaving.value = false

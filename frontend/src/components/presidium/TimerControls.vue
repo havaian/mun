@@ -358,7 +358,7 @@ const startSessionTimer = async () => {
         emit('timer-started', { type: 'session', duration: sessionTimerDuration.value * 60 })
         toast.success('Session timer started')
     } catch (error) {
-        console.error('Start session timer error:', error)
+        toast.error('Start session timer error:', error)
         toast.error('Failed to start session timer')
     } finally {
         isUpdating.value = false
@@ -369,9 +369,9 @@ const pauseSessionTimer = async () => {
     try {
         isUpdating.value = true
         await apiMethods.timers.pauseTimer(props.sessionId, 'session')
-        toast.info('Session timer paused')
+        toast.log('Session timer paused')
     } catch (error) {
-        console.error('Pause session timer error:', error)
+        toast.error('Pause session timer error:', error)
         toast.error('Failed to pause session timer')
     } finally {
         isUpdating.value = false
@@ -384,7 +384,7 @@ const resumeSessionTimer = async () => {
         await apiMethods.timers.resumeTimer(props.sessionId, 'session')
         toast.success('Session timer resumed')
     } catch (error) {
-        console.error('Resume session timer error:', error)
+        toast.error('Resume session timer error:', error)
         toast.error('Failed to resume session timer')
     } finally {
         isUpdating.value = false
@@ -396,9 +396,9 @@ const stopSessionTimer = async () => {
         isUpdating.value = true
         await apiMethods.timers.stopTimer(props.sessionId, 'session')
         emit('timer-stopped', { type: 'session' })
-        toast.info('Session timer stopped')
+        toast.log('Session timer stopped')
     } catch (error) {
-        console.error('Stop session timer error:', error)
+        toast.error('Stop session timer error:', error)
         toast.error('Failed to stop session timer')
     } finally {
         isUpdating.value = false
@@ -411,7 +411,7 @@ const extendSessionTimer = async () => {
         await apiMethods.timers.extendTimer(props.sessionId, 'session', { extension: 900 }) // 15 minutes
         toast.success('Session timer extended by 15 minutes')
     } catch (error) {
-        console.error('Extend session timer error:', error)
+        toast.error('Extend session timer error:', error)
         toast.error('Failed to extend session timer')
     } finally {
         isUpdating.value = false
@@ -427,7 +427,7 @@ const startSpeakerTimer = async () => {
         emit('timer-started', { type: 'speaker', speaker: props.currentSpeaker, duration: speakerTimerDuration.value })
         toast.success(`Speaker timer started for ${props.currentSpeaker.countryName}`)
     } catch (error) {
-        console.error('Start speaker timer error:', error)
+        toast.error('Start speaker timer error:', error)
         toast.error('Failed to start speaker timer')
     } finally {
         isUpdating.value = false
@@ -438,9 +438,9 @@ const pauseSpeakerTimer = async () => {
     try {
         isUpdating.value = true
         await apiMethods.timers.pauseTimer(props.sessionId, 'speaker')
-        toast.info('Speaker timer paused')
+        toast.log('Speaker timer paused')
     } catch (error) {
-        console.error('Pause speaker timer error:', error)
+        toast.error('Pause speaker timer error:', error)
         toast.error('Failed to pause speaker timer')
     } finally {
         isUpdating.value = false
@@ -453,7 +453,7 @@ const resumeSpeakerTimer = async () => {
         await apiMethods.timers.resumeTimer(props.sessionId, 'speaker')
         toast.success('Speaker timer resumed')
     } catch (error) {
-        console.error('Resume speaker timer error:', error)
+        toast.error('Resume speaker timer error:', error)
         toast.error('Failed to resume speaker timer')
     } finally {
         isUpdating.value = false
@@ -467,7 +467,7 @@ const finishSpeech = async () => {
         emit('speaker-finished', props.currentSpeaker)
         toast.success('Speech finished')
     } catch (error) {
-        console.error('Finish speech error:', error)
+        toast.error('Finish speech error:', error)
         toast.error('Failed to finish speech')
     } finally {
         isUpdating.value = false
@@ -480,7 +480,7 @@ const extendSpeakerTimer = async () => {
         await apiMethods.timers.extendTimer(props.sessionId, 'speaker', { extension: 30 })
         toast.success('Speaker timer extended by 30 seconds')
     } catch (error) {
-        console.error('Extend speaker timer error:', error)
+        toast.error('Extend speaker timer error:', error)
         toast.error('Failed to extend speaker timer')
     } finally {
         isUpdating.value = false
@@ -513,7 +513,7 @@ const createAdditionalTimer = async () => {
         toast.success('Additional timer created')
 
     } catch (error) {
-        console.error('Create additional timer error:', error)
+        toast.error('Create additional timer error:', error)
         toast.error('Failed to create additional timer')
     } finally {
         isUpdating.value = false
@@ -526,7 +526,7 @@ const startAdditionalTimer = async (timerId) => {
         await apiMethods.timers.updateAdditionalTimer(props.sessionId, timerId, { action: 'start' })
         toast.success('Timer started')
     } catch (error) {
-        console.error('Start additional timer error:', error)
+        toast.error('Start additional timer error:', error)
         toast.error('Failed to start timer')
     } finally {
         isUpdating.value = false
@@ -537,9 +537,9 @@ const stopAdditionalTimer = async (timerId) => {
     try {
         isUpdating.value = true
         await apiMethods.timers.updateAdditionalTimer(props.sessionId, timerId, { action: 'stop' })
-        toast.info('Timer stopped')
+        toast.log('Timer stopped')
     } catch (error) {
-        console.error('Stop additional timer error:', error)
+        toast.error('Stop additional timer error:', error)
         toast.error('Failed to stop timer')
     } finally {
         isUpdating.value = false
@@ -550,9 +550,9 @@ const removeAdditionalTimer = async (timerId) => {
     try {
         isUpdating.value = true
         await apiMethods.timers.deleteAdditionalTimer(props.sessionId, timerId)
-        toast.info('Timer removed')
+        toast.log('Timer removed')
     } catch (error) {
-        console.error('Remove additional timer error:', error)
+        toast.error('Remove additional timer error:', error)
         toast.error('Failed to remove timer')
     } finally {
         isUpdating.value = false
@@ -571,7 +571,7 @@ const startBreakTimer = async () => {
         await apiMethods.timers.createAdditionalTimer(props.sessionId, timerData)
         toast.success('Break timer started (15 minutes)')
     } catch (error) {
-        console.error('Start break timer error:', error)
+        toast.error('Start break timer error:', error)
         toast.error('Failed to start break timer')
     } finally {
         isUpdating.value = false
@@ -589,7 +589,7 @@ const startVotingTimer = async () => {
         await apiMethods.timers.createAdditionalTimer(props.sessionId, timerData)
         toast.success('Voting timer started (5 minutes)')
     } catch (error) {
-        console.error('Start voting timer error:', error)
+        toast.error('Start voting timer error:', error)
         toast.error('Failed to start voting timer')
     } finally {
         isUpdating.value = false
@@ -607,7 +607,7 @@ const startCaucusTimer = async () => {
         await apiMethods.timers.createAdditionalTimer(props.sessionId, timerData)
         toast.success('Caucus timer started (20 minutes)')
     } catch (error) {
-        console.error('Start caucus timer error:', error)
+        toast.error('Start caucus timer error:', error)
         toast.error('Failed to start caucus timer')
     } finally {
         isUpdating.value = false

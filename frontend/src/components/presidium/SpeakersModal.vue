@@ -415,7 +415,7 @@ const removeSpeaker = (index) => {
     speakersList.value.splice(index, 1)
     hasChanges.value = true
 
-    toast.info(`${speaker.countryName} removed from speakers queue`)
+    toast.log(`${speaker.countryName} removed from speakers queue`)
 }
 
 const moveSpeaker = (fromIndex, toIndex) => {
@@ -452,7 +452,7 @@ const setCurrentSpeaker = async (speaker) => {
         toast.success(`${speaker.countryName} is now speaking`)
 
     } catch (error) {
-        console.error('Set current speaker error:', error)
+        toast.error('Set current speaker error:', error)
         toast.error('Failed to set current speaker')
     } finally {
         isUpdating.value = false
@@ -483,7 +483,7 @@ const finishCurrentSpeech = async () => {
         toast.success('Speech finished')
 
     } catch (error) {
-        console.error('Finish speech error:', error)
+        toast.error('Finish speech error:', error)
         toast.error('Failed to finish speech')
     } finally {
         isUpdating.value = false
@@ -499,7 +499,7 @@ const nextSpeaker = async () => {
 const clearSpeakersList = () => {
     speakersList.value = []
     hasChanges.value = true
-    toast.info('Speakers list cleared')
+    toast.log('Speakers list cleared')
 }
 
 const shuffleSpeakers = () => {
@@ -530,7 +530,7 @@ const saveSpeakersList = async () => {
         toast.success('Speakers list updated')
 
     } catch (error) {
-        console.error('Save speakers list error:', error)
+        toast.error('Save speakers list error:', error)
         toast.error('Failed to save speakers list')
     } finally {
         isUpdating.value = false

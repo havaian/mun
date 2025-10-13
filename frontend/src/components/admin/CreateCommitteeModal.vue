@@ -517,7 +517,7 @@ const loadAvailablePresidium = async () => {
         })
         availablePresidium.value = response.data.users || []
     } catch (error) {
-        console.error('Failed to load presidium members:', error)
+        toast.error('Failed to load presidium members:', error)
         toast.error('Failed to load available presidium members')
     }
 }
@@ -579,7 +579,7 @@ const handleSubmit = async () => {
         closeModal()
 
     } catch (error) {
-        console.error('Failed to save committee:', error)
+        toast.error('Failed to save committee:', error)
 
         if (error.response?.data?.errors) {
             errors.value = error.response.data.errors
@@ -606,7 +606,7 @@ const saveDraft = async () => {
         closeModal()
 
     } catch (error) {
-        console.error('Failed to save draft:', error)
+        toast.error('Failed to save draft:', error)
         toast.error('Failed to save draft')
     } finally {
         isDraftSaving.value = false

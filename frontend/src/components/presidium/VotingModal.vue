@@ -545,7 +545,7 @@ const createVoting = async () => {
         toast.success('Voting created and started')
 
     } catch (error) {
-        console.error('Create voting error:', error)
+        toast.error('Create voting error:', error)
         toast.error('Failed to create voting')
     } finally {
         isUpdating.value = false
@@ -556,9 +556,9 @@ const pauseVoting = async () => {
     try {
         isUpdating.value = true
         // Implementation for pausing voting
-        toast.info('Voting paused')
+        toast.log('Voting paused')
     } catch (error) {
-        console.error('Pause voting error:', error)
+        toast.error('Pause voting error:', error)
         toast.error('Failed to pause voting')
     } finally {
         isUpdating.value = false
@@ -577,7 +577,7 @@ const endVoting = async () => {
         toast.success(`Voting ended - ${results.passed ? 'PASSED' : 'FAILED'}`)
 
     } catch (error) {
-        console.error('End voting error:', error)
+        toast.error('End voting error:', error)
         toast.error('Failed to end voting')
     } finally {
         isUpdating.value = false
@@ -591,7 +591,7 @@ const nextRollCallVoter = async () => {
         isUpdating.value = true
         await votingStore.skipRollCallVote(activeVoting.value._id)
     } catch (error) {
-        console.error('Next roll call voter error:', error)
+        toast.error('Next roll call voter error:', error)
         toast.error('Failed to advance to next voter')
     } finally {
         isUpdating.value = false

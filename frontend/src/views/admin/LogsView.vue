@@ -327,7 +327,7 @@ const loadLogs = async () => {
         logs.value = generateMockLogs()
 
     } catch (error) {
-        console.error('Failed to load logs:', error)
+        toast.error('Failed to load logs:', error)
         toast.error('Failed to load system logs')
     } finally {
         isLoading.value = false

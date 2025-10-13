@@ -347,7 +347,7 @@ const loadFlag = async () => {
         }
 
     } catch (error) {
-        console.warn('Flag loading error:', error)
+        toast.warn('Flag loading error:', error)
         hasError.value = true
     } finally {
         isLoading.value = false

@@ -264,7 +264,7 @@ const handleLogout = async () => {
         toast.success('Logged out successfully')
         router.push('/auth/login')
     } catch (error) {
-        console.error('Logout error:', error)
+        toast.error('Logout error:', error)
         toast.error('Failed to logout')
     }
 }
@@ -283,7 +283,7 @@ const loadAdminData = async () => {
             documentsUploaded: 0
         }
     } catch (error) {
-        console.error('Failed to load admin data:', error)
+        toast.error('Failed to load admin data:', error)
     }
 }
 

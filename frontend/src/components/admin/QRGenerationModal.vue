@@ -235,7 +235,7 @@ const extendSession = async () => {
         }
 
     } catch (error) {
-        console.error('Session extension error:', error)
+        toast.error('Session extension error:', error)
         toast.error('Failed to extend session')
         handleSessionExpiry()
     } finally {
@@ -310,7 +310,7 @@ const playWarningSound = () => {
         oscillator.start(audioContext.currentTime)
         oscillator.stop(audioContext.currentTime + 0.2)
     } catch (error) {
-        console.warn('Could not play warning sound:', error)
+        toast.warn('Could not play warning sound:', error)
     }
 }
 

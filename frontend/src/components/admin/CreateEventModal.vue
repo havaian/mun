@@ -333,7 +333,7 @@ const createEvent = async () => {
         toast.success(`Event "${form.name}" created successfully`)
 
     } catch (error) {
-        console.error('Create event error:', error)
+        toast.error('Create event error:', error)
         toast.error('Failed to create event')
     } finally {
         isSubmitting.value = false

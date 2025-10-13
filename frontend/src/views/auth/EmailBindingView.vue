@@ -221,7 +221,7 @@ const handleEmailBinding = async () => {
         }
 
     } catch (error) {
-        console.error('Email binding error:', error)
+        toast.error('Email binding error:', error)
         toast.error('Registration failed. Please try again.')
     }
 }

@@ -489,7 +489,7 @@ const loadEvents = async () => {
         }
 
     } catch (error) {
-        console.error('Load events error:', error)
+        toast.error('Load events error:', error)
         toast.error('Failed to load events')
         events.value = []
     } finally {
@@ -548,7 +548,7 @@ const duplicateEvent = async (event) => {
             toast.success(`Event "${response.data.name}" created successfully`)
         }
     } catch (error) {
-        console.error('Duplicate event error:', error)
+        toast.error('Duplicate event error:', error)
         toast.error('Failed to duplicate event')
     }
 }
@@ -569,7 +569,7 @@ const confirmDelete = async () => {
         showDeleteConfirm.value = false
         selectedEvent.value = null
     } catch (error) {
-        console.error('Delete event error:', error)
+        toast.error('Delete event error:', error)
         toast.error('Failed to delete event')
     }
 }
@@ -594,7 +594,7 @@ const exportEvents = async () => {
             toast.success('Events exported successfully')
         }
     } catch (error) {
-        console.error('Export events error:', error)
+        toast.error('Export events error:', error)
         toast.error('Failed to export events')
     }
 }

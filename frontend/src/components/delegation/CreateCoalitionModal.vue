@@ -487,7 +487,7 @@ const createCoalition = async () => {
         }
 
     } catch (error) {
-        console.error('Create coalition error:', error)
+        toast.error('Create coalition error:', error)
         toast.error('Failed to create coalition')
     } finally {
         isSubmitting.value = false
