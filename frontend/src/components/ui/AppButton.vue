@@ -8,7 +8,7 @@
         <component v-if="icon && !iconRight && !loading" :is="icon" :class="iconClasses" />
 
         <!-- Content -->
-        <span v-if="$slots.default" class="inline-flex" :class="{ 'opacity-0': loading }">
+        <span v-if="$slots.default" class="inline-flex items-center" :class="{ 'opacity-0': loading }">
             <slot />
         </span>
 
