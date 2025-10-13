@@ -406,7 +406,14 @@ const startCamera = async () => {
         // Request camera permission
         stream.value = await navigator.mediaDevices.getUserMedia(constraints)
 
+        // Set camera active first so the video element renders
+        isCameraActive.value = true
+
+        // Wait for next tick to ensure video element is in DOM
+        await nextTick()
+
         if (videoElement.value) {
+            console.log('Video element found, setting stream')
             videoElement.value.srcObject = stream.value
 
             // Wait for video to be ready
@@ -415,7 +422,6 @@ const startCamera = async () => {
                     console.log('Video metadata loaded, starting playback')
                     videoElement.value.play().then(() => {
                         console.log('Video playing successfully')
-                        isCameraActive.value = true
                         startScanning()
                         resolve()
                     }).catch(err => {
@@ -424,6 +430,8 @@ const startCamera = async () => {
                     })
                 }
             })
+        } else {
+            console.error('Video element not found after nextTick')
         }
 
         toast.success('Camera started successfully')
