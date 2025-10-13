@@ -126,6 +126,7 @@ const buttonClasses = computed(() => {
         'inline-flex items-center justify-center font-medium transition-all duration-200',
         'focus:outline-none focus:ring-2 focus:ring-offset-2',
         'disabled:opacity-50 disabled:cursor-not-allowed',
+        'box-border',
 
         // Size classes
         {
@@ -152,7 +153,7 @@ const buttonClasses = computed(() => {
         // Variant classes
         {
             // Primary
-            'bg-mun-blue text-white hover:bg-mun-blue-600 focus:ring-mun-blue shadow-mun hover:shadow-mun-lg':
+            'bg-mun-blue text-white hover:bg-mun-blue-600 focus:ring-mun-blue shadow-mun hover:shadow-mun-lg border border-transparent':
                 props.variant === 'primary',
 
             // Secondary  
@@ -164,15 +165,15 @@ const buttonClasses = computed(() => {
                 props.variant === 'outline',
 
             // Ghost
-            'text-mun-gray-700 hover:bg-mun-gray-100 focus:ring-mun-gray-500':
+            'text-mun-gray-700 hover:bg-mun-gray-100 focus:ring-mun-gray-500 border border-transparent':
                 props.variant === 'ghost',
 
             // Danger
-            'bg-mun-red text-white hover:bg-mun-red-600 focus:ring-mun-red shadow-mun hover:shadow-lg':
+            'bg-mun-red text-white hover:bg-mun-red-600 focus:ring-mun-red shadow-mun hover:shadow-lg border border-transparent':
                 props.variant === 'danger',
 
             // Success
-            'bg-mun-green text-white hover:bg-mun-green-600 focus:ring-mun-green shadow-mun hover:shadow-lg':
+            'bg-mun-green text-white hover:bg-mun-green-600 focus:ring-mun-green shadow-mun hover:shadow-lg border border-transparent':
                 props.variant === 'success'
         },
 
