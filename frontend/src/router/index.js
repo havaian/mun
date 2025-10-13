@@ -116,7 +116,7 @@ const routes = [
         meta: { title: 'System Logs' }
       },
       {
-        path: 'logs',
+        path: 'settings',
         name: 'AdminSettings',
         component: AdminSettings,
         meta: { title: 'System Settings' }
