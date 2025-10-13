@@ -123,7 +123,7 @@ const routes = [
         meta: { title: 'System Settings' }
       },
       {
-        path: 'docuements',
+        path: 'documents',
         name: 'AdminDocuments',
         component: AdminDocuments,
         meta: { title: 'Documents Management' }
