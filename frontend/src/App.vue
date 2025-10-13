@@ -36,9 +36,6 @@
     <!-- Session Timeout Warning -->
     <SessionTimeoutModal ref="sessionTimeoutModal" />
 
-    <!-- Network Status Indicator -->
-    <NetworkStatusIndicator />
-
     <!-- WebSocket Connection Status -->
     <div v-if="showWebSocketStatus" class="fixed bottom-4 right-4 z-40 transition-all duration-300"
       :class="webSocketStatusClass">
@@ -115,7 +112,6 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import ToastContainer from '@/components/ui/ToastContainer.vue'
 import ModalContainer from '@/components/ui/ModalContainer.vue'
 import SessionTimeoutModal from '@/components/modals/SessionTimeoutModal.vue'
-import NetworkStatusIndicator from '@/components/ui/NetworkStatusIndicator.vue'
 
 // Icons
 import {
@@ -297,14 +293,20 @@ const handleRouteChange = (to, from) => {
 }
 
 const handleAuthStateChange = (mutation, state) => {
-  if (state.isAuthenticated && !wsStore.isConnected) {
+  if (state.isAuthenticated && !wsStore.isConnected && !wsStore.isConnecting) {
     // Connect WebSocket when user logs in
     wsStore.connect().catch(error => {
       toast.warn('Failed to connect WebSocket after login:', error)
     })
   } else if (!state.isAuthenticated && wsStore.isConnected) {
-    // Disconnect WebSocket when user logs out
-    wsStore.disconnect()
+    // Add a small delay to avoid disconnecting during temporary auth state changes
+    setTimeout(() => {
+      // Double-check that user is still not authenticated
+      if (!authStore.isAuthenticated && wsStore.isConnected) {
+        console.log('🔌 Disconnecting WebSocket due to logout')
+        wsStore.disconnect()
+      }
+    }, 500) // 500ms delay to let auth validation complete
   }
 }
 
