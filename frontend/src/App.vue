@@ -27,6 +27,9 @@
       </transition>
     </router-view>
 
+    <!-- Global Sleek Select -->
+    <SleekSelect />
+
     <!-- Global Toast Container -->
     <ToastContainer />
 
@@ -108,6 +111,7 @@ import { useWebSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
 
 // Components
+import SleekSelect from '@/components/ui/SleekSelect.vue'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import ToastContainer from '@/components/ui/ToastContainer.vue'
 import ModalContainer from '@/components/ui/ModalContainer.vue'
@@ -118,6 +122,7 @@ import {
   ExclamationTriangleIcon,
   XMarkIcon
 } from '@heroicons/vue/24/outline'
+import SleekSelect from './components/ui/SleekSelect.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

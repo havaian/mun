@@ -10,15 +10,16 @@
                     </p>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <!-- Quick Filter Select -->
-                    <select v-model="filters.status" @change="handleStatusFilterChange"
-                        class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
-                        <option value="all">All Documents</option>
-                        <option value="pending">Pending Review</option>
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
-                    </select>
-
+                    <!-- Quick Filter using SleekSelect -->
+                    <SleekSelect
+                        v-model="filters.status"
+                        :options="statusFilterOptions"
+                        placeholder="Filter by status"
+                        size="md"
+                        container-class="min-w-[160px]"
+                        @change="handleStatusFilterChange"
+                    />
+                    
                     <button @click="refreshDocuments" :disabled="isLoading"
                         class="inline-flex items-center px-4 py-2 bg-mun-blue-600 text-white text-sm font-medium rounded-lg hover:bg-mun-blue-700 focus:ring-2 focus:ring-mun-blue-500 disabled:opacity-50 transition-colors">
                         <ArrowPathIcon :class="['w-4 h-4 mr-2', { 'animate-spin': isLoading }]" />
@@ -28,7 +29,7 @@
             </div>
         </div>
 
-        <!-- Document Stats Cards - Now 4 Cards -->
+        <!-- Document Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="mun-card p-6">
                 <div class="flex items-center">
@@ -90,35 +91,34 @@
 
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Document Type</label>
-                    <select v-model="filters.type"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
-                        <option value="">All Types</option>
-                        <option v-for="type in documentTypes" :key="type.value" :value="type.value">
-                            {{ type.label }}
-                        </option>
-                    </select>
+                    <SleekSelect
+                        v-model="filters.type"
+                        :options="documentTypeOptions"
+                        placeholder="All Types"
+                        searchable
+                        size="md"
+                    />
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Committee</label>
-                    <select v-model="filters.committee"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
-                        <option value="">All Committees</option>
-                        <option v-for="committee in committees" :key="committee._id" :value="committee._id">
-                            {{ committee.name }}
-                        </option>
-                    </select>
+                    <SleekSelect
+                        v-model="filters.committee"
+                        :options="committeeOptions"
+                        placeholder="All Committees"
+                        searchable
+                        size="md"
+                    />
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Date Range</label>
-                    <select v-model="filters.dateRange"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
-                        <option value="">All Time</option>
-                        <option v-for="range in dateRangeOptions" :key="range.value" :value="range.value">
-                            {{ range.label }}
-                        </option>
-                    </select>
+                    <SleekSelect
+                        v-model="filters.dateRange"
+                        :options="dateRangeOptions"
+                        placeholder="All Time"
+                        size="md"
+                    />
                 </div>
             </div>
         </div>
@@ -129,12 +129,13 @@
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-mun-gray-900">Documents</h3>
                     <div class="flex items-center space-x-3">
-                        <select v-model="pagination.pageSize" @change="loadDocuments"
-                            class="text-sm border border-gray-300 rounded-lg px-3 py-1 focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
-                            <option value="10">10 per page</option>
-                            <option value="25">25 per page</option>
-                            <option value="50">50 per page</option>
-                        </select>
+                        <SleekSelect
+                            v-model="pagination.pageSize"
+                            :options="pageSizeOptions"
+                            size="sm"
+                            container-class="min-w-[120px]"
+                            @change="loadDocuments"
+                        />
                     </div>
                 </div>
             </div>
@@ -154,28 +155,22 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Document
                                 </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Committee
                                 </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Author
                                 </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Status
                                 </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Uploaded
                                 </th>
-                                <th
-                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Actions
                                 </th>
                             </tr>
@@ -185,16 +180,13 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
-                                            <div
-                                                class="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                                            <div class="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
                                                 <DocumentTextIcon class="h-6 w-6 text-gray-500" />
                                             </div>
                                         </div>
                                         <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">{{ document.title ||
-                                                document.originalName || document.filename || 'Untitled' }}</div>
-                                            <div class="text-sm text-gray-500">{{ getDocumentTypeLabel(document.type) }}
-                                            </div>
+                                            <div class="text-sm font-medium text-gray-900">{{ document.title || document.originalName || document.filename || 'Untitled' }}</div>
+                                            <div class="text-sm text-gray-500">{{ getDocumentTypeLabel(document.type) }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -203,8 +195,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     <div>
-                                        <div class="font-medium">{{ document.authorEmail ||
-                                            document.uploadedBy?.username || 'Unknown' }}</div>
+                                        <div class="font-medium">{{ document.authorEmail || document.uploadedBy?.username || 'Unknown' }}</div>
                                         <div class="text-gray-500">{{ document.countryName || 'N/A' }}</div>
                                     </div>
                                 </td>
@@ -229,8 +220,7 @@
                                             class="text-gray-600 hover:text-gray-900 transition-colors">
                                             <ArrowDownTrayIcon class="w-4 h-4" />
                                         </button>
-                                        <button
-                                            v-if="document.status === 'pending' || document.status === 'under_review'"
+                                        <button v-if="document.status === 'pending' || document.status === 'under_review'"
                                             @click="moderateDocument(document)"
                                             class="text-purple-600 hover:text-purple-900 transition-colors">
                                             <CheckCircleIcon class="w-4 h-4" />
@@ -330,19 +320,45 @@ const stats = ref({
     rejected: 0
 })
 
-// Options
-const documentTypes = [
+// Options for SleekSelect components
+const statusFilterOptions = [
+    { label: 'All Documents', value: 'all' },
+    { label: 'Pending Review', value: 'pending' },
+    { label: 'Approved', value: 'approved' },
+    { label: 'Rejected', value: 'rejected' }
+]
+
+const documentTypeOptions = [
+    { label: 'All Types', value: '' },
     { label: 'Position Paper', value: 'position_paper' },
     { label: 'Public Document', value: 'public_document' },
     { label: 'Resolution Draft', value: 'resolution_draft' }
 ]
 
 const dateRangeOptions = [
+    { label: 'All Time', value: '' },
     { label: 'Today', value: 'today' },
     { label: 'This Week', value: 'week' },
     { label: 'This Month', value: 'month' },
     { label: 'Last 3 Months', value: '3months' }
 ]
+
+const pageSizeOptions = [
+    { label: '10 per page', value: 10 },
+    { label: '25 per page', value: 25 },
+    { label: '50 per page', value: 50 }
+]
+
+// Computed options for committees
+const committeeOptions = computed(() => {
+    return [
+        { label: 'All Committees', value: '' },
+        ...committees.value.map(committee => ({
+            label: committee.name,
+            value: committee._id
+        }))
+    ]
+})
 
 // Methods
 const loadDocuments = async () => {
@@ -467,8 +483,8 @@ const downloadDocument = (document) => {
 
 // Utility functions
 const getDocumentTypeLabel = (type) => {
-    const typeObj = documentTypes.find(t => t.value === type)
-    return typeObj?.label || type?.replace('_', ' ') || 'Document'
+    const typeOption = documentTypeOptions.find(option => option.value === type)
+    return typeOption?.label || type?.replace('_', ' ') || 'Document'
 }
 
 const getStatusLabel = (status) => {
