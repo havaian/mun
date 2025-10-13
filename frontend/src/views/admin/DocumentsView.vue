@@ -19,71 +19,73 @@
             </div>
         </div>
 
-        <!-- Filters and Stats -->
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <!-- Document Stats -->
-            <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-mun-gray-600">Total Documents</p>
-                            <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ stats.total }}</p>
-                        </div>
-                        <div class="p-2 bg-blue-100 rounded-lg">
+        <!-- FIXED: Stats Cards & Filters - Now Same Size as Reports View -->
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <!-- Document Stats Cards - FIXED: Now 4 equal columns like Reports view -->
+            <div class="lg:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="mun-card p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-lg bg-blue-100">
                             <DocumentTextIcon class="w-6 h-6 text-blue-600" />
                         </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-mun-gray-600">Total Documents</p>
+                            <p class="text-2xl font-bold text-mun-gray-900">{{ stats.total }}</p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-mun-gray-600">Pending Review</p>
-                            <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ stats.pending }}</p>
-                        </div>
-                        <div class="p-2 bg-yellow-100 rounded-lg">
+                <div class="mun-card p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-lg bg-yellow-100">
                             <ClockIcon class="w-6 h-6 text-yellow-600" />
                         </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-mun-gray-600">Pending Review</p>
+                            <p class="text-2xl font-bold text-mun-gray-900">{{ stats.pending }}</p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-mun-gray-600">Approved</p>
-                            <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ stats.approved }}</p>
-                        </div>
-                        <div class="p-2 bg-green-100 rounded-lg">
+                <div class="mun-card p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-lg bg-green-100">
                             <CheckCircleIcon class="w-6 h-6 text-green-600" />
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-mun-gray-600">Approved</p>
+                            <p class="text-2xl font-bold text-mun-gray-900">{{ stats.approved }}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Quick Filters -->
-            <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-4">
-                <h3 class="text-sm font-semibold text-mun-gray-900 mb-3">Quick Filters</h3>
-                <div class="space-y-2">
-                    <button @click="setFilter('all')"
-                        :class="['w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
-                            filters.status === 'all' ? 'bg-mun-blue-50 text-mun-blue-700' : 'text-mun-gray-600 hover:bg-gray-50']">
-                        All Documents
-                    </button>
-                    <button @click="setFilter('pending')"
-                        :class="['w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
-                            filters.status === 'pending' ? 'bg-yellow-50 text-yellow-700' : 'text-mun-gray-600 hover:bg-gray-50']">
-                        Pending Review
-                    </button>
-                    <button @click="setFilter('approved')"
-                        :class="['w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
-                            filters.status === 'approved' ? 'bg-green-50 text-green-700' : 'text-mun-gray-600 hover:bg-gray-50']">
-                        Approved
-                    </button>
-                    <button @click="setFilter('rejected')"
-                        :class="['w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
-                            filters.status === 'rejected' ? 'bg-red-50 text-red-700' : 'text-mun-gray-600 hover:bg-gray-50']">
-                        Rejected
-                    </button>
+            <!-- Quick Filters - FIXED: Compact sidebar -->
+            <div class="lg:col-span-1">
+                <div class="mun-card p-4">
+                    <h3 class="text-sm font-semibold text-mun-gray-900 mb-3">Quick Filters</h3>
+                    <div class="space-y-2">
+                        <button @click="setFilter('all')"
+                            :class="['w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
+                                filters.status === 'all' ? 'bg-mun-blue-50 text-mun-blue-700' : 'text-mun-gray-600 hover:bg-gray-50']">
+                            All Documents
+                        </button>
+                        <button @click="setFilter('pending')"
+                            :class="['w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
+                                filters.status === 'pending' ? 'bg-yellow-50 text-yellow-700' : 'text-mun-gray-600 hover:bg-gray-50']">
+                            Pending Review
+                        </button>
+                        <button @click="setFilter('approved')"
+                            :class="['w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
+                                filters.status === 'approved' ? 'bg-green-50 text-green-700' : 'text-mun-gray-600 hover:bg-gray-50']">
+                            Approved
+                        </button>
+                        <button @click="setFilter('rejected')"
+                            :class="['w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
+                                filters.status === 'rejected' ? 'bg-red-50 text-red-700' : 'text-mun-gray-600 hover:bg-gray-50']">
+                            Rejected
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -201,7 +203,7 @@
                                         </div>
                                         <div class="ml-4">
                                             <div class="text-sm font-medium text-gray-900">{{ document.title ||
-                                                document.filename || 'Untitled' }}</div>
+                                                document.originalName || document.filename || 'Untitled' }}</div>
                                             <div class="text-sm text-gray-500">{{ getDocumentTypeLabel(document.type) }}
                                             </div>
                                         </div>
@@ -238,7 +240,9 @@
                                             class="text-gray-600 hover:text-gray-900 transition-colors">
                                             <ArrowDownTrayIcon class="w-4 h-4" />
                                         </button>
-                                        <button v-if="document.status === 'pending'" @click="moderateDocument(document)"
+                                        <button
+                                            v-if="document.status === 'pending' || document.status === 'under_review'"
+                                            @click="moderateDocument(document)"
                                             class="text-purple-600 hover:text-purple-900 transition-colors">
                                             <CheckCircleIcon class="w-4 h-4" />
                                         </button>
@@ -340,8 +344,7 @@ const stats = ref({
 const documentTypes = [
     { label: 'Position Paper', value: 'position_paper' },
     { label: 'Public Document', value: 'public_document' },
-    { label: 'Resolution', value: 'resolution' },
-    { label: 'Amendment', value: 'amendment' }
+    { label: 'Resolution Draft', value: 'resolution_draft' }
 ]
 
 const dateRangeOptions = [
@@ -377,14 +380,20 @@ const loadDocuments = async () => {
             params.dateRange = filters.value.dateRange
         }
 
+        // FIXED: Use the correct API method - now calls the new general documents endpoint
         const response = await apiMethods.documents.getAll(params)
         if (response?.data) {
-            documents.value = response.data.documents || response.data || []
-            pagination.value.total = response.data.total || documents.value.length
-            pagination.value.totalPages = Math.ceil(pagination.value.total / pagination.value.pageSize)
+            documents.value = response.data.documents || []
 
-            // Calculate stats from documents
-            calculateStats()
+            // FIXED: Use backend-provided stats if available, otherwise calculate
+            if (response.data.stats) {
+                stats.value = response.data.stats
+            } else {
+                calculateStats()
+            }
+
+            pagination.value.total = response.data.total || response.data.pagination?.total || documents.value.length
+            pagination.value.totalPages = Math.ceil(pagination.value.total / pagination.value.pageSize)
         }
     } catch (error) {
         toast.error('Failed to load documents')
@@ -408,7 +417,7 @@ const loadCommittees = async () => {
 const calculateStats = () => {
     stats.value = {
         total: documents.value.length,
-        pending: documents.value.filter(d => d.status === 'pending').length,
+        pending: documents.value.filter(d => d.status === 'pending' || d.status === 'uploaded' || d.status === 'under_review').length,
         approved: documents.value.filter(d => d.status === 'approved').length,
         rejected: documents.value.filter(d => d.status === 'rejected').length
     }
@@ -453,7 +462,7 @@ const downloadDocument = (document) => {
             const url = window.URL.createObjectURL(new Blob([response]))
             const link = document.createElement('a')
             link.href = url
-            link.setAttribute('download', document.filename || `document_${document._id}`)
+            link.setAttribute('download', document.originalName || document.filename || `document_${document._id}`)
             document.body.appendChild(link)
             link.click()
             link.remove()
@@ -475,8 +484,11 @@ const getDocumentTypeLabel = (type) => {
 const getStatusLabel = (status) => {
     const labels = {
         'pending': 'Pending Review',
+        'uploaded': 'Pending Review',
+        'under_review': 'Under Review',
         'approved': 'Approved',
         'rejected': 'Rejected',
+        'needs_revision': 'Needs Revision',
         'draft': 'Draft'
     }
     return labels[status] || status
@@ -485,8 +497,11 @@ const getStatusLabel = (status) => {
 const getStatusClasses = (status) => {
     const classes = {
         'pending': 'bg-yellow-100 text-yellow-800',
+        'uploaded': 'bg-yellow-100 text-yellow-800',
+        'under_review': 'bg-blue-100 text-blue-800',
         'approved': 'bg-green-100 text-green-800',
         'rejected': 'bg-red-100 text-red-800',
+        'needs_revision': 'bg-orange-100 text-orange-800',
         'draft': 'bg-gray-100 text-gray-800'
     }
     return classes[status] || 'bg-gray-100 text-gray-800'

@@ -114,36 +114,37 @@
             </div>
         </div>
 
-        <!-- System Analytics -->
+        <!-- System Health - FIXED ALIGNMENT -->
         <div class="mun-card p-6">
             <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">System Health</h3>
+            <!-- FIXED: Made both columns consistent with equal height and proper alignment -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- System Status -->
-                <div>
-                    <h4 class="font-medium text-mun-gray-900 mb-3">System Status</h4>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
+                <div class="space-y-4">
+                    <h4 class="font-medium text-mun-gray-900">System Status</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between py-2">
                             <span class="text-sm text-mun-gray-600">API Status</span>
                             <span
                                 :class="['text-sm font-medium', systemHealth.api ? 'text-green-700' : 'text-red-700']">
                                 {{ systemHealth.api ? 'Healthy' : 'Issues' }}
                             </span>
                         </div>
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between py-2">
                             <span class="text-sm text-mun-gray-600">Database</span>
                             <span
                                 :class="['text-sm font-medium', systemHealth.database ? 'text-green-700' : 'text-red-700']">
                                 {{ systemHealth.database ? 'Connected' : 'Disconnected' }}
                             </span>
                         </div>
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between py-2">
                             <span class="text-sm text-mun-gray-600">WebSocket</span>
                             <span
                                 :class="['text-sm font-medium', systemHealth.websocket ? 'text-green-700' : 'text-red-700']">
                                 {{ systemHealth.websocket ? 'Active' : 'Inactive' }}
                             </span>
                         </div>
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between py-2">
                             <span class="text-sm text-mun-gray-600">Memory Usage</span>
                             <span class="font-medium text-mun-gray-900">{{ systemHealth.memoryUsage || '--' }}%</span>
                         </div>
@@ -151,23 +152,23 @@
                 </div>
 
                 <!-- Performance Metrics -->
-                <div>
-                    <h4 class="font-medium text-mun-gray-900 mb-3">Performance</h4>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
+                <div class="space-y-4">
+                    <h4 class="font-medium text-mun-gray-900">Performance</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between py-2">
                             <span class="text-sm text-mun-gray-600">Uptime</span>
                             <span class="font-medium text-mun-gray-900">{{ formatUptime(systemHealth.uptime) }}</span>
                         </div>
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between py-2">
                             <span class="text-sm text-mun-gray-600">Active Sessions</span>
                             <span class="font-medium text-mun-gray-900">{{ stats.activeSessions || 0 }}</span>
                         </div>
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between py-2">
                             <span class="text-sm text-mun-gray-600">Avg Response Time</span>
                             <span class="font-medium text-mun-gray-900">{{ systemHealth.avgResponseTime || '--'
                                 }}ms</span>
                         </div>
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between py-2">
                             <span class="text-sm text-mun-gray-600">Error Rate</span>
                             <span class="font-medium text-mun-gray-900">{{ systemHealth.errorRate || 0 }}%</span>
                         </div>

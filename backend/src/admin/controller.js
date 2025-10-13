@@ -61,7 +61,7 @@ const getDashboardStats = async (req, res) => {
                             }
                         }
                     }
-                ]),
+                ]).then(result => result[0] || { total: 0, active: 0, draft: 0, completed: 0 }),
 
                 // Committee statistics
                 Committee.aggregate([
@@ -78,91 +78,113 @@ const getDashboardStats = async (req, res) => {
                             avgCountriesPerCommittee: { $avg: { $size: '$countries' } }
                         }
                     }
-                ]),
+                ]).then(result => result[0] || { total: 0, active: 0, totalCountries: 0, avgCountriesPerCommittee: 0 }),
 
                 // User statistics
                 User.aggregate([
                     {
                         $group: {
-                            _id: '$role',
-                            count: { $sum: 1 },
+                            _id: null,
+                            total: { $sum: 1 },
                             active: {
                                 $sum: {
-                                    $cond: [{ $eq: ['$isActive', true] }, 1, 0]
+                                    $cond: [
+                                        {
+                                            $gte: [
+                                                '$lastActivity',
+                                                new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
+                                            ]
+                                        },
+                                        1,
+                                        0
+                                    ]
+                                }
+                            },
+                            byRole: {
+                                $push: '$role'
+                            }
+                        }
+                    }
+                ]).then(result => result[0] || { total: 0, active: 0, byRole: [] }),
+
+                // Document statistics - FIXED: Added totalDocuments and better stats
+                Document.aggregate([
+                    {
+                        $group: {
+                            _id: null,
+                            total: { $sum: 1 },
+                            byStatus: {
+                                $push: '$status'
+                            },
+                            byType: {
+                                $push: '$type'
+                            },
+                            recentUploads: {
+                                $sum: {
+                                    $cond: [
+                                        {
+                                            $gte: [
+                                                '$createdAt',
+                                                new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
+                                            ]
+                                        },
+                                        1,
+                                        0
+                                    ]
                                 }
                             }
                         }
                     }
-                ]),
+                ]).then(result => result[0] || { total: 0, byStatus: [], byType: [], recentUploads: 0 }),
 
-                // Document statistics
-                Document.aggregate([
-                    {
-                        $group: {
-                            _id: '$status',
-                            count: { $sum: 1 }
-                        }
-                    }
-                ]),
-
-                // Session statistics (last 24 hours)
+                // Session statistics
                 Session.aggregate([
                     {
-                        $match: {
-                            createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
-                        }
-                    },
-                    {
                         $group: {
                             _id: '$status',
                             count: { $sum: 1 },
-                            avgDuration: { $avg: '$totalDuration' }
+                            avgDuration: { $avg: '$duration' }
                         }
                     }
                 ]),
 
-                // Voting statistics (last 7 days)
+                // Voting statistics
                 Voting.aggregate([
-                    {
-                        $match: {
-                            createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
-                        }
-                    },
                     {
                         $group: {
                             _id: '$status',
                             count: { $sum: 1 },
-                            avgParticipation: { $avg: { $size: '$votes' } }
+                            avgParticipation: { $avg: '$participationRate' }
                         }
                     }
                 ])
             ]);
 
-            // Process and format the aggregated data
-            const eventData = eventStats[0] || { total: 0, active: 0, draft: 0, completed: 0 };
-            const committeeData = committeeStats[0] || { total: 0, active: 0, totalCountries: 0, avgCountriesPerCommittee: 0 };
+            // Process event data
+            const eventData = eventStats;
+
+            // Process committee data
+            const committeeData = committeeStats;
 
             // Process user data
+            const totalUsers = userStats.total;
+            const activeUsers = userStats.active;
             const usersByRole = {};
-            let totalUsers = 0;
-            let activeUsers = 0;
-
-            userStats.forEach(stat => {
-                usersByRole[stat._id] = {
-                    total: stat.count,
-                    active: stat.active
-                };
-                totalUsers += stat.count;
-                activeUsers += stat.active;
+            userStats.byRole.forEach(role => {
+                usersByRole[role] = (usersByRole[role] || 0) + 1;
             });
 
-            // Process document data
+            // Process document data - FIXED: Added proper document stats
+            const totalDocuments = documentStats.total;
             const documentsByStatus = {};
-            let totalDocuments = 0;
+            const documentsByType = {};
 
-            documentStats.forEach(stat => {
-                documentsByStatus[stat._id] = stat.count;
-                totalDocuments += stat.count;
+            documentStats.byStatus.forEach(status => {
+                documentsByStatus[status] = (documentsByStatus[status] || 0) + 1;
+            });
+
+            documentStats.byType.forEach(type => {
+                documentsByType[type] = (documentsByType[type] || 0) + 1;
             });
 
             // Process session data
@@ -199,12 +221,19 @@ const getDashboardStats = async (req, res) => {
                 activeUsers: activeUsers,
                 usersByRole: usersByRole,
 
-                documentsUploaded: totalDocuments,
+                // FIXED: Added totalDocuments for the Reports View
+                totalDocuments: totalDocuments,
+                documentsUploaded: totalDocuments, // Keep for backward compatibility
                 documentsByStatus: documentsByStatus,
-                pendingModeration: documentsByStatus.pending || 0,
+                documentsByType: documentsByType,
+                pendingModeration: documentsByStatus.pending || documentsByStatus.under_review || 0,
+                recentDocumentUploads: documentStats.recentUploads,
 
-                // Recent activity metrics
+                // Session metrics
+                activeSessions: sessionsByStatus.active?.count || 0,
                 recentSessions: sessionsByStatus,
+
+                // Voting metrics  
                 recentVotings: votingsByStatus,
 
                 // Performance metrics

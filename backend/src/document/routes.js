@@ -72,6 +72,128 @@ const validatePagination = [
         .withMessage('Status must be uploaded, under_review, approved, rejected, or needs_revision')
 ];
 
+// Get all documents (admin only) - for document management page
+router.get('/',
+    authenticateToken,
+    requireAdmin, // Only admins can see all documents across committees
+    validatePagination,
+    handleValidationErrors,
+    async (req, res) => {
+        try {
+            const { 
+                page = 1, 
+                limit = 20, 
+                type, 
+                status, 
+                search, 
+                committeeId,
+                dateRange 
+            } = req.query;
+
+            const { Document } = require('./model');
+            
+            // Build filter
+            const filter = {};
+
+            // Type filter
+            if (type && ['position_paper', 'public_document', 'resolution_draft', 'all'].includes(type) && type !== 'all') {
+                filter.type = type;
+            }
+
+            // Status filter  
+            if (status && ['uploaded', 'under_review', 'approved', 'rejected', 'needs_revision', 'pending'].includes(status)) {
+                // Map 'pending' to actual backend status
+                if (status === 'pending') {
+                    filter.status = { $in: ['uploaded', 'under_review'] };
+                } else {
+                    filter.status = status;
+                }
+            }
+
+            // Committee filter
+            if (committeeId) {
+                filter.committeeId = committeeId;
+            }
+
+            // Search filter
+            if (search) {
+                filter.$or = [
+                    { originalName: { $regex: search, $options: 'i' } },
+                    { publicTitle: { $regex: search, $options: 'i' } },
+                    { 'content.extractedText': { $regex: search, $options: 'i' } }
+                ];
+            }
+
+            // Date range filter
+            if (dateRange) {
+                const now = new Date();
+                let startDate;
+
+                switch (dateRange) {
+                    case 'today':
+                        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        break;
+                    case 'week':
+                        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        break;
+                    case 'month':
+                        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                        break;
+                    case '3months':
+                        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                        break;
+                }
+
+                if (startDate) {
+                    filter.createdAt = { $gte: startDate };
+                }
+            }
+
+            // Only show parent documents (not versions)
+            filter.parentDocumentId = null;
+
+            const skip = (page - 1) * limit;
+            const limitNum = parseInt(limit);
+
+            // Execute query with population
+            const documents = await Document.find(filter)
+                .select('type authorEmail countryName originalName filename fileSize status createdAt updatedAt content.wordCount content.pageCount publicTitle')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limitNum)
+                .populate('committeeId', 'name')
+                .populate('uploadedBy', 'username presidiumRole');
+
+            const total = await Document.countDocuments(filter);
+
+            // Calculate stats for the current filter
+            const stats = {
+                total: total,
+                pending: await Document.countDocuments({ ...filter, status: { $in: ['uploaded', 'under_review'] } }),
+                approved: await Document.countDocuments({ ...filter, status: 'approved' }),
+                rejected: await Document.countDocuments({ ...filter, status: 'rejected' })
+            };
+
+            res.json({
+                success: true,
+                documents,
+                stats,
+                pagination: {
+                    currentPage: parseInt(page),
+                    totalPages: Math.ceil(total / limitNum),
+                    total: total,
+                    hasNext: skip + documents.length < total,
+                    hasPrev: page > 1
+                }
+            });
+
+        } catch (error) {
+            logger.error('Get all documents error:', error);
+            res.status(500).json({ error: 'Failed to fetch documents' });
+        }
+    }
+);
+
 // Position Papers Routes
 
 // Upload position paper (delegates only)
