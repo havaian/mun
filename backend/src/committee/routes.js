@@ -1,5 +1,5 @@
 const express = require('express');
-const { body, param, validationResult } = require('express-validator');
+const { body, param, query, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
@@ -135,7 +135,123 @@ const validatePresidiumRole = [
         .withMessage('Invalid presidium role')
 ];
 
+const validatePagination = [
+    query('page')
+        .optional()
+        .isInt({ min: 1 })
+        .withMessage('Page must be a positive integer'),
+    query('limit')
+        .optional()
+        .isInt({ min: 1, max: 100 })
+        .withMessage('Limit must be between 1 and 100'),
+    query('status')
+        .optional()
+        .isIn(['setup', 'active', 'completed'])
+        .withMessage('Status must be setup, active, or completed'),
+    query('eventId')
+        .optional()
+        .isMongoId()
+        .withMessage('Event ID must be valid')
+];
+
 // Routes
+
+// Get all committees (admin can see all, presidium/delegates see their own)
+router.get('/',
+    authenticateToken,
+    validatePagination,
+    handleValidationErrors,
+    async (req, res) => {
+        try {
+            const {
+                page = 1,
+                limit = 20,
+                status,
+                eventId,
+                search
+            } = req.query;
+
+            const { Committee } = require('./model');
+
+            // Build filter based on user role
+            const filter = {};
+
+            // Admin can see all committees
+            // Presidium/delegates can only see committees they're part of
+            if (req.user.role !== 'admin') {
+                if (req.user.committeeId) {
+                    filter._id = req.user.committeeId;
+                } else {
+                    // User not assigned to any committee
+                    return res.json({
+                        success: true,
+                        committees: [],
+                        pagination: {
+                            currentPage: parseInt(page),
+                            totalPages: 0,
+                            total: 0,
+                            hasNext: false,
+                            hasPrev: false
+                        }
+                    });
+                }
+            }
+
+            // Apply filters
+            if (status) {
+                filter.status = status;
+            }
+
+            if (eventId) {
+                filter.eventId = eventId;
+            }
+
+            // Search filter
+            if (search) {
+                filter.$or = [
+                    { name: { $regex: search, $options: 'i' } },
+                    { description: { $regex: search, $options: 'i' } }
+                ];
+            }
+
+            const skip = (page - 1) * limit;
+            const limitNum = parseInt(limit);
+
+            // Execute query with population
+            const committees = await Committee.find(filter)
+                .select('name description type status language eventId countries.length createdAt updatedAt')
+                .populate('eventId', 'name status')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limitNum);
+
+            const total = await Committee.countDocuments(filter);
+
+            // Add computed fields
+            const committeesWithCounts = committees.map(committee => ({
+                ...committee.toObject(),
+                countriesCount: committee.countries?.length || 0
+            }));
+
+            res.json({
+                success: true,
+                committees: committeesWithCounts,
+                pagination: {
+                    currentPage: parseInt(page),
+                    totalPages: Math.ceil(total / limitNum),
+                    total: total,
+                    hasNext: skip + committees.length < total,
+                    hasPrev: page > 1
+                }
+            });
+
+        } catch (error) {
+            const logger = require('../utils/logger');
+            logger.error('Get all committees error:', error);
+            res.status(500).json({ error: 'Failed to fetch committees' });
+        }
+    }
+);
 
 // Create new committee (admin only)
 router.post('/',
