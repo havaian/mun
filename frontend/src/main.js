@@ -31,14 +31,14 @@ app.component('AppCard', AppCard)
 window.toast = {
     success: (message, options) => toastService.success(message, options),
     error: (message, options) => toastService.error(message, options),
-    warn: (message, options) => toastService.warning(message, options),
-    log: (message, options) => toastService.info(message, options),
+    warn: (message, options) => toastService.warn(message, options),
+    log: (message, options) => toastService.log(message, options),
     clear: () => toastService.clear()
 }
 
 // Global error handler
 app.config.errorHandler = (err, vm, info) => {
-    // console.error('Global error:', err, info)
+    console.error('Global error:', err, info)
 
     // Show toast for global errors
     window.toast.error('An unexpected error occurred')
