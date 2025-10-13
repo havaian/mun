@@ -306,37 +306,26 @@ const filters = reactive({
 // Computed
 const totalPages = computed(() => Math.ceil(totalLogs.value / pageSize.value))
 
-// Mock data for demonstration
-const generateMockLogs = () => {
-    const levels = ['error', 'warn', 'info', 'debug']
-    const types = ['auth', 'session', 'document', 'voting', 'system', 'api']
-    const users = ['admin@mun.uz', 'john.doe@committee.mun', 'jane.smith@presidium.mun', null]
-    const messages = [
-        'User login successful',
-        'Session timeout warning issued',
-        'Document uploaded and validated',
-        'Voting session started',
-        'WebSocket connection established',
-        'Database query executed',
-        'Authentication failed - invalid credentials',
-        'File upload rejected - invalid format',
-        'Committee session ended',
-        'Real-time update broadcast sent'
-    ]
+// Map activity types to log levels for better categorization
+const mapActivityToLogLevel = (actionType) => {
+    const errorTypes = ['login_failed', 'upload_failed', 'system_error', 'database_error']
+    const warnTypes = ['session_timeout', 'invalid_request', 'rate_limit_exceeded']
+    const infoTypes = ['login', 'logout', 'document_upload', 'vote_cast', 'session_start', 'session_end']
 
-    return Array.from({ length: 200 }, (_, i) => ({
-        id: i + 1,
-        timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-        level: levels[Math.floor(Math.random() * levels.length)],
-        type: types[Math.floor(Math.random() * types.length)],
-        message: messages[Math.floor(Math.random() * messages.length)],
-        user: users[Math.floor(Math.random() * users.length)],
-        details: Math.random() > 0.7 ? {
-            ip: '192.168.1.' + Math.floor(Math.random() * 255),
-            userAgent: 'Mozilla/5.0...',
-            sessionId: 'sess_' + Math.random().toString(36).substr(2, 9)
-        } : null
-    }))
+    if (errorTypes.includes(actionType)) return 'error'
+    if (warnTypes.includes(actionType)) return 'warn'
+    if (infoTypes.includes(actionType)) return 'info'
+    return 'debug'
+}
+
+// Map activity types to our log categories
+const mapActivityToType = (actionType) => {
+    if (actionType.includes('login') || actionType.includes('logout')) return 'auth'
+    if (actionType.includes('session')) return 'session'
+    if (actionType.includes('document') || actionType.includes('upload')) return 'document'
+    if (actionType.includes('vote') || actionType.includes('voting')) return 'voting'
+    if (actionType.includes('system') || actionType.includes('database')) return 'system'
+    return 'api'
 }
 
 // Methods
