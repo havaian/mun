@@ -29,8 +29,6 @@ const validateAdminLogin = [
         .withMessage('Password must be at least 6 characters')
 ];
 
-// REMOVED: validatePresidiumLogin - presidium now uses QR flow
-
 // QR login validation
 const validateQrLogin = [
     body('token')
@@ -68,8 +66,6 @@ router.post('/admin-login',
     handleValidationErrors,
     controller.adminLogin
 );
-
-// REMOVED: presidium-login route - presidium now uses QR flow
 
 // QR code authentication (for both delegates AND presidium)
 router.post('/qr-login',

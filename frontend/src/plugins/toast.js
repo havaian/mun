@@ -37,13 +37,6 @@ class ToastService {
 
         this.toasts.push(toast)
 
-        // Auto remove if duration is set
-        if (toast.duration > 0) {
-            setTimeout(() => {
-                this.remove(toast.id)
-            }, toast.duration)
-        }
-
         return toast.id
     }
 

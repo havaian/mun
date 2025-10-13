@@ -90,8 +90,6 @@ const adminLogin = async (req, res) => {
     }
 };
 
-// REMOVED: presidiumLogin function - presidium now uses QR flow
-
 // QR code login (for both delegates AND presidium)
 const qrLogin = async (req, res) => {
     try {

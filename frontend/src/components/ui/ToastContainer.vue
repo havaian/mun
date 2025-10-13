@@ -46,7 +46,7 @@
                             </div>
                         </div>
 
-                        <!-- Progress bar for timed toasts - Fixed timing and hover behavior -->
+                        <!-- Progress bar for timed toasts -->
                         <div v-if="toast.duration > 0 && toast.showProgress !== false" class="mt-3 -mb-1 -mx-4">
                             <div class="h-1 bg-gray-100">
                                 <div :class="[
@@ -81,8 +81,9 @@ const { toast: toastService } = useToast()
 // Access reactive toasts from the service
 const toasts = computed(() => toastService.toasts)
 
-// Reactive progress tracking - Fixed for proper timing and hover behavior
+// Reactive progress tracking and timeout management
 const currentProgress = ref({})
+const toastTimeouts = ref({})
 
 // Toast type configurations
 const toastConfig = {
@@ -123,26 +124,30 @@ const getIconClass = (type) => toastConfig[type]?.iconClass || toastConfig.info.
 const getProgressClasses = (type) => toastConfig[type]?.progressClass || toastConfig.info.progressClass
 const getActionButtonClass = (type) => toastConfig[type]?.actionClass || toastConfig.info.actionClass
 
-// Progress calculation - Fixed for accurate timing and hover behavior
+// Progress calculation - Fixed timing logic
 const calculateProgress = (toast) => {
     if (!toast.duration || toast.duration <= 0) return 100
 
     const now = Date.now()
+    const totalPausedTime = toast.totalPausedTime || 0
+    const elapsed = now - toast.timestamp - totalPausedTime
 
-    // If toast is paused, calculate progress up to pause time
+    // If paused, don't update progress
     if (toast.paused) {
-        const elapsedBeforePause = (toast.pausedAt || now) - toast.timestamp - (toast.previousPausedTime || 0)
-        return Math.max(0, Math.min(100, ((toast.duration - elapsedBeforePause) / toast.duration) * 100))
+        return toast.pausedProgress || 100
     }
 
-    // Calculate total elapsed time including previous pauses
-    const elapsed = now - toast.timestamp - (toast.totalPausedTime || 0)
     const remainingProgress = ((toast.duration - elapsed) / toast.duration) * 100
-
     return Math.max(0, Math.min(100, remainingProgress))
 }
 
 const removeToast = (id) => {
+    // Clear any pending timeout
+    if (toastTimeouts.value[id]) {
+        clearTimeout(toastTimeouts.value[id])
+        delete toastTimeouts.value[id]
+    }
+
     // Clean up progress tracking
     delete currentProgress.value[id]
     toastService.remove(id)
@@ -162,22 +167,46 @@ const handleAction = (toast) => {
 const pauseTimer = (id) => {
     const toast = toasts.value.find(t => t.id === id)
     if (toast && toast.duration > 0 && !toast.paused) {
+        // Clear the existing timeout
+        if (toastTimeouts.value[id]) {
+            clearTimeout(toastTimeouts.value[id])
+            delete toastTimeouts.value[id]
+        }
+
+        // Mark as paused and save current progress
         toast.paused = true
         toast.pausedAt = Date.now()
+        toast.pausedProgress = currentProgress.value[id]
     }
 }
 
 const resumeTimer = (id) => {
     const toast = toasts.value.find(t => t.id === id)
     if (toast && toast.paused) {
+        // Calculate how long we were paused
         const pauseDuration = Date.now() - (toast.pausedAt || 0)
         toast.totalPausedTime = (toast.totalPausedTime || 0) + pauseDuration
+
+        // Resume the toast
         toast.paused = false
         toast.pausedAt = null
+
+        // Calculate remaining time and set new timeout
+        const elapsed = Date.now() - toast.timestamp - toast.totalPausedTime
+        const remainingTime = toast.duration - elapsed
+
+        if (remainingTime > 0) {
+            toastTimeouts.value[id] = setTimeout(() => {
+                removeToast(id)
+            }, remainingTime)
+        } else {
+            // Time is up, remove immediately
+            removeToast(id)
+        }
     }
 }
 
-// Progress update with accurate timing and proper hover behavior
+// Progress update interval
 let progressInterval = null
 
 const updateProgress = () => {
@@ -185,33 +214,48 @@ const updateProgress = () => {
         if (toast.duration > 0) {
             const progress = calculateProgress(toast)
             currentProgress.value[toast.id] = progress
-
-            // Only remove toast if NOT paused AND progress has reached 0
-            // This prevents removal during hover even if time has technically elapsed
-            if (!toast.paused && progress <= 0) {
-                removeToast(toast.id)
-            }
         }
     })
 }
 
-// Watch for new toasts and initialize their progress
+// Initialize new toasts with proper timeout management
+const initializeToast = (toast) => {
+    if (toast.duration > 0) {
+        currentProgress.value[toast.id] = 100
+
+        // Initialize pause tracking properties
+        toast.paused = false
+        toast.totalPausedTime = 0
+        toast.pausedAt = null
+        toast.pausedProgress = null
+
+        // Set up auto-removal timeout
+        toastTimeouts.value[toast.id] = setTimeout(() => {
+            removeToast(toast.id)
+        }, toast.duration)
+    }
+}
+
+// Watch for new toasts
 watch(toasts, (newToasts, oldToasts) => {
+    // Initialize new toasts
     newToasts.forEach(toast => {
-        if (toast.duration > 0 && !(toast.id in currentProgress.value)) {
-            currentProgress.value[toast.id] = 100
-            // Initialize pause tracking properties
-            toast.paused = false
-            toast.totalPausedTime = 0
-            toast.pausedAt = null
+        if (!(toast.id in currentProgress.value)) {
+            initializeToast(toast)
         }
     })
 
-    // Clean up progress for removed toasts
+    // Clean up removed toasts
     if (oldToasts) {
         const currentIds = new Set(newToasts.map(t => t.id))
         Object.keys(currentProgress.value).forEach(id => {
-            if (!currentIds.has(parseInt(id))) {
+            const numericId = parseInt(id)
+            if (!currentIds.has(numericId)) {
+                // Clear timeout if exists
+                if (toastTimeouts.value[id]) {
+                    clearTimeout(toastTimeouts.value[id])
+                    delete toastTimeouts.value[id]
+                }
                 delete currentProgress.value[id]
             }
         })
@@ -227,6 +271,12 @@ onUnmounted(() => {
     if (progressInterval) {
         clearInterval(progressInterval)
     }
+
+    // Clear all timeouts
+    Object.values(toastTimeouts.value).forEach(timeout => {
+        clearTimeout(timeout)
+    })
+    toastTimeouts.value = {}
 })
 </script>
 
