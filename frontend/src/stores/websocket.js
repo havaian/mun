@@ -101,6 +101,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
 
     const disconnect = () => {
         console.log('🔌 Disconnecting WebSocket')
+        console.trace('Disconnect called from:')
         
         if (socket.value) {
             socket.value.disconnect()
