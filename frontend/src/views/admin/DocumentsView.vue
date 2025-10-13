@@ -99,7 +99,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Document Type</label>
-                    <select v-model="filters.type" 
+                    <select v-model="filters.type"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
                         <option value="">All Types</option>
                         <option v-for="type in documentTypes" :key="type.value" :value="type.value">
@@ -110,7 +110,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Committee</label>
-                    <select v-model="filters.committee" 
+                    <select v-model="filters.committee"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
                         <option value="">All Committees</option>
                         <option v-for="committee in committees" :key="committee._id" :value="committee._id">
@@ -121,7 +121,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Date Range</label>
-                    <select v-model="filters.dateRange" 
+                    <select v-model="filters.dateRange"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
                         <option value="">All Time</option>
                         <option v-for="range in dateRangeOptions" :key="range.value" :value="range.value">
@@ -163,22 +163,28 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Document
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Committee
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Author
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Status
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Uploaded
                                 </th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Actions
                                 </th>
                             </tr>
@@ -188,13 +194,16 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
-                                            <div class="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                                            <div
+                                                class="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
                                                 <DocumentTextIcon class="h-6 w-6 text-gray-500" />
                                             </div>
                                         </div>
                                         <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">{{ document.title || document.filename || 'Untitled' }}</div>
-                                            <div class="text-sm text-gray-500">{{ getDocumentTypeLabel(document.type) }}</div>
+                                            <div class="text-sm font-medium text-gray-900">{{ document.title ||
+                                                document.filename || 'Untitled' }}</div>
+                                            <div class="text-sm text-gray-500">{{ getDocumentTypeLabel(document.type) }}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -203,7 +212,8 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     <div>
-                                        <div class="font-medium">{{ document.authorEmail || document.uploadedBy?.username || 'Unknown' }}</div>
+                                        <div class="font-medium">{{ document.authorEmail ||
+                                            document.uploadedBy?.username || 'Unknown' }}</div>
                                         <div class="text-gray-500">{{ document.countryName || 'N/A' }}</div>
                                     </div>
                                 </td>
@@ -285,11 +295,11 @@ import { apiMethods } from '@/utils/api'
 
 // Icons
 import {
-    DocumentTextIcon, 
-    ArrowPathIcon, 
-    ClockIcon, 
-    CheckCircleIcon, 
-    EyeIcon, 
+    DocumentTextIcon,
+    ArrowPathIcon,
+    ClockIcon,
+    CheckCircleIcon,
+    EyeIcon,
     ArrowDownTrayIcon
 } from '@heroicons/vue/24/outline'
 
@@ -367,10 +377,10 @@ const loadDocuments = async () => {
             params.dateRange = filters.value.dateRange
         }
 
-        const response = await apiMethods.get('/api/documents', { params })
+        const response = await apiMethods.documents.getAll(params)
         if (response?.data) {
             documents.value = response.data.documents || response.data || []
-            pagination.value.total = response.data.total || 0
+            pagination.value.total = response.data.total || documents.value.length
             pagination.value.totalPages = Math.ceil(pagination.value.total / pagination.value.pageSize)
 
             // Calculate stats from documents
@@ -386,7 +396,7 @@ const loadDocuments = async () => {
 
 const loadCommittees = async () => {
     try {
-        const response = await apiMethods.get('/api/committees')
+        const response = await apiMethods.committees.getAll()
         if (response?.data) {
             committees.value = response.data.committees || response.data || []
         }
@@ -426,7 +436,7 @@ const nextPage = () => {
 }
 
 const viewDocument = (document) => {
-    // Open document preview in new tab
+    // Open document preview using proper API method
     window.open(`/api/documents/${document._id}/preview`, '_blank')
 }
 
@@ -436,8 +446,24 @@ const moderateDocument = (document) => {
 }
 
 const downloadDocument = (document) => {
-    // Download document
-    window.open(`/api/documents/${document._id}/download`, '_blank')
+    // Download document using proper API method
+    apiMethods.documents.download(document._id)
+        .then(response => {
+            // Create download link for blob response
+            const url = window.URL.createObjectURL(new Blob([response]))
+            const link = document.createElement('a')
+            link.href = url
+            link.setAttribute('download', document.filename || `document_${document._id}`)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.URL.revokeObjectURL(url)
+            toast.success('Document downloaded')
+        })
+        .catch(error => {
+            console.error('Download failed:', error)
+            toast.error('Failed to download document')
+        })
 }
 
 // Utility functions

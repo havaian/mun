@@ -308,11 +308,11 @@ const loadReportsData = async () => {
     try {
         isLoading.value = true
 
-        // Load dashboard stats and system health
+        // Load dashboard stats and system health using proper API methods
         const [statsResponse, healthResponse, activityResponse] = await Promise.all([
-            apiMethods.get('/api/admin/dashboard/stats'),
-            apiMethods.get('/api/admin/system/health'),
-            apiMethods.get('/api/admin/dashboard/activity', { params: { limit: 10 } })
+            apiMethods.admin.getDashboardStats(),
+            apiMethods.admin.getSystemHealth(),
+            apiMethods.admin.getRecentActivity({ limit: 10 })
         ])
 
         // Update stats
@@ -376,7 +376,7 @@ const loadReportsData = async () => {
 
 const loadCommittees = async () => {
     try {
-        const response = await apiMethods.get('/api/committees')
+        const response = await apiMethods.committees.getAll()
         if (response?.data) {
             committees.value = response.data.committees || response.data || []
         }
@@ -392,7 +392,7 @@ const loadActivity = async () => {
             params.type = activityFilter.value
         }
 
-        const response = await apiMethods.get('/api/admin/dashboard/activity', { params })
+        const response = await apiMethods.admin.getRecentActivity(params)
         if (response?.data?.activities) {
             recentActivity.value = response.data.activities
         }
@@ -410,9 +410,18 @@ const downloadExport = async (exportItem) => {
     try {
         isGenerating.value[exportItem.id] = true
 
-        const response = await apiMethods.get(exportItem.endpoint, {
-            responseType: 'json' // We'll handle the download differently
-        })
+        let response;
+
+        // Use the appropriate API method based on export type
+        if (exportItem.id === 'all_stats') {
+            response = await apiMethods.admin.getDashboardStats()
+        } else if (exportItem.id === 'user_activity') {
+            response = await apiMethods.admin.getRecentActivity({ limit: 1000 })
+        } else if (exportItem.id === 'system_config') {
+            response = await apiMethods.exports.getSystemConfig()
+        } else {
+            throw new Error('Unknown export type')
+        }
 
         if (response?.data) {
             // Create downloadable JSON file
@@ -441,9 +450,7 @@ const exportCommitteeReport = async (committee) => {
     try {
         isGenerating.value[committee._id] = true
 
-        const response = await apiMethods.get(`/api/export/committee-report/${committee._id}`, {
-            responseType: 'blob'
-        })
+        const response = await apiMethods.exports.exportCompleteReport(committee._id)
 
         if (response) {
             // Create download link for PDF

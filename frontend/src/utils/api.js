@@ -120,6 +120,34 @@ api.interceptors.response.use(
 
 // API methods with proper error handling
 export const apiMethods = {
+
+
+    // Admin Management
+    admin: {
+        // Dashboard
+        getDashboardStats: () => api.get('/admin/dashboard/stats'),
+        getRecentActivity: (params = {}) => api.get('/admin/dashboard/activity', { params }),
+
+        // System Health  
+        getSystemHealth: () => api.get('/admin/system/health'),
+        getPerformanceMetrics: () => api.get('/admin/performance/metrics'),
+        getResponseTimes: (params = {}) => api.get('/admin/performance/response-times', { params }),
+
+        // System Management
+        clearCaches: () => api.post('/admin/system/clear-cache'),
+
+        // Analytics
+        getUserEngagementAnalytics: (params = {}) => api.get('/admin/analytics/user-engagement', { params }),
+        getUsagePatterns: (params = {}) => api.get('/admin/analytics/usage-patterns', { params }),
+
+        // Bulk Operations
+        bulkGenerateQR: (data) => api.post('/admin/committees/bulk-qr', data),
+
+        // Maintenance
+        performMaintenance: (data) => api.post('/admin/maintenance/execute', data),
+        createBackup: (data) => api.post('/admin/maintenance/backup', data)
+    },
+
     // Authentication
     auth: {
         adminLogin: (credentials) => api.post('/auth/admin-login', credentials),
@@ -139,6 +167,17 @@ export const apiMethods = {
         create: (data) => api.post('/events', data),
         update: (id, data) => api.put(`/events/${id}`, data),
         delete: (id) => api.delete(`/events/${id}`)
+    },
+
+    // Export Management  
+    exports: {
+        getSystemConfig: () => api.get('/admin/export/config'),
+        getAuditLogs: (params = {}) => api.get('/admin/export/audit-logs', { params }),
+        generateQRPDF: (committeeId) => api.get(`/export/qr-codes/${committeeId}`, { responseType: 'blob' }),
+        exportCommitteeStats: (committeeId) => api.get(`/export/statistics/${committeeId}`, { responseType: 'blob' }),
+        exportVotingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`, { responseType: 'blob' }),
+        exportResolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`, { responseType: 'blob' }),
+        exportCompleteReport: (committeeId) => api.get(`/export/committee-report/${committeeId}`, { responseType: 'blob' })
     },
 
     // Committees
