@@ -28,17 +28,20 @@ setup_nfs_media() {
         return 0
     fi
     
-    # Only migrate if it's a regular directory
+    # NEVER MIGRATE MEDIA AUTOMATICALLY
+
+    # # Only migrate if it's a regular directory
     if [ -d "./uploads" ] && [ ! -L "./uploads" ]; then
-        echo "Migrating uploads directory to NFS"
-        cp -r ./uploads/* "$NFS_PROJECT_DIR/"
-        rm -rf "./uploads"
+        echo "./uploads directory is not symlinked! Needs manual confiration"
+    #     echo "Migrating uploads directory to NFS"
+    #     cp -r ./uploads/* "$NFS_PROJECT_DIR/"
+    #     rm -rf "./uploads"
     fi
     
-    # Create/fix symlink
-    rm -f "./uploads" 2>/dev/null || true
-    ln -sf "$NFS_PROJECT_DIR" "./uploads"
-    echo "Linked media: ./uploads -> $NFS_PROJECT_DIR"
+    # # Create/fix symlink
+    # rm -f "./uploads" 2>/dev/null || true
+    # ln -sf "$NFS_PROJECT_DIR" "./uploads"
+    # echo "Linked media: ./uploads -> $NFS_PROJECT_DIR"
 }
 
 # Setup NFS media storage
