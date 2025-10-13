@@ -122,7 +122,6 @@ import {
   ExclamationTriangleIcon,
   XMarkIcon
 } from '@heroicons/vue/24/outline'
-import SleekSelect from './components/ui/SleekSelect.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
