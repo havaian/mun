@@ -91,6 +91,9 @@
                         </div>
 
                         <div class="text-center">
+                            <h2 class="text-xl font-semibold text-mun-gray-900 mb-2">Scan QR Code</h2>
+                            <p class="text-mun-gray-600 mb-6">Point your camera at the QR code to authenticate</p>
+
                             <!-- QR Scanner -->
                             <div class="mb-6">
                                 <!-- Camera Not Active State -->
@@ -129,8 +132,8 @@
 
                                 <!-- Camera Active - Scanning -->
                                 <div v-else-if="isCameraActive && !scanResult" class="relative">
-                                    <video ref="videoElement" autoplay playsinline muted
-                                        class="w-full aspect-square object-cover rounded-2xl">
+                                    <video ref="videoElement" autoplay playsinline muted webkit-playsinline
+                                        class="w-full aspect-square object-cover rounded-2xl bg-black">
                                     </video>
 
                                     <!-- Scanner Overlay -->
@@ -409,9 +412,16 @@ const startCamera = async () => {
             // Wait for video to be ready
             await new Promise((resolve) => {
                 videoElement.value.onloadedmetadata = () => {
-                    isCameraActive.value = true
-                    startScanning()
-                    resolve()
+                    console.log('Video metadata loaded, starting playback')
+                    videoElement.value.play().then(() => {
+                        console.log('Video playing successfully')
+                        isCameraActive.value = true
+                        startScanning()
+                        resolve()
+                    }).catch(err => {
+                        console.error('Video play failed:', err)
+                        resolve()
+                    })
                 }
             })
         }
@@ -486,9 +496,16 @@ const tryFallbackCamera = async () => {
             videoElement.value.srcObject = stream.value
             await new Promise((resolve) => {
                 videoElement.value.onloadedmetadata = () => {
-                    isCameraActive.value = true
-                    startScanning()
-                    resolve()
+                    console.log('Fallback video metadata loaded')
+                    videoElement.value.play().then(() => {
+                        console.log('Fallback video playing successfully')
+                        isCameraActive.value = true
+                        startScanning()
+                        resolve()
+                    }).catch(err => {
+                        console.error('Fallback video play failed:', err)
+                        resolve()
+                    })
                 }
             })
         }
