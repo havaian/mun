@@ -98,6 +98,16 @@
                         <DocumentChartBarIcon class="w-5 h-5" />
                         <span>Reports & Analytics</span>
                     </router-link>
+
+                    <router-link to="/admin/logs" :class="getNavLinkClass('AdminLogs')">
+                        <ClipboardDocumentListIcon class="w-5 h-5" />
+                        <span>System Logs</span>
+                        <div v-if="stats.recentErrors > 0" class="ml-auto">
+                            <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+                                {{ stats.recentErrors }}
+                            </span>
+                        </div>
+                    </router-link>
                 </div>
 
                 <!-- System Settings -->
@@ -212,8 +222,7 @@ import { useToast } from '@/plugins/toast'
 
 // Icons
 import {
-    XMarkIcon, ChartBarIcon, CalendarDaysIcon, UserGroupIcon, UsersIcon, DocumentTextIcon,
-    DocumentChartBarIcon, CogIcon, UserIcon, ArrowRightOnRectangleIcon
+    XMarkIcon, ChartBarIcon, CalendarDaysIcon, UserGroupIcon, UsersIcon, DocumentTextIcon, DocumentChartBarIcon, CogIcon, UserIcon, ArrowRightOnRectangleIcon, ClipboardDocumentListIcon
 } from '@heroicons/vue/24/outline'
 
 // Stores

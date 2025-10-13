@@ -13,6 +13,7 @@ const AdminEvents = () => import('@/views/admin/EventsView.vue')
 const AdminCommittees = () => import('@/views/admin/CommitteesView.vue')
 const AdminUsers = () => import('@/views/admin/UsersView.vue')
 const AdminReports = () => import('@/views/admin/ReportsView.vue')
+const AdminLogs = () => import('@/views/admin/LogsView.vue')
 
 // Presidium views
 const PresidiumDashboard = () => import('@/views/presidium/DashboardView.vue')
@@ -106,6 +107,12 @@ const routes = [
         name: 'AdminReports',
         component: AdminReports,
         meta: { title: 'Reports & Analytics' }
+      },
+      {
+        path: 'logs',
+        name: 'AdminLogs',
+        component: AdminLogs,
+        meta: { title: 'System Logs' }
       }
     ]
   },
