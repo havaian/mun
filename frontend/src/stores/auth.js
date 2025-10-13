@@ -218,7 +218,7 @@ export const useAuthStore = defineStore('auth', () => {
             localStorage.removeItem('mun_token')
 
             if (showMessage) {
-                toast.info('You have been logged out')
+                toast.log('You have been logged out')
             }
 
             router.push({ name: 'Login' })
@@ -240,7 +240,7 @@ export const useAuthStore = defineStore('auth', () => {
 
         if (timeSinceActivity > timeout) {
             logout(false)
-            toast.warning('Session expired due to inactivity')
+            toast.warn('Session expired due to inactivity')
             return 'expired'
         }
 
