@@ -3,14 +3,14 @@ import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
 import { io } from 'socket.io-client'
 import { useAuthStore } from './auth'
-import { useToast } from '@/plugins/toast'
 
 export const useWebSocketStore = defineStore('websocket', () => {
     const socket = ref(null)
     const isConnected = ref(false)
+    const isConnecting = ref(false)
     const reconnectAttempts = ref(0)
     const maxReconnectAttempts = 5
-    const toast = useToast()
+    const connectionState = ref('disconnected') // 'disconnected', 'connecting', 'connected'
 
     // Real-time data stores
     const sessionUpdates = reactive({})
@@ -21,33 +21,99 @@ export const useWebSocketStore = defineStore('websocket', () => {
     const messageUpdates = reactive([])
 
     // Connection management
-    const connect = () => {
+    const connect = async () => {
         const authStore = useAuthStore()
 
-        if (!authStore.token || socket.value?.connected) {
-            return
+        if (!authStore.token) {
+            console.warn('❌ Cannot connect WebSocket: No authentication token')
+            return Promise.reject(new Error('No authentication token'))
         }
 
-        const wsUrl = '/'
+        if (socket.value?.connected) {
+            console.log('ℹ️ WebSocket already connected')
+            return Promise.resolve()
+        }
 
-        socket.value = io(wsUrl, {
-            auth: {
-                token: authStore.token
-            },
-            transports: ['websocket', 'polling'],
-            timeout: 10000,
-            forceNew: true
+        // Prevent multiple connection attempts
+        if (isConnecting.value) {
+            console.log('ℹ️ WebSocket connection already in progress')
+            return Promise.resolve()
+        }
+
+        return new Promise((resolve, reject) => {
+            try {
+                isConnecting.value = true
+                connectionState.value = 'connecting'
+
+                // Disconnect existing socket if any
+                if (socket.value) {
+                    socket.value.disconnect()
+                    socket.value = null
+                }
+
+                // Use current host - nginx handles the WebSocket proxying to backend
+                const wsUrl = window.location.origin
+                console.log('🔌 Connecting to WebSocket:', wsUrl)
+
+                socket.value = io(wsUrl, {
+                    auth: {
+                        token: authStore.token
+                    },
+                    transports: ['websocket', 'polling'], // Try websocket first, fallback to polling
+                    upgrade: true,
+                    rememberUpgrade: true,
+                    timeout: 10000,
+                    reconnection: false, // We'll handle reconnection manually
+                    forceNew: true,
+                    autoConnect: true
+                })
+
+                setupEventListeners()
+
+                // Set up connection timeout
+                const connectionTimeout = setTimeout(() => {
+                    if (!isConnected.value) {
+                        console.error('❌ WebSocket connection timeout')
+                        cleanup()
+                        reject(new Error('Connection timeout'))
+                    }
+                }, 15000) // 15 second timeout
+
+                // Resolve promise on successful connection
+                socket.value.once('connect', () => {
+                    clearTimeout(connectionTimeout)
+                    resolve()
+                })
+
+                // Reject promise on connection error
+                socket.value.once('connect_error', (error) => {
+                    clearTimeout(connectionTimeout)
+                    cleanup()
+                    reject(error)
+                })
+
+            } catch (error) {
+                cleanup()
+                reject(error)
+            }
         })
-
-        setupEventListeners()
     }
 
     const disconnect = () => {
+        console.log('🔌 Disconnecting WebSocket')
+        
         if (socket.value) {
             socket.value.disconnect()
             socket.value = null
         }
+        
+        cleanup()
+    }
+
+    const cleanup = () => {
         isConnected.value = false
+        isConnecting.value = false
+        connectionState.value = 'disconnected'
         reconnectAttempts.value = 0
     }
 
@@ -57,34 +123,59 @@ export const useWebSocketStore = defineStore('websocket', () => {
         // Connection events
         socket.value.on('connect', () => {
             isConnected.value = true
+            isConnecting.value = false
+            connectionState.value = 'connected'
             reconnectAttempts.value = 0
-            console.log('🔗 WebSocket connected')
+            console.log('🔗 WebSocket connected successfully')
 
             // Join user-specific rooms
             const authStore = useAuthStore()
             if (authStore.user?.committeeId) {
                 socket.value.emit('join-committee', authStore.user.committeeId)
+                console.log('📝 Joined committee room:', authStore.user.committeeId)
             }
+
+            // Send user info for room assignment
+            socket.value.emit('user-info', {
+                userId: authStore.user?.id,
+                email: authStore.user?.email,
+                role: authStore.user?.role,
+                committeeId: authStore.user?.committeeId
+            })
         })
 
         socket.value.on('disconnect', (reason) => {
-            isConnected.value = false
             console.log('❌ WebSocket disconnected:', reason)
+            
+            isConnected.value = false
+            isConnecting.value = false
+            connectionState.value = 'disconnected'
 
-            if (reason === 'io server disconnect') {
-                // Server disconnected, try to reconnect
-                setTimeout(() => {
-                    if (reconnectAttempts.value < maxReconnectAttempts) {
-                        reconnectAttempts.value++
-                        connect()
-                    }
-                }, 2000 * reconnectAttempts.value)
+            // Only attempt reconnection for certain disconnect reasons
+            if (reason === 'io server disconnect' || reason === 'transport close') {
+                scheduleReconnect()
+            } else if (reason === 'io client disconnect') {
+                // Client initiated disconnect - don't reconnect
+                console.log('ℹ️ Client initiated disconnect - not reconnecting')
             }
         })
 
         socket.value.on('connect_error', (error) => {
-            console.error('WebSocket connection error:', error)
+            console.error('❌ WebSocket connection error:', error)
             isConnected.value = false
+            isConnecting.value = false
+            connectionState.value = 'disconnected'
+            
+            scheduleReconnect()
+        })
+
+        socket.value.on('reconnect_error', (error) => {
+            console.error('❌ WebSocket reconnection error:', error)
+        })
+
+        // Server confirmation of connection
+        socket.value.on('connected', (data) => {
+            console.log('✅ WebSocket connection confirmed by server:', data.message)
         })
 
         // Session events
@@ -94,7 +185,8 @@ export const useWebSocketStore = defineStore('websocket', () => {
                 status: 'active',
                 timestamp: Date.now()
             }
-            toast.success(`Session started: ${data.mode} mode`)
+            // Note: Removed toast here to avoid notification spam
+            console.log('📅 Session started:', data.mode)
         })
 
         socket.value.on('session-ended', (data) => {
@@ -103,7 +195,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
                 status: 'ended',
                 timestamp: Date.now()
             }
-            toast.info('Session ended')
+            console.log('📅 Session ended')
         })
 
         socket.value.on('session-mode-changed', (data) => {
@@ -112,7 +204,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
                 ...data,
                 timestamp: Date.now()
             }
-            toast.info(`Debate mode changed to: ${data.newMode}`)
+            console.log('📅 Debate mode changed to:', data.newMode)
         })
 
         // Speaker events
@@ -122,47 +214,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
                 speakerEmail: data.email,
                 timestamp: Date.now()
             }
-        })
-
-        socket.value.on('speaker-list-updated', (data) => {
-            speakerUpdates[data.sessionId] = {
-                ...speakerUpdates[data.sessionId],
-                speakerList: data.speakerList,
-                timestamp: Date.now()
-            }
-        })
-
-        // Timer events
-        socket.value.on('timer-started', (data) => {
-            timerUpdates[`${data.sessionId}-${data.timerType}`] = {
-                ...data,
-                status: 'running',
-                timestamp: Date.now()
-            }
-        })
-
-        socket.value.on('timer-paused', (data) => {
-            timerUpdates[`${data.sessionId}-${data.timerType}`] = {
-                ...data,
-                status: 'paused',
-                timestamp: Date.now()
-            }
-        })
-
-        socket.value.on('timer-stopped', (data) => {
-            timerUpdates[`${data.sessionId}-${data.timerType}`] = {
-                ...data,
-                status: 'stopped',
-                timestamp: Date.now()
-            }
-        })
-
-        socket.value.on('timer-tick', (data) => {
-            timerUpdates[`${data.sessionId}-${data.timerType}`] = {
-                ...timerUpdates[`${data.sessionId}-${data.timerType}`],
-                remainingTime: data.remainingTime,
-                timestamp: Date.now()
-            }
+            console.log('🎤 Speaker changed:', data.country)
         })
 
         // Voting events
@@ -172,107 +224,137 @@ export const useWebSocketStore = defineStore('websocket', () => {
                 status: 'active',
                 timestamp: Date.now()
             }
-            toast.success(`New voting: ${data.subject}`)
+            console.log('🗳️ Voting started:', data.title)
         })
 
-        socket.value.on('voting-completed', (data) => {
+        socket.value.on('voting-ended', (data) => {
             votingUpdates[data.votingId] = {
                 ...data,
-                status: 'completed',
+                status: 'ended',
                 timestamp: Date.now()
             }
-            toast.success(`Voting completed: ${data.passed ? 'PASSED' : 'FAILED'}`)
+            console.log('🗳️ Voting ended:', data.title)
         })
 
         socket.value.on('vote-cast', (data) => {
-            // Update voting progress without revealing individual votes
             if (votingUpdates[data.votingId]) {
-                votingUpdates[data.votingId].votesCount = data.votesCount
+                votingUpdates[data.votingId].currentResults = data.currentResults
                 votingUpdates[data.votingId].timestamp = Date.now()
             }
         })
 
-        socket.value.on('voting-progress', (data) => {
-            votingUpdates[data.votingId] = {
-                ...votingUpdates[data.votingId],
+        // Timer events
+        socket.value.on('timer-started', (data) => {
+            const key = `${data.sessionId}-${data.timerType}`
+            timerUpdates[key] = {
                 ...data,
+                status: 'running',
                 timestamp: Date.now()
+            }
+        })
+
+        socket.value.on('timer-paused', (data) => {
+            const key = `${data.sessionId}-${data.timerType}`
+            if (timerUpdates[key]) {
+                timerUpdates[key].status = 'paused'
+                timerUpdates[key].pausedAt = data.pausedAt
+                timerUpdates[key].timestamp = Date.now()
+            }
+        })
+
+        socket.value.on('timer-stopped', (data) => {
+            const key = `${data.sessionId}-${data.timerType}`
+            if (timerUpdates[key]) {
+                timerUpdates[key].status = 'stopped'
+                timerUpdates[key].timestamp = Date.now()
             }
         })
 
         // Attendance events
         socket.value.on('attendance-updated', (data) => {
             attendanceUpdates[data.sessionId] = {
-                attendance: data.attendance,
-                quorum: data.quorum,
+                ...data,
                 timestamp: Date.now()
-            }
-        })
-
-        socket.value.on('quorum-status-changed', (data) => {
-            attendanceUpdates[data.sessionId] = {
-                ...attendanceUpdates[data.sessionId],
-                quorum: data.quorum,
-                timestamp: Date.now()
-            }
-
-            if (data.quorum.hasQuorum) {
-                toast.success('Quorum achieved')
-            } else {
-                toast.warning('Quorum lost')
             }
         })
 
         // Message events
-        socket.value.on('new-message', (data) => {
+        socket.value.on('message-received', (data) => {
             messageUpdates.push({
                 ...data,
                 timestamp: Date.now()
             })
 
-            const authStore = useAuthStore()
-            if (data.recipientEmail === authStore.user?.email) {
-                toast.info(`New message from ${data.senderCountry}`)
+            // Keep only last 100 messages
+            if (messageUpdates.length > 100) {
+                messageUpdates.splice(0, messageUpdates.length - 100)
             }
         })
 
         // Emergency/announcement events
         socket.value.on('emergency-announcement', (data) => {
-            toast.error(data.message, {
-                duration: 10000,
-                important: true
-            })
+            // Use window.toast if available, fallback to console
+            if (window.toast) {
+                window.toast.error(data.message, { duration: 10000 })
+            } else {
+                console.error('🚨 Emergency:', data.message)
+            }
         })
 
         socket.value.on('general-announcement', (data) => {
-            toast.info(data.message, {
-                duration: 5000
-            })
+            if (window.toast) {
+                window.toast.log(data.message, { duration: 5000 })
+            } else {
+                console.log('📢 Announcement:', data.message)
+            }
         })
+    }
+
+    const scheduleReconnect = () => {
+        if (reconnectAttempts.value >= maxReconnectAttempts) {
+            console.error('❌ Max reconnection attempts reached')
+            return
+        }
+
+        const delay = Math.min(2000 * Math.pow(2, reconnectAttempts.value), 30000) // Exponential backoff, max 30s
+        console.log(`🔄 Scheduling reconnect attempt ${reconnectAttempts.value + 1} in ${delay}ms`)
+
+        setTimeout(() => {
+            if (!isConnected.value && !isConnecting.value) {
+                reconnectAttempts.value++
+                connect().catch(error => {
+                    console.error('❌ Reconnection failed:', error)
+                })
+            }
+        }, delay)
     }
 
     // Emit events
     const joinCommittee = (committeeId) => {
         if (socket.value?.connected) {
             socket.value.emit('join-committee', committeeId)
+            console.log('📝 Joining committee room:', committeeId)
         }
     }
 
     const leaveCommittee = (committeeId) => {
         if (socket.value?.connected) {
             socket.value.emit('leave-committee', committeeId)
+            console.log('📝 Leaving committee room:', committeeId)
         }
     }
 
     const joinSession = (sessionId) => {
         if (socket.value?.connected) {
             socket.value.emit('join-session', sessionId)
+            console.log('📅 Joining session room:', sessionId)
         }
     }
 
     const leaveSession = (sessionId) => {
         if (socket.value?.connected) {
             socket.value.emit('leave-session', sessionId)
+            console.log('📅 Leaving session room:', sessionId)
         }
     }
 
@@ -315,6 +397,8 @@ export const useWebSocketStore = defineStore('websocket', () => {
         // State
         socket,
         isConnected,
+        isConnecting,
+        connectionState,
         reconnectAttempts,
 
         // Data stores
