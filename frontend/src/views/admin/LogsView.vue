@@ -332,42 +332,89 @@ const mapActivityToType = (actionType) => {
 const loadLogs = async () => {
     isLoading.value = true
     try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        // Build query parameters
+        const params = new URLSearchParams({
+            limit: pageSize.value,
+            page: currentPage.value,
+            type: filters.type || 'all'
+        })
 
-        const allLogs = generateMockLogs()
-        let filteredLogs = allLogs
+        // Add time range based on date filters
+        if (filters.dateFrom && filters.dateTo) {
+            const fromDate = new Date(filters.dateFrom)
+            const toDate = new Date(filters.dateTo)
+            const diffTime = Math.abs(toDate - fromDate)
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-        // Apply filters
-        if (filters.level) {
-            filteredLogs = filteredLogs.filter(log => log.level === filters.level)
+            if (diffDays === 0) {
+                params.set('timeRange', '24h')
+            } else if (diffDays <= 7) {
+                params.set('timeRange', '7d')
+            } else if (diffDays <= 30) {
+                params.set('timeRange', '30d')
+            }
+        } else if (filters.dateFrom || filters.dateTo) {
+            params.set('timeRange', '7d') // Default to week if only one date is set
         }
 
-        if (filters.type) {
-            filteredLogs = filteredLogs.filter(log => log.type === filters.type)
+        const response = await fetch(`/api/admin/dashboard/activity?${params}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`,
+                'Content-Type': 'application/json'
+            }
+        })
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
         }
 
-        if (filters.search) {
-            const searchTerm = filters.search.toLowerCase()
-            filteredLogs = filteredLogs.filter(log =>
-                log.message.toLowerCase().includes(searchTerm) ||
-                (log.user && log.user.toLowerCase().includes(searchTerm))
-            )
+        const data = await response.json()
+
+        if (data.success) {
+            // Transform activity data to log format
+            let activities = data.activities || []
+
+            // Apply client-side filters
+            if (filters.search) {
+                const searchTerm = filters.search.toLowerCase()
+                activities = activities.filter(activity =>
+                    activity.description.toLowerCase().includes(searchTerm) ||
+                    (activity.user && activity.user.toLowerCase().includes(searchTerm))
+                )
+            }
+
+            if (filters.level) {
+                activities = activities.filter(activity => {
+                    const logLevel = mapActivityToLogLevel(activity.actionType || '')
+                    return logLevel === filters.level
+                })
+            }
+
+            // Transform to log format
+            const transformedLogs = activities.map(activity => ({
+                id: activity.id,
+                timestamp: activity.timestamp,
+                level: mapActivityToLogLevel(activity.actionType || ''),
+                type: mapActivityToType(activity.actionType || ''),
+                message: activity.description,
+                user: activity.user,
+                details: {
+                    actionType: activity.actionType,
+                    committee: activity.committee,
+                    event: activity.event,
+                    metadata: activity.metadata
+                }
+            }))
+
+            logs.value = transformedLogs
+            totalLogs.value = data.totalCount || transformedLogs.length
+        } else {
+            throw new Error(data.error || 'Failed to load logs')
         }
-
-        // Sort by timestamp (newest first)
-        filteredLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-
-        totalLogs.value = filteredLogs.length
-
-        // Paginate
-        const startIndex = (currentPage.value - 1) * pageSize.value
-        const endIndex = startIndex + pageSize.value
-        logs.value = filteredLogs.slice(startIndex, endIndex)
 
     } catch (error) {
-        toast.error('Failed to load logs')
         console.error('Load logs error:', error)
+        toast.error('Failed to load logs')
     } finally {
         isLoading.value = false
     }
@@ -449,8 +496,8 @@ const viewLogDetails = (log) => {
 }
 
 const exportLogs = () => {
-    // Simulate export functionality
-    toast.success('Logs exported successfully')
+    // TODO: Implement real export functionality
+    toast.success('Export feature coming soon')
 }
 
 // Formatting functions
