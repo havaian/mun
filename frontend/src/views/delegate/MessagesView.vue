@@ -241,26 +241,25 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-mun-gray-700 mb-2">To</label>
-                                <select v-model="composeForm.recipient" required class="input-field">
-                                    <option value="">Select recipient</option>
-                                    <option value="presidium">Presidium</option>
-                                    <option value="all-delegates">All Delegates</option>
-                                    <optgroup label="Individual Countries">
-                                        <option v-for="country in availableCountries" :key="country" :value="country">
-                                            {{ country }}
-                                        </option>
-                                    </optgroup>
-                                </select>
+                                <SleekSelect v-model="composeForm.recipient" :options="[
+                                    { label: 'Select recipient', value: '' },
+                                    { label: 'Presidium', value: 'presidium' },
+                                    { label: 'All Delegates', value: 'all-delegates' },
+                                    ...availableCountries.map(country => ({
+                                        label: country,
+                                        value: country
+                                    }))
+                                ]" placeholder="Select recipient" searchable />
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-mun-gray-700 mb-2">Type</label>
-                                <select v-model="composeForm.type" required class="input-field">
-                                    <option value="diplomatic">Diplomatic Note</option>
-                                    <option value="coalition">Coalition Message</option>
-                                    <option value="procedural">Procedural Inquiry</option>
-                                    <option value="general">General Communication</option>
-                                </select>
+                                <SleekSelect v-model="composeForm.type" :options="[
+                                    { label: 'Diplomatic Note', value: 'diplomatic' },
+                                    { label: 'Coalition Message', value: 'coalition' },
+                                    { label: 'Procedural Inquiry', value: 'procedural' },
+                                    { label: 'General Communication', value: 'general' }
+                                ]" placeholder="Select message type" />
                             </div>
                         </div>
 
@@ -272,10 +271,10 @@
 
                         <div>
                             <label class="block text-sm font-medium text-mun-gray-700 mb-2">Priority</label>
-                            <select v-model="composeForm.priority" class="input-field max-w-xs">
-                                <option value="normal">Normal</option>
-                                <option value="high">High Priority</option>
-                            </select>
+                            <SleekSelect v-model="composeForm.priority" :options="[
+                                { label: 'Normal', value: 'normal' },
+                                { label: 'High Priority', value: 'high' }
+                            ]" containerClass="max-w-xs" />
                         </div>
 
                         <div>

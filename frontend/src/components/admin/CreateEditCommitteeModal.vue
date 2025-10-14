@@ -50,18 +50,18 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Committee Type *
                                         </label>
-                                        <select v-model="formData.type" required class="input-field"
-                                            :class="{ 'border-mun-red-300': errors.type }" @change="handleTypeChange">
-                                            <option value="">Select committee type</option>
-                                            <option value="GA">General Assembly</option>
-                                            <option value="SC">Security Council</option>
-                                            <option value="ECOSOC">Economic and Social Council</option>
-                                            <option value="HRC">Human Rights Council</option>
-                                            <option value="LEGAL">Legal Committee</option>
-                                            <option value="DISEC">Disarmament Committee</option>
-                                            <option value="SPECPOL">Special Political Committee</option>
-                                            <option value="OTHER">Other</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.type" :options="[
+                                            { label: 'Select committee type', value: '' },
+                                            { label: 'General Assembly', value: 'GA' },
+                                            { label: 'Security Council', value: 'SC' },
+                                            { label: 'Economic and Social Council', value: 'ECOSOC' },
+                                            { label: 'Human Rights Council', value: 'HRC' },
+                                            { label: 'Legal Committee', value: 'LEGAL' },
+                                            { label: 'Disarmament Committee', value: 'DISEC' },
+                                            { label: 'Special Political Committee', value: 'SPECPOL' },
+                                            { label: 'Other', value: 'OTHER' }
+                                        ]" placeholder="Select committee type" :trigger-class="errors.type ? 'border-mun-red-300' : ''"
+                                            @change="handleTypeChange" required size="md" />
                                         <p v-if="errors.type" class="mt-1 text-sm text-mun-red-600">
                                             {{ errors.type }}
                                         </p>
@@ -72,14 +72,14 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Event *
                                         </label>
-                                        <select v-model="formData.eventId" required class="input-field"
-                                            :class="{ 'border-mun-red-300': errors.eventId }">
-                                            <option value="">Select event</option>
-                                            <option v-for="event in availableEvents" :key="event._id"
-                                                :value="event._id">
-                                                {{ event.name }}
-                                            </option>
-                                        </select>
+                                        <SleekSelect v-model="formData.eventId" :options="[
+                                            { label: 'Select event', value: '' },
+                                            ...availableEvents.map(event => ({
+                                                label: event.name,
+                                                value: event._id
+                                            }))
+                                        ]" placeholder="Select event" :trigger-class="errors.eventId ? 'border-mun-red-300' : ''" searchable required
+                                            size="md" />
                                         <p v-if="errors.eventId" class="mt-1 text-sm text-mun-red-600">
                                             {{ errors.eventId }}
                                         </p>
@@ -90,13 +90,13 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Status
                                         </label>
-                                        <select v-model="formData.status" class="input-field">
-                                            <option value="draft">Draft</option>
-                                            <option value="setup">Setup</option>
-                                            <option value="active">Active</option>
-                                            <option value="paused">Paused</option>
-                                            <option value="completed">Completed</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.status" :options="[
+                                            { label: 'Draft', value: 'draft' },
+                                            { label: 'Setup', value: 'setup' },
+                                            { label: 'Active', value: 'active' },
+                                            { label: 'Paused', value: 'paused' },
+                                            { label: 'Completed', value: 'completed' }
+                                        ]" size="md" />
                                     </div>
 
                                     <!-- Abbreviation -->
@@ -142,12 +142,12 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Working Language
                                         </label>
-                                        <select v-model="formData.language" class="input-field">
-                                            <option value="en">English</option>
-                                            <option value="ru">Russian</option>
-                                            <option value="uz_lat">Uzbek (Latin)</option>
-                                            <option value="uz_cyr">Uzbek (Cyrillic)</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.language" :options="[
+                                            { label: 'English', value: 'en' },
+                                            { label: 'Russian', value: 'ru' },
+                                            { label: 'Uzbek (Latin)', value: 'uz_lat' },
+                                            { label: 'Uzbek (Cyrillic)', value: 'uz_cyr' }
+                                        ]" size="md" />
                                     </div>
 
                                     <!-- Max Countries -->
@@ -177,13 +177,13 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Time Zone
                                         </label>
-                                        <select v-model="formData.timeZone" class="input-field">
-                                            <option value="Asia/Tashkent">Asia/Tashkent (UTC+5)</option>
-                                            <option value="UTC">UTC (UTC+0)</option>
-                                            <option value="America/New_York">America/New_York (UTC-5)</option>
-                                            <option value="Europe/London">Europe/London (UTC+0)</option>
-                                            <option value="Asia/Dubai">Asia/Dubai (UTC+4)</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.timeZone" :options="[
+                                            { label: 'Asia/Tashkent (UTC+5)', value: 'Asia/Tashkent' },
+                                            { label: 'UTC (UTC+0)', value: 'UTC' },
+                                            { label: 'America/New_York (UTC-5)', value: 'America/New_York' },
+                                            { label: 'Europe/London (UTC+0)', value: 'Europe/London' },
+                                            { label: 'Asia/Dubai (UTC+4)', value: 'Asia/Dubai' }
+                                        ]" size="md" />
                                     </div>
                                 </div>
 
@@ -265,12 +265,11 @@
                                             <label class="block text-sm font-medium text-blue-800 mb-2">
                                                 Voting Threshold (non-procedural)
                                             </label>
-                                            <select v-model="formData.scSettings.votingThreshold"
-                                                class="input-field !border-blue-300 !focus:border-blue-500">
-                                                <option value="simple">Simple Majority</option>
-                                                <option value="qualified">Qualified Majority (9/15)</option>
-                                                <option value="two-thirds">Two-Thirds Majority</option>
-                                            </select>
+                                            <SleekSelect v-model="formData.scSettings.votingThreshold" :options="[
+                                                { label: 'Simple Majority', value: 'simple' },
+                                                { label: 'Qualified Majority (9/15)', value: 'qualified' },
+                                                { label: 'Two-Thirds Majority', value: 'two-thirds' }
+                                            ]" trigger-class="!border-blue-300 focus:!border-blue-500" size="md" />
                                         </div>
                                     </div>
                                 </div>
@@ -302,12 +301,12 @@
                                                 <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                                     Role
                                                 </label>
-                                                <select v-model="member.role" class="input-field">
-                                                    <option value="chairman">Chairman</option>
-                                                    <option value="co-chairman">Co-Chairman</option>
-                                                    <option value="expert">Expert</option>
-                                                    <option value="secretary">Secretary</option>
-                                                </select>
+                                                <SleekSelect v-model="member.role" :options="[
+                                                    { label: 'Chairman', value: 'chairman' },
+                                                    { label: 'Co-Chairman', value: 'co-chairman' },
+                                                    { label: 'Expert', value: 'expert' },
+                                                    { label: 'Secretary', value: 'secretary' }
+                                                ]" size="md" />
                                             </div>
 
                                             <div>
@@ -366,11 +365,11 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Debate Format
                                         </label>
-                                        <select v-model="formData.debateFormat" class="input-field">
-                                            <option value="formal">Formal Debate</option>
-                                            <option value="informal">Informal Consultation</option>
-                                            <option value="mixed">Mixed Format</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.debateFormat" :options="[
+                                            { label: 'Formal Debate', value: 'formal' },
+                                            { label: 'Informal Consultation', value: 'informal' },
+                                            { label: 'Mixed Format', value: 'mixed' }
+                                        ]" size="md" />
                                     </div>
 
                                     <!-- Roll Call Voting -->
@@ -378,11 +377,11 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Voting Method
                                         </label>
-                                        <select v-model="formData.votingMethod" class="input-field">
-                                            <option value="placard">Placard Voting</option>
-                                            <option value="roll-call">Roll Call</option>
-                                            <option value="electronic">Electronic Voting</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.votingMethod" :options="[
+                                            { label: 'Placard Voting', value: 'placard' },
+                                            { label: 'Roll Call', value: 'roll-call' },
+                                            { label: 'Electronic Voting', value: 'electronic' }
+                                        ]" size="md" />
                                     </div>
 
                                     <!-- Document Deadline -->

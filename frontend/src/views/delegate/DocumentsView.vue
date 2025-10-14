@@ -87,12 +87,12 @@
                 <div class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-mun-gray-900">Documents</h2>
                     <div class="flex items-center space-x-3">
-                        <select v-model="filterType" class="input-field max-w-xs">
-                            <option value="">All Types</option>
-                            <option value="position-paper">Position Papers</option>
-                            <option value="resolution">Resolutions</option>
-                            <option value="amendment">Amendments</option>
-                        </select>
+                        <SleekSelect v-model="filterType" :options="[
+                            { label: 'All Types', value: '' },
+                            { label: 'Position Papers', value: 'position-paper' },
+                            { label: 'Resolutions', value: 'resolution' },
+                            { label: 'Amendments', value: 'amendment' }
+                        ]" containerClass="max-w-xs" placeholder="Filter by type" />
                     </div>
                 </div>
             </div>
@@ -203,13 +203,13 @@
                     <form @submit.prevent="uploadDocument" class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-mun-gray-700 mb-2">Document Type</label>
-                            <select v-model="uploadForm.type" required class="input-field">
-                                <option value="">Select document type</option>
-                                <option value="position-paper">Position Paper</option>
-                                <option value="resolution">Resolution</option>
-                                <option value="amendment">Amendment</option>
-                                <option value="other">Other</option>
-                            </select>
+                            <SleekSelect v-model="uploadForm.type" :options="[
+                                { label: 'Select document type', value: '' },
+                                { label: 'Position Paper', value: 'position-paper' },
+                                { label: 'Resolution', value: 'resolution' },
+                                { label: 'Amendment', value: 'amendment' },
+                                { label: 'Other', value: 'other' }
+                            ]" placeholder="Select document type" />
                         </div>
 
                         <div>

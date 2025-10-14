@@ -69,14 +69,9 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Committee Type *
                                         </label>
-                                        <select v-model="formData.type" class="mun-input"
-                                            :class="{ 'border-red-500': errors.type }" required>
-                                            <option value="">Select committee type</option>
-                                            <option v-for="type in committeeTypes" :key="type.value"
-                                                :value="type.value">
-                                                {{ type.label }}
-                                            </option>
-                                        </select>
+                                        <SleekSelect v-model="formData.type" :options="committeeTypes"
+                                            placeholder="Select committee type" size="md"
+                                            :trigger-class="errors.type ? 'border-red-500' : ''" required />
                                         <p v-if="errors.type" class="mt-1 text-sm text-red-600">
                                             {{ errors.type }}
                                         </p>
@@ -123,16 +118,15 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Working Language *
                                         </label>
-                                        <select v-model="formData.language" class="mun-input"
-                                            :class="{ 'border-red-500': errors.language }" required>
-                                            <option value="">Select language</option>
-                                            <option value="en">English</option>
-                                            <option value="fr">French</option>
-                                            <option value="es">Spanish</option>
-                                            <option value="ar">Arabic</option>
-                                            <option value="ru">Russian</option>
-                                            <option value="zh">Chinese</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.language" :options="[
+                                            { label: 'Select language', value: '' },
+                                            { label: 'English', value: 'en' },
+                                            { label: 'French', value: 'fr' },
+                                            { label: 'Spanish', value: 'es' },
+                                            { label: 'Arabic', value: 'ar' },
+                                            { label: 'Russian', value: 'ru' },
+                                            { label: 'Chinese', value: 'zh' }
+                                        ]" placeholder="Select language" size="md" :trigger-class="errors.language ? 'border-red-500' : ''" required />
                                         <p v-if="errors.language" class="mt-1 text-sm text-red-600">
                                             {{ errors.language }}
                                         </p>
@@ -153,11 +147,11 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Status
                                         </label>
-                                        <select v-model="formData.status" class="mun-input">
-                                            <option value="active">Active</option>
-                                            <option value="inactive">Inactive</option>
-                                            <option value="draft">Draft</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.status" :options="[
+                                            { label: 'Active', value: 'active' },
+                                            { label: 'Inactive', value: 'inactive' },
+                                            { label: 'Draft', value: 'draft' }
+                                        ]" size="md" />
                                     </div>
                                 </div>
 
@@ -252,24 +246,26 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Chairman
                                         </label>
-                                        <select v-model="formData.chairman" class="mun-input">
-                                            <option value="">Select chairman</option>
-                                            <option v-for="user in availablePresidium" :key="user.id" :value="user.id">
-                                                {{ user.name }} ({{ user.email }})
-                                            </option>
-                                        </select>
+                                        <SleekSelect v-model="formData.chairman" :options="[
+                                            { label: 'Select chairman', value: '' },
+                                            ...availablePresidium.map(user => ({
+                                                label: `${user.name} (${user.email})`,
+                                                value: user.id
+                                            }))
+                                        ]" placeholder="Select chairman" searchable size="md" />
                                     </div>
 
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Co-Chairman
                                         </label>
-                                        <select v-model="formData.coChairman" class="mun-input">
-                                            <option value="">Select co-chairman</option>
-                                            <option v-for="user in availablePresidium" :key="user.id" :value="user.id">
-                                                {{ user.name }} ({{ user.email }})
-                                            </option>
-                                        </select>
+                                        <SleekSelect v-model="formData.coChairman" :options="[
+                                            { label: 'Select co-chairman', value: '' },
+                                            ...availablePresidium.map(user => ({
+                                                label: `${user.name} (${user.email})`,
+                                                value: user.id
+                                            }))
+                                        ]" placeholder="Select co-chairman" searchable size="md" />
                                     </div>
 
                                     <div class="md:col-span-2">
@@ -279,18 +275,18 @@
                                         <div class="space-y-2">
                                             <div v-for="(member, index) in formData.presidiumMembers" :key="index"
                                                 class="flex items-center space-x-3">
-                                                <select v-model="member.userId" class="flex-1 mun-input">
-                                                    <option value="">Select member</option>
-                                                    <option v-for="user in availablePresidium" :key="user.id"
-                                                        :value="user.id">
-                                                        {{ user.name }} ({{ user.email }})
-                                                    </option>
-                                                </select>
+                                                <SleekSelect v-model="member.userId" :options="[
+                                                    { label: 'Select member', value: '' },
+                                                    ...availablePresidium.map(user => ({
+                                                        label: `${user.name} (${user.email})`,
+                                                        value: user.id
+                                                    }))
+                                                ]" placeholder="Select member" searchable size="md" container-class="flex-1" />
 
-                                                <select v-model="member.role" class="w-32 mun-input">
-                                                    <option value="expert">Expert</option>
-                                                    <option value="secretary">Secretary</option>
-                                                </select>
+                                                <SleekSelect v-model="member.role" :options="[
+                                                    { label: 'Expert', value: 'expert' },
+                                                    { label: 'Secretary', value: 'secretary' }
+                                                ]" size="md" container-class="w-32" />
 
                                                 <button type="button" @click="removePresidiumMember(index)"
                                                     class="p-2 text-red-500 hover:text-red-700 rounded-lg">

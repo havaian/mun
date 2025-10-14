@@ -61,7 +61,7 @@
                                                     <h4 class="font-medium text-mun-gray-900">{{ reportType.label }}
                                                     </h4>
                                                     <p class="text-sm text-mun-gray-600 mt-1">{{ reportType.description
-                                                        }}</p>
+                                                    }}</p>
                                                     <div class="flex items-center mt-2 space-x-2">
                                                         <span v-for="format in reportType.formats" :key="format"
                                                             class="px-2 py-1 bg-mun-gray-100 text-mun-gray-700 text-xs rounded">
@@ -130,11 +130,10 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Events
                                         </label>
-                                        <select multiple v-model="filters.events" class="mun-input" size="4">
-                                            <option v-for="event in availableEvents" :key="event.id" :value="event.id">
-                                                {{ event.name }}
-                                            </option>
-                                        </select>
+                                        <SleekSelect v-model="filters.events" :options="availableEvents.map(event => ({
+                                            label: event.name,
+                                            value: event.id
+                                        }))" placeholder="Select events..." multiple searchable show-select-all :max-display-tags="2" />
                                         <p class="text-xs text-mun-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
                                     </div>
 
@@ -143,12 +142,10 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Committees
                                         </label>
-                                        <select multiple v-model="filters.committees" class="mun-input" size="4">
-                                            <option v-for="committee in availableCommittees" :key="committee.id"
-                                                :value="committee.id">
-                                                {{ committee.name }} ({{ committee.acronym }})
-                                            </option>
-                                        </select>
+                                        <SleekSelect v-model="filters.committees" :options="availableCommittees.map(committee => ({
+                                            label: `${committee.name} (${committee.acronym})`,
+                                            value: committee.id
+                                        }))" placeholder="Select committees..." multiple searchable show-select-all :max-display-tags="2" />
                                         <p class="text-xs text-mun-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
                                     </div>
 
@@ -286,7 +283,7 @@
                                         <p><strong>Date Range:</strong> {{ formatDateRange() }}</p>
                                         <p><strong>Format:</strong> {{ getCurrentFormat()?.label }}</p>
                                         <p v-if="hasFilters()"><strong>Filters Applied:</strong> {{ getFilterSummary()
-                                            }}</p>
+                                        }}</p>
                                         <p><strong>Estimated Size:</strong> {{ getEstimatedSize() }}</p>
                                     </div>
                                 </div>
@@ -549,7 +546,7 @@ const loadAvailableData = async () => {
         availableCommittees.value = committeesResponse.data.committees || []
 
     } catch (error) {
-        toast.error('Failed to load available data:', error)
+        console.error('Failed to load available data:', error)
         toast.error('Failed to load filter options')
     }
 }
@@ -659,7 +656,7 @@ const generateExport = async () => {
         closeModal()
 
     } catch (error) {
-        toast.error('Export failed:', error)
+        console.error('Export failed:', error)
         toast.error(error.response?.data?.message || 'Failed to generate export')
     } finally {
         isExporting.value = false

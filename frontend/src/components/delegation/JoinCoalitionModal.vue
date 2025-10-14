@@ -49,21 +49,19 @@
 
                                             <!-- Filters -->
                                             <div class="filters flex items-center space-x-4">
-                                                <select v-model="filterType"
-                                                    class="px-3 py-2 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue">
-                                                    <option value="">All Types</option>
-                                                    <option value="general">General Coalition</option>
-                                                    <option value="regional">Regional Bloc</option>
-                                                    <option value="thematic">Thematic Group</option>
-                                                    <option value="bilateral">Bilateral Partnership</option>
-                                                </select>
+                                                <SleekSelect v-model="filterType" :options="[
+                                                    { label: 'All Types', value: '' },
+                                                    { label: 'General Coalition', value: 'general' },
+                                                    { label: 'Regional Bloc', value: 'regional' },
+                                                    { label: 'Thematic Group', value: 'thematic' },
+                                                    { label: 'Bilateral Partnership', value: 'bilateral' }
+                                                ]" size="sm" container-class="min-w-[140px]" />
 
-                                                <select v-model="filterStatus"
-                                                    class="px-3 py-2 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue">
-                                                    <option value="">All Status</option>
-                                                    <option value="draft">Forming</option>
-                                                    <option value="active">Active</option>
-                                                </select>
+                                                <SleekSelect v-model="filterStatus" :options="[
+                                                    { label: 'All Status', value: '' },
+                                                    { label: 'Forming', value: 'draft' },
+                                                    { label: 'Active', value: 'active' }
+                                                ]" size="sm" container-class="min-w-[120px]" />
 
                                                 <label class="flex items-center text-sm text-mun-gray-700">
                                                     <input v-model="showOnlyJoinable" type="checkbox"
@@ -271,7 +269,7 @@
                                                 class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent resize-none"></textarea>
                                             <div class="flex justify-end mt-1">
                                                 <span class="text-xs text-mun-gray-500">{{ joinMessage.length
-                                                }}/300</span>
+                                                    }}/300</span>
                                             </div>
                                         </div>
                                     </div>

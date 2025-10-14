@@ -36,7 +36,7 @@
             <!-- Key Metrics -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div
-                    class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6 hover:shadow-md transition-shadow">
+                    class="mun-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-mun-gray-600">Events</p>
@@ -53,7 +53,7 @@
                 </div>
 
                 <div
-                    class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6 hover:shadow-md transition-shadow">
+                    class="mun-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-mun-gray-600">Committees</p>
@@ -70,7 +70,7 @@
                 </div>
 
                 <div
-                    class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6 hover:shadow-md transition-shadow">
+                    class="mun-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-mun-gray-600">Users</p>
@@ -87,7 +87,7 @@
                 </div>
 
                 <div
-                    class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6 hover:shadow-md transition-shadow">
+                    class="mun-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-mun-gray-600">Documents</p>

@@ -57,13 +57,12 @@
                                     </div>
 
                                     <!-- Filter -->
-                                    <select v-model="statusFilter"
-                                        class="text-sm border border-mun-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
-                                        <option value="">All Countries</option>
-                                        <option value="present">Present Only</option>
-                                        <option value="absent">Absent Only</option>
-                                        <option value="unmarked">Unmarked Only</option>
-                                    </select>
+                                    <SleekSelect v-model="statusFilter" :options="[
+                                        { label: 'All Countries', value: '' },
+                                        { label: 'Present Only', value: 'present' },
+                                        { label: 'Absent Only', value: 'absent' },
+                                        { label: 'Unmarked Only', value: 'unmarked' }
+                                    ]" size="sm" container-class="min-w-[140px]" />
                                 </div>
 
                                 <div class="flex items-center space-x-2">

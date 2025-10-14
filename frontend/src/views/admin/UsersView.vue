@@ -77,38 +77,39 @@
         <div class="mun-card p-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                 <div class="flex items-center space-x-4">
-                    <select v-model="filters.role" @change="filterUsers" class="input-field max-w-xs">
-                        <option value="">All Roles</option>
-                        <option value="admin">Admin</option>
-                        <option value="presidium">Presidium</option>
-                        <option value="delegate">Delegate</option>
-                    </select>
+                    <SleekSelect v-model="filters.role" @change="filterUsers" :options="[
+                        { label: 'All Roles', value: '' },
+                        { label: 'Admin', value: 'admin' },
+                        { label: 'Presidium', value: 'presidium' },
+                        { label: 'Delegate', value: 'delegate' }
+                    ]" containerClass="max-w-xs" placeholder="Filter by role" />
 
-                    <select v-model="filters.status" @change="filterUsers" class="input-field max-w-xs">
-                        <option value="">All Statuses</option>
-                        <option value="active">Active</option>
-                        <option value="pending">Pending</option>
-                        <option value="inactive">Inactive</option>
-                    </select>
+                    <SleekSelect v-model="filters.status" @change="filterUsers" :options="[
+                        { label: 'All Statuses', value: '' },
+                        { label: 'Active', value: 'active' },
+                        { label: 'Pending', value: 'pending' },
+                        { label: 'Inactive', value: 'inactive' }
+                    ]" containerClass="max-w-xs" placeholder="Filter by status" />
 
-                    <select v-model="filters.committee" @change="filterUsers" class="input-field max-w-xs">
-                        <option value="">All Committees</option>
-                        <option v-for="committee in committees" :key="committee.id" :value="committee.id">
-                            {{ committee.name }}
-                        </option>
-                    </select>
+                    <SleekSelect v-model="filters.committee" @change="filterUsers" :options="[
+                        { label: 'All Committees', value: '' },
+                        ...committees.map(committee => ({
+                            label: committee.name,
+                            value: committee.id
+                        }))
+                    ]" containerClass="max-w-xs" placeholder="Filter by committee" />
                 </div>
 
                 <div class="flex items-center space-x-3">
                     <input v-model="searchQuery" @input="debouncedSearch" type="text" placeholder="Search users..."
                         class="input-field max-w-xs">
-                    <select v-model="sortBy" @change="sortUsers" class="input-field max-w-xs">
-                        <option value="created_desc">Newest First</option>
-                        <option value="created_asc">Oldest First</option>
-                        <option value="name_asc">Name A-Z</option>
-                        <option value="name_desc">Name Z-A</option>
-                        <option value="lastLogin_desc">Last Login</option>
-                    </select>
+                    <SleekSelect v-model="sortBy" @change="sortUsers" :options="[
+                        { label: 'Newest First', value: 'created_desc' },
+                        { label: 'Oldest First', value: 'created_asc' },
+                        { label: 'Name A-Z', value: 'name_asc' },
+                        { label: 'Name Z-A', value: 'name_desc' },
+                        { label: 'Last Login', value: 'lastLogin_desc' }
+                    ]" containerClass="max-w-xs" placeholder="Sort by" />
                 </div>
             </div>
         </div>

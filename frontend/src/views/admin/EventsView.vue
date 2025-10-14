@@ -73,21 +73,21 @@
         <div class="mun-card p-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                 <div class="flex items-center space-x-4">
-                    <select v-model="filters.status" @change="filterEvents" class="input-field max-w-xs">
-                        <option value="">All Statuses</option>
-                        <option value="draft">Draft</option>
-                        <option value="active">Active</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
+                    <SleekSelect v-model="filters.status" :options="[
+                        { label: 'All Statuses', value: '' },
+                        { label: 'Draft', value: 'draft' },
+                        { label: 'Active', value: 'active' },
+                        { label: 'Completed', value: 'completed' },
+                        { label: 'Cancelled', value: 'cancelled' }
+                    ]" @change="filterEvents" container-class="max-w-xs" />
 
-                    <select v-model="filters.dateRange" @change="filterEvents" class="input-field max-w-xs">
-                        <option value="">All Dates</option>
-                        <option value="this_week">This Week</option>
-                        <option value="this_month">This Month</option>
-                        <option value="next_month">Next Month</option>
-                        <option value="past">Past Events</option>
-                    </select>
+                    <SleekSelect v-model="filters.dateRange" :options="[
+                        { label: 'All Dates', value: '' },
+                        { label: 'This Week', value: 'this_week' },
+                        { label: 'This Month', value: 'this_month' },
+                        { label: 'Next Month', value: 'next_month' },
+                        { label: 'Past Events', value: 'past' }
+                    ]" @change="filterEvents" container-class="max-w-xs" />
 
                     <div class="flex items-center space-x-2">
                         <button @click="viewMode = 'grid'" :class="[
@@ -108,14 +108,14 @@
                 <div class="flex items-center space-x-3">
                     <input v-model="searchQuery" @input="debouncedSearch" type="text" placeholder="Search events..."
                         class="input-field max-w-xs">
-                    <select v-model="sortBy" @change="sortEvents" class="input-field max-w-xs">
-                        <option value="created_desc">Newest First</option>
-                        <option value="created_asc">Oldest First</option>
-                        <option value="name_asc">Name A-Z</option>
-                        <option value="name_desc">Name Z-A</option>
-                        <option value="date_asc">Start Date</option>
-                        <option value="date_desc">End Date</option>
-                    </select>
+                    <SleekSelect v-model="sortBy" :options="[
+                        { label: 'Newest First', value: 'created_desc' },
+                        { label: 'Oldest First', value: 'created_asc' },
+                        { label: 'Name A-Z', value: 'name_asc' },
+                        { label: 'Name Z-A', value: 'name_desc' },
+                        { label: 'Start Date', value: 'date_asc' },
+                        { label: 'End Date', value: 'date_desc' }
+                    ]" @change="sortEvents" size="sm" container-class="max-w-xs" />
                 </div>
             </div>
         </div>

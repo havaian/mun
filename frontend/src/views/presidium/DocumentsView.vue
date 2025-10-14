@@ -67,21 +67,21 @@
         <div class="mun-card p-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                 <div class="flex items-center space-x-4">
-                    <select v-model="filters.type" class="input-field max-w-xs">
-                        <option value="">All Document Types</option>
-                        <option value="position-paper">Position Papers</option>
-                        <option value="resolution">Resolutions</option>
-                        <option value="amendment">Amendments</option>
-                        <option value="public">Public Documents</option>
-                    </select>
+                    <SleekSelect v-model="filters.type" :options="[
+                        { label: 'All Document Types', value: '' },
+                        { label: 'Position Papers', value: 'position-paper' },
+                        { label: 'Resolutions', value: 'resolution' },
+                        { label: 'Amendments', value: 'amendment' },
+                        { label: 'Public Documents', value: 'public' }
+                    ]" containerClass="max-w-xs" placeholder="Filter by type" />
 
-                    <select v-model="filters.status" class="input-field max-w-xs">
-                        <option value="">All Statuses</option>
-                        <option value="pending">Pending Review</option>
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
-                        <option value="revision_requested">Revision Requested</option>
-                    </select>
+                    <SleekSelect v-model="filters.status" :options="[
+                        { label: 'All Statuses', value: '' },
+                        { label: 'Pending Review', value: 'pending' },
+                        { label: 'Approved', value: 'approved' },
+                        { label: 'Rejected', value: 'rejected' },
+                        { label: 'Revision Requested', value: 'revision_requested' }
+                    ]" containerClass="max-w-xs" placeholder="Filter by status" />
                 </div>
 
                 <div class="flex items-center space-x-3">

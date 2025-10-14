@@ -128,13 +128,12 @@
                                                         <label
                                                             class="block text-sm font-medium text-mun-gray-700 mb-2">Majority
                                                             Required *</label>
-                                                        <select v-model="votingForm.majorityType"
-                                                            class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue">
-                                                            <option value="simple">Simple Majority (50% + 1)</option>
-                                                            <option value="two-thirds">Two-Thirds Majority</option>
-                                                            <option value="consensus">Consensus Required</option>
-                                                            <option value="unanimity">Unanimous Consent</option>
-                                                        </select>
+                                                        <SleekSelect v-model="votingForm.majorityType" :options="[
+                                                            { label: 'Simple Majority (50% + 1)', value: 'simple' },
+                                                            { label: 'Two-Thirds Majority', value: 'two-thirds' },
+                                                            { label: 'Consensus Required', value: 'consensus' },
+                                                            { label: 'Unanimous Consent', value: 'unanimity' }
+                                                        ]" container-class="w-full" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -215,7 +214,7 @@
                                                                         :country-code="country.countryCode" size="tiny"
                                                                         class="ml-3" />
                                                                     <span class="ml-2 text-sm">{{ country.countryName
-                                                                    }}</span>
+                                                                        }}</span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -240,7 +239,7 @@
                                         <div class="flex items-start justify-between">
                                             <div>
                                                 <h4 class="text-xl font-bold text-mun-blue-900">{{ activeVoting.subject
-                                                }}</h4>
+                                                    }}</h4>
                                                 <p class="text-mun-blue-700 mt-1">{{ activeVoting.description }}</p>
                                                 <div class="flex items-center space-x-4 mt-3 text-sm text-mun-blue-600">
                                                     <span class="flex items-center">
@@ -255,9 +254,10 @@
 
                                             <div class="text-right">
                                                 <div class="text-3xl font-bold text-mun-blue-900">{{ progressPercentage
-                                                }}%</div>
-                                                <div class="text-sm text-mun-blue-700">{{ votesReceived }}/{{ totalVoters
-                                                }} votes</div>
+                                                    }}%</div>
+                                                <div class="text-sm text-mun-blue-700">{{ votesReceived }}/{{
+                                                    totalVoters
+                                                    }} votes</div>
                                             </div>
                                         </div>
                                     </div>
@@ -279,7 +279,7 @@
                                             <div v-if="isRollCall && currentVoter" class="current-voter-info">
                                                 <span class="text-sm text-mun-gray-600">Current voter:</span>
                                                 <span class="ml-2 font-medium text-mun-blue">{{ currentVoterCountry
-                                                }}</span>
+                                                    }}</span>
                                             </div>
                                         </div>
 
@@ -349,7 +349,7 @@
                                                         class="flex items-center space-x-4 mt-2 text-xs text-mun-gray-400">
                                                         <span>{{ formatDate(voting.completedAt) }}</span>
                                                         <span>{{ getVotingTypeDisplayFromType(voting.votingType)
-                                                        }}</span>
+                                                            }}</span>
                                                         <span>{{ voting.votes?.length || 0 }} votes</span>
                                                     </div>
                                                 </div>

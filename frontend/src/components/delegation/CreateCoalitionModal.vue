@@ -192,15 +192,18 @@
                                                 <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                                     Minimum Members Required
                                                 </label>
-                                                <select v-model="formData.minMembers"
-                                                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent">
-                                                    <option value="3">3 members (minimum)</option>
-                                                    <option value="4">4 members</option>
-                                                    <option value="5">5 members</option>
-                                                    <option value="6">6 members</option>
-                                                    <option value="7">7 members</option>
-                                                    <option value="8">8 members or more</option>
-                                                </select>
+                                                <SleekSelect
+    v-model="formData.minMembers"
+    :options="[
+        { label: '3 members (minimum)', value: '3' },
+        { label: '4 members', value: '4' },
+        { label: '5 members', value: '5' },
+        { label: '6 members', value: '6' },
+        { label: '7 members', value: '7' },
+        { label: '8 members or more', value: '8' }
+    ]"
+    size="md"
+/>
                                                 <p class="text-xs text-mun-gray-600 mt-1">
                                                     Coalition will be activated once this many members accept
                                                     invitations

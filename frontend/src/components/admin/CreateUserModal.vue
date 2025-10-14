@@ -160,14 +160,14 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Presidium Role *
                                         </label>
-                                        <select v-model="formData.presidiumRole" class="mun-input"
-                                            :class="{ 'border-red-500': errors.presidiumRole }" required>
-                                            <option value="">Select presidium role</option>
-                                            <option value="chairman">Chairman</option>
-                                            <option value="co-chairman">Co-Chairman</option>
-                                            <option value="expert">Expert</option>
-                                            <option value="secretary">Secretary</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.presidiumRole" :options="[
+                                            { label: 'Select presidium role', value: '' },
+                                            { label: 'Chairman', value: 'chairman' },
+                                            { label: 'Co-Chairman', value: 'co-chairman' },
+                                            { label: 'Expert', value: 'expert' },
+                                            { label: 'Secretary', value: 'secretary' }
+                                        ]" placeholder="Select presidium role" :trigger-class="errors.presidiumRole ? 'border-red-500' : ''" required
+                                            size="md" />
                                         <p v-if="errors.presidiumRole" class="mt-1 text-sm text-red-600">
                                             {{ errors.presidiumRole }}
                                         </p>
@@ -178,14 +178,14 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Country/Organization *
                                         </label>
-                                        <select v-model="formData.country" class="mun-input"
-                                            :class="{ 'border-red-500': errors.country }" required>
-                                            <option value="">Select country or organization</option>
-                                            <option v-for="country in availableCountries" :key="country.code"
-                                                :value="country.code">
-                                                {{ country.name }}
-                                            </option>
-                                        </select>
+                                        <SleekSelect v-model="formData.country" :options="[
+                                            { label: 'Select country or organization', value: '' },
+                                            ...availableCountries.map(country => ({
+                                                label: country.name,
+                                                value: country.code
+                                            }))
+                                        ]" placeholder="Select country or organization" :trigger-class="errors.country ? 'border-red-500' : ''" searchable
+                                            required size="md" />
                                         <p v-if="errors.country" class="mt-1 text-sm text-red-600">
                                             {{ errors.country }}
                                         </p>
@@ -196,14 +196,14 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Committee Assignment
                                         </label>
-                                        <select v-model="formData.committeeId" class="mun-input"
-                                            :class="{ 'border-red-500': errors.committeeId }">
-                                            <option value="">No committee assigned</option>
-                                            <option v-for="committee in availableCommittees" :key="committee.id"
-                                                :value="committee.id">
-                                                {{ committee.name }} ({{ committee.acronym }})
-                                            </option>
-                                        </select>
+                                        <SleekSelect v-model="formData.committeeId" :options="[
+                                            { label: 'No committee assigned', value: '' },
+                                            ...availableCommittees.map(committee => ({
+                                                label: `${committee.name} (${committee.acronym})`,
+                                                value: committee.id
+                                            }))
+                                        ]" placeholder="No committee assigned" :trigger-class="errors.committeeId ? 'border-red-500' : ''" searchable
+                                            size="md" />
                                         <p v-if="errors.committeeId" class="mt-1 text-sm text-red-600">
                                             {{ errors.committeeId }}
                                         </p>
@@ -253,29 +253,29 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Preferred Language
                                         </label>
-                                        <select v-model="formData.language" class="mun-input">
-                                            <option value="en">English</option>
-                                            <option value="fr">French</option>
-                                            <option value="es">Spanish</option>
-                                            <option value="ar">Arabic</option>
-                                            <option value="ru">Russian</option>
-                                            <option value="zh">Chinese</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.language" :options="[
+                                            { label: 'English', value: 'en' },
+                                            { label: 'French', value: 'fr' },
+                                            { label: 'Spanish', value: 'es' },
+                                            { label: 'Arabic', value: 'ar' },
+                                            { label: 'Russian', value: 'ru' },
+                                            { label: 'Chinese', value: 'zh' }
+                                        ]" searchable size="md" />
                                     </div>
 
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Time Zone
                                         </label>
-                                        <select v-model="formData.timezone" class="mun-input">
-                                            <option value="Asia/Tashkent">Asia/Tashkent (GMT+5)</option>
-                                            <option value="UTC">UTC (GMT+0)</option>
-                                            <option value="America/New_York">Eastern Time (GMT-5)</option>
-                                            <option value="America/Los_Angeles">Pacific Time (GMT-8)</option>
-                                            <option value="Europe/London">London (GMT+0)</option>
-                                            <option value="Europe/Paris">Paris (GMT+1)</option>
-                                            <option value="Asia/Tokyo">Tokyo (GMT+9)</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.timezone" :options="[
+                                            { label: 'Asia/Tashkent (GMT+5)', value: 'Asia/Tashkent' },
+                                            { label: 'UTC (GMT+0)', value: 'UTC' },
+                                            { label: 'Eastern Time (GMT-5)', value: 'America/New_York' },
+                                            { label: 'Pacific Time (GMT-8)', value: 'America/Los_Angeles' },
+                                            { label: 'London (GMT+0)', value: 'Europe/London' },
+                                            { label: 'Paris (GMT+1)', value: 'Europe/Paris' },
+                                            { label: 'Tokyo (GMT+9)', value: 'Asia/Tokyo' }
+                                        ]" searchable size="md" />
                                     </div>
                                 </div>
 
@@ -337,13 +337,13 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Experience Level
                                         </label>
-                                        <select v-model="formData.experienceLevel" class="mun-input">
-                                            <option value="">Select experience level</option>
-                                            <option value="beginner">Beginner (0-1 conferences)</option>
-                                            <option value="intermediate">Intermediate (2-5 conferences)</option>
-                                            <option value="advanced">Advanced (5+ conferences)</option>
-                                            <option value="expert">Expert/Veteran</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.experienceLevel" :options="[
+                                            { label: 'Select experience level', value: '' },
+                                            { label: 'Beginner (0-1 conferences)', value: 'beginner' },
+                                            { label: 'Intermediate (2-5 conferences)', value: 'intermediate' },
+                                            { label: 'Advanced (5+ conferences)', value: 'advanced' },
+                                            { label: 'Expert/Veteran', value: 'expert' }
+                                        ]" placeholder="Select experience level" size="md" />
                                     </div>
 
                                     <div>

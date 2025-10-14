@@ -106,12 +106,12 @@
                 <div class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-mun-gray-900">Delegate Attendance</h2>
                     <div class="flex items-center space-x-3">
-                        <select v-model="statusFilter" class="input-field max-w-xs">
-                            <option value="">All Status</option>
-                            <option value="present">Present</option>
-                            <option value="absent">Absent</option>
-                            <option value="late">Late</option>
-                        </select>
+                        <SleekSelect v-model="statusFilter" :options="[
+                            { label: 'All Status', value: '' },
+                            { label: 'Present', value: 'present' },
+                            { label: 'Absent', value: 'absent' },
+                            { label: 'Late', value: 'late' }
+                        ]" containerClass="max-w-xs" placeholder="Filter by status" />
                         <input v-model="searchQuery" type="text" placeholder="Search countries..."
                             class="input-field max-w-xs">
                     </div>

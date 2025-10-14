@@ -68,12 +68,10 @@
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                         Event
                     </label>
-                    <select v-model="filters.eventId" class="input-field" @change="applyFilters">
-                        <option value="">All Events</option>
-                        <option v-for="event in availableEvents" :key="event._id" :value="event._id">
-                            {{ event.name }}
-                        </option>
-                    </select>
+                    <SleekSelect v-model="filters.eventId" :options="[
+                        { label: 'All Events', value: '' },
+                        ...availableEvents.map(event => ({ label: event.name, value: event._id }))
+                    ]" @change="applyFilters" container-class="w-full" />
                 </div>
 
                 <!-- Committee Type Filter -->
@@ -81,17 +79,17 @@
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                         Type
                     </label>
-                    <select v-model="filters.type" class="input-field" @change="applyFilters">
-                        <option value="">All Types</option>
-                        <option value="GA">General Assembly</option>
-                        <option value="SC">Security Council</option>
-                        <option value="ECOSOC">Economic and Social Council</option>
-                        <option value="HRC">Human Rights Council</option>
-                        <option value="LEGAL">Legal Committee</option>
-                        <option value="DISEC">Disarmament Committee</option>
-                        <option value="SPECPOL">Special Political Committee</option>
-                        <option value="OTHER">Other</option>
-                    </select>
+                    <SleekSelect v-model="filters.type" :options="[
+                        { label: 'All Types', value: '' },
+                        { label: 'General Assembly', value: 'GA' },
+                        { label: 'Security Council', value: 'SC' },
+                        { label: 'Economic and Social Council', value: 'ECOSOC' },
+                        { label: 'Human Rights Council', value: 'HRC' },
+                        { label: 'Legal Committee', value: 'LEGAL' },
+                        { label: 'Disarmament Committee', value: 'DISEC' },
+                        { label: 'Special Political Committee', value: 'SPECPOL' },
+                        { label: 'Other', value: 'OTHER' }
+                    ]" @change="applyFilters" container-class="w-full" />
                 </div>
             </div>
 
@@ -102,38 +100,38 @@
                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                             Status
                         </label>
-                        <select v-model="filters.status" class="input-field" @change="applyFilters">
-                            <option value="">All Statuses</option>
-                            <option value="draft">Draft</option>
-                            <option value="setup">Setup</option>
-                            <option value="active">Active</option>
-                            <option value="paused">Paused</option>
-                            <option value="completed">Completed</option>
-                        </select>
+                        <SleekSelect v-model="filters.status" :options="[
+                            { label: 'All Statuses', value: '' },
+                            { label: 'Draft', value: 'draft' },
+                            { label: 'Setup', value: 'setup' },
+                            { label: 'Active', value: 'active' },
+                            { label: 'Paused', value: 'paused' },
+                            { label: 'Completed', value: 'completed' }
+                        ]" @change="applyFilters" container-class="w-full" />
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                             Country Count
                         </label>
-                        <select v-model="filters.countryRange" class="input-field" @change="applyFilters">
-                            <option value="">Any Size</option>
-                            <option value="small">Small (1-15)</option>
-                            <option value="medium">Medium (16-30)</option>
-                            <option value="large">Large (31-50)</option>
-                            <option value="xlarge">Very Large (50+)</option>
-                        </select>
+                        <SleekSelect v-model="filters.countryRange" :options="[
+                            { label: 'Any Size', value: '' },
+                            { label: 'Small (1-15)', value: 'small' },
+                            { label: 'Medium (16-30)', value: 'medium' },
+                            { label: 'Large (31-50)', value: 'large' },
+                            { label: 'Very Large (50+)', value: 'xlarge' }
+                        ]" @change="applyFilters" container-class="w-full" />
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                             Has QR Codes
                         </label>
-                        <select v-model="filters.hasQR" class="input-field" @change="applyFilters">
-                            <option value="">All</option>
-                            <option value="yes">Generated</option>
-                            <option value="no">Not Generated</option>
-                        </select>
+                        <SleekSelect v-model="filters.hasQR" :options="[
+                            { label: 'All', value: '' },
+                            { label: 'Generated', value: 'yes' },
+                            { label: 'Not Generated', value: 'no' }
+                        ]" @change="applyFilters" container-class="w-full" />
                     </div>
                 </div>
             </div>
@@ -208,15 +206,15 @@
             <!-- Sort Options -->
             <div class="flex items-center space-x-2">
                 <span class="text-sm text-mun-gray-600">Sort by:</span>
-                <select v-model="sortBy" class="input-field !py-2 !px-3 text-sm" @change="applySorting">
-                    <option value="created_desc">Newest First</option>
-                    <option value="created_asc">Oldest First</option>
-                    <option value="name_asc">Name A-Z</option>
-                    <option value="name_desc">Name Z-A</option>
-                    <option value="type_asc">Type A-Z</option>
-                    <option value="countries_desc">Most Countries</option>
-                    <option value="countries_asc">Least Countries</option>
-                </select>
+                <SleekSelect v-model="sortBy" :options="[
+                    { label: 'Newest First', value: 'created_desc' },
+                    { label: 'Oldest First', value: 'created_asc' },
+                    { label: 'Name A-Z', value: 'name_asc' },
+                    { label: 'Name Z-A', value: 'name_desc' },
+                    { label: 'Type A-Z', value: 'type_asc' },
+                    { label: 'Most Countries', value: 'countries_desc' },
+                    { label: 'Least Countries', value: 'countries_asc' }
+                ]" @change="applySorting" size="sm" container-class="min-w-[150px]" />
             </div>
         </div>
 

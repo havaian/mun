@@ -70,13 +70,12 @@
                                             <label class="block text-sm font-medium text-mun-gray-700 mb-1">
                                                 Quorum Percentage
                                             </label>
-                                            <select v-model="settings.quorumPercentage"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
-                                                <option value="0.33">33% (One-third)</option>
-                                                <option value="0.5">50% (Simple majority)</option>
-                                                <option value="0.67">67% (Two-thirds)</option>
-                                                <option value="0.75">75% (Three-quarters)</option>
-                                            </select>
+                                            <SleekSelect v-model="settings.quorumPercentage" :options="[
+                                                { label: '33% (One-third)', value: '0.33' },
+                                                { label: '50% (Simple majority)', value: '0.5' },
+                                                { label: '67% (Two-thirds)', value: '0.67' },
+                                                { label: '75% (Three-quarters)', value: '0.75' }
+                                            ]" size="md" />
                                             <p class="text-xs text-mun-gray-500 mt-1">Minimum attendance for valid
                                                 session</p>
                                         </div>
@@ -86,15 +85,14 @@
                                             <label class="block text-sm font-medium text-mun-gray-700 mb-1">
                                                 Working Language
                                             </label>
-                                            <select v-model="settings.language"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
-                                                <option value="en">English</option>
-                                                <option value="fr">French</option>
-                                                <option value="es">Spanish</option>
-                                                <option value="ar">Arabic</option>
-                                                <option value="zh">Chinese</option>
-                                                <option value="ru">Russian</option>
-                                            </select>
+                                            <SleekSelect v-model="settings.language" :options="[
+                                                { label: 'English', value: 'en' },
+                                                { label: 'French', value: 'fr' },
+                                                { label: 'Spanish', value: 'es' },
+                                                { label: 'Arabic', value: 'ar' },
+                                                { label: 'Chinese', value: 'zh' },
+                                                { label: 'Russian', value: 'ru' }
+                                            ]" searchable size="md" />
                                         </div>
                                     </div>
                                 </div>
@@ -251,12 +249,11 @@
                                             <label class="block text-sm font-medium text-mun-gray-700 mb-1">
                                                 Default Majority Type
                                             </label>
-                                            <select v-model="settings.defaultMajorityType"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
-                                                <option value="simple">Simple Majority</option>
-                                                <option value="two-thirds">Two-Thirds Majority</option>
-                                                <option value="consensus">Consensus Required</option>
-                                            </select>
+                                            <SleekSelect v-model="settings.defaultMajorityType" :options="[
+                                                { label: 'Simple Majority', value: 'simple' },
+                                                { label: 'Two-Thirds Majority', value: 'two-thirds' },
+                                                { label: 'Consensus Required', value: 'consensus' }
+                                            ]" size="md" />
                                         </div>
 
                                         <!-- Allow Abstentions -->

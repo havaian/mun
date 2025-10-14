@@ -59,13 +59,13 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-2">
                                         Default Language
                                     </label>
-                                    <select v-model="settings.general.defaultLanguage"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-mun-blue focus:ring-mun-blue">
-                                        <option value="en">English</option>
-                                        <option value="ru">Russian</option>
-                                        <option value="uz_lat">Uzbek (Latin)</option>
-                                        <option value="uz_cyr">Uzbek (Cyrillic)</option>
-                                    </select>
+                                    <SleekSelect v-model="settings.general.defaultLanguage" :options="[
+                                        { label: 'English', value: 'en' },
+                                        { label: 'Russian', value: 'ru' },
+                                        { label: 'Uzbek (Latin)', value: 'uz_lat' },
+                                        { label: 'Uzbek (Cyrillic)', value: 'uz_cyr' }
+                                    ]" placeholder="Select language" />
+
                                 </div>
 
                                 <div>

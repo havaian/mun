@@ -50,14 +50,13 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Event Type *
                                         </label>
-                                        <select v-model="formData.eventType" required class="input-field"
-                                            :class="{ 'border-mun-red-300': errors.eventType }">
-                                            <option value="">Select type</option>
-                                            <option value="conference">Conference</option>
-                                            <option value="simulation">Simulation</option>
-                                            <option value="training">Training</option>
-                                            <option value="competition">Competition</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.eventType" :options="[
+                                            { label: 'Select type', value: '' },
+                                            { label: 'Conference', value: 'conference' },
+                                            { label: 'Simulation', value: 'simulation' },
+                                            { label: 'Training', value: 'training' },
+                                            { label: 'Competition', value: 'competition' }
+                                        ]" placeholder="Select type" :trigger-class="errors.eventType ? 'border-mun-red-300' : ''" required size="md" />
                                         <p v-if="errors.eventType" class="mt-1 text-sm text-mun-red-600">
                                             {{ errors.eventType }}
                                         </p>
@@ -68,13 +67,13 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Status
                                         </label>
-                                        <select v-model="formData.status" class="input-field">
-                                            <option value="draft">Draft</option>
-                                            <option value="published">Published</option>
-                                            <option value="active">Active</option>
-                                            <option value="completed">Completed</option>
-                                            <option value="cancelled">Cancelled</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.status" :options="[
+                                            { label: 'Draft', value: 'draft' },
+                                            { label: 'Published', value: 'published' },
+                                            { label: 'Active', value: 'active' },
+                                            { label: 'Completed', value: 'completed' },
+                                            { label: 'Cancelled', value: 'cancelled' }
+                                        ]" size="md" />
                                     </div>
 
                                     <!-- Description -->
@@ -193,12 +192,12 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Currency
                                         </label>
-                                        <select v-model="formData.currency" class="input-field">
-                                            <option value="USD">USD - US Dollar</option>
-                                            <option value="UZS">UZS - Uzbekistan Som</option>
-                                            <option value="EUR">EUR - Euro</option>
-                                            <option value="GBP">GBP - British Pound</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.currency" :options="[
+                                            { label: 'USD - US Dollar', value: 'USD' },
+                                            { label: 'UZS - Uzbekistan Som', value: 'UZS' },
+                                            { label: 'EUR - Euro', value: 'EUR' },
+                                            { label: 'GBP - British Pound', value: 'GBP' }
+                                        ]" size="md" />
                                     </div>
                                 </div>
 
@@ -289,14 +288,14 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Time Zone
                                         </label>
-                                        <select v-model="formData.timeZone" class="input-field">
-                                            <option value="Asia/Tashkent">Asia/Tashkent (UTC+5)</option>
-                                            <option value="UTC">UTC (UTC+0)</option>
-                                            <option value="America/New_York">America/New_York (UTC-5)</option>
-                                            <option value="Europe/London">Europe/London (UTC+0)</option>
-                                            <option value="Asia/Dubai">Asia/Dubai (UTC+4)</option>
-                                            <option value="Asia/Shanghai">Asia/Shanghai (UTC+8)</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.timeZone" :options="[
+                                            { label: 'Asia/Tashkent (UTC+5)', value: 'Asia/Tashkent' },
+                                            { label: 'UTC (UTC+0)', value: 'UTC' },
+                                            { label: 'America/New_York (UTC-5)', value: 'America/New_York' },
+                                            { label: 'Europe/London (UTC+0)', value: 'Europe/London' },
+                                            { label: 'Asia/Dubai (UTC+4)', value: 'Asia/Dubai' },
+                                            { label: 'Asia/Shanghai (UTC+8)', value: 'Asia/Shanghai' }
+                                        ]" size="md" />
                                     </div>
 
                                     <!-- Language -->
@@ -304,12 +303,12 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Primary Language
                                         </label>
-                                        <select v-model="formData.language" class="input-field">
-                                            <option value="en">English</option>
-                                            <option value="ru">Russian</option>
-                                            <option value="uz_lat">Uzbek (Latin)</option>
-                                            <option value="uz_cyr">Uzbek (Cyrillic)</option>
-                                        </select>
+                                        <SleekSelect v-model="formData.language" :options="[
+                                            { label: 'English', value: 'en' },
+                                            { label: 'Russian', value: 'ru' },
+                                            { label: 'Uzbek (Latin)', value: 'uz_lat' },
+                                            { label: 'Uzbek (Cyrillic)', value: 'uz_cyr' }
+                                        ]" size="md" />
                                     </div>
 
                                     <!-- Tags -->

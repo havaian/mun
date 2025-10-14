@@ -30,29 +30,27 @@
                 <!-- Log Level Filter -->
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Log Level</label>
-                    <select v-model="filters.level" @change="applyFilters"
-                        class="w-full px-3 py-2 border border-mun-gray-300 rounded-lg focus:ring-2 focus:ring-mun-blue-500 focus:border-mun-blue-500">
-                        <option value="">All Levels</option>
-                        <option value="error">Error</option>
-                        <option value="warn">Warning</option>
-                        <option value="info">Info</option>
-                        <option value="debug">Debug</option>
-                    </select>
+                    <SleekSelect v-model="filters.level" @change="applyFilters" :options="[
+                        { label: 'All Levels', value: '' },
+                        { label: 'Error', value: 'error' },
+                        { label: 'Warning', value: 'warn' },
+                        { label: 'Info', value: 'info' },
+                        { label: 'Debug', value: 'debug' }
+                    ]" placeholder="Select log level" />
                 </div>
 
                 <!-- Activity Type Filter -->
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Activity Type</label>
-                    <select v-model="filters.type" @change="applyFilters"
-                        class="w-full px-3 py-2 border border-mun-gray-300 rounded-lg focus:ring-2 focus:ring-mun-blue-500 focus:border-mun-blue-500">
-                        <option value="">All Types</option>
-                        <option value="auth">Authentication</option>
-                        <option value="session">Session</option>
-                        <option value="document">Document</option>
-                        <option value="voting">Voting</option>
-                        <option value="system">System</option>
-                        <option value="api">API</option>
-                    </select>
+                    <SleekSelect v-model="filters.type" @change="applyFilters" :options="[
+                        { label: 'All Types', value: '' },
+                        { label: 'Authentication', value: 'auth' },
+                        { label: 'Session', value: 'session' },
+                        { label: 'Document', value: 'document' },
+                        { label: 'Voting', value: 'voting' },
+                        { label: 'System', value: 'system' },
+                        { label: 'API', value: 'api' }
+                    ]" placeholder="Select activity type" />
                 </div>
 
                 <!-- Date Range -->

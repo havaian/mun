@@ -1,3 +1,4 @@
+<!-- Enhanced SleekSelect Component -->
 <template>
     <div class="sleek-select relative" :class="containerClass">
         <button ref="trigger" @click="toggleDropdown" @blur="handleBlur" @keydown="handleKeydown" :class="[
@@ -7,58 +8,95 @@
             triggerClass,
             sizeClasses
         ]" :disabled="disabled" :aria-expanded="isOpen" :aria-haspopup="true" role="combobox">
-            <span :class="[
+
+            <!-- Multiple Selection Display -->
+            <div v-if="multiple" class="flex items-center flex-wrap gap-1 min-h-[1.5rem]">
+                <!-- Selected Tags -->
+                <div v-if="selectedOptions.length > 0" class="flex flex-wrap gap-1">
+                    <span v-for="option in displayedSelections" :key="option.value"
+                        class="inline-flex items-center px-2 py-1 bg-mun-blue-100 text-mun-blue-800 text-xs rounded-md">
+                        <component v-if="option.icon" :is="option.icon" class="w-3 h-3 mr-1" />
+                        {{ option.label }}
+                        <button @click.stop="removeSelection(option.value)"
+                            class="ml-1 hover:text-mun-blue-900 focus:outline-none">
+                            <XMarkIcon class="w-3 h-3" />
+                        </button>
+                    </span>
+
+                    <!-- More indicator -->
+                    <span v-if="selectedOptions.length > maxDisplayTags"
+                        class="px-2 py-1 bg-mun-gray-100 text-mun-gray-600 text-xs rounded-md">
+                        +{{ selectedOptions.length - maxDisplayTags }} more
+                    </span>
+                </div>
+
+                <!-- Placeholder for empty state -->
+                <span v-else class="text-gray-500">{{ placeholder }}</span>
+            </div>
+
+            <!-- Single Selection Display -->
+            <span v-else :class="[
                 'flex items-center transition-colors duration-150',
                 selectedOption ? 'text-gray-900' : 'text-gray-500'
             ]">
-                <!-- Icon if provided -->
                 <component v-if="selectedOption?.icon" :is="selectedOption.icon" class="w-4 h-4 mr-2 flex-shrink-0" />
-                <!-- Selected value or placeholder -->
                 {{ selectedOption ? selectedOption.label : placeholder }}
             </span>
 
             <!-- Dropdown chevron with rotation animation -->
             <ChevronDownIcon :class="[
                 'w-4 h-4 transition-transform duration-200 ease-in-out flex-shrink-0 ml-2',
-                isOpen ? 'rotate-180' : 'rotate-0'
+                isOpen ? 'transform rotate-180 text-mun-blue-600' : 'text-gray-400'
             ]" />
         </button>
 
-        <!-- Dropdown Panel with smooth animations -->
-        <Transition enter-active-class="transition duration-200 ease-out"
-            enter-from-class="opacity-0 scale-95 translate-y-1" enter-to-class="opacity-100 scale-100 translate-y-0"
-            leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100 scale-100 translate-y-0"
-            leave-to-class="opacity-0 scale-95 translate-y-1">
-            <div v-show="isOpen" ref="dropdown" :class="[
-                'sleek-select__dropdown absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden',
+        <!-- Dropdown -->
+        <Transition name="dropdown" appear>
+            <div v-if="isOpen" ref="dropdown" :class="[
+                'sleek-select__dropdown absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg',
                 dropdownClass
-            ]" role="listbox">
-                <!-- Search Input (if searchable) -->
-                <div v-if="searchable" class="p-2 border-b border-gray-100">
+            ]">
+                <!-- Search Input -->
+                <div v-if="searchable" class="p-3 border-b border-gray-100">
                     <input ref="searchInput" v-model="searchQuery" type="text" placeholder="Search options..."
-                        class="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-mun-blue-300 focus:border-mun-blue-400"
-                        @keydown.stop />
+                        class="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue-200 focus:border-mun-blue-400" />
                 </div>
 
                 <!-- Options List -->
                 <div class="max-h-60 overflow-y-auto">
-                    <div v-for="(option, index) in filteredOptions" :key="option.value || option"
-                        @click="selectOption(option)" @mouseenter="highlightedIndex = index" :class="[
-                            'sleek-select__option flex items-center px-4 py-3 cursor-pointer transition-colors duration-150 text-sm',
-                            isSelected(option)
-                                ? 'bg-mun-blue-50 text-mun-blue-700 font-medium'
-                                : highlightedIndex === index
-                                    ? 'bg-gray-50 text-gray-900'
-                                    : 'text-gray-700 hover:bg-gray-50'
+                    <!-- Select All Option (for multiple) -->
+                    <div v-if="multiple && showSelectAll && filteredOptions.length > 1" @click="toggleSelectAll"
+                        class="sleek-select__option flex items-center px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 border-b border-gray-100">
+                        <input type="checkbox" :checked="isAllSelected" :indeterminate="isPartiallySelected"
+                            class="mr-3 w-4 h-4 text-mun-blue-600 border-gray-300 rounded focus:ring-mun-blue-500"
+                            readonly />
+                        <span class="font-medium">{{ isAllSelected ? 'Deselect All' : 'Select All' }}</span>
+                    </div>
+
+                    <!-- Option Items -->
+                    <div v-for="(option, index) in filteredOptions" :key="option.value" @click="selectOption(option)"
+                        :class="[
+                            'sleek-select__option flex items-center px-4 py-3 text-sm cursor-pointer transition-colors duration-150',
+                            multiple ?
+                                (isSelected(option) ? 'bg-mun-blue-50 text-mun-blue-700' : 'hover:bg-gray-50') :
+                                (isSelected(option) ? 'bg-mun-blue-50 text-mun-blue-700 font-medium' :
+                                    highlightedIndex === index ? 'bg-gray-50 text-gray-900' : 'text-gray-700 hover:bg-gray-50')
                         ]" role="option" :aria-selected="isSelected(option)">
+
+                        <!-- Checkbox for multiple selection -->
+                        <input v-if="multiple" type="checkbox" :checked="isSelected(option)"
+                            class="mr-3 w-4 h-4 text-mun-blue-600 border-gray-300 rounded focus:ring-mun-blue-500"
+                            readonly />
+
                         <!-- Option Icon -->
                         <component v-if="option.icon" :is="option.icon" class="w-4 h-4 mr-3 flex-shrink-0" />
 
                         <!-- Option Label -->
                         <span class="flex-1">{{ getOptionLabel(option) }}</span>
 
-                        <!-- Selected Checkmark -->
-                        <CheckIcon v-if="isSelected(option)" class="w-4 h-4 text-mun-blue-600 flex-shrink-0 ml-2" />
+                        <!-- Selected Checkmark (for single selection) -->
+                        <CheckIcon v-if="!multiple && isSelected(option)"
+                            class="w-4 h-4 text-mun-blue-600 flex-shrink-0 ml-2" />
                     </div>
 
                     <!-- No options found state -->
@@ -78,7 +116,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { ChevronDownIcon, CheckIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon, CheckIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 // Props
 const props = defineProps({
@@ -109,6 +147,18 @@ const props = defineProps({
     disabled: {
         type: Boolean,
         default: false
+    },
+    multiple: {
+        type: Boolean,
+        default: false
+    },
+    maxDisplayTags: {
+        type: Number,
+        default: 3
+    },
+    showSelectAll: {
+        type: Boolean,
+        default: true
     },
     size: {
         type: String,
@@ -176,7 +226,7 @@ const filteredOptions = computed(() => {
 })
 
 const selectedOption = computed(() => {
-    if (!props.modelValue) return null
+    if (props.multiple || !props.modelValue) return null
 
     return normalizedOptions.value.find(option => {
         if (typeof props.modelValue === 'object') {
@@ -184,6 +234,28 @@ const selectedOption = computed(() => {
         }
         return option.value === props.modelValue
     })
+})
+
+const selectedOptions = computed(() => {
+    if (!props.multiple || !props.modelValue) return []
+
+    const values = Array.isArray(props.modelValue) ? props.modelValue : [props.modelValue]
+    return normalizedOptions.value.filter(option =>
+        values.includes(option.value)
+    )
+})
+
+const displayedSelections = computed(() => {
+    return selectedOptions.value.slice(0, props.maxDisplayTags)
+})
+
+const isAllSelected = computed(() => {
+    return props.multiple && filteredOptions.value.length > 0 &&
+        filteredOptions.value.every(option => selectedOptions.value.some(sel => sel.value === option.value))
+})
+
+const isPartiallySelected = computed(() => {
+    return props.multiple && selectedOptions.value.length > 0 && !isAllSelected.value
 })
 
 // Methods
@@ -218,16 +290,61 @@ const closeDropdown = () => {
 }
 
 const selectOption = (option) => {
-    const value = typeof props.modelValue === 'object' ? option : option.value
+    if (props.multiple) {
+        const currentValues = Array.isArray(props.modelValue) ? [...props.modelValue] : []
+        const index = currentValues.indexOf(option.value)
 
-    emit('update:modelValue', value)
-    emit('change', value)
+        if (index > -1) {
+            currentValues.splice(index, 1)
+        } else {
+            currentValues.push(option.value)
+        }
 
-    closeDropdown()
-    trigger.value?.focus()
+        emit('update:modelValue', currentValues)
+        emit('change', currentValues)
+    } else {
+        const value = typeof props.modelValue === 'object' ? option : option.value
+        emit('update:modelValue', value)
+        emit('change', value)
+        closeDropdown()
+        trigger.value?.focus()
+    }
+}
+
+const removeSelection = (value) => {
+    if (!props.multiple) return
+
+    const currentValues = Array.isArray(props.modelValue) ? [...props.modelValue] : []
+    const index = currentValues.indexOf(value)
+
+    if (index > -1) {
+        currentValues.splice(index, 1)
+        emit('update:modelValue', currentValues)
+        emit('change', currentValues)
+    }
+}
+
+const toggleSelectAll = () => {
+    if (!props.multiple) return
+
+    if (isAllSelected.value) {
+        // Deselect all
+        emit('update:modelValue', [])
+        emit('change', [])
+    } else {
+        // Select all filtered options
+        const allValues = filteredOptions.value.map(option => option.value)
+        emit('update:modelValue', allValues)
+        emit('change', allValues)
+    }
 }
 
 const isSelected = (option) => {
+    if (props.multiple) {
+        const values = Array.isArray(props.modelValue) ? props.modelValue : []
+        return values.includes(option.value)
+    }
+
     if (!props.modelValue) return false
 
     if (typeof props.modelValue === 'object') {
@@ -242,7 +359,6 @@ const getOptionLabel = (option) => {
 }
 
 const handleBlur = (event) => {
-    // Don't close if focus moves to dropdown or search input
     if (dropdown.value?.contains(event.relatedTarget)) {
         return
     }
@@ -320,6 +436,19 @@ watch(() => props.modelValue, () => {
 </script>
 
 <style scoped>
+/* Dropdown animations */
+.dropdown-enter-active,
+.dropdown-leave-active {
+    transition: all 0.2s ease;
+    transform-origin: top;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+    opacity: 0;
+    transform: scaleY(0.95) translateY(-4px);
+}
+
 /* Custom scrollbar for dropdown */
 .sleek-select__dropdown .max-h-60::-webkit-scrollbar {
     width: 6px;
@@ -355,5 +484,15 @@ watch(() => props.modelValue, () => {
 /* Loading state styles if needed */
 .sleek-select--loading .sleek-select__trigger {
     cursor: wait;
+}
+
+/* Selected tags styling */
+.sleek-select .inline-flex {
+    max-width: 100%;
+}
+
+/* Checkbox styling */
+input[type="checkbox"] {
+    pointer-events: none;
 }
 </style>

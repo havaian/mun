@@ -51,14 +51,10 @@
                                             <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                                 Data Source *
                                             </label>
-                                            <select v-model="reportConfig.dataSource" @change="onDataSourceChange"
-                                                class="mun-input" required>
-                                                <option value="">Select data source</option>
-                                                <option v-for="source in dataSources" :key="source.value"
-                                                    :value="source.value">
-                                                    {{ source.label }}
-                                                </option>
-                                            </select>
+                                            <SleekSelect v-model="reportConfig.dataSource" :options="[
+                                                { label: 'Select data source', value: '' },
+                                                ...dataSources
+                                            ]" placeholder="Select data source" @change="onDataSourceChange" required size="md" />
                                         </div>
 
                                         <div>
@@ -181,24 +177,21 @@
                                                 <!-- Field Configuration -->
                                                 <div class="flex items-center space-x-2">
                                                     <!-- Sorting -->
-                                                    <select v-model="fieldConfigs[fieldKey].sort"
-                                                        class="text-xs border border-mun-gray-300 rounded px-2 py-1">
-                                                        <option value="">No Sort</option>
-                                                        <option value="asc">Sort Asc</option>
-                                                        <option value="desc">Sort Desc</option>
-                                                    </select>
+                                                    <SleekSelect v-model="fieldConfigs[fieldKey].sort" :options="[
+                                                        { label: 'No Sort', value: '' },
+                                                        { label: 'Sort Asc', value: 'asc' },
+                                                        { label: 'Sort Desc', value: 'desc' }
+                                                    ]" size="sm" container-class="w-24" />
 
-                                                    <!-- Aggregation for numeric fields -->
-                                                    <select v-if="getFieldType(fieldKey) === 'number'"
-                                                        v-model="fieldConfigs[fieldKey].aggregation"
-                                                        class="text-xs border border-mun-gray-300 rounded px-2 py-1">
-                                                        <option value="">No Aggregation</option>
-                                                        <option value="sum">Sum</option>
-                                                        <option value="avg">Average</option>
-                                                        <option value="min">Minimum</option>
-                                                        <option value="max">Maximum</option>
-                                                        <option value="count">Count</option>
-                                                    </select>
+                                                    <SleekSelect v-if="getFieldType(fieldKey) === 'number'"
+                                                        v-model="fieldConfigs[fieldKey].aggregation" :options="[
+                                                            { label: 'No Aggregation', value: '' },
+                                                            { label: 'Sum', value: 'sum' },
+                                                            { label: 'Average', value: 'avg' },
+                                                            { label: 'Minimum', value: 'min' },
+                                                            { label: 'Maximum', value: 'max' },
+                                                            { label: 'Count', value: 'count' }
+                                                        ]" size="sm" container-class="w-32" />
                                                 </div>
 
                                                 <!-- Move Up/Down -->
@@ -240,21 +233,17 @@
                                                 class="flex items-center space-x-4 p-3 bg-mun-gray-50 rounded-lg">
 
                                                 <!-- Field Selection -->
-                                                <select v-model="filter.field" class="mun-input-sm">
-                                                    <option value="">Select Field</option>
-                                                    <option v-for="field in availableFields" :key="field.key"
-                                                        :value="field.key">
-                                                        {{ field.label }}
-                                                    </option>
-                                                </select>
+                                                <SleekSelect v-model="filter.field" :options="[
+                                                    { label: 'Select Field', value: '' },
+                                                    ...availableFields.map(field => ({
+                                                        label: field.label,
+                                                        value: field.key
+                                                    }))
+                                                ]" placeholder="Select Field" searchable size="sm" container-class="w-48" />
 
-                                                <!-- Operator Selection -->
-                                                <select v-model="filter.operator" class="mun-input-sm">
-                                                    <option v-for="op in getOperatorsForField(filter.field)"
-                                                        :key="op.value" :value="op.value">
-                                                        {{ op.label }}
-                                                    </option>
-                                                </select>
+                                                <SleekSelect v-model="filter.operator"
+                                                    :options="getOperatorsForField(filter.field)" size="sm"
+                                                    container-class="w-32" />
 
                                                 <!-- Value Input -->
                                                 <input v-model="filter.value" :type="getInputTypeForField(filter.field)"
@@ -285,26 +274,26 @@
                                                 <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                                     Group By
                                                 </label>
-                                                <select v-model="reportConfig.groupBy" class="mun-input">
-                                                    <option value="">No Grouping</option>
-                                                    <option v-for="field in categoricalFields" :key="field.key"
-                                                        :value="field.key">
-                                                        {{ field.label }}
-                                                    </option>
-                                                </select>
+                                                <SleekSelect v-model="reportConfig.groupBy" :options="[
+                                                    { label: 'No Grouping', value: '' },
+                                                    ...categoricalFields.map(field => ({
+                                                        label: field.label,
+                                                        value: field.key
+                                                    }))
+                                                ]" placeholder="No Grouping" size="md" />
                                             </div>
 
                                             <div>
                                                 <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                                     Order By
                                                 </label>
-                                                <select v-model="reportConfig.orderBy" class="mun-input">
-                                                    <option value="">No Ordering</option>
-                                                    <option v-for="field in selectedFieldObjects" :key="field.key"
-                                                        :value="field.key">
-                                                        {{ field.label }}
-                                                    </option>
-                                                </select>
+                                                <SleekSelect v-model="reportConfig.orderBy" :options="[
+                                                    { label: 'No Ordering', value: '' },
+                                                    ...selectedFieldObjects.map(field => ({
+                                                        label: field.label,
+                                                        value: field.key
+                                                    }))
+                                                ]" placeholder="No Ordering" size="md" />
                                             </div>
                                         </div>
                                     </div>

@@ -166,7 +166,7 @@
                         <div class="flex items-center justify-between py-2">
                             <span class="text-sm text-mun-gray-600">Avg Response Time</span>
                             <span class="font-medium text-mun-gray-900">{{ systemHealth.avgResponseTime || '--'
-                                }}ms</span>
+                            }}ms</span>
                         </div>
                         <div class="flex items-center justify-between py-2">
                             <span class="text-sm text-mun-gray-600">Error Rate</span>
@@ -183,13 +183,13 @@
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-mun-gray-900">Recent Activity</h3>
                     <div class="flex items-center space-x-3">
-                        <select v-model="activityFilter" class="input-field max-w-xs" @change="loadActivity">
-                            <option value="">All Activities</option>
-                            <option value="login">Logins</option>
-                            <option value="document">Documents</option>
-                            <option value="voting">Voting</option>
-                            <option value="system">System</option>
-                        </select>
+                        <SleekSelect v-model="activityFilter" @change="loadActivity" :options="[
+                            { label: 'All Activities', value: '' },
+                            { label: 'Logins', value: 'login' },
+                            { label: 'Documents', value: 'document' },
+                            { label: 'Voting', value: 'voting' },
+                            { label: 'System', value: 'system' }
+                        ]" containerClass="max-w-xs" placeholder="Filter activities" />
                     </div>
                 </div>
             </div>

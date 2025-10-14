@@ -30,26 +30,26 @@
                                     placeholder="Brief description of the event"
                                     :class="{ 'border-mun-red-500': errors.description }"></textarea>
                                 <p v-if="errors.description" class="text-sm text-mun-red-600 mt-1">{{ errors.description
-                                }}</p>
+                                    }}</p>
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-mun-gray-700 mb-2">Event Type</label>
-                                <select v-model="form.eventType" class="input-field">
-                                    <option value="conference">Conference</option>
-                                    <option value="workshop">Workshop</option>
-                                    <option value="simulation">Simulation</option>
-                                    <option value="training">Training</option>
-                                </select>
+                                <SleekSelect v-model="form.eventType" :options="[
+                                    { label: 'Conference', value: 'conference' },
+                                    { label: 'Workshop', value: 'workshop' },
+                                    { label: 'Simulation', value: 'simulation' },
+                                    { label: 'Training', value: 'training' }
+                                ]" size="md" />
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-mun-gray-700 mb-2">Language</label>
-                                <select v-model="form.language" class="input-field">
-                                    <option value="en">English</option>
-                                    <option value="ru">Russian</option>
-                                    <option value="uz">Uzbek</option>
-                                </select>
+                                <SleekSelect v-model="form.language" :options="[
+                                    { label: 'English', value: 'en' },
+                                    { label: 'Russian', value: 'ru' },
+                                    { label: 'Uzbek', value: 'uz' }
+                                ]" size="md" />
                             </div>
                         </div>
                     </div>
@@ -86,11 +86,11 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-mun-gray-700 mb-2">Timezone</label>
-                                <select v-model="form.timezone" class="input-field">
-                                    <option value="Asia/Tashkent">Asia/Tashkent (UTC+5)</option>
-                                    <option value="Europe/London">Europe/London (UTC+0)</option>
-                                    <option value="America/New_York">America/New_York (UTC-5)</option>
-                                </select>
+                                <SleekSelect v-model="form.timezone" :options="[
+                                    { label: 'Asia/Tashkent (UTC+5)', value: 'Asia/Tashkent' },
+                                    { label: 'Europe/London (UTC+0)', value: 'Europe/London' },
+                                    { label: 'America/New_York (UTC-5)', value: 'America/New_York' }
+                                ]" size="md" />
                             </div>
                         </div>
                     </div>

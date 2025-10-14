@@ -175,12 +175,11 @@
                                                 <span>{{ country.code }}</span>
 
                                                 <!-- Role Selector for SC -->
-                                                <select v-if="committee?.type === 'SC'" v-model="country.role"
-                                                    @change="updateCountryRole(country)"
-                                                    class="text-xs border-mun-gray-300 rounded px-2 py-1">
-                                                    <option value="non-permanent">Non-Permanent</option>
-                                                    <option value="permanent">Permanent</option>
-                                                </select>
+                                                <SleekSelect v-if="committee?.type === 'SC'" v-model="country.role"
+                                                    :options="[
+                                                        { label: 'Non-Permanent', value: 'non-permanent' },
+                                                        { label: 'Permanent', value: 'permanent' }
+                                                    ]" size="sm" container-class="min-w-[120px]" @change="updateCountryRole(country)" />
 
                                                 <!-- Registration Status -->
                                                 <span v-if="country.email" class="text-mun-green-600">

@@ -72,13 +72,12 @@
                     class="w-full px-3 py-2 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
             </div>
 
-            <select v-model="filterStatus"
-                class="px-3 py-2 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue">
-                <option value="">All Status</option>
-                <option value="present">Present</option>
-                <option value="absent">Absent</option>
-                <option value="unmarked">Unmarked</option>
-            </select>
+            <SleekSelect v-model="filterStatus" :options="[
+                { label: 'All Status', value: '' },
+                { label: 'Present', value: 'present' },
+                { label: 'Absent', value: 'absent' },
+                { label: 'Unmarked', value: 'unmarked' }
+            ]" size="sm" container-class="min-w-[110px]" />
 
             <button @click="markAllPresent" :disabled="isUpdating"
                 class="px-3 py-2 text-sm font-medium text-white bg-mun-green-600 rounded hover:bg-mun-green-700 transition-colors disabled:opacity-50">

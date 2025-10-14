@@ -57,14 +57,13 @@
                 <div v-if="!sessionTimer.isRunning && !sessionTimer.isPaused" class="timer-settings">
                     <div class="flex items-center space-x-2">
                         <label class="text-xs text-mun-gray-600">Duration:</label>
-                        <select v-model="sessionTimerDuration"
-                            class="text-xs border border-mun-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-mun-blue">
-                            <option :value="60">1 hour</option>
-                            <option :value="90">1.5 hours</option>
-                            <option :value="120">2 hours</option>
-                            <option :value="150">2.5 hours</option>
-                            <option :value="180">3 hours</option>
-                        </select>
+                        <SleekSelect v-model="sessionTimerDuration" :options="[
+                            { label: '1 hour', value: 60 },
+                            { label: '1.5 hours', value: 90 },
+                            { label: '2 hours', value: 120 },
+                            { label: '2.5 hours', value: 150 },
+                            { label: '3 hours', value: 180 }
+                        ]" size="sm" container-class="min-w-[100px]" />
                     </div>
                 </div>
             </div>
@@ -127,15 +126,14 @@
                 <div v-if="!speakerTimer.isRunning && !speakerTimer.isPaused" class="timer-settings">
                     <div class="flex items-center space-x-2">
                         <label class="text-xs text-mun-gray-600">Speech time:</label>
-                        <select v-model="speakerTimerDuration"
-                            class="text-xs border border-mun-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-mun-blue">
-                            <option :value="60">1 minute</option>
-                            <option :value="90">1.5 minutes</option>
-                            <option :value="120">2 minutes</option>
-                            <option :value="180">3 minutes</option>
-                            <option :value="240">4 minutes</option>
-                            <option :value="300">5 minutes</option>
-                        </select>
+                        <SleekSelect v-model="speakerTimerDuration" :options="[
+                            { label: '1 minute', value: 60 },
+                            { label: '1.5 minutes', value: 90 },
+                            { label: '2 minutes', value: 120 },
+                            { label: '3 minutes', value: 180 },
+                            { label: '4 minutes', value: 240 },
+                            { label: '5 minutes', value: 300 }
+                        ]" size="sm" container-class="min-w-[100px]" />
                     </div>
                 </div>
             </div>

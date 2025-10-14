@@ -15,12 +15,11 @@
 
             <div class="flex items-center space-x-2">
                 <!-- Time Range Selector -->
-                <select v-model="timeRange"
-                    class="px-2 py-1 text-xs border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue">
-                    <option value="session">This Session</option>
-                    <option value="today">Today</option>
-                    <option value="week">This Week</option>
-                </select>
+                <SleekSelect v-model="timeRange" :options="[
+                    { label: 'This Session', value: 'session' },
+                    { label: 'Today', value: 'today' },
+                    { label: 'This Week', value: 'week' }
+                ]" size="sm" containerClass="min-w-[120px]" />
 
                 <!-- Refresh Button -->
                 <button @click="refreshStats" :disabled="isLoading"

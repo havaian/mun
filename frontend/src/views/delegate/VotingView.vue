@@ -152,12 +152,12 @@
                 <div class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-mun-gray-900">Voting History</h2>
                     <div class="flex items-center space-x-3">
-                        <select v-model="historyFilter" class="input-field max-w-xs">
-                            <option value="">All Votes</option>
-                            <option value="resolution">Resolutions</option>
-                            <option value="amendment">Amendments</option>
-                            <option value="procedural">Procedural</option>
-                        </select>
+                        <SleekSelect v-model="historyFilter" :options="[
+                            { label: 'All Votes', value: '' },
+                            { label: 'Resolutions', value: 'resolution' },
+                            { label: 'Amendments', value: 'amendment' },
+                            { label: 'Procedural', value: 'procedural' }
+                        ]" containerClass="max-w-xs" placeholder="Filter by type" />
                     </div>
                 </div>
             </div>

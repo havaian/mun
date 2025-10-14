@@ -125,40 +125,40 @@
                                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                         Preferred Language
                                     </label>
-                                    <select v-model="accountData.language" class="mun-input">
-                                        <option value="en">English</option>
-                                        <option value="fr">Français</option>
-                                        <option value="es">Español</option>
-                                        <option value="ar">العربية</option>
-                                        <option value="ru">Русский</option>
-                                        <option value="zh">中文</option>
-                                    </select>
+                                    <SleekSelect v-model="accountData.language" :options="[
+                                        { label: 'English', value: 'en' },
+                                        { label: 'Français', value: 'fr' },
+                                        { label: 'Español', value: 'es' },
+                                        { label: 'العربية', value: 'ar' },
+                                        { label: 'Русский', value: 'ru' },
+                                        { label: '中文', value: 'zh' }
+                                    ]" placeholder="Select language" />
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                         Time Zone
                                     </label>
-                                    <select v-model="accountData.timezone" class="mun-input">
-                                        <option value="Asia/Tashkent">Asia/Tashkent (GMT+5)</option>
-                                        <option value="UTC">UTC (GMT+0)</option>
-                                        <option value="America/New_York">Eastern Time (GMT-5)</option>
-                                        <option value="America/Los_Angeles">Pacific Time (GMT-8)</option>
-                                        <option value="Europe/London">London (GMT+0)</option>
-                                        <option value="Europe/Paris">Paris (GMT+1)</option>
-                                        <option value="Asia/Tokyo">Tokyo (GMT+9)</option>
-                                    </select>
+                                    <SleekSelect v-model="accountData.timezone" :options="[
+                                        { label: 'Asia/Tashkent (GMT+5)', value: 'Asia/Tashkent' },
+                                        { label: 'UTC (GMT+0)', value: 'UTC' },
+                                        { label: 'Eastern Time (GMT-5)', value: 'America/New_York' },
+                                        { label: 'Pacific Time (GMT-8)', value: 'America/Los_Angeles' },
+                                        { label: 'London (GMT+0)', value: 'Europe/London' },
+                                        { label: 'Paris (GMT+1)', value: 'Europe/Paris' },
+                                        { label: 'Tokyo (GMT+9)', value: 'Asia/Tokyo' }
+                                    ]" placeholder="Select timezone" searchable />
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                         Date Format
                                     </label>
-                                    <select v-model="accountData.dateFormat" class="mun-input">
-                                        <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                                        <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                                        <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                                    </select>
+                                    <SleekSelect v-model="accountData.dateFormat" :options="[
+                                        { label: 'MM/DD/YYYY', value: 'MM/DD/YYYY' },
+                                        { label: 'DD/MM/YYYY', value: 'DD/MM/YYYY' },
+                                        { label: 'YYYY-MM-DD', value: 'YYYY-MM-DD' }
+                                    ]" placeholder="Select date format" />
                                 </div>
                             </div>
 

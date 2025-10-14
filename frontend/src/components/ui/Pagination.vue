@@ -35,12 +35,9 @@
                 <!-- Items per page selector -->
                 <div v-if="showPerPageSelector" class="flex items-center space-x-2 mr-4">
                     <label class="text-sm text-mun-gray-700">Show:</label>
-                    <select :value="perPage" @change="changePerPage($event.target.value)"
-                        class="px-3 py-1.5 text-sm border border-mun-gray-300 rounded-md focus:ring-2 focus:ring-mun-blue focus:border-mun-blue">
-                        <option v-for="option in perPageOptions" :key="option" :value="option">
-                            {{ option }}
-                        </option>
-                    </select>
+                    <SleekSelect :model-value="perPage" @update:model-value="changePerPage"
+                        :options="perPageOptions.map(option => ({ label: option.toString(), value: option }))" size="sm"
+                        containerClass="min-w-[80px]" />
                 </div>
 
                 <!-- First page button -->
