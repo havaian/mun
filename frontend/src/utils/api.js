@@ -120,8 +120,6 @@ api.interceptors.response.use(
 
 // API methods with proper error handling
 export const apiMethods = {
-
-
     // Admin Management
     admin: {
         // Dashboard

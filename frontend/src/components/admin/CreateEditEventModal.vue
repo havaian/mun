@@ -56,7 +56,9 @@
                                             { label: 'Simulation', value: 'simulation' },
                                             { label: 'Training', value: 'training' },
                                             { label: 'Competition', value: 'competition' }
-                                        ]" placeholder="Select type" :trigger-class="errors.eventType ? 'border-mun-red-300' : ''" required size="md" />
+                                        ]" placeholder="Select type"
+                                            :trigger-class="errors.eventType ? 'border-mun-red-300' : ''" required
+                                            size="md" />
                                         <p v-if="errors.eventType" class="mt-1 text-sm text-mun-red-600">
                                             {{ errors.eventType }}
                                         </p>
@@ -431,6 +433,8 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useToast } from '@/plugins/toast'
 import { apiMethods } from '@/utils/api'
+import SleekSelect from '@/components/ui/SleekSelect.vue'
+import AppButton from '@/components/ui/AppButton.vue'
 
 // Icons
 import {
@@ -463,9 +467,10 @@ const props = defineProps({
     }
 })
 
-// Emits
+// Emits - Define this before using it
 const emit = defineEmits(['update:modelValue', 'created', 'updated'])
 
+// Initialize toast
 const toast = useToast()
 
 // State
@@ -688,29 +693,29 @@ const submitForm = async () => {
 
         let response
         if (props.mode === 'edit') {
-            response = await apiMethods.events.update(props.event._id, submitData)
+            response = await apiMethods.put(`/api/admin/events/${props.event._id}`, submitData)
         } else {
-            response = await apiMethods.events.create(submitData)
+            response = await apiMethods.post('/api/admin/events', submitData)
         }
 
-        if (response.data.success) {
-            const event = response.data.event
+        if (response?.data) {
+            const eventData = response.data.event || response.data
 
             if (props.mode === 'edit') {
-                emit('updated', event)
+                emit('updated', eventData)
                 toast.success('Event updated successfully')
             } else {
-                emit('created', event)
+                emit('created', eventData)
                 toast.success('Event created successfully')
             }
 
             close()
         } else {
-            throw new Error(response.data.error || 'Failed to save event')
+            throw new Error('Failed to save event')
         }
 
     } catch (error) {
-        toast.error('Submit event error:', error)
+        console.error('Submit event error:', error)
         toast.error(error.message || 'Failed to save event')
     } finally {
         isSubmitting.value = false
@@ -731,16 +736,16 @@ const saveDraft = async () => {
             draftData.endDate = new Date(draftData.endDate).toISOString()
         }
 
-        const response = await apiMethods.events.create(draftData)
+        const response = await apiMethods.post('/api/admin/events', draftData)
 
-        if (response.data.success) {
-            emit('created', response.data.event)
+        if (response?.data) {
+            emit('created', response.data.event || response.data)
             toast.success('Event saved as draft')
             close()
         }
 
     } catch (error) {
-        toast.error('Save draft error:', error)
+        console.error('Save draft error:', error)
         toast.error('Failed to save draft')
     } finally {
         isDraftSaving.value = false
@@ -759,5 +764,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>
