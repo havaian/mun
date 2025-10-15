@@ -105,9 +105,9 @@
             </div>
 
             <!-- System Health & Recent Activity & Active Events -->
-            <div class="mun-card grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Comprehensive System Health Monitor -->
-                <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
+                <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="text-lg font-semibold text-mun-gray-900">System Health Monitor</h3>
                         <div class="flex items-center space-x-2">
