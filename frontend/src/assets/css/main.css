@@ -274,21 +274,25 @@
 }
 
 /* Input sizing */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-input[type="tel"],
-input[type="url"],
-input[type="search"],
-input[type="date"],
-input[type="time"],
-input[type="datetime-local"],
-input[type="month"],
-input[type="week"],
-textarea,
-select {
-    @apply px-4 py-2.5 text-sm;
+input[type="text"]:not(.pl-10), 
+input[type="email"]:not(.pl-10), 
+input[type="password"]:not(.pl-10), 
+input[type="number"]:not(.pl-10), 
+input[type="tel"]:not(.pl-10), 
+input[type="url"]:not(.pl-10), 
+input[type="search"]:not(.pl-10), 
+input[type="date"]:not(.pl-10), 
+input[type="time"]:not(.pl-10), 
+input[type="datetime-local"]:not(.pl-10), 
+input[type="month"]:not(.pl-10), 
+input[type="week"]:not(.pl-10), 
+textarea:not(.pl-10), 
+select:not(.pl-10) { 
+    @apply px-4 py-2.5 text-sm; 
+}
+
+input.pl-10, textarea.pl-10 {
+    @apply py-2.5 text-sm;
 }
 
 /* Size variants to match SleekSelect */
