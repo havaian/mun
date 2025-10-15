@@ -1,7 +1,7 @@
 <template>
     <div class="p-6 space-y-6">
         <!-- Header -->
-        <div class="flex items-center justify-between">
+        <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-mun-gray-900">User Management</h1>
                 <p class="text-mun-gray-600">Manage system users and their permissions</p>

@@ -2,7 +2,7 @@
     <div class="admin-documents p-6 space-y-6">
         <!-- Page Header -->
         <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+            <div class="mun-card flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                 <div>
                     <h1 class="text-2xl font-bold text-mun-gray-900">Document Management</h1>
                     <p class="text-mun-gray-600 mt-1">
@@ -81,7 +81,7 @@
         </div>
 
         <!-- Advanced Filters -->
-        <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
+        <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Search</label>
@@ -124,7 +124,7 @@
         </div>
 
         <!-- Documents Table -->
-        <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden">
+        <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-mun-gray-200">
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-mun-gray-900">Documents</h3>

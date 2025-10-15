@@ -43,7 +43,7 @@
                 <div class="lg:col-span-3">
                     <!-- General Settings -->
                     <div v-if="activeSection === 'general'" class="space-y-6">
-                        <div class="bg-white shadow rounded-lg p-6">
+                        <div class="mun-card bg-white shadow rounded-lg p-6">
                             <h3 class="text-lg font-medium text-mun-gray-900 mb-4">General Configuration</h3>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -101,7 +101,7 @@
 
                     <!-- Authentication Settings -->
                     <div v-if="activeSection === 'auth'" class="space-y-6">
-                        <div class="bg-white shadow rounded-lg p-6">
+                        <div class="mun-card bg-white shadow rounded-lg p-6">
                             <h3 class="text-lg font-medium text-mun-gray-900 mb-4">Authentication Settings</h3>
 
                             <div class="space-y-6">
@@ -143,7 +143,7 @@
 
                     <!-- Email Settings -->
                     <div v-if="activeSection === 'email'" class="space-y-6">
-                        <div class="bg-white shadow rounded-lg p-6">
+                        <div class="mun-card bg-white shadow rounded-lg p-6">
                             <h3 class="text-lg font-medium text-mun-gray-900 mb-4">Email Configuration</h3>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -199,7 +199,7 @@
 
                     <!-- Security Settings -->
                     <div v-if="activeSection === 'security'" class="space-y-6">
-                        <div class="bg-white shadow rounded-lg p-6">
+                        <div class="mun-card bg-white shadow rounded-lg p-6">
                             <h3 class="text-lg font-medium text-mun-gray-900 mb-4">Security Configuration</h3>
 
                             <div class="space-y-6">
@@ -242,7 +242,7 @@
 
                     <!-- System Maintenance -->
                     <div v-if="activeSection === 'system'" class="space-y-6">
-                        <div class="bg-white shadow rounded-lg p-6">
+                        <div class="mun-card bg-white shadow rounded-lg p-6">
                             <h3 class="text-lg font-medium text-mun-gray-900 mb-4">System Maintenance</h3>
 
                             <div class="space-y-6">

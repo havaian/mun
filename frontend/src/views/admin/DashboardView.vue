@@ -6,12 +6,12 @@
                 <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-mun-blue-600 mx-auto mb-4"></div>
                 <p class="text-mun-gray-600">Loading dashboard...</p>
             </div>
-        </div>
+        </div> 
 
         <!-- Dashboard Content -->
         <div v-else class="space-y-6 p-6">
             <!-- Header -->
-            <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
+            <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
                 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                     <div>
                         <h1 class="text-2xl font-bold text-mun-gray-900">Admin Dashboard</h1>
@@ -105,7 +105,7 @@
             </div>
 
             <!-- System Health & Recent Activity & Active Events -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="mun-card grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Comprehensive System Health Monitor -->
                 <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
                     <div class="flex items-center justify-between mb-6">
@@ -232,7 +232,7 @@
                 <!-- Recent Activity & Active Events -->
                 <div class="space-y-6">
                     <!-- Recent Activity -->
-                    <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
+                    <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold text-mun-gray-900">Recent Activity</h3>
                             <router-link to="/admin/logs"
@@ -281,7 +281,7 @@
                     </div>
 
                     <!-- Active Events -->
-                    <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
+                    <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold text-mun-gray-900">Active Events</h3>
                             <router-link to="/admin/events"

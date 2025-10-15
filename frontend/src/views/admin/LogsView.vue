@@ -2,7 +2,7 @@
     <div class="admin-logs">
         <!-- Header -->
         <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6 mb-6">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+            <div class="mun-card flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                 <div>
                     <h1 class="text-2xl font-bold text-mun-gray-900">System Logs</h1>
                     <p class="text-mun-gray-600 mt-1">Monitor system activity and audit trails</p>
@@ -25,7 +25,7 @@
         </div>
 
         <!-- Filters -->
-        <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6 mb-6">
+        <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6 mb-6">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <!-- Log Level Filter -->
                 <div>
@@ -100,7 +100,7 @@
         </div>
 
         <!-- Logs Table -->
-        <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden">
+        <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden">
             <!-- Loading State -->
             <div v-if="isLoading" class="p-8 text-center">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-mun-blue-600 mx-auto mb-4"></div>

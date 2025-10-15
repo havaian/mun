@@ -1,7 +1,7 @@
 <template>
-    <div class="max-w-7xl mx-auto p-6 space-y-6">
+    <div class="p-6 space-y-6">
         <!-- Page Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+        <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200  flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
             <div>
                 <h1 class="text-2xl font-bold text-mun-gray-900">Committee Management</h1>
                 <p class="text-mun-gray-600 mt-1">Create and manage MUN committees</p>

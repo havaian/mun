@@ -90,12 +90,17 @@
         @apply focus:ring-2 focus:ring-mun-blue focus:ring-opacity-50 focus:ring-offset-2;
     }
 
+    button {
+        display: inline-flex;
+        align-items: center;
+    }
+
     /* Input field styles */
     .input-field {
         @apply w-full px-4 py-3 rounded-xl border border-mun-gray-200;
         @apply bg-white/80 backdrop-blur-sm placeholder-mun-gray-400;
         @apply transition-all duration-200 focus:border-mun-blue focus:ring-1 focus:ring-mun-blue;
-        @apply hover:border-mun-gray-300;
+        @apply hover:border-mun-blue-400;
     }
 
     /* Card component */
@@ -358,5 +363,5 @@ textarea.input-field.input-lg.pl-10 {
 /* Ensure checkboxes are not affected by input field styles */
 input[type="checkbox"].input-field,
 input[type="radio"].input-field {
-    @apply p-0 w-auto h-auto;
+    @apply p-2 w-auto h-auto rounded;
 }
