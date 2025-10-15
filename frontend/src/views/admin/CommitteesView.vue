@@ -219,11 +219,11 @@
         </div>
 
         <!-- Committees Display -->
-        <div v-if="isLoading" class="flex justify-center py-12">
+        <div v-if="isLoading" class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden flex justify-center py-12">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
         </div>
 
-        <div v-else-if="filteredCommittees.length === 0" class="text-center py-12">
+        <div v-else-if="filteredCommittees.length === 0" class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
             <UserGroupIcon class="w-16 h-16 text-mun-gray-400 mx-auto mb-4" />
             <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
                 {{ hasActiveFilters ? 'No committees match your filters' : 'No committees found' }}
@@ -244,7 +244,7 @@
         </div>
 
         <!-- Grid View -->
-        <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-else-if="viewMode === 'grid'" class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div v-for="committee in paginatedCommittees" :key="committee._id"
                 class="mun-card p-6 hover:shadow-lg transition-shadow cursor-pointer" @click="viewCommittee(committee)">
 
@@ -305,7 +305,7 @@
         </div>
 
         <!-- List View -->
-        <div v-else class="mun-card overflow-x-auto">
+        <div v-else class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden overflow-x-auto">
             <table class="min-w-full divide-y divide-mun-gray-200">
                 <thead class="bg-mun-gray-50">
                     <tr>
@@ -389,7 +389,7 @@
         </div>
 
         <!-- Pagination -->
-        <div v-if="filteredCommittees.length > pagination.pageSize" class="flex justify-center">
+        <div v-if="filteredCommittees.length > pagination.pageSize" class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden flex justify-center">
             <Pagination :current-page="pagination.currentPage" :total-pages="pagination.totalPages"
                 @page-change="handlePageChange" />
         </div>
