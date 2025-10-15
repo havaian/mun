@@ -14,7 +14,7 @@
             </div>
 
             <!-- Main Content Card -->
-            <div class="mun-card">
+            <div class="bg-white rounded-xl p-6">
                 <transition name="slide-replace" mode="out-in">
                     <!-- Login Method Selection -->
                     <div v-if="currentView === 'selection'" key="selection">
