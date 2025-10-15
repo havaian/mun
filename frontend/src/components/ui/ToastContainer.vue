@@ -1,7 +1,7 @@
 <template>
     <teleport to="body">
-        <div class="toast-container fixed top-4 right-4 z-50 space-y-3 pointer-events-none">
-            <transition-group name="toast" tag="div">
+        <div class="toast-container fixed top-4 right-4 z-50 space-y-4 pointer-events-none">
+            <transition-group name="toast" tag="div" class="space-y-4">
                 <div v-for="toast in toasts" :key="toast.id"
                     class="toast-item pointer-events-auto relative max-w-sm w-full bg-white shadow-lg rounded-lg border overflow-hidden"
                     :class="getBorderClass(toast.type)" @mouseenter="pauseTimer(toast.id)"
@@ -84,6 +84,7 @@ const toasts = computed(() => toastService.toasts)
 // Reactive progress tracking and timeout management
 const currentProgress = ref({})
 const toastTimeouts = ref({})
+const startTimes = ref({})
 
 // Toast type configurations
 const toastConfig = {
@@ -124,21 +125,23 @@ const getIconClass = (type) => toastConfig[type]?.iconClass || toastConfig.info.
 const getProgressClasses = (type) => toastConfig[type]?.progressClass || toastConfig.info.progressClass
 const getActionButtonClass = (type) => toastConfig[type]?.actionClass || toastConfig.info.actionClass
 
-// Progress calculation - Fixed timing logic
+// Fixed progress calculation - should decrease from 100 to 0
 const calculateProgress = (toast) => {
     if (!toast.duration || toast.duration <= 0) return 100
 
     const now = Date.now()
+    const startTime = startTimes.value[toast.id] || toast.timestamp
     const totalPausedTime = toast.totalPausedTime || 0
-    const elapsed = now - toast.timestamp - totalPausedTime
+    const elapsed = now - startTime - totalPausedTime
 
     // If paused, don't update progress
     if (toast.paused) {
-        return toast.pausedProgress || 100
+        return currentProgress.value[toast.id] || 100
     }
 
-    const remainingProgress = ((toast.duration - elapsed) / toast.duration) * 100
-    return Math.max(0, Math.min(100, remainingProgress))
+    // Calculate remaining progress (starts at 100%, decreases to 0%)
+    const remainingProgress = Math.max(0, ((toast.duration - elapsed) / toast.duration) * 100)
+    return remainingProgress
 }
 
 const removeToast = (id) => {
@@ -150,6 +153,7 @@ const removeToast = (id) => {
 
     // Clean up progress tracking
     delete currentProgress.value[id]
+    delete startTimes.value[id]
     toastService.remove(id)
 }
 
@@ -176,6 +180,8 @@ const pauseTimer = (id) => {
         // Mark as paused and save current progress
         toast.paused = true
         toast.pausedAt = Date.now()
+
+        // Save the current progress to maintain it while paused
         toast.pausedProgress = currentProgress.value[id]
     }
 }
@@ -192,8 +198,9 @@ const resumeTimer = (id) => {
         toast.pausedAt = null
 
         // Calculate remaining time and set new timeout
-        const elapsed = Date.now() - toast.timestamp - toast.totalPausedTime
-        const remainingTime = toast.duration - elapsed
+        const startTime = startTimes.value[id] || toast.timestamp
+        const elapsed = Date.now() - startTime - toast.totalPausedTime
+        const remainingTime = Math.max(0, toast.duration - elapsed)
 
         if (remainingTime > 0) {
             toastTimeouts.value[id] = setTimeout(() => {
@@ -211,9 +218,14 @@ let progressInterval = null
 
 const updateProgress = () => {
     toasts.value.forEach(toast => {
-        if (toast.duration > 0) {
+        if (toast.duration > 0 && !toast.paused) {
             const progress = calculateProgress(toast)
             currentProgress.value[toast.id] = progress
+
+            // Auto-remove when progress reaches 0
+            if (progress <= 0) {
+                removeToast(toast.id)
+            }
         }
     })
 }
@@ -221,7 +233,9 @@ const updateProgress = () => {
 // Initialize new toasts with proper timeout management
 const initializeToast = (toast) => {
     if (toast.duration > 0) {
+        // Set initial progress to 100%
         currentProgress.value[toast.id] = 100
+        startTimes.value[toast.id] = Date.now()
 
         // Initialize pause tracking properties
         toast.paused = false
@@ -257,6 +271,7 @@ watch(toasts, (newToasts, oldToasts) => {
                     delete toastTimeouts.value[id]
                 }
                 delete currentProgress.value[id]
+                delete startTimes.value[id]
             }
         })
     }
@@ -277,6 +292,8 @@ onUnmounted(() => {
         clearTimeout(timeout)
     })
     toastTimeouts.value = {}
+    currentProgress.value = {}
+    startTimes.value = {}
 })
 </script>
 
@@ -302,6 +319,11 @@ onUnmounted(() => {
 
 .toast-move {
     transition: transform 0.3s ease;
+}
+
+/* Ensure proper spacing in transition group */
+.space-y-4>*+* {
+    margin-top: 1rem;
 }
 
 /* Hover effects - avoiding transform: scale as per user preference */
@@ -330,6 +352,11 @@ onUnmounted(() => {
     .toast-item {
         max-width: calc(100vw - 2rem);
         width: auto;
+    }
+
+    /* Maintain spacing on mobile */
+    .space-y-4>*+* {
+        margin-top: 0.75rem;
     }
 }
 

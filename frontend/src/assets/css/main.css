@@ -272,3 +272,34 @@
         }
     }
 }
+
+/* Input sizing */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"],
+textarea,
+select {
+    @apply px-4 py-2.5 text-sm;
+}
+
+/* Size variants to match SleekSelect */
+input.input-sm,
+textarea.input-sm,
+select.input-sm {
+    @apply py-2 px-3 text-sm;
+}
+
+input.input-lg,
+textarea.input-lg,
+select.input-lg {
+    @apply py-3 px-4 text-base;
+}
