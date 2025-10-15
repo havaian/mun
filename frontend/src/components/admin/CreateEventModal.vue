@@ -148,19 +148,19 @@
                             <div>
                                 <label class="block text-sm font-medium text-mun-gray-700 mb-2">Contact Email</label>
                                 <input v-model="form.contactEmail" type="email" class="input-field"
-                                    placeholder="contact@example.com">
+                                    placeholder="support@mun.uz">
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-mun-gray-700 mb-2">Contact Phone</label>
                                 <input v-model="form.contactPhone" type="tel" class="input-field"
-                                    placeholder="+998 90 123 45 67">
+                                    placeholder="+998 90 985 53 68">
                             </div>
 
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-mun-gray-700 mb-2">Venue/Location</label>
                                 <input v-model="form.venue" type="text" class="input-field"
-                                    placeholder="e.g., Tashkent International University">
+                                    placeholder="e.g., Tashkent State University of Law">
                             </div>
                         </div>
                     </div>

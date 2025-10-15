@@ -252,7 +252,7 @@
                                             Contact Phone
                                         </label>
                                         <input v-model="formData.contactPhone" type="tel" class="input-field"
-                                            placeholder="+998 909855368" />
+                                            placeholder="+998 90 985 53 68" />
                                     </div>
 
                                     <!-- Website -->

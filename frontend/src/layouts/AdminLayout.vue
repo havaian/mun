@@ -178,7 +178,7 @@
                                 {{ authStore.user?.fullName || 'Admin User' }}
                             </p>
                             <p class="text-xs text-mun-gray-500 truncate">
-                                {{ authStore.user?.email || 'admin@mun.com' }}
+                                {{ authStore.user?.email || 'admin@mun.uz' }}
                             </p>
                         </div>
                     </div>
