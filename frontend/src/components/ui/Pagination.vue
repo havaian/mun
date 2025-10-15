@@ -90,7 +90,7 @@
             <span class="text-sm text-mun-gray-700">Go to page:</span>
             <input v-model.number="jumpToPageInput" @keyup.enter="handlePageJump" type="number" :min="1"
                 :max="totalPages"
-                class="w-16 px-2 py-1 text-sm text-center border border-mun-gray-300 rounded-md focus:ring-2 focus:ring-mun-blue focus:border-mun-blue"
+                class="input-field w-16 px-2 py-1 text-sm text-center"
                 placeholder="1" />
             <AppButton @click="handlePageJump" variant="outline" size="sm" :disabled="!isValidJumpPage">
                 Go

@@ -380,22 +380,6 @@ defineExpose({
 </script>
 
 <style scoped>
-/* Modal animation */
-.modal-enter-active,
-.modal-leave-active {
-    transition: all 0.3s ease;
-}
-
-.modal-enter-from {
-    opacity: 0;
-    transform: translateY(-20px);
-}
-
-.modal-leave-to {
-    opacity: 0;
-    transform: translateY(20px);
-}
-
 /* Pulse animation for critical state */
 @keyframes pulse {
 

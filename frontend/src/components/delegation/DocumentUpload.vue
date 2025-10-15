@@ -141,7 +141,7 @@
                 </label>
                 <input v-model="documentTitle" type="text" placeholder="Enter a descriptive title for your document..."
                     maxlength="200"
-                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent"
+                    class="input-field w-full px-4 py-3"
                     :class="{ 'border-red-300': errors.title }" />
                 <div class="flex items-center justify-between mt-1">
                     <p v-if="errors.title" class="text-sm text-red-600">{{ errors.title }}</p>
@@ -157,7 +157,7 @@
                 <textarea v-model="documentDescription"
                     placeholder="Provide a brief description of the document's content and purpose..." rows="3"
                     maxlength="500"
-                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent resize-none"></textarea>
+                    class="input-field w-full px-4 py-3 resize-none"></textarea>
                 <div class="flex justify-end mt-1">
                     <span class="text-xs text-mun-gray-500">{{ documentDescription.length }}/500</span>
                 </div>
@@ -180,7 +180,7 @@
                 <div class="flex items-center space-x-2">
                     <input v-model="newTag" @keydown.enter.prevent="addTag" @keydown.comma.prevent="addTag" type="text"
                         placeholder="Add tags (press Enter or comma to add)..." maxlength="20"
-                        class="flex-1 px-3 py-2 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
+                        class="input-field flex-1 px-3 py-2 text-sm" />
                     <button @click="addTag" :disabled="!newTag.trim() || documentTags.length >= 5"
                         class="px-3 py-2 text-sm font-medium text-mun-blue bg-mun-blue/10 border border-mun-blue/20 rounded hover:bg-mun-blue/20 transition-colors disabled:opacity-50">
                         Add

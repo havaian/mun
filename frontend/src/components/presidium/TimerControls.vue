@@ -224,20 +224,20 @@
                         <div>
                             <label class="block text-sm font-medium text-mun-gray-700 mb-1">Purpose</label>
                             <input v-model="newTimerForm.purpose" type="text"
-                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue"
+                                class="input-field w-full px-3 py-2"
                                 placeholder="e.g., Moderated Caucus" />
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-mun-gray-700 mb-1">Duration (minutes)</label>
                             <input v-model.number="newTimerForm.duration" type="number" min="1" max="120"
-                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue"
+                                class="input-field w-full px-3 py-2"
                                 placeholder="e.g., 20" />
                         </div>
 
                         <div class="flex items-center">
                             <input v-model="newTimerForm.startImmediately" type="checkbox"
-                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                class="input-field w-full px-3 py-2" />
                             <label class="ml-2 text-sm text-mun-gray-700">Start immediately</label>
                         </div>
                     </div>

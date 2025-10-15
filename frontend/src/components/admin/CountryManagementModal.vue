@@ -85,7 +85,7 @@
                                         <!-- Selection Checkbox -->
                                         <input type="checkbox" :checked="selectedCountries.includes(country.code)"
                                             @click.stop="toggleCountrySelection(country)"
-                                            class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded mr-3" />
+                                            class="input-field h-4 w-4 mr-3" />
 
                                         <!-- Flag -->
                                         <div class="w-8 h-6 rounded-sm overflow-hidden mr-3 border border-mun-gray-200">
@@ -594,40 +594,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Modal animation */
-.modal-enter-active,
-.modal-leave-active {
-    transition: all 0.3s ease;
-}
-
-.modal-enter-from {
-    opacity: 0;
-    transform: translateY(-20px);
-}
-
-.modal-leave-to {
-    opacity: 0;
-    transform: translateY(20px);
-}
-
-/* Custom scrollbar */
-.overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-    background: #f1f5f9;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
-
 /* Country selection animation */
 .country-item {
     transition: all 0.2s ease;

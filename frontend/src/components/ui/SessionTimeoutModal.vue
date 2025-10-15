@@ -329,17 +329,6 @@ defineExpose({
 </script>
 
 <style scoped>
-/* Modal animation */
-.modal-enter-active,
-.modal-leave-active {
-    transition: all 0.3s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-    opacity: 0;
-}
-
 /* Subtle pulse animation for critical state */
 @keyframes pulse-subtle {
 
@@ -378,12 +367,6 @@ defineExpose({
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-
-    .modal-enter-active,
-    .modal-leave-active {
-        transition: none;
-    }
-
     .animate-pulse-subtle {
         animation: none;
     }

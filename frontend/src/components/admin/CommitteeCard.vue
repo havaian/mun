@@ -5,7 +5,7 @@
         <!-- Selection Checkbox -->
         <div class="absolute top-4 left-4 z-10">
             <input type="checkbox" :checked="selected" @click.stop="$emit('select', committee._id)"
-                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
+                class="input-field h-4 w-4" />
         </div>
 
         <!-- QR Status Indicator -->
@@ -482,11 +482,6 @@ onUnmounted(() => {
 .dropdown-leave-to {
     opacity: 0;
     transform: translateY(10px) scale(0.95);
-}
-
-/* Card hover effects */
-.mun-card:hover {
-    transform: translateY(-2px);
 }
 
 /* Progress bar animation */

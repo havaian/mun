@@ -222,11 +222,6 @@ const handleClick = (event) => {
     opacity: 0;
 }
 
-/* Card entrance animation */
-.mun-card {
-    animation: slideInUp 0.4s ease-out;
-}
-
 @keyframes slideInUp {
     from {
         opacity: 0;

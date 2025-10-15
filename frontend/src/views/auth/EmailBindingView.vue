@@ -78,7 +78,7 @@
                     <!-- Terms and Conditions -->
                     <div class="flex items-start space-x-3">
                         <input id="agreedToTerms" v-model="emailForm.agreedToTerms" type="checkbox" required
-                            class="mt-1 h-4 w-4 text-mun-blue border-mun-gray-300 rounded focus:ring-mun-blue"
+                            class="input-field mt-1 h-4 w-4"
                             :disabled="authStore.isLoading" />
                         <label for="agreedToTerms" class="text-sm text-mun-gray-600">
                             I agree to the

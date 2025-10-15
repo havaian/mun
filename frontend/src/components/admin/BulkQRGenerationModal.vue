@@ -36,7 +36,7 @@
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <label
                                         class="relative flex cursor-pointer rounded-xl border p-4 transition-all hover:bg-mun-gray-50">
-                                        <input v-model="selectedOperations.presidium" type="checkbox" class="sr-only" />
+                                        <input v-model="selectedOperations.presidium" type="checkbox" class="input-field sr-only" />
                                         <div class="flex flex-1 items-center">
                                             <div class="flex-shrink-0">
                                                 <div :class="[
@@ -63,7 +63,7 @@
 
                                     <label
                                         class="relative flex cursor-pointer rounded-xl border p-4 transition-all hover:bg-mun-gray-50">
-                                        <input v-model="selectedOperations.delegates" type="checkbox" class="sr-only" />
+                                        <input v-model="selectedOperations.delegates" type="checkbox" class="input-field sr-only" />
                                         <div class="flex flex-1 items-center">
                                             <div class="flex-shrink-0">
                                                 <div :class="[
@@ -90,7 +90,7 @@
 
                                     <label
                                         class="relative flex cursor-pointer rounded-xl border p-4 transition-all hover:bg-mun-gray-50">
-                                        <input v-model="selectedOperations.pdfs" type="checkbox" class="sr-only" />
+                                        <input v-model="selectedOperations.pdfs" type="checkbox" class="input-field sr-only" />
                                         <div class="flex flex-1 items-center">
                                             <div class="flex-shrink-0">
                                                 <div :class="[

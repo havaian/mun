@@ -47,7 +47,7 @@
                                             </label>
                                             <input v-model.number="settings.sessionDuration" type="number" min="30"
                                                 max="480" step="15"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue"
+                                                class="input-field w-full px-3 py-2"
                                                 placeholder="e.g., 120" />
                                             <p class="text-xs text-mun-gray-500 mt-1">Total time allocated for this
                                                 session</p>
@@ -60,7 +60,7 @@
                                             </label>
                                             <input v-model.number="settings.breakDuration" type="number" min="5"
                                                 max="60" step="5"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue"
+                                                class="input-field w-full px-3 py-2"
                                                 placeholder="e.g., 15" />
                                             <p class="text-xs text-mun-gray-500 mt-1">Standard break length</p>
                                         </div>
@@ -109,7 +109,7 @@
                                             </label>
                                             <input v-model.number="settings.defaultSpeechTime" type="number" min="30"
                                                 max="600" step="30"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue"
+                                                class="input-field w-full px-3 py-2"
                                                 placeholder="e.g., 120" />
                                         </div>
 
@@ -120,7 +120,7 @@
                                             </label>
                                             <input v-model.number="settings.extensionTime" type="number" min="15"
                                                 max="120" step="15"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue"
+                                                class="input-field w-full px-3 py-2"
                                                 placeholder="e.g., 30" />
                                         </div>
 
@@ -131,14 +131,14 @@
                                             </label>
                                             <input v-model.number="settings.maxSpeakerListSize" type="number" min="5"
                                                 max="50"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue"
+                                                class="input-field w-full px-3 py-2"
                                                 placeholder="e.g., 20" />
                                         </div>
 
                                         <!-- Auto-advance speakers -->
                                         <div class="flex items-center">
                                             <input v-model="settings.autoAdvanceSpeakers" type="checkbox"
-                                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                                class="input-field w-full px-3 py-2" />
                                             <label class="ml-2 text-sm text-mun-gray-700">
                                                 Auto-advance to next speaker
                                             </label>
@@ -164,12 +164,12 @@
                                                     (seconds)</label>
                                                 <input v-model.number="settings.formalDebate.speechTime" type="number"
                                                     min="60" max="300"
-                                                    class="w-full px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
+                                                    class="input-field w-full px-2 py-1 text-sm" />
                                             </div>
 
                                             <div class="flex items-center">
                                                 <input v-model="settings.formalDebate.allowQuestions" type="checkbox"
-                                                    class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                                    class="input-field" />
                                                 <label class="ml-2 text-xs text-mun-gray-700">Allow questions</label>
                                             </div>
                                         </div>
@@ -185,7 +185,7 @@
                                                     (minutes)</label>
                                                 <input v-model.number="settings.moderatedCaucus.totalTime" type="number"
                                                     min="5" max="60"
-                                                    class="w-full px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
+                                                    class="input-field w-full px-2 py-1 text-sm" />
                                             </div>
 
                                             <div>
@@ -193,7 +193,7 @@
                                                     (seconds)</label>
                                                 <input v-model.number="settings.moderatedCaucus.speechTime"
                                                     type="number" min="30" max="180"
-                                                    class="w-full px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
+                                                    class="input-field w-full px-2 py-1 text-sm" />
                                             </div>
 
                                             <div class="flex items-center">
@@ -214,7 +214,7 @@
                                                     (minutes)</label>
                                                 <input v-model.number="settings.unmoderatedCaucus.defaultDuration"
                                                     type="number" min="5" max="30"
-                                                    class="w-full px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
+                                                    class="input-field w-full px-2 py-1 text-sm" />
                                             </div>
 
                                             <div>
@@ -222,7 +222,7 @@
                                                     (minutes)</label>
                                                 <input v-model.number="settings.unmoderatedCaucus.maxDuration"
                                                     type="number" min="10" max="60"
-                                                    class="w-full px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
+                                                    class="input-field w-full px-2 py-1 text-sm" />
                                             </div>
                                         </div>
                                     </div>
@@ -240,7 +240,7 @@
                                             </label>
                                             <input v-model.number="settings.defaultVotingTime" type="number" min="2"
                                                 max="30"
-                                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue"
+                                                class="input-field w-full px-2 py-1 text-sm"
                                                 placeholder="e.g., 5" />
                                         </div>
 
@@ -259,7 +259,7 @@
                                         <!-- Allow Abstentions -->
                                         <div class="flex items-center">
                                             <input v-model="settings.allowAbstentions" type="checkbox"
-                                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                                class="input-field" />
                                             <label class="ml-2 text-sm text-mun-gray-700">
                                                 Allow abstentions by default
                                             </label>
@@ -268,7 +268,7 @@
                                         <!-- Show real-time results -->
                                         <div class="flex items-center">
                                             <input v-model="settings.showRealTimeResults" type="checkbox"
-                                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                                class="input-field" />
                                             <label class="ml-2 text-sm text-mun-gray-700">
                                                 Show real-time voting results
                                             </label>
@@ -283,7 +283,7 @@
                                     <div class="space-y-3">
                                         <div class="flex items-center">
                                             <input v-model="settings.notifications.timerWarnings" type="checkbox"
-                                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                                class="input-field" />
                                             <label class="ml-2 text-sm text-mun-gray-700">
                                                 Timer warnings (30 seconds remaining)
                                             </label>
@@ -291,7 +291,7 @@
 
                                         <div class="flex items-center">
                                             <input v-model="settings.notifications.quorumAlerts" type="checkbox"
-                                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                                class="input-field" />
                                             <label class="ml-2 text-sm text-mun-gray-700">
                                                 Quorum status alerts
                                             </label>
@@ -299,7 +299,7 @@
 
                                         <div class="flex items-center">
                                             <input v-model="settings.notifications.voteReminders" type="checkbox"
-                                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                                class="input-field" />
                                             <label class="ml-2 text-sm text-mun-gray-700">
                                                 Vote reminders for delegates
                                             </label>
@@ -307,7 +307,7 @@
 
                                         <div class="flex items-center">
                                             <input v-model="settings.notifications.soundEffects" type="checkbox"
-                                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                                class="input-field" />
                                             <label class="ml-2 text-sm text-mun-gray-700">
                                                 Sound effects for timers and alerts
                                             </label>

@@ -37,7 +37,7 @@
                 <!-- Search Input -->
                 <div v-if="searchable" class="sticky top-0 bg-white border-b border-gray-200 px-3 py-2">
                     <input v-model="searchQuery" type="text"
-                        class="w-full px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-mun-blue focus:border-mun-blue"
+                        class="input-field w-full px-3 py-1"
                         :placeholder="searchPlaceholder" @click.stop />
                 </div>
 

@@ -43,7 +43,7 @@
                                     <label v-for="reportType in reportTypes" :key="reportType.value"
                                         class="relative cursor-pointer">
                                         <input v-model="selectedReportType" type="radio" :value="reportType.value"
-                                            class="sr-only" />
+                                            class="input-field sr-only" />
                                         <div :class="[
                                             'p-4 border-2 rounded-xl transition-all duration-200',
                                             selectedReportType === reportType.value
@@ -102,7 +102,7 @@
                                             <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                                 Start Date
                                             </label>
-                                            <input v-model="dateRange.start" type="date" class="mun-input"
+                                            <input v-model="dateRange.start" type="date" class="input-field"
                                                 :max="dateRange.end || getCurrentDate()" />
                                         </div>
 
@@ -110,7 +110,7 @@
                                             <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                                 End Date
                                             </label>
-                                            <input v-model="dateRange.end" type="date" class="mun-input"
+                                            <input v-model="dateRange.end" type="date" class="input-field"
                                                 :min="dateRange.start" :max="getCurrentDate()" />
                                         </div>
                                     </div>
@@ -158,7 +158,7 @@
                                             <label v-for="role in userRoles" :key="role.value"
                                                 class="flex items-center space-x-2">
                                                 <input v-model="filters.userRoles" type="checkbox" :value="role.value"
-                                                    class="mun-checkbox" />
+                                                    class="input-field" />
                                                 <span class="text-sm text-mun-gray-700">{{ role.label }}</span>
                                             </label>
                                         </div>
@@ -173,7 +173,7 @@
                                             <label v-for="status in availableStatuses" :key="status.value"
                                                 class="flex items-center space-x-2">
                                                 <input v-model="filters.statuses" type="checkbox" :value="status.value"
-                                                    class="mun-checkbox" />
+                                                    class="input-field" />
                                                 <span class="text-sm text-mun-gray-700">{{ status.label }}</span>
                                             </label>
                                         </div>
@@ -192,7 +192,7 @@
                                     <label v-for="format in availableFormats" :key="format.value"
                                         class="relative cursor-pointer">
                                         <input v-model="selectedFormat" type="radio" :value="format.value"
-                                            class="sr-only" />
+                                            class="input-field sr-only" />
                                         <div :class="[
                                             'p-4 border-2 rounded-lg text-center transition-all duration-200',
                                             selectedFormat === format.value
@@ -222,7 +222,7 @@
                                 <div class="space-y-4">
                                     <label class="flex items-center space-x-3">
                                         <input v-model="advancedOptions.includePersonalData" type="checkbox"
-                                            class="mun-checkbox" />
+                                            class="input-field" />
                                         <div>
                                             <div class="text-sm font-medium text-mun-gray-900">Include Personal Data
                                             </div>
@@ -233,7 +233,7 @@
 
                                     <label class="flex items-center space-x-3">
                                         <input v-model="advancedOptions.includeStatistics" type="checkbox"
-                                            class="mun-checkbox" />
+                                            class="input-field" />
                                         <div>
                                             <div class="text-sm font-medium text-mun-gray-900">Include Statistics</div>
                                             <div class="text-xs text-mun-gray-500">Participation rates, voting patterns,
@@ -243,7 +243,7 @@
 
                                     <label class="flex items-center space-x-3">
                                         <input v-model="advancedOptions.includeDocuments" type="checkbox"
-                                            class="mun-checkbox" />
+                                            class="input-field" />
                                         <div>
                                             <div class="text-sm font-medium text-mun-gray-900">Include Documents</div>
                                             <div class="text-xs text-mun-gray-500">Links to submitted documents and
@@ -253,7 +253,7 @@
 
                                     <label class="flex items-center space-x-3">
                                         <input v-model="advancedOptions.separateSheets" type="checkbox"
-                                            class="mun-checkbox" />
+                                            class="input-field" />
                                         <div>
                                             <div class="text-sm font-medium text-mun-gray-900">Separate Sheets</div>
                                             <div class="text-xs text-mun-gray-500">Create separate sheets/tabs for
@@ -673,48 +673,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.mun-card {
-    @apply bg-white rounded-xl shadow-sm border border-mun-gray-100;
-}
-
-.mun-input {
-    @apply w-full px-4 py-3 border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue transition-colors;
-}
-
-.mun-checkbox {
-    @apply w-4 h-4 text-mun-blue border-mun-gray-300 rounded focus:ring-mun-blue focus:ring-2;
-}
-
-/* Modal animations */
-.modal-enter-active,
-.modal-leave-active {
-    transition: all 0.3s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-    opacity: 0;
-}
-
-/* Custom scrollbar */
-.overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
-
 /* Multi-select styling */
 select[multiple] {
     background-image: none;
@@ -768,12 +726,6 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-
-    .modal-enter-active,
-    .modal-leave-active {
-        transition: none;
-    }
-
     .format-card:hover {
         transform: none;
     }

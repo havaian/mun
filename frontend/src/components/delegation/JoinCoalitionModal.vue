@@ -42,7 +42,7 @@
                                             <div class="relative">
                                                 <input v-model="searchQuery" type="text"
                                                     placeholder="Search coalitions by name, description, or country..."
-                                                    class="w-full px-4 py-3 pl-10 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent" />
+                                                    class="winput-field w-full px-4 py-3 pl-10" />
                                                 <MagnifyingGlassIcon
                                                     class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-mun-gray-400" />
                                             </div>
@@ -65,7 +65,7 @@
 
                                                 <label class="flex items-center text-sm text-mun-gray-700">
                                                     <input v-model="showOnlyJoinable" type="checkbox"
-                                                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue mr-2" />
+                                                        class="input-field" />
                                                     Only joinable
                                                 </label>
                                             </div>

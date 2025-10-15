@@ -43,7 +43,7 @@
                                             <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                                 Report Name *
                                             </label>
-                                            <input v-model="reportConfig.name" type="text" class="mun-input"
+                                            <input v-model="reportConfig.name" type="text" class="input-field"
                                                 placeholder="Enter report name" required />
                                         </div>
 
@@ -65,7 +65,7 @@
                                                 <label v-for="type in reportTypes" :key="type.value"
                                                     class="relative cursor-pointer">
                                                     <input v-model="reportConfig.type" type="radio" :value="type.value"
-                                                        class="sr-only" />
+                                                        class="input-field sr-only" />
                                                     <div :class="[
                                                         'p-3 border-2 rounded-lg text-center transition-all',
                                                         reportConfig.type === type.value
@@ -93,7 +93,7 @@
                                         <div v-for="field in availableFields" :key="field.key"
                                             class="flex items-center space-x-2 p-2 bg-white rounded-lg border border-mun-gray-200">
                                             <input :id="`field-${field.key}`" v-model="selectedFields"
-                                                :value="field.key" type="checkbox" class="mun-checkbox" />
+                                                :value="field.key" type="checkbox" class="input-field" />
                                             <label :for="`field-${field.key}`" class="flex-1 cursor-pointer">
                                                 <div class="text-sm font-medium text-mun-gray-900">{{ field.label }}
                                                 </div>
@@ -247,7 +247,7 @@
 
                                                 <!-- Value Input -->
                                                 <input v-model="filter.value" :type="getInputTypeForField(filter.field)"
-                                                    class="mun-input-sm" placeholder="Filter value" />
+                                                    class="input-field input-sm" placeholder="Filter value" />
 
                                                 <!-- Remove Filter -->
                                                 <button @click="removeFilter(index)"
@@ -772,52 +772,6 @@ watch(() => reportFilters.value, () => {
 </script>
 
 <style scoped>
-.mun-card {
-    @apply bg-white rounded-xl shadow-sm border border-mun-gray-100;
-}
-
-.mun-input {
-    @apply w-full px-4 py-3 border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue transition-colors;
-}
-
-.mun-input-sm {
-    @apply px-3 py-2 text-sm border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue transition-colors;
-}
-
-.mun-checkbox {
-    @apply w-4 h-4 text-mun-blue border-mun-gray-300 rounded focus:ring-mun-blue focus:ring-2;
-}
-
-/* Modal animations */
-.modal-enter-active,
-.modal-leave-active {
-    transition: all 0.3s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-    opacity: 0;
-}
-
-/* Custom scrollbar */
-.overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
-
 /* Table styling */
 table {
     border-collapse: separate;

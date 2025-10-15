@@ -122,19 +122,19 @@
                             <div class="flex items-center space-x-6">
                                 <label class="flex items-center">
                                     <input v-model="form.isPublic" type="checkbox"
-                                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
+                                        class="input-field">
                                     <span class="ml-2 text-sm text-mun-gray-700">Public Event</span>
                                 </label>
 
                                 <label class="flex items-center">
                                     <input v-model="form.allowWaitlist" type="checkbox"
-                                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
+                                        class="input-field">
                                     <span class="ml-2 text-sm text-mun-gray-700">Enable Waitlist</span>
                                 </label>
 
                                 <label class="flex items-center">
                                     <input v-model="form.requireApproval" type="checkbox"
-                                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
+                                        class="input-field">
                                     <span class="ml-2 text-sm text-mun-gray-700">Require Approval</span>
                                 </label>
                             </div>

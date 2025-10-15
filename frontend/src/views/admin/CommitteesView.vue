@@ -255,7 +255,7 @@
                         <p class="text-sm text-mun-gray-600 mt-1">{{ committee.description || 'No description' }}</p>
                     </div>
                     <input type="checkbox" v-model="selectedCommittees" :value="committee._id" @click.stop
-                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
+                        class="input-field">
                 </div>
 
                 <!-- Committee Info -->
@@ -311,7 +311,7 @@
                     <tr>
                         <th class="px-6 py-3 text-left">
                             <input type="checkbox" @change="toggleSelectAll" :checked="isAllSelected"
-                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
+                                class="input-field">
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
                             Committee
@@ -338,7 +338,7 @@
                         class="hover:bg-mun-gray-50 cursor-pointer transition-colors" @click="viewCommittee(committee)">
                         <td class="px-6 py-4">
                             <input type="checkbox" v-model="selectedCommittees" :value="committee._id" @click.stop
-                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
+                                class="input-field">
                         </td>
                         <td class="px-6 py-4">
                             <div>

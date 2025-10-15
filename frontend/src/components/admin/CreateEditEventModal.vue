@@ -205,7 +205,7 @@
                                 <div class="space-y-4">
                                     <div class="flex items-center">
                                         <input id="requireApproval" v-model="formData.requireApproval" type="checkbox"
-                                            class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
+                                            class="input-field h-4 w-4" />
                                         <label for="requireApproval" class="ml-2 text-sm text-mun-gray-700">
                                             Require approval for registrations
                                         </label>
@@ -213,7 +213,7 @@
 
                                     <div class="flex items-center">
                                         <input id="allowWaitlist" v-model="formData.allowWaitlist" type="checkbox"
-                                            class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
+                                            class="input-field h-4 w-4" />
                                         <label for="allowWaitlist" class="ml-2 text-sm text-mun-gray-700">
                                             Allow waitlist when event is full
                                         </label>
@@ -221,7 +221,7 @@
 
                                     <div class="flex items-center">
                                         <input id="sendWelcomeEmail" v-model="formData.sendWelcomeEmail" type="checkbox"
-                                            class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
+                                            class="input-field h-4 w-4" />
                                         <label for="sendWelcomeEmail" class="ml-2 text-sm text-mun-gray-700">
                                             Send welcome email to registrants
                                         </label>
@@ -243,7 +243,7 @@
                                             Contact Email
                                         </label>
                                         <input v-model="formData.contactEmail" type="email" class="input-field"
-                                            placeholder="contact@munuz.org" />
+                                            placeholder="support@mun.uz" />
                                     </div>
 
                                     <!-- Contact Phone -->
@@ -252,7 +252,7 @@
                                             Contact Phone
                                         </label>
                                         <input v-model="formData.contactPhone" type="tel" class="input-field"
-                                            placeholder="+998 90 123 45 67" />
+                                            placeholder="+998 909855368" />
                                     </div>
 
                                     <!-- Website -->
@@ -261,7 +261,7 @@
                                             Website
                                         </label>
                                         <input v-model="formData.website" type="url" class="input-field"
-                                            placeholder="https://munuz.org" />
+                                            placeholder="https://mun.uz" />
                                     </div>
 
                                     <!-- Social Media -->
@@ -270,7 +270,7 @@
                                             Social Media
                                         </label>
                                         <input v-model="formData.socialMedia" type="text" class="input-field"
-                                            placeholder="@munuz_official" />
+                                            placeholder="@mun_uz" />
                                     </div>
                                 </div>
                             </div>
@@ -760,37 +760,4 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Modal animation */
-.modal-enter-active,
-.modal-leave-active {
-    transition: all 0.3s ease;
-}
-
-.modal-enter-from {
-    opacity: 0;
-    transform: translateY(-20px);
-}
-
-.modal-leave-to {
-    opacity: 0;
-    transform: translateY(20px);
-}
-
-/* Custom scrollbar for modal content */
-.overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-    background: #f1f5f9;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
 </style>

@@ -44,7 +44,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Committee Name *
                                         </label>
-                                        <input v-model="formData.name" type="text" class="mun-input"
+                                        <input v-model="formData.name" type="text" class="input-field"
                                             :class="{ 'border-red-500': errors.name }"
                                             placeholder="e.g., United Nations Security Council" maxlength="100"
                                             required />
@@ -57,7 +57,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Acronym *
                                         </label>
-                                        <input v-model="formData.acronym" type="text" class="mun-input"
+                                        <input v-model="formData.acronym" type="text" class="input-field"
                                             :class="{ 'border-red-500': errors.acronym }" placeholder="e.g., UNSC"
                                             maxlength="10" style="text-transform: uppercase;" required />
                                         <p v-if="errors.acronym" class="mt-1 text-sm text-red-600">
@@ -81,7 +81,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Description
                                         </label>
-                                        <textarea v-model="formData.description" rows="4" class="mun-input"
+                                        <textarea v-model="formData.description" rows="4" class="input-field"
                                             placeholder="Brief description of the committee's purpose and scope..."
                                             maxlength="500"></textarea>
                                         <p class="mt-1 text-xs text-mun-gray-500">
@@ -103,7 +103,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Maximum Delegates
                                         </label>
-                                        <input v-model.number="formData.maxDelegates" type="number" class="mun-input"
+                                        <input v-model.number="formData.maxDelegates" type="number" class="input-field"
                                             :class="{ 'border-red-500': errors.maxDelegates }" placeholder="e.g., 20"
                                             min="1" max="200" />
                                         <p v-if="errors.maxDelegates" class="mt-1 text-sm text-red-600">
@@ -136,7 +136,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Session Duration (minutes)
                                         </label>
-                                        <input v-model.number="formData.sessionDuration" type="number" class="mun-input"
+                                        <input v-model.number="formData.sessionDuration" type="number" class="input-field"
                                             placeholder="e.g., 180" min="30" max="480" />
                                         <p class="mt-1 text-xs text-mun-gray-500">
                                             Default session length for this committee
@@ -161,7 +161,7 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <label class="flex items-center space-x-3 cursor-pointer">
                                             <input v-model="formData.allowGuestSpeakers" type="checkbox"
-                                                class="mun-checkbox" />
+                                                class="input-field" />
                                             <div>
                                                 <div class="text-sm font-medium text-mun-gray-900">Guest Speakers</div>
                                                 <div class="text-xs text-mun-gray-500">Allow non-delegate speakers</div>
@@ -170,7 +170,7 @@
 
                                         <label class="flex items-center space-x-3 cursor-pointer">
                                             <input v-model="formData.enableVoting" type="checkbox"
-                                                class="mun-checkbox" />
+                                                class="input-field" />
                                             <div>
                                                 <div class="text-sm font-medium text-mun-gray-900">Voting System</div>
                                                 <div class="text-xs text-mun-gray-500">Enable electronic voting</div>
@@ -179,7 +179,7 @@
 
                                         <label class="flex items-center space-x-3 cursor-pointer">
                                             <input v-model="formData.enableDocumentSharing" type="checkbox"
-                                                class="mun-checkbox" />
+                                                class="input-field" />
                                             <div>
                                                 <div class="text-sm font-medium text-mun-gray-900">Document Sharing
                                                 </div>
@@ -190,7 +190,7 @@
 
                                         <label class="flex items-center space-x-3 cursor-pointer">
                                             <input v-model="formData.enablePrivateMessaging" type="checkbox"
-                                                class="mun-checkbox" />
+                                                class="input-field" />
                                             <div>
                                                 <div class="text-sm font-medium text-mun-gray-900">Private Messaging
                                                 </div>
@@ -213,9 +213,9 @@
                                     <div v-for="(topic, index) in formData.agendaTopics" :key="index"
                                         class="flex items-start space-x-3 p-4 bg-mun-gray-50 rounded-lg">
                                         <div class="flex-1 space-y-3">
-                                            <input v-model="topic.title" type="text" class="mun-input"
+                                            <input v-model="topic.title" type="text" class="input-field"
                                                 placeholder="Topic title" maxlength="200" />
-                                            <textarea v-model="topic.description" rows="2" class="mun-input"
+                                            <textarea v-model="topic.description" rows="2" class="input-field"
                                                 placeholder="Topic description (optional)" maxlength="300"></textarea>
                                         </div>
 
@@ -315,7 +315,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Background Guide URL
                                         </label>
-                                        <input v-model="formData.backgroundGuideUrl" type="url" class="mun-input"
+                                        <input v-model="formData.backgroundGuideUrl" type="url" class="input-field"
                                             placeholder="https://example.com/background-guide.pdf" />
                                         <p class="mt-1 text-xs text-mun-gray-500">
                                             Link to the committee's background guide document
@@ -326,7 +326,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Meeting Room/Location
                                         </label>
-                                        <input v-model="formData.meetingRoom" type="text" class="mun-input"
+                                        <input v-model="formData.meetingRoom" type="text" class="input-field"
                                             placeholder="e.g., Conference Room A, Virtual Room 1" />
                                     </div>
 
@@ -334,7 +334,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Internal Notes
                                         </label>
-                                        <textarea v-model="formData.internalNotes" rows="3" class="mun-input"
+                                        <textarea v-model="formData.internalNotes" rows="3" class="input-field"
                                             placeholder="Internal notes for administrators (not visible to delegates)"></textarea>
                                     </div>
                                 </div>
@@ -649,45 +649,4 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.mun-card {
-    @apply bg-white rounded-xl shadow-sm border border-mun-gray-100;
-}
-
-.mun-input {
-    @apply w-full px-4 py-3 border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue transition-colors;
-}
-
-.mun-checkbox {
-    @apply w-4 h-4 text-mun-blue border-mun-gray-300 rounded focus:ring-mun-blue focus:ring-2;
-}
-
-/* Modal animations */
-.modal-enter-active,
-.modal-leave-active {
-    transition: all 0.3s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-    opacity: 0;
-}
-
-/* Custom scrollbar */
-.overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
 </style>

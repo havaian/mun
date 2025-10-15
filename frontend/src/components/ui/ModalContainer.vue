@@ -288,17 +288,6 @@ const onLeave = (el) => {
 </script>
 
 <style scoped>
-/* Modal animation */
-.modal-enter-active,
-.modal-leave-active {
-    transition: opacity 0.3s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-    opacity: 0;
-}
-
 /* Shake animation for static modals */
 @keyframes shake {
 
@@ -327,25 +316,6 @@ const onLeave = (el) => {
     animation: shake 0.6s ease-in-out;
 }
 
-/* Scrollbar styling for scrollable modals */
-.overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
-
 /* Focus management */
 .modal-wrapper {
     isolation: isolate;
@@ -360,12 +330,6 @@ const onLeave = (el) => {
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-
-    .modal-enter-active,
-    .modal-leave-active {
-        transition: none;
-    }
-
     .animate-shake {
         animation: none;
     }

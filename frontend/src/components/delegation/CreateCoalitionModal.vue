@@ -46,7 +46,7 @@
                                                 </label>
                                                 <input v-model="formData.name" type="text"
                                                     placeholder="Enter coalition name..." maxlength="100"
-                                                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent"
+                                                    class="input-field w-full px-4 py-3"
                                                     :class="{ 'border-red-300': errors.name }" />
                                                 <div class="flex items-center justify-between mt-1">
                                                     <p v-if="errors.name" class="text-sm text-red-600">{{ errors.name }}
@@ -129,7 +129,7 @@
                                             <div class="relative">
                                                 <input v-model="countrySearch" type="text"
                                                     placeholder="Search for countries to invite..."
-                                                    class="w-full px-4 py-3 pl-10 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent" />
+                                                    class="input-field w-full px-4 py-3 pl-10" />
                                                 <MagnifyingGlassIcon
                                                     class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-mun-gray-400" />
                                             </div>
@@ -218,7 +218,7 @@
                                                 <div class="space-y-3">
                                                     <label class="flex items-center">
                                                         <input v-model="formData.isPublic" type="checkbox"
-                                                            class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                                            class="input-field" />
                                                         <span class="ml-3 text-sm text-mun-gray-700">
                                                             Make coalition publicly visible
                                                         </span>
@@ -226,7 +226,7 @@
 
                                                     <label class="flex items-center">
                                                         <input v-model="formData.allowDirectJoin" type="checkbox"
-                                                            class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                                            class="input-field" />
                                                         <span class="ml-3 text-sm text-mun-gray-700">
                                                             Allow delegates to request to join
                                                         </span>

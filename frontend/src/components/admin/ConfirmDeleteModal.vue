@@ -117,7 +117,7 @@
                         <div v-if="allowForceDelete && (dependencies?.length || requireConfirmation)" class="mb-6">
                             <label class="flex items-start space-x-3 cursor-pointer">
                                 <input v-model="forceDelete" type="checkbox"
-                                    class="mt-1 w-4 h-4 text-red-600 border-red-300 rounded focus:ring-red-500" />
+                                    class="input-field mt-1 w-4 h-4 text-red-600 border-red-300 rounded focus:ring-red-500" />
                                 <div class="text-sm">
                                     <div class="font-medium text-red-900">
                                         I understand the consequences
@@ -137,7 +137,7 @@
                                 to confirm:
                             </label>
                             <input v-model="userConfirmationInput" type="text"
-                                class="w-full px-3 py-2 border border-mun-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                                class="input-field w-full px-3 py-2 border border-mun-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                                 :placeholder="`Type '${confirmationText}' here`" @keyup.enter="confirmDelete" />
                         </div>
                     </div>
@@ -425,17 +425,6 @@ watch(() => props.modelValue, (newVal) => {
 </script>
 
 <style scoped>
-/* Modal animations */
-.modal-enter-active,
-.modal-leave-active {
-    transition: all 0.3s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-    opacity: 0;
-}
-
 /* Custom checkbox styling */
 input[type="checkbox"]:checked {
     background-color: #dc2626;

@@ -52,7 +52,7 @@
                                         System Name
                                     </label>
                                     <input v-model="settings.general.systemName" type="text"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-mun-blue focus:ring-mun-blue" />
+                                        class="input-field block w-full" />
                                 </div>
 
                                 <div>
@@ -74,7 +74,7 @@
                                     </label>
                                     <input v-model.number="settings.general.sessionTimeout" type="number" min="5"
                                         max="480"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-mun-blue focus:ring-mun-blue" />
+                                        class="input-field block w-full" />
                                 </div>
 
                                 <div>
@@ -82,14 +82,14 @@
                                         Max File Upload Size (MB)
                                     </label>
                                     <input v-model.number="settings.general.maxFileSize" type="number" min="1" max="100"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-mun-blue focus:ring-mun-blue" />
+                                        class="input-field block w-full" />
                                 </div>
                             </div>
 
                             <div class="mt-6">
                                 <label class="flex items-center">
                                     <input v-model="settings.general.maintenanceMode" type="checkbox"
-                                        class="rounded border-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                        class="input-field" />
                                     <span class="ml-2 text-sm text-gray-700">Enable maintenance mode</span>
                                 </label>
                                 <p class="mt-1 text-xs text-gray-500">
@@ -108,7 +108,7 @@
                                 <div>
                                     <label class="flex items-center">
                                         <input v-model="settings.auth.requireEmailVerification" type="checkbox"
-                                            class="rounded border-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                            class="input-field" />
                                         <span class="ml-2 text-sm text-gray-700">Require email verification</span>
                                     </label>
                                 </div>
@@ -116,7 +116,7 @@
                                 <div>
                                     <label class="flex items-center">
                                         <input v-model="settings.auth.enableQRLogin" type="checkbox"
-                                            class="rounded border-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                            class="input-field" />
                                         <span class="ml-2 text-sm text-gray-700">Enable QR code login</span>
                                     </label>
                                 </div>
@@ -126,7 +126,7 @@
                                         QR Token Expiry (hours)
                                     </label>
                                     <input v-model.number="settings.auth.qrTokenExpiry" type="number" min="1" max="168"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-mun-blue focus:ring-mun-blue" />
+                                        class="input-field block w-full" />
                                 </div>
 
                                 <div>
@@ -135,7 +135,7 @@
                                     </label>
                                     <input v-model.number="settings.auth.maxLoginAttempts" type="number" min="3"
                                         max="10"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-mun-blue focus:ring-mun-blue" />
+                                        class="input-field block w-full" />
                                 </div>
                             </div>
                         </div>
@@ -152,7 +152,7 @@
                                         SMTP Host
                                     </label>
                                     <input v-model="settings.email.smtpHost" type="text"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-mun-blue focus:ring-mun-blue" />
+                                        class="input-field block w-full" />
                                 </div>
 
                                 <div>
@@ -160,7 +160,7 @@
                                         SMTP Port
                                     </label>
                                     <input v-model.number="settings.email.smtpPort" type="number"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-mun-blue focus:ring-mun-blue" />
+                                        class="input-field block w-full" />
                                 </div>
 
                                 <div>
@@ -168,7 +168,7 @@
                                         From Email
                                     </label>
                                     <input v-model="settings.email.fromEmail" type="email"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-mun-blue focus:ring-mun-blue" />
+                                        class="input-field block w-full" />
                                 </div>
 
                                 <div>
@@ -176,14 +176,14 @@
                                         From Name
                                     </label>
                                     <input v-model="settings.email.fromName" type="text"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-mun-blue focus:ring-mun-blue" />
+                                        class="input-field block w-full" />
                                 </div>
                             </div>
 
                             <div class="mt-6">
                                 <label class="flex items-center">
                                     <input v-model="settings.email.enableSSL" type="checkbox"
-                                        class="rounded border-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                        class="input-field" />
                                     <span class="ml-2 text-sm text-gray-700">Enable SSL/TLS</span>
                                 </label>
                             </div>
@@ -206,7 +206,7 @@
                                 <div>
                                     <label class="flex items-center">
                                         <input v-model="settings.security.enableTwoFactor" type="checkbox"
-                                            class="rounded border-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                            class="input-field" />
                                         <span class="ml-2 text-sm text-gray-700">Enable two-factor authentication</span>
                                     </label>
                                 </div>
@@ -214,7 +214,7 @@
                                 <div>
                                     <label class="flex items-center">
                                         <input v-model="settings.security.enforceHTTPS" type="checkbox"
-                                            class="rounded border-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                            class="input-field" />
                                         <span class="ml-2 text-sm text-gray-700">Enforce HTTPS connections</span>
                                     </label>
                                 </div>
@@ -225,7 +225,7 @@
                                     </label>
                                     <input v-model.number="settings.security.passwordMinLength" type="number" min="6"
                                         max="32"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-mun-blue focus:ring-mun-blue" />
+                                        class="input-field block w-full" />
                                 </div>
 
                                 <div>
@@ -234,7 +234,7 @@
                                     </label>
                                     <input v-model.number="settings.security.rateLimit" type="number" min="10"
                                         max="1000"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-mun-blue focus:ring-mun-blue" />
+                                        class="input-field block w-full" />
                                 </div>
                             </div>
                         </div>

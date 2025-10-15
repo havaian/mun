@@ -79,7 +79,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             First Name *
                                         </label>
-                                        <input v-model="formData.firstName" type="text" class="mun-input"
+                                        <input v-model="formData.firstName" type="text" class="input-field"
                                             :class="{ 'border-red-500': errors.firstName }"
                                             placeholder="Enter first name" maxlength="50" required />
                                         <p v-if="errors.firstName" class="mt-1 text-sm text-red-600">
@@ -91,7 +91,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Last Name *
                                         </label>
-                                        <input v-model="formData.lastName" type="text" class="mun-input"
+                                        <input v-model="formData.lastName" type="text" class="input-field"
                                             :class="{ 'border-red-500': errors.lastName }" placeholder="Enter last name"
                                             maxlength="50" required />
                                         <p v-if="errors.lastName" class="mt-1 text-sm text-red-600">
@@ -103,7 +103,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Email Address *
                                         </label>
-                                        <input v-model="formData.email" type="email" class="mun-input"
+                                        <input v-model="formData.email" type="email" class="input-field"
                                             :class="{ 'border-red-500': errors.email }"
                                             placeholder="Enter email address" required />
                                         <p v-if="errors.email" class="mt-1 text-sm text-red-600">
@@ -115,7 +115,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Username *
                                         </label>
-                                        <input v-model="formData.username" type="text" class="mun-input"
+                                        <input v-model="formData.username" type="text" class="input-field"
                                             :class="{ 'border-red-500': errors.username }" placeholder="Enter username"
                                             maxlength="30" required />
                                         <p v-if="errors.username" class="mt-1 text-sm text-red-600">
@@ -127,7 +127,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Phone Number
                                         </label>
-                                        <input v-model="formData.phone" type="tel" class="mun-input"
+                                        <input v-model="formData.phone" type="tel" class="input-field"
                                             placeholder="Enter phone number" />
                                     </div>
 
@@ -135,7 +135,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Date of Birth
                                         </label>
-                                        <input v-model="formData.dateOfBirth" type="date" class="mun-input"
+                                        <input v-model="formData.dateOfBirth" type="date" class="input-field"
                                             :max="getMaxBirthDate()" />
                                     </div>
                                 </div>
@@ -158,7 +158,7 @@
                                             <label v-for="role in availableRoles" :key="role.value"
                                                 class="relative cursor-pointer">
                                                 <input v-model="formData.role" type="radio" :value="role.value"
-                                                    class="sr-only" required />
+                                                    class="input-field sr-only" required />
                                                 <div :class="[
                                                     'p-4 border-2 rounded-xl transition-all duration-200',
                                                     formData.role === role.value
@@ -276,7 +276,7 @@
                                         </div>
                                         <label class="relative inline-flex items-center cursor-pointer">
                                             <input v-model="formData.requirePasswordChange" type="checkbox"
-                                                class="sr-only peer" />
+                                                class="input-field sr-only peer" />
                                             <div
                                                 class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
                                             </div>
@@ -336,7 +336,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Institution/Organization
                                         </label>
-                                        <input v-model="formData.institution" type="text" class="mun-input"
+                                        <input v-model="formData.institution" type="text" class="input-field"
                                             placeholder="e.g., University name, Organization" />
                                     </div>
 
@@ -357,7 +357,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Emergency Contact
                                         </label>
-                                        <input v-model="formData.emergencyContact" type="text" class="mun-input"
+                                        <input v-model="formData.emergencyContact" type="text" class="input-field"
                                             placeholder="Emergency contact name and phone" />
                                     </div>
 
@@ -365,7 +365,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Admin Notes
                                         </label>
-                                        <textarea v-model="formData.adminNotes" rows="3" class="mun-input"
+                                        <textarea v-model="formData.adminNotes" rows="3" class="input-field"
                                             placeholder="Internal notes for administrators (not visible to user)"></textarea>
                                     </div>
                                 </div>
@@ -690,45 +690,4 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.mun-card {
-    @apply bg-white rounded-xl shadow-sm border border-mun-gray-100;
-}
-
-.mun-input {
-    @apply w-full px-4 py-3 border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue transition-colors;
-}
-
-.mun-checkbox {
-    @apply w-4 h-4 text-mun-blue border-mun-gray-300 rounded focus:ring-mun-blue focus:ring-2;
-}
-
-/* Modal animations */
-.modal-enter-active,
-.modal-leave-active {
-    transition: all 0.3s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-    opacity: 0;
-}
-
-/* Custom scrollbar */
-.overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
 </style>

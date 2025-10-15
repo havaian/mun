@@ -470,11 +470,6 @@ onUnmounted(() => {
     transform: translateY(10px) scale(0.95);
 }
 
-/* Card hover effects */
-.mun-card:hover {
-    transform: translateY(-2px);
-}
-
 /* Progress bar animation */
 .progress-bar {
     transition: width 0.3s ease;

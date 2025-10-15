@@ -90,7 +90,7 @@
                                                             class="block text-sm font-medium text-mun-gray-700 mb-2">Voting
                                                             Subject *</label>
                                                         <input v-model="votingForm.subject" type="text" required
-                                                            class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue"
+                                                            class="input-field w-full px-4 py-3"
                                                             placeholder="e.g., Resolution A/77/1 on Climate Change" />
                                                     </div>
 
@@ -98,7 +98,7 @@
                                                         <label
                                                             class="block text-sm font-medium text-mun-gray-700 mb-2">Description</label>
                                                         <textarea v-model="votingForm.description" rows="4"
-                                                            class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue"
+                                                            class="input-field w-full px-4 py-3"
                                                             placeholder="Optional description..." />
                                                     </div>
 
@@ -111,7 +111,7 @@
                                                                 class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-mun-gray-50"
                                                                 :class="votingForm.votingType === type.value ? 'border-mun-blue bg-mun-blue-50' : 'border-mun-gray-300'">
                                                                 <input v-model="votingForm.votingType" type="radio"
-                                                                    :value="type.value" class="sr-only" />
+                                                                    :value="type.value" class="input-field sr-only" />
                                                                 <component :is="type.icon"
                                                                     class="w-5 h-5 mr-3 text-mun-blue" />
                                                                 <div>
@@ -157,7 +157,7 @@
                                                             <input v-if="votingForm.hasTimeLimit"
                                                                 v-model.number="votingForm.timeLimit" type="number"
                                                                 min="1" max="120"
-                                                                class="w-20 px-2 py-1 text-sm border border-mun-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-mun-blue" />
+                                                                class="input-field w-20 px-2 py-1 text-sm" />
                                                             <span v-if="votingForm.hasTimeLimit"
                                                                 class="text-sm text-mun-gray-500">minutes</span>
                                                         </div>
@@ -171,18 +171,18 @@
                                                             <label class="flex items-center">
                                                                 <input v-model="votingForm.allowAbstention"
                                                                     type="checkbox"
-                                                                    class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                                                    class="input-field" />
                                                                 <span class="ml-3 text-sm">Allow Abstentions</span>
                                                             </label>
                                                             <label class="flex items-center">
                                                                 <input v-model="votingForm.allowLatecomer"
                                                                     type="checkbox"
-                                                                    class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                                                    class="input-field" />
                                                                 <span class="ml-3 text-sm">Allow Late Votes</span>
                                                             </label>
                                                             <label class="flex items-center">
                                                                 <input v-model="votingForm.showResults" type="checkbox"
-                                                                    class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                                                    class="input-field" />
                                                                 <span class="ml-3 text-sm">Show Real-time Results</span>
                                                             </label>
                                                         </div>
@@ -198,7 +198,7 @@
                                                                 <label class="flex items-center font-medium">
                                                                     <input v-model="selectAllVoters" type="checkbox"
                                                                         @change="toggleAllVoters"
-                                                                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                                                        class="input-field" />
                                                                     <span class="ml-3 text-sm">Select All
                                                                         Countries</span>
                                                                 </label>
@@ -209,7 +209,7 @@
                                                                     :key="country.email" class="flex items-center">
                                                                     <input v-model="votingForm.eligibleVoters"
                                                                         type="checkbox" :value="country.email"
-                                                                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                                                        class="input-field" />
                                                                     <CountryFlag :country-name="country.countryName"
                                                                         :country-code="country.countryCode" size="tiny"
                                                                         class="ml-3" />

@@ -10,7 +10,7 @@
                     <label class="flex items-center text-sm text-mun-gray-600">
                         <input type="checkbox" :checked="isAllSelected" :indeterminate="isIndeterminate"
                             @change="$emit('select-all')"
-                            class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded mr-2" />
+                            class="input-field mr-2 h-4 w-4" />
                         Select All
                     </label>
                 </div>
@@ -117,7 +117,7 @@
                         <td class="px-6 py-4">
                             <input type="checkbox" :checked="selected.includes(committee._id)"
                                 @change="$emit('select', committee._id)"
-                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
+                                class="input-field h-4 w-4" />
                         </td>
 
                         <!-- Committee Name -->

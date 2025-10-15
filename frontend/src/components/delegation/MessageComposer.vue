@@ -48,7 +48,7 @@
                     <div class="relative">
                         <input v-model="recipientSearch" @input="filterRecipients" @focus="showRecipientDropdown = true"
                             type="text" placeholder="Search for a country..."
-                            class="w-full px-4 py-3 pl-10 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent"
+                            class="input-field w-full px-4 py-3 pl-10"
                             :class="{ 'border-red-300': errors.recipients }" />
                         <MagnifyingGlassIcon
                             class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-mun-gray-400" />
@@ -138,7 +138,7 @@
                                 <label v-for="country in availableCountries" :key="country.email"
                                     class="flex items-center space-x-2 text-sm cursor-pointer">
                                     <input type="checkbox" :value="country.email" v-model="customRecipients"
-                                        class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                                        class="input-field" />
                                     <CountryFlag :country="country.name" size="xs" />
                                     <span>{{ country.name }}</span>
                                 </label>
@@ -156,7 +156,7 @@
                     Subject <span class="text-red-500">*</span>
                 </label>
                 <input v-model="messageSubject" type="text" placeholder="Enter message subject..." maxlength="200"
-                    class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-transparent"
+                    class="input-field"
                     :class="{ 'border-red-300': errors.subject }" />
                 <div class="flex items-center justify-between mt-1">
                     <p v-if="errors.subject" class="text-sm text-red-600">{{ errors.subject }}</p>

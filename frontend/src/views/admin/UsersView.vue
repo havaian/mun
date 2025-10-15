@@ -156,7 +156,7 @@
                         <tr>
                             <th class="px-6 py-3 text-left">
                                 <input type="checkbox" @change="toggleSelectAll" :checked="isAllSelected"
-                                    class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
+                                    class="input-field">
                             </th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
@@ -189,7 +189,7 @@
                             class="hover:bg-mun-gray-50 transition-colors">
                             <td class="px-6 py-4">
                                 <input type="checkbox" v-model="selectedUsers" :value="user.id"
-                                    class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue">
+                                    class="input-field">
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center">

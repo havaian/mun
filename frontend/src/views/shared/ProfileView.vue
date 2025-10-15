@@ -49,7 +49,7 @@
                                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                         Full Name
                                     </label>
-                                    <input v-model="profileData.fullName" type="text" class="mun-input"
+                                    <input v-model="profileData.fullName" type="text" class="input-field"
                                         :class="{ 'border-red-500': errors.fullName }"
                                         placeholder="Enter your full name" />
                                     <p v-if="errors.fullName" class="mt-1 text-sm text-red-600">
@@ -61,7 +61,7 @@
                                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                         Email Address
                                     </label>
-                                    <input v-model="profileData.email" type="email" class="mun-input"
+                                    <input v-model="profileData.email" type="email" class="input-field"
                                         :class="{ 'border-red-500': errors.email }" placeholder="Enter your email" />
                                     <p v-if="errors.email" class="mt-1 text-sm text-red-600">
                                         {{ errors.email }}
@@ -72,7 +72,7 @@
                                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                         Phone Number
                                     </label>
-                                    <input v-model="profileData.phone" type="tel" class="mun-input"
+                                    <input v-model="profileData.phone" type="tel" class="input-field"
                                         placeholder="Enter your phone number" />
                                 </div>
 
@@ -80,7 +80,7 @@
                                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                         Country/Organization
                                     </label>
-                                    <input v-model="profileData.country" type="text" class="mun-input"
+                                    <input v-model="profileData.country" type="text" class="input-field"
                                         :readonly="authStore.user?.role === 'delegate'"
                                         :class="{ 'bg-mun-gray-50': authStore.user?.role === 'delegate' }"
                                         placeholder="Your country or organization" />
@@ -90,7 +90,7 @@
                                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                         Bio
                                     </label>
-                                    <textarea v-model="profileData.bio" rows="4" class="mun-input"
+                                    <textarea v-model="profileData.bio" rows="4" class="input-field"
                                         placeholder="Tell us about yourself..."></textarea>
                                 </div>
                             </div>
@@ -114,7 +114,7 @@
                                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                         Username
                                     </label>
-                                    <input v-model="accountData.username" type="text" class="mun-input"
+                                    <input v-model="accountData.username" type="text" class="input-field"
                                         :class="{ 'border-red-500': errors.username }" placeholder="Enter username" />
                                     <p v-if="errors.username" class="mt-1 text-sm text-red-600">
                                         {{ errors.username }}
@@ -182,7 +182,7 @@
                                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                         Current Password
                                     </label>
-                                    <input v-model="passwordData.currentPassword" type="password" class="mun-input"
+                                    <input v-model="passwordData.currentPassword" type="password" class="input-field"
                                         :class="{ 'border-red-500': errors.currentPassword }"
                                         placeholder="Enter current password" />
                                     <p v-if="errors.currentPassword" class="mt-1 text-sm text-red-600">
@@ -194,7 +194,7 @@
                                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                         New Password
                                     </label>
-                                    <input v-model="passwordData.newPassword" type="password" class="mun-input"
+                                    <input v-model="passwordData.newPassword" type="password" class="input-field"
                                         :class="{ 'border-red-500': errors.newPassword }"
                                         placeholder="Enter new password" />
                                     <p v-if="errors.newPassword" class="mt-1 text-sm text-red-600">
@@ -206,7 +206,7 @@
                                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                         Confirm New Password
                                     </label>
-                                    <input v-model="passwordData.confirmPassword" type="password" class="mun-input"
+                                    <input v-model="passwordData.confirmPassword" type="password" class="input-field"
                                         :class="{ 'border-red-500': errors.confirmPassword }"
                                         placeholder="Confirm new password" />
                                     <p v-if="errors.confirmPassword" class="mt-1 text-sm text-red-600">
@@ -267,7 +267,7 @@
                                         <p class="text-sm text-mun-gray-500">Receive updates via email</p>
                                     </div>
                                     <input v-model="notificationData.emailEnabled" type="checkbox"
-                                        class="mun-checkbox" />
+                                        class="input-field" />
                                 </div>
 
                                 <div class="flex items-center justify-between">
@@ -276,7 +276,7 @@
                                         <p class="text-sm text-mun-gray-500">Get notified about session changes</p>
                                     </div>
                                     <input v-model="notificationData.sessionUpdates" type="checkbox"
-                                        class="mun-checkbox" />
+                                        class="input-field" />
                                 </div>
 
                                 <div class="flex items-center justify-between">
@@ -285,7 +285,7 @@
                                         <p class="text-sm text-mun-gray-500">Notifications for document submissions</p>
                                     </div>
                                     <input v-model="notificationData.documentUpdates" type="checkbox"
-                                        class="mun-checkbox" />
+                                        class="input-field" />
                                 </div>
 
                                 <div class="flex items-center justify-between">
@@ -295,7 +295,7 @@
                                         <p class="text-sm text-mun-gray-500">Alerts for voting sessions</p>
                                     </div>
                                     <input v-model="notificationData.votingNotifications" type="checkbox"
-                                        class="mun-checkbox" />
+                                        class="input-field" />
                                 </div>
 
                                 <div class="flex items-center justify-between">
@@ -305,7 +305,7 @@
                                         <p class="text-sm text-mun-gray-500">New message alerts</p>
                                     </div>
                                     <input v-model="notificationData.messageNotifications" type="checkbox"
-                                        class="mun-checkbox" />
+                                        class="input-field" />
                                 </div>
                             </div>
 
@@ -592,15 +592,4 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.mun-card {
-    @apply bg-white rounded-xl shadow-sm border border-mun-gray-100;
-}
-
-.mun-input {
-    @apply w-full px-4 py-3 border border-mun-gray-200 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue transition-colors;
-}
-
-.mun-checkbox {
-    @apply w-4 h-4 text-mun-blue border-mun-gray-300 rounded focus:ring-mun-blue focus:ring-2;
-}
 </style>

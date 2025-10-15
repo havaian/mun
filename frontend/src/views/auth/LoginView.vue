@@ -265,7 +265,7 @@
                     <div>
                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">QR Code</label>
                         <input v-model="manualCode" type="text" placeholder="Enter the code from your QR slip"
-                            class="w-full px-4 py-3 border border-mun-gray-300 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-mun-blue outline-none transition-colors"
+                            class="input-field w-full px-4 py-3"
                             @keyup.enter="processManualCode" ref="manualCodeInput" />
                     </div>
 

@@ -68,7 +68,7 @@
                     <div v-if="multiple && showSelectAll && filteredOptions.length > 1" @click="toggleSelectAll"
                         class="sleek-select__option flex items-center px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 border-b border-gray-100">
                         <input type="checkbox" :checked="isAllSelected" :indeterminate="isPartiallySelected"
-                            class="mr-3 w-4 h-4 text-mun-blue-600 border-gray-300 rounded focus:ring-mun-blue-500"
+                            class="input-field mr-3 w-4 h-4"
                             readonly />
                         <span class="font-medium">{{ isAllSelected ? 'Deselect All' : 'Select All' }}</span>
                     </div>
@@ -85,7 +85,7 @@
 
                         <!-- Checkbox for multiple selection -->
                         <input v-if="multiple" type="checkbox" :checked="isSelected(option)"
-                            class="mr-3 w-4 h-4 text-mun-blue-600 border-gray-300 rounded focus:ring-mun-blue-500"
+                            class="input-field mr-3 w-4 h-4"
                             readonly />
 
                         <!-- Option Icon -->

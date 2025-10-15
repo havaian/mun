@@ -194,7 +194,7 @@
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div class="flex items-center">
                                             <input id="allowObservers" v-model="formData.allowObservers" type="checkbox"
-                                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
+                                                class="input-field h-4 w-4" />
                                             <label for="allowObservers" class="ml-2 text-sm text-mun-gray-700">
                                                 Allow observers
                                             </label>
@@ -202,7 +202,7 @@
 
                                         <div class="flex items-center">
                                             <input id="enableVoting" v-model="formData.enableVoting" type="checkbox"
-                                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
+                                                class="input-field h-4 w-4" />
                                             <label for="enableVoting" class="ml-2 text-sm text-mun-gray-700">
                                                 Enable voting
                                             </label>
@@ -211,7 +211,7 @@
                                         <div class="flex items-center">
                                             <input id="allowAmendments" v-model="formData.allowAmendments"
                                                 type="checkbox"
-                                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
+                                                class="input-field h-4 w-4" />
                                             <label for="allowAmendments" class="ml-2 text-sm text-mun-gray-700">
                                                 Allow amendments
                                             </label>
@@ -220,7 +220,7 @@
                                         <div class="flex items-center">
                                             <input id="requirePositionPapers" v-model="formData.requirePositionPapers"
                                                 type="checkbox"
-                                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
+                                                class="input-field h-4 w-4" />
                                             <label for="requirePositionPapers" class="ml-2 text-sm text-mun-gray-700">
                                                 Require position papers
                                             </label>
@@ -246,7 +246,7 @@
                                         <div class="flex items-center">
                                             <input id="enableVetoPower" v-model="formData.scSettings.enableVetoPower"
                                                 type="checkbox"
-                                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
+                                                class="input-field h-4 w-4" />
                                             <label for="enableVetoPower" class="ml-2 text-sm text-blue-800">
                                                 Enable veto power for permanent members
                                             </label>
@@ -255,7 +255,7 @@
                                         <div class="flex items-center">
                                             <input id="requireUnanimity" v-model="formData.scSettings.requireUnanimity"
                                                 type="checkbox"
-                                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
+                                                class="input-field h-4 w-4" />
                                             <label for="requireUnanimity" class="ml-2 text-sm text-blue-800">
                                                 Require unanimity for procedural votes
                                             </label>
@@ -815,37 +815,4 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Modal animation */
-.modal-enter-active,
-.modal-leave-active {
-    transition: all 0.3s ease;
-}
-
-.modal-enter-from {
-    opacity: 0;
-    transform: translateY(-20px);
-}
-
-.modal-leave-to {
-    opacity: 0;
-    transform: translateY(20px);
-}
-
-/* Custom scrollbar for modal content */
-.overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-    background: #f1f5f9;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
 </style>

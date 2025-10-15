@@ -162,7 +162,7 @@
                                         <MagnifyingGlassIcon
                                             class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-mun-gray-400" />
                                         <input v-model="searchQuery" type="text" placeholder="Search countries..."
-                                            class="pl-10 pr-4 py-2 text-sm border border-mun-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue focus:border-mun-blue" />
+                                            class="input-field pl-10 pr-4 py-2" />
                                     </div>
                                 </div>
 
