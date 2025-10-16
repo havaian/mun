@@ -486,7 +486,7 @@ const loadEvents = async () => {
         isLoading.value = true
 
         // Use the generic get method since admin.events might not be defined
-        const response = await apiMethods.get('/api/admin/events')
+        const response = await apiMethods.events.getAll()
 
         // Handle different response structures
         if (response?.data?.success && response.data.events) {
@@ -557,7 +557,7 @@ const duplicateEvent = async (event) => {
             status: 'draft'
         }
 
-        const response = await apiMethods.post('/api/admin/events', duplicateData)
+        const response = await apiMethods.events.create(duplicateData)
 
         if (response?.data?.success && response.data.event) {
             events.value.unshift(response.data.event)
@@ -589,7 +589,7 @@ const confirmDelete = async () => {
             throw new Error('Event ID not found')
         }
 
-        const response = await apiMethods.delete(`/api/admin/events/${eventId}`)
+        const response = await apiMethods.events.delete(eventId)
 
         if (response?.data?.success || response?.status === 200) {
             // Remove event from local array
@@ -611,9 +611,7 @@ const confirmDelete = async () => {
 
 const exportEvents = async () => {
     try {
-        const response = await apiMethods.get('/api/admin/events/export', {
-            responseType: 'blob'
-        })
+        const response = await apiMethods.exports.exportEvents()
 
         if (response?.data) {
             // Create download link

@@ -515,7 +515,7 @@ const onDataSourceChange = async () => {
 
 const loadAvailableFields = async () => {
     try {
-        const response = await apiMethods.get(`/admin/reports/fields/${reportConfig.dataSource}`)
+        const response = await apiMethods.admin.getReportFields(reportConfig.dataSource)
         availableFields.value = response.data.fields || []
 
         // Initialize field configs
@@ -683,7 +683,7 @@ const previewReport = async () => {
             limit: 50 // Preview limit
         }
 
-        const response = await apiMethods.post('/admin/reports/preview', reportData)
+        const response = await apiMethods.admin.generateReportPreview(reportData)
         previewData.value = response.data.data || []
 
     } catch (error) {
@@ -709,7 +709,7 @@ const saveReportTemplate = async () => {
             orderBy: reportConfig.orderBy
         }
 
-        await apiMethods.post('/admin/reports/templates', templateData)
+        await apiMethods.admin.saveReportTemplate(templateData)
 
         toast.success('Report template saved successfully')
 
@@ -736,9 +736,7 @@ const generateReport = async () => {
             orderBy: reportConfig.orderBy
         }
 
-        const response = await apiMethods.post('/admin/reports/generate', reportData, {
-            responseType: 'blob'
-        })
+        const response = await apiMethods.admin.generateReport(reportData)
 
         // Create download link
         const url = window.URL.createObjectURL(new Blob([response.data]))

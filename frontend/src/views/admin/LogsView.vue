@@ -275,6 +275,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { apiMethods } from '@/utils/api'
 import {
     ArrowPathIcon,
     ArrowDownTrayIcon,
@@ -327,6 +328,20 @@ const mapActivityToType = (actionType) => {
 }
 
 // Methods
+const getTimeRange = () => {
+    if (filters.dateFrom && filters.dateTo) {
+        const fromDate = new Date(filters.dateFrom)
+        const toDate = new Date(filters.dateTo)
+        const diffDays = Math.ceil(Math.abs(toDate - fromDate) / (1000 * 60 * 60 * 24))
+        
+        if (diffDays === 0) return '24h'
+        if (diffDays <= 7) return '7d'
+        if (diffDays <= 30) return '30d'
+        return '30d'
+    }
+    return '7d'
+}
+
 const loadLogs = async () => {
     isLoading.value = true
     try {
@@ -355,18 +370,14 @@ const loadLogs = async () => {
             params.set('timeRange', '7d') // Default to week if only one date is set
         }
 
-        const response = await fetch(`/api/admin/dashboard/activity?${params}`, {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`,
-                'Content-Type': 'application/json'
-            }
+        const response = await apiMethods.admin.getRecentActivity({
+            limit: pageSize.value,
+            page: currentPage.value,
+            type: filters.type || 'all',
+            timeRange: getTimeRange()
         })
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-
-        const data = await response.json()
+        const data = response?.data
 
         if (data.success) {
             // Transform activity data to log format

@@ -735,9 +735,9 @@ const submitForm = async () => {
         let response
         if (props.mode === 'edit') {
             const eventId = props.event._id || props.event.id
-            response = await apiMethods.put(`/api/admin/events/${eventId}`, submitData)
+            response = await apiMethods.events.update(eventId, submitData)
         } else {
-            response = await apiMethods.post('/api/admin/events', submitData)
+            response = await apiMethods.events.create(submitData)
         }
 
         if (response?.data) {
@@ -782,9 +782,9 @@ const saveDraft = async () => {
         let response
         if (props.mode === 'edit') {
             const eventId = props.event._id || props.event.id
-            response = await apiMethods.put(`/api/admin/events/${eventId}`, draftData)
+            response = await apiMethods.events.update(eventId, draftData)
         } else {
-            response = await apiMethods.post('/api/admin/events', draftData)
+            response = await apiMethods.events.create(draftData)
         }
 
         if (response?.data) {

@@ -510,13 +510,11 @@ const loadUserData = () => {
 const loadAvailableData = async () => {
     try {
         // Load countries
-        const countriesResponse = await apiMethods.get('/admin/countries')
+        const countriesResponse = await apiMethods.countries.getAll()
         availableCountries.value = countriesResponse.data.countries || []
 
         // Load committees
-        const committeesResponse = await apiMethods.get('/admin/committees', {
-            params: { status: 'active' }
-        })
+        const committeesResponse = await apiMethods.committees.getAll({ status: 'active' })
         availableCommittees.value = committeesResponse.data.committees || []
 
     } catch (error) {
@@ -628,7 +626,7 @@ const sendPasswordReset = async () => {
     try {
         isSendingReset.value = true
 
-        await apiMethods.post(`/admin/users/${props.user.id}/reset-password`)
+        await apiMethods.users.resetPassword(props.user.id)
 
         toast.success('Password reset email sent successfully')
 
@@ -649,7 +647,7 @@ const handleSubmit = async () => {
     try {
         isSubmitting.value = true
 
-        const response = await apiMethods.put(`/admin/users/${props.user.id}`, formData)
+        const response = await apiMethods.users.update(props.user.id, formData)
 
         emit('updated', response.data.user)
         toast.success('User updated successfully')

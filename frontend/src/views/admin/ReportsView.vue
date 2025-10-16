@@ -288,19 +288,19 @@ const systemExports = [
         id: 'all_stats',
         title: 'System Statistics',
         description: 'Complete system statistics export',
-        endpoint: '/api/admin/dashboard/stats'
+        endpoint: '/admin/dashboard/stats'
     },
     {
         id: 'user_activity',
         title: 'User Activity Report',
         description: 'Detailed user activity logs',
-        endpoint: '/api/admin/dashboard/activity'
+        endpoint: '/admin/dashboard/activity'
     },
     {
         id: 'system_config',
         title: 'System Configuration',
         description: 'Current system configuration export',
-        endpoint: '/api/admin/export/config'
+        endpoint: '/admin/export/config'
     }
 ]
 

@@ -414,7 +414,7 @@ const getUserInitials = () => {
 const loadProfileData = async () => {
     try {
         // Load user profile data from API
-        const response = await apiMethods.get('/user/profile')
+        const response = await apiMethods.user.getProfile()
 
         // Update form data
         Object.assign(profileData, response.data.profile || {})
@@ -449,9 +449,7 @@ const updatePersonalInfo = async () => {
     try {
         isUpdatingPersonal.value = true
 
-        await apiMethods.put('/user/profile', {
-            profile: profileData
-        })
+        await apiMethods.user.updateProfile(profileData)
 
         // Update auth store
         authStore.updateUser({
@@ -473,9 +471,7 @@ const updateAccountSettings = async () => {
     try {
         isUpdatingAccount.value = true
 
-        await apiMethods.put('/user/account', {
-            account: accountData
-        })
+        await apiMethods.user.updateAccount(accountData)
 
         toast.success('Account settings updated successfully')
 
@@ -513,10 +509,7 @@ const changePassword = async () => {
     try {
         isChangingPassword.value = true
 
-        await apiMethods.put('/user/password', {
-            currentPassword: passwordData.currentPassword,
-            newPassword: passwordData.newPassword
-        })
+        await apiMethods.user.changePassword(passwordData.currentPassword, passwordData.newPassword)
 
         // Clear form
         Object.keys(passwordData).forEach(key => {
@@ -537,8 +530,11 @@ const toggle2FA = async () => {
     try {
         isToggling2FA.value = true
 
-        const endpoint = accountData.twoFactorEnabled ? '/user/disable-2fa' : '/user/enable-2fa'
-        await apiMethods.post(endpoint)
+        if (accountData.twoFactorEnabled) {
+            await apiMethods.user.disable2FA()
+        } else {
+            await apiMethods.user.enable2FA()
+        }
 
         accountData.twoFactorEnabled = !accountData.twoFactorEnabled
 
@@ -560,9 +556,7 @@ const updateNotificationSettings = async () => {
     try {
         isUpdatingNotifications.value = true
 
-        await apiMethods.put('/user/notifications', {
-            notifications: notificationData
-        })
+        await apiMethods.user.updateNotifications(notificationData)
 
         toast.success('Notification preferences updated successfully')
 

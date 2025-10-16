@@ -549,9 +549,7 @@ const exportData = async () => {
     try {
         isExporting.value = true
 
-        const response = await apiMethods.get(`/admin/committees/${props.committee.id}/export`, {
-            responseType: 'blob'
-        })
+        const response = await apiMethods.exports.exportCommitteeStats(props.committee.id)
 
         // Create download link
         const url = window.URL.createObjectURL(new Blob([response.data]))

@@ -6,7 +6,7 @@
                 <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-mun-blue-600 mx-auto mb-4"></div>
                 <p class="text-mun-gray-600">Loading dashboard...</p>
             </div>
-        </div> 
+        </div>
 
         <!-- Dashboard Content -->
         <div v-else class="space-y-6 p-6">
@@ -35,8 +35,7 @@
 
             <!-- Key Metrics -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div
-                    class="mun-card p-6">
+                <div class="mun-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-mun-gray-600">Events</p>
@@ -52,8 +51,7 @@
                     </div>
                 </div>
 
-                <div
-                    class="mun-card p-6">
+                <div class="mun-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-mun-gray-600">Committees</p>
@@ -69,8 +67,7 @@
                     </div>
                 </div>
 
-                <div
-                    class="mun-card p-6">
+                <div class="mun-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-mun-gray-600">Users</p>
@@ -86,8 +83,7 @@
                     </div>
                 </div>
 
-                <div
-                    class="mun-card p-6">
+                <div class="mun-card p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-mun-gray-600">Documents</p>
@@ -216,7 +212,7 @@
                                 </div>
                                 <div>
                                     <div class="text-lg font-bold text-mun-gray-900">{{ formatUptime(healthData.uptime)
-                                        }}</div>
+                                    }}</div>
                                     <div class="text-xs text-mun-gray-600">Uptime</div>
                                 </div>
                                 <div>
@@ -266,9 +262,9 @@
                                     <p class="text-sm text-mun-gray-900">{{ activity.description }}</p>
                                     <div class="flex items-center space-x-2 mt-1">
                                         <span class="text-xs text-mun-gray-500">{{ formatTimeAgo(activity.timestamp)
-                                        }}</span>
+                                            }}</span>
                                         <span v-if="activity.user" class="text-xs text-mun-gray-500">by {{ activity.user
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -336,6 +332,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useWebSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
+import { apiMethods } from '@/utils/api'
 import format from '@/utils/time'
 
 // Icons
@@ -345,9 +342,6 @@ import {
     UserGroupIcon,
     UsersIcon,
     DocumentTextIcon,
-    PlusIcon,
-    QrCodeIcon,
-    DocumentChartBarIcon,
     ClockIcon,
     UserIcon,
     CogIcon,
@@ -460,28 +454,18 @@ const getServiceStatusTextColor = (status) => {
     return statusMap[status] || 'text-gray-700'
 }
 
-// API Methods - Using direct fetch calls based on project knowledge patterns
+// API Methods - Using apiMethods from utils
 const loadDashboardStats = async () => {
     try {
-        const response = await fetch('/api/admin/dashboard/stats', {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`,
-                'Content-Type': 'application/json'
-            }
-        })
+        const response = await apiMethods.admin.getDashboardStats()
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-
-        const data = await response.json()
-        if (data.success) {
-            stats.value = { ...stats.value, ...data.stats }
+        if (response?.data?.success) {
+            stats.value = { ...stats.value, ...response.data.stats }
         } else {
-            throw new Error(data.error || 'Failed to load stats')
+            throw new Error(response?.data?.error || 'Failed to load stats')
         }
     } catch (error) {
-        toast.error('Failed to load dashboard stats:', error)
+        console.error('Failed to load dashboard stats:', error)
         toast.error('Failed to load dashboard statistics')
     }
 }
@@ -489,25 +473,15 @@ const loadDashboardStats = async () => {
 const loadRecentActivity = async () => {
     isLoadingActivity.value = true
     try {
-        const response = await fetch('/api/admin/dashboard/activity?limit=10', {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`,
-                'Content-Type': 'application/json'
-            }
-        })
+        const response = await apiMethods.admin.getRecentActivity({ limit: 10 })
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-
-        const data = await response.json()
-        if (data.success) {
-            recentActivity.value = data.activities || []
+        if (response?.data?.success) {
+            recentActivity.value = response.data.activities || []
         } else {
-            throw new Error(data.error || 'Failed to load activity')
+            throw new Error(response?.data?.error || 'Failed to load activity')
         }
     } catch (error) {
-        toast.error('Failed to load recent activity:', error)
+        console.error('Failed to load recent activity:', error)
         toast.error('Failed to load recent activity')
     } finally {
         isLoadingActivity.value = false
@@ -517,21 +491,11 @@ const loadRecentActivity = async () => {
 const loadActiveEvents = async () => {
     isLoadingEvents.value = true
     try {
-        const response = await fetch('/api/events?status=active', {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`,
-                'Content-Type': 'application/json'
-            }
-        })
+        const response = await apiMethods.events.getAll({ status: 'active' })
 
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-
-        const data = await response.json()
-        activeEvents.value = Array.isArray(data) ? data : data.events || []
+        activeEvents.value = Array.isArray(response?.data) ? response.data : response?.data?.events || []
     } catch (error) {
-        toast.error('Failed to load active events:', error)
+        console.error('Failed to load active events:', error)
         toast.error('Failed to load active events')
     } finally {
         isLoadingEvents.value = false
@@ -541,16 +505,11 @@ const loadActiveEvents = async () => {
 const loadSystemHealth = async () => {
     try {
         const startTime = Date.now()
-        const response = await fetch('/api/health', {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`,
-                'Content-Type': 'application/json'
-            }
-        })
+        const response = await apiMethods.admin.getSystemHealth()
         responseTime.value = Date.now() - startTime
 
-        if (response.ok) {
-            const data = await response.json()
+        if (response?.data) {
+            const data = response.data
 
             healthData.value = {
                 status: data.status || 'unknown',
@@ -566,10 +525,10 @@ const loadSystemHealth = async () => {
                 websocket: wsStore?.isConnected || false
             }
         } else {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+            throw new Error('Invalid health response')
         }
     } catch (error) {
-        toast.error('Failed to load system health:', error)
+        console.error('Failed to load system health:', error)
         systemHealth.value = {
             api: false,
             database: false,
@@ -600,6 +559,7 @@ const refreshAll = async () => {
         lastUpdated.value = new Date()
         toast.success('Dashboard refreshed')
     } catch (error) {
+        console.error('Failed to refresh dashboard:', error)
         toast.error('Failed to refresh dashboard')
     } finally {
         isRefreshing.value = false
@@ -611,43 +571,25 @@ const generateQRCodes = async () => {
 
     isGeneratingQR.value = true
     try {
-        const committeesResponse = await fetch('/api/committees?status=active', {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`,
-                'Content-Type': 'application/json'
-            }
-        })
+        const committeesResponse = await apiMethods.committees.getAll({ status: 'active' })
 
-        if (!committeesResponse.ok) {
-            throw new Error('Failed to fetch committees')
-        }
-
-        const committeesData = await committeesResponse.json()
-        const committees = Array.isArray(committeesData) ? committeesData : committeesData.committees || []
+        const committees = Array.isArray(committeesResponse?.data) ? committeesResponse.data : committeesResponse?.data?.committees || []
 
         if (committees.length === 0) {
-            toast.log('No active committees found')
+            toast.info('No active committees found')
             return
         }
 
         const committeeIds = committees.map(c => c._id)
-        const response = await fetch('/api/admin/committees/bulk-qr', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ committeeIds })
-        })
+        const response = await apiMethods.admin.bulkGenerateQR({ committeeIds })
 
-        if (response.ok) {
-            const data = await response.json()
-            toast.success(`Generated QR codes for ${data.totalQRGenerated || committees.length} countries`)
+        if (response?.data) {
+            toast.success(`Generated QR codes for ${response.data.totalQRGenerated || committees.length} countries`)
         } else {
             throw new Error('QR generation failed')
         }
     } catch (error) {
-        toast.error('QR generation error:', error)
+        console.error('QR generation error:', error)
         toast.error('Failed to generate QR codes')
     } finally {
         isGeneratingQR.value = false
@@ -722,7 +664,7 @@ onMounted(async () => {
         ])
         lastUpdated.value = new Date()
     } catch (error) {
-        toast.error('Dashboard initialization error:', error)
+        console.error('Dashboard initialization error:', error)
         toast.error('Failed to load dashboard')
     } finally {
         isInitialLoading.value = false

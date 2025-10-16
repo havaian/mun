@@ -148,8 +148,19 @@ export const apiMethods = {
         bulkGenerateQR: (data) => api.post('/admin/committees/bulk-qr', data),
 
         // Maintenance
-        performMaintenance: (data) => api.post('/admin/maintenance/execute', data),
-        createBackup: (data) => api.post('/admin/maintenance/backup', data)
+        performMaintenance: (data) => api.post('/admin/maintenance/execute', data), // TODO
+        
+        // Miscellaneous
+        createBackup: (data) => api.post('/admin/maintenance/backup', data),
+        getReportFields: (dataSource) => api.get(`/admin/reports/fields/${dataSource}`), // TODO
+        generateReportPreview: (data) => api.post('/admin/reports/preview', data), // TODO
+        saveReportTemplate: (data) => api.post('/admin/reports/templates', data), // TODO
+        generateReport: (data) => api.post('/admin/reports/generate', data, { responseType: 'blob' }), // TODO
+        generateCustomReport: (data) => api.post('/admin/reports/export', data, { responseType: 'blob' }), // TODO
+        getSettings: () => api.get('/admin/settings'), // TODO
+        updateSettings: (settings) => api.put('/admin/settings', { settings }), // TODO
+        testEmailSettings: (emailSettings) => api.post('/admin/settings/test-email', { emailSettings }), // TODO
+        createBackup: () => api.post('/admin/maintenance/backup')
     },
 
     // Authentication
@@ -166,10 +177,12 @@ export const apiMethods = {
 
     // Events
     events: {
-        getAll: (params = {}) => api.get('/events', { params }),
+        getAll: (params = {}) => api.get('/events/', { params }),
         getById: (id) => api.get(`/events/${id}`),
+        getByIdStats: (id) => api.get(`/events/${id}/statistics`),
         create: (data) => api.post('/events', data),
         update: (id, data) => api.put(`/events/${id}`, data),
+        updateStatusById: (id, data) => api.put(`/events/${id}/status`, data),
         delete: (id) => api.delete(`/events/${id}`)
     },
 
@@ -179,48 +192,88 @@ export const apiMethods = {
         getAuditLogs: (params = {}) => api.get('/admin/export/audit-logs', { params }),
         generateQRPDF: (committeeId) => api.get(`/export/qr-codes/${committeeId}`, { responseType: 'blob' }),
         exportCommitteeStats: (committeeId) => api.get(`/export/statistics/${committeeId}`, { responseType: 'blob' }),
-        exportVotingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`, { responseType: 'blob' }),
-        exportResolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`, { responseType: 'blob' }),
-        exportCompleteReport: (committeeId) => api.get(`/export/committee-report/${committeeId}`, { responseType: 'blob' })
+        exportVotingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`, { responseType: 'blob' }), // DUPLICATE
+        exportResolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`, { responseType: 'blob' }), // DUPLICATE
+        exportCompleteReport: (committeeId) => api.get(`/export/committee-report/${committeeId}`, { responseType: 'blob' }),
+        exportEventData: (eventId) => api.get(`/export/events/${eventId}`, { responseType: 'blob' }), // TODO
+        
+        getStatistics: (committeeId) => api.get(`/export/statistics/${committeeId}`),
+        getVotingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`), // DUPLICATE
+        getResolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`), // DUPLICATE
+
+        getEventCSV: (eventId) => api.get(`/export/event/${eventId}/csv`, { responseType: 'blob' }), // TODO
+        getEventFullReport: (eventId) => api.get(`/export/event/${eventId}/full-report`, { responseType: 'blob' }), // TODO
+        getCommitteeCSV: (committeeId) => api.get(`/export/committee/${committeeId}/csv`, { responseType: 'blob' }), // TODO
+        getCommitteeStatistics: (committeeId) => api.get(`/export/committee/${committeeId}/statistics`, { responseType: 'blob' }), // TODO
+        getResolutionsExport: (committeeId) => api.get(`/export/committee/${committeeId}/resolutions`, { responseType: 'blob' }), // TODO
+        getVotingRecords: (committeeId) => api.get(`/export/committee/${committeeId}/voting-records`, { responseType: 'blob' }), // TODO
+        getAttendanceExport: (committeeId) => api.get(`/export/committee/${committeeId}/attendance`, { responseType: 'blob' }), // TODO
+        getMessagingStats: (committeeId) => api.get(`/export/committee/${committeeId}/messaging-stats`, { responseType: 'blob' }), // TODO
+
+        getPDFExport: (type, id) => api.get(`/export/${type}/${id}/pdf`, { responseType: 'blob' }), // TODO
+        getExcelExport: (type, id) => api.get(`/export/${type}/${id}/excel`, { responseType: 'blob' }), // TODO
+        getJSONExport: (type, id) => api.get(`/export/${type}/${id}/json`), // TODO
+        exportCommitteesBulk: (ids) => api.get('/admin/committees/export', {  // TODO
+            params: { ids }, 
+            responseType: 'blob' 
+        }),
+        exportEvents: () => api.get('/admin/events/export', { responseType: 'blob' }), // TODO
+        exportUsers: () => api.get('/admin/users/export', { responseType: 'blob' }) // TODO
     },
 
     // Committees
     committees: {
-        getAll: (params = {}) => api.get('/committees', { params }),
+        getAll: (params = {}) => api.get('/committees/', { params }),
         getById: (id) => api.get(`/committees/${id}`),
         create: (data) => api.post('/committees', data),
         update: (id, data) => api.put(`/committees/${id}`, data),
         delete: (id) => api.delete(`/committees/${id}`),
         addCountry: (id, countryData) => api.post(`/committees/${id}/countries`, countryData),
         removeCountry: (id, countryName) => api.delete(`/committees/${id}/countries/${countryName}`),
-        generateQRs: (id) => api.post(`/committees/${id}/generate-qrs`),
-        generatePresidiumQRs: (id) => api.post(`/committees/${id}/presidium/generate-qrs`),
+        updateCountryStatus: (id, countryName) => api.put(`/committees/${id}/countries/${countryName}/status`),
+        generateQRs: (id) => api.get(`/committees/${id}/qr-codes`),
+        regenerateQRs: (id) => api.get(`/committees/${id}/qr-codes/regenerate`),
+        regenerateCountryQRs: (id, countryName) => api.get(`/committees/${id}/qr-codes/${countryName}/regenerate`),
+        generatePresidiumQRs: (id, data) => api.post(`/committees/${id}/presidium/generate-qrs`, data),
+        resetPresidiumQRs: (id, role, data) => api.post(`/committees/${id}/presidium/${role}/reset-qr`, data),
+        getPresidium: (id) => api.get(`/committees/${id}/presidium`),
+        updatePresidium: (id) => api.put(`/committees/${id}/presidium`),
         getPresidiumStatus: (id) => api.get(`/committees/${id}/presidium/status`),
-        resetPresidiumQR: (id, role) => api.post(`/committees/${id}/presidium/${role}/reset-qr`),
         getQRTokens: (id) => api.get(`/committees/${id}/qr-tokens`)
     },
 
     // Countries
     countries: {
-        getAll: (params = {}) => api.get('/countries', { params }),
+        getAll: (params = {}) => api.get('/countries/', { params }),
         getByCode: (code, params = {}) => api.get(`/countries/${code}`, { params }),
         getFlag: (code) => api.get(`/countries/flags/${code}`),
         getAllFlags: () => api.get('/countries/flags/all'),
-        refreshCache: () => api.post('/countries/flags/refresh')
+        getAllFlagsBatch: () => api.get('/countries/flags/all/batch'),
+        getFlagsMetaInfo: () => api.get('/countries/flags/meta/info'),
+        getMetaHealth: () => api.get('/countries/meta/health'),
+        refreshCache: () => api.post('/countries/admin/refresh-flags')
     },
 
     // Documents
     documents: {
-        getAll: (params = {}) => api.get('/documents', { params }),
+        getAll: (params = {}) => api.get('/documents/', { params }),
         getById: (id) => api.get(`/documents/${id}`),
-        upload: (formData) => api.post('/documents', formData, {
+        upload: (formData) => api.post('/documents/', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         }),
         download: (id) => api.get(`/documents/${id}/download`, {
             responseType: 'blob'
         }),
+        getDocumentVersions: (id) => api.get(`/documents/${id}/versions`),
         preview: (id) => api.get(`/documents/${id}/preview`),
-        delete: (id) => api.delete(`/documents/${id}`)
+        delete: (id) => api.delete(`/documents/${id}`),
+        createPositionPapers: (data) => api.post('/documents/position-papers', data),
+        getPositionPapersForCommittee: (committeeId) => api.post(`/documents/position-papers/${committeeId}`),
+        reviewPositionPapersForCommittee: (committeeId, data) => api.put(`/documents/position-papers/${committeeId}`, data),
+        uploadPublicDocument: (data) => api.post('/documents/public', data),
+        getPublicDocumentsForCommittee: (committeeId, data) => api.get(`/documents/public/${committeeId}`, data),
+        getPublicDocumentsById: (id, data) => api.get(`/documents/public/${id}`, data),
+        deletePublicDocumentsById: (id) => api.delete(`/documents/public/${id}`),
     },
 
     // Coalitions & Resolutions
@@ -294,29 +347,6 @@ export const apiMethods = {
         getDiplomaticNotes: (params = {}) => api.get('/messages/diplomatic', { params }),
         markAllAsRead: (committeeId) => api.put(`/messages/committee/${committeeId}/read-all`),
         deleteMessage: (id) => api.delete(`/messages/${id}`),
-    },
-
-    // Export/PDF
-    export: {
-        generateQRPDF: (committeeId) => api.get(`/export/qr-codes/${committeeId}`, {
-            responseType: 'blob'
-        }),
-        getStatistics: (committeeId) => api.get(`/export/statistics/${committeeId}`),
-        getVotingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`),
-        getResolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`),
-
-        getEventCSV: (eventId) => api.get(`/export/event/${eventId}/csv`, { responseType: 'blob' }),
-        getEventFullReport: (eventId) => api.get(`/export/event/${eventId}/full-report`, { responseType: 'blob' }),
-        getCommitteeCSV: (committeeId) => api.get(`/export/committee/${committeeId}/csv`, { responseType: 'blob' }),
-        getCommitteeStatistics: (committeeId) => api.get(`/export/committee/${committeeId}/statistics`, { responseType: 'blob' }),
-        getResolutionsExport: (committeeId) => api.get(`/export/committee/${committeeId}/resolutions`, { responseType: 'blob' }),
-        getVotingRecords: (committeeId) => api.get(`/export/committee/${committeeId}/voting-records`, { responseType: 'blob' }),
-        getAttendanceExport: (committeeId) => api.get(`/export/committee/${committeeId}/attendance`, { responseType: 'blob' }),
-        getMessagingStats: (committeeId) => api.get(`/export/committee/${committeeId}/messaging-stats`, { responseType: 'blob' }),
-
-        getPDFExport: (type, id) => api.get(`/export/${type}/${id}/pdf`, { responseType: 'blob' }),
-        getExcelExport: (type, id) => api.get(`/export/${type}/${id}/excel`, { responseType: 'blob' }),
-        getJSONExport: (type, id) => api.get(`/export/${type}/${id}/json`),
     },
 
     // File upload helper
@@ -430,6 +460,7 @@ export const apiMethods = {
         updateSettings: (committeeId, settings) => api.put(`/presentation/${committeeId}/settings`, settings),
         getSettings: (committeeId) => api.get(`/presentation/${committeeId}/settings`)
     },
+    
     // Procedures/Motions
     procedures: {
         // Procedural motions
@@ -455,6 +486,17 @@ export const apiMethods = {
         answerQuestion: (id, answerData) => api.put(`/questions/${id}/answer`, answerData),
         updateQuestionPriority: (id, priorityData) => api.put(`/questions/${id}/priority`, priorityData)
     },
+
+    user: {
+        getProfile: () => api.get('/user/profile'),
+        updateProfile: (profile) => api.put('/user/profile', { profile }),
+        updateAccount: (account) => api.put('/user/account', { account }),
+        changePassword: (currentPassword, newPassword) => api.put('/user/password', { currentPassword, newPassword }),
+        enable2FA: () => api.post('/user/enable-2fa'),
+        disable2FA: () => api.post('/user/disable-2fa'),
+        updateNotifications: (notifications) => api.put('/user/notifications', { notifications })
+    },
+
     // Health check
     health: {
         check: () => api.get('/health'),

@@ -403,7 +403,7 @@ const startBulkGeneration = async () => {
                     currentOperation.value = 'Generating PDF...'
                     addLog(`Starting PDF generation for ${committee?.name}`, 'info')
 
-                    const pdfResponse = await apiMethods.export.generateQRPDF(committeeId)
+                    const pdfResponse = await apiMethods.exports.generateQRPDF(committeeId)
 
                     if (pdfResponse.data) {
                         result.operations.push('PDF generated')

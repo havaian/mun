@@ -365,7 +365,7 @@ const hasUnsavedChanges = computed(() => {
 // Methods
 const loadSettings = async () => {
     try {
-        const response = await apiMethods.get('/admin/settings')
+        const response = await apiMethods.admin.getSettings()
         if (response?.data?.success) {
             settings.value = { ...settings.value, ...response.data.settings }
             originalSettings.value = JSON.parse(JSON.stringify(settings.value))
@@ -380,9 +380,7 @@ const loadSettings = async () => {
 const saveAllSettings = async () => {
     isSaving.value = true
     try {
-        const response = await apiMethods.put('/admin/settings', {
-            settings: settings.value
-        })
+        const response = await apiMethods.admin.updateSettings(settings.value)
 
         if (response?.data?.success) {
             originalSettings.value = JSON.parse(JSON.stringify(settings.value))
@@ -399,9 +397,7 @@ const saveAllSettings = async () => {
 const testEmailSettings = async () => {
     isTestingEmail.value = true
     try {
-        const response = await apiMethods.post('/admin/settings/test-email', {
-            emailSettings: settings.value.email
-        })
+        const response = await apiMethods.admin.testEmailSettings(settings.value.email)
 
         if (response?.data?.success) {
             toast.success('Test email sent successfully')
@@ -417,7 +413,7 @@ const testEmailSettings = async () => {
 const clearCaches = async () => {
     isClearingCache.value = true
     try {
-        const response = await apiMethods.post('/admin/system/clear-cache')
+        const response = await apiMethods.admin.clearCaches()
 
         if (response?.data?.success) {
             toast.success('System caches cleared successfully')
@@ -433,7 +429,7 @@ const clearCaches = async () => {
 const createBackup = async () => {
     isCreatingBackup.value = true
     try {
-        const response = await apiMethods.post('/admin/maintenance/backup')
+        const response = await apiMethods.admin.createBackup()
 
         if (response?.data?.success) {
             toast.success('Database backup initiated successfully')

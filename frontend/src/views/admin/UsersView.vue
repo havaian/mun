@@ -459,8 +459,8 @@ const loadUsers = async () => {
         isLoading.value = true
 
         const [usersResponse, committeesResponse] = await Promise.all([
-            apiMethods.get('/api/admin/users'),
-            apiMethods.get('/api/admin/committees')
+            apiMethods.users.getAll(),
+            apiMethods.committees.getAll()
         ])
 
         if (usersResponse?.data) {
@@ -517,10 +517,7 @@ const bulkAction = async (action) => {
     try {
         if (selectedUsers.value.length === 0) return
 
-        const response = await apiMethods.post('/api/admin/users/bulk-action', {
-            action,
-            userIds: selectedUsers.value
-        })
+        const response = await apiMethods.users.bulkAction(action, selectedUsers.value)
 
         if (response?.success) {
             if (action === 'activate') {
@@ -561,9 +558,7 @@ const editUserFromDetails = (user) => {
 
 const toggleUserStatus = async (user) => {
     try {
-        const response = await apiMethods.put(`/api/admin/users/${user.id}/status`, {
-            isActive: !user.isActive
-        })
+        const response = await apiMethods.users.updateStatus(user.id, !user.isActive)
 
         if (response?.success) {
             user.isActive = !user.isActive
@@ -577,7 +572,7 @@ const toggleUserStatus = async (user) => {
 
 const resetUserQR = async (user) => {
     try {
-        const response = await apiMethods.post(`/api/admin/users/${user.id}/reset-qr`)
+        const response = await apiMethods.users.resetQR(user.id)
         if (response?.success) {
             toast.success('QR code reset successfully')
         }
@@ -594,7 +589,7 @@ const deleteUser = (user) => {
 
 const confirmDelete = async () => {
     try {
-        const response = await apiMethods.delete(`/api/admin/users/${selectedUser.value.id}`)
+        const response = await apiMethods.users.delete(selectedUser.value.id)
         if (response?.success) {
             users.value = users.value.filter(u => u.id !== selectedUser.value.id)
             toast.success('User deleted successfully')
@@ -610,9 +605,7 @@ const confirmDelete = async () => {
 
 const exportUsers = async () => {
     try {
-        const response = await apiMethods.get('/api/admin/users/export', {
-            responseType: 'blob'
-        })
+        const response = await apiMethods.exports.exportUsers()
 
         if (response) {
             // Create download link

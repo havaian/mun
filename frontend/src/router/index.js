@@ -209,16 +209,23 @@ const routes = [
     ]
   },
 
-  // Shared routes
-  {
-    path: '/profile',
-    name: 'Profile',
-    component: ProfileView,
-    meta: {
-      title: 'Profile',
-      requiresAuth: true
-    }
-  },
+  // // Delegate routes
+  // {
+  //   path: '/shared',
+  //   component: () => import('@/layouts/SharedLayout.vue'),
+  //   meta: { requiresAuth: true, roles: ['admin', 'presidium', 'delegate'] },
+  //   children: [
+  //     {
+  //       path: '/profile',
+  //       name: 'Profile',
+  //       component: ProfileView,
+  //       meta: {
+  //         title: 'Profile',
+  //         requiresAuth: true
+  //       }
+  //     }
+  //   ]
+  // },
 
   // Root redirect
   {

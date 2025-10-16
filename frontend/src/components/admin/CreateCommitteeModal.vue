@@ -508,9 +508,7 @@ const loadCommitteeData = () => {
 
 const loadAvailablePresidium = async () => {
     try {
-        const response = await apiMethods.get('/admin/users', {
-            params: { role: 'presidium', status: 'active' }
-        })
+        const response = await apiMethods.users.getAll({ role: 'presidium', status: 'active' })
         availablePresidium.value = response.data.users || []
     } catch (error) {
         toast.error('Failed to load presidium members:', error)
@@ -563,11 +561,11 @@ const handleSubmit = async () => {
 
         let response
         if (props.mode === 'edit') {
-            response = await apiMethods.put(`/admin/committees/${props.committee.id}`, formData)
+            response = await apiMethods.committees.update(props.committee.id, formData)
             emit('updated', response.data.committee)
             toast.success('Committee updated successfully')
         } else {
-            response = await apiMethods.post('/admin/committees', formData)
+            response = await apiMethods.committees.create(formData)
             emit('created', response.data.committee)
             toast.success('Committee created successfully')
         }
@@ -595,7 +593,7 @@ const saveDraft = async () => {
         draftData.agendaTopics = draftData.agendaTopics.filter(topic => topic.title.trim())
         draftData.presidiumMembers = draftData.presidiumMembers.filter(member => member.userId)
 
-        const response = await apiMethods.post('/admin/committees', draftData)
+        const response = await apiMethods.committees.create(draftData)
 
         emit('created', response.data.committee)
         toast.success('Committee saved as draft')

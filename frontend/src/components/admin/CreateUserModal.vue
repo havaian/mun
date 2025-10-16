@@ -520,13 +520,11 @@ const getMaxBirthDate = () => {
 const loadAvailableData = async () => {
     try {
         // Load countries
-        const countriesResponse = await apiMethods.get('/admin/countries')
+        const countriesResponse = await apiMethods.countries.getAll()
         availableCountries.value = countriesResponse.data.countries || []
 
         // Load committees
-        const committeesResponse = await apiMethods.get('/admin/committees', {
-            params: { status: 'active' }
-        })
+        const committeesResponse = await apiMethods.committees.getAll({ status: 'active' })
         availableCommittees.value = committeesResponse.data.committees || []
 
     } catch (error) {
@@ -596,7 +594,7 @@ const handleSubmit = async () => {
         const userData = { ...formData }
         delete userData.confirmPassword // Remove confirm password field
 
-        const response = await apiMethods.post('/admin/users', userData)
+        const response = await apiMethods.users.create(userData)
 
         emit('created', response.data.user)
         toast.success('User created successfully')

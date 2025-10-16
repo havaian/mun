@@ -594,7 +594,7 @@ const sendPasswordReset = async () => {
     try {
         isSendingReset.value = true
 
-        await apiMethods.post(`/admin/users/${props.user.id}/reset-password`)
+        await apiMethods.admin.users.resetPassword(props.user.id)
 
         toast.success('Password reset email sent successfully')
 

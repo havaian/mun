@@ -538,11 +538,11 @@ const setQuickDateRange = (range) => {
 const loadAvailableData = async () => {
     try {
         // Load events
-        const eventsResponse = await apiMethods.get('/admin/events')
+        const eventsResponse = await apiMethods.events.getAll()
         availableEvents.value = eventsResponse.data.events || []
 
         // Load committees
-        const committeesResponse = await apiMethods.get('/admin/committees')
+        const committeesResponse = await apiMethods.committees.getAll()
         availableCommittees.value = committeesResponse.data.committees || []
 
     } catch (error) {
@@ -638,9 +638,7 @@ const generateExport = async () => {
             options: advancedOptions
         }
 
-        const response = await apiMethods.post('/admin/reports/export', exportData, {
-            responseType: 'blob'
-        })
+        const response = await apiMethods.admin.generateCustomReport(exportData)
 
         // Create download link
         const url = window.URL.createObjectURL(new Blob([response.data]))

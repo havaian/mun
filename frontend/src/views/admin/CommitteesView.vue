@@ -667,10 +667,8 @@ const loadCommittees = async () => {
     try {
         isLoading.value = true
 
-        const response = await apiMethods.get('/api/admin/committees', {
-            params: {
-                include: 'eventId,countries,documents'
-            }
+        const response = await apiMethods.committees.getAll({
+            include: 'eventId,countries,documents'
         })
 
         if (response?.data) {
@@ -693,11 +691,9 @@ const loadCommittees = async () => {
 
 const loadEvents = async () => {
     try {
-        const response = await apiMethods.get('/api/admin/events', {
-            params: {
-                status: 'active,published',
-                limit: 100
-            }
+        const response = await apiMethods.events.getAll({
+            status: 'active,published',
+            limit: 100
         })
 
         if (response?.data) {
@@ -787,7 +783,7 @@ const deleteCommittee = (committee) => {
 
 const confirmDelete = async () => {
     try {
-        const response = await apiMethods.delete(`/api/admin/committees/${selectedCommittee.value._id}`)
+        const response = await apiMethods.committees.delete(selectedCommittee.value._id)
 
         if (response?.success) {
             committees.value = committees.value.filter(c => c._id !== selectedCommittee.value._id)
@@ -819,7 +815,7 @@ const duplicateCommittee = async (committee) => {
         delete duplicatedData.updatedAt
         delete duplicatedData.documents
 
-        const response = await apiMethods.post('/api/admin/committees', duplicatedData)
+        const response = await apiMethods.committees.create(duplicatedData)
 
         if (response?.data) {
             committees.value.unshift(response.data.committee || response.data)
@@ -837,7 +833,7 @@ const toggleCommitteeStatus = async (committee) => {
     try {
         const newStatus = committee.status === 'active' ? 'setup' : 'active'
 
-        const response = await apiMethods.put(`/api/admin/committees/${committee._id}`, {
+        const response = await apiMethods.committees.update(committee._id, {
             status: newStatus
         })
 
@@ -871,7 +867,7 @@ const bulkGenerateQR = async () => {
     try {
         isBulkGenerating.value = true
 
-        const response = await apiMethods.post('/api/admin/committees/bulk-qr', {
+        const response = await apiMethods.admin.bulkGenerateQR({
             committeeIds: selectedCommittees.value
         })
 
@@ -898,10 +894,7 @@ const bulkGenerateQR = async () => {
 
 const bulkExport = async () => {
     try {
-        const response = await apiMethods.get('/api/admin/committees/export', {
-            params: { ids: selectedCommittees.value.join(',') },
-            responseType: 'blob'
-        })
+        const response = await apiMethods.exports.exportCommitteesBulk(selectedCommittees.value.join(','))
 
         if (response) {
             // Create download link
