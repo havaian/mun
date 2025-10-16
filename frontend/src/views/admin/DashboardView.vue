@@ -509,7 +509,7 @@ const loadSystemHealth = async () => {
         responseTime.value = Date.now() - startTime
 
         if (response?.data) {
-            const data = response.data
+            const data = response
 
             healthData.value = {
                 status: data.status || 'unknown',
