@@ -433,8 +433,6 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useToast } from '@/plugins/toast'
 import { apiMethods } from '@/utils/api'
-import SleekSelect from '@/components/ui/SleekSelect.vue'
-import AppButton from '@/components/ui/AppButton.vue'
 
 // Icons
 import {
@@ -468,7 +466,7 @@ const props = defineProps({
 })
 
 // Emits - Define this before using it
-const emit = defineEmits(['update:modelValue', 'created', 'updated'])
+const emit = defineEmits(['update:modelValue', 'created', 'updated', 'saved'])
 
 // Initialize toast
 const toast = useToast()
@@ -521,6 +519,49 @@ const formData = reactive({
     instructions: '',
     internalNotes: ''
 })
+
+// Select options
+const eventTypeOptions = [
+    { label: 'Select event type', value: '' },
+    { label: 'Model United Nations', value: 'mun' },
+    { label: 'Conference', value: 'conference' },
+    { label: 'Workshop', value: 'workshop' },
+    { label: 'Simulation', value: 'simulation' },
+    { label: 'Training', value: 'training' },
+    { label: 'Seminar', value: 'seminar' },
+    { label: 'Competition', value: 'competition' }
+]
+
+const statusOptions = [
+    { label: 'Draft', value: 'draft' },
+    { label: 'Active', value: 'active' },
+    { label: 'Completed', value: 'completed' }
+]
+
+const languageOptions = [
+    { label: 'English', value: 'en' },
+    { label: 'Russian', value: 'ru' },
+    { label: 'Uzbek', value: 'uz' },
+    { label: 'French', value: 'fr' },
+    { label: 'Spanish', value: 'es' },
+    { label: 'Arabic', value: 'ar' },
+    { label: 'Chinese', value: 'zh' }
+]
+
+const timezoneOptions = [
+    { label: 'Tashkent (UTC+5)', value: 'Asia/Tashkent' },
+    { label: 'Moscow (UTC+3)', value: 'Europe/Moscow' },
+    { label: 'London (UTC+0)', value: 'Europe/London' },
+    { label: 'New York (UTC-5)', value: 'America/New_York' },
+    { label: 'Dubai (UTC+4)', value: 'Asia/Dubai' }
+]
+
+const currencyOptions = [
+    { label: 'USD ($)', value: 'USD' },
+    { label: 'UZS (сўм)', value: 'UZS' },
+    { label: 'EUR (€)', value: 'EUR' },
+    { label: 'RUB (₽)', value: 'RUB' }
+]
 
 // Computed
 const isValid = computed(() => {
@@ -693,14 +734,15 @@ const submitForm = async () => {
 
         let response
         if (props.mode === 'edit') {
-            response = await apiMethods.put(`/api/admin/events/${props.event._id}`, submitData)
+            const eventId = props.event._id || props.event.id
+            response = await apiMethods.put(`/api/admin/events/${eventId}`, submitData)
         } else {
             response = await apiMethods.post('/api/admin/events', submitData)
         }
 
         if (response?.data) {
             const eventData = response.data.event || response.data
-
+            
             if (props.mode === 'edit') {
                 emit('updated', eventData)
                 toast.success('Event updated successfully')
@@ -709,14 +751,14 @@ const submitForm = async () => {
                 toast.success('Event created successfully')
             }
 
-            close()
-        } else {
-            throw new Error('Failed to save event')
+            // Emit saved for both cases
+            emit('saved', eventData)
+            closeModal()
         }
 
     } catch (error) {
-        console.error('Submit event error:', error)
-        toast.error(error.message || 'Failed to save event')
+        console.error('Submit form error:', error)
+        toast.error(props.mode === 'edit' ? 'Failed to update event' : 'Failed to create event')
     } finally {
         isSubmitting.value = false
     }
@@ -726,9 +768,10 @@ const saveDraft = async () => {
     try {
         isDraftSaving.value = true
 
-        const draftData = { ...formData, status: 'draft' }
+        const draftData = { ...formData }
+        draftData.status = 'draft'
 
-        // Convert dates
+        // Convert dates if present
         if (draftData.startDate) {
             draftData.startDate = new Date(draftData.startDate).toISOString()
         }
@@ -736,12 +779,23 @@ const saveDraft = async () => {
             draftData.endDate = new Date(draftData.endDate).toISOString()
         }
 
-        const response = await apiMethods.post('/api/admin/events', draftData)
+        let response
+        if (props.mode === 'edit') {
+            const eventId = props.event._id || props.event.id
+            response = await apiMethods.put(`/api/admin/events/${eventId}`, draftData)
+        } else {
+            response = await apiMethods.post('/api/admin/events', draftData)
+        }
 
         if (response?.data) {
-            emit('created', response.data.event || response.data)
-            toast.success('Event saved as draft')
-            close()
+            toast.success('Draft saved successfully')
+            
+            const eventData = response.data.event || response.data
+            emit('saved', eventData)
+            
+            if (props.mode === 'create') {
+                closeModal()
+            }
         }
 
     } catch (error) {

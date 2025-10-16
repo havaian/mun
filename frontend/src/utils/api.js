@@ -120,6 +120,12 @@ api.interceptors.response.use(
 
 // API methods with proper error handling
 export const apiMethods = {
+    get: (url, config = {}) => api.get(url, config),
+    post: (url, data = {}, config = {}) => api.post(url, data, config),
+    put: (url, data = {}, config = {}) => api.put(url, data, config),
+    delete: (url, config = {}) => api.delete(url, config),
+    patch: (url, data = {}, config = {}) => api.patch(url, data, config),
+    
     // Admin Management
     admin: {
         // Dashboard
