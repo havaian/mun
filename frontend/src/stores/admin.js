@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
 import { useWebSocketStore } from '@/stores/websocket'
@@ -54,6 +54,13 @@ export const useAdminStore = defineStore('admin', () => {
     const recentActivity = ref([])
     const activeEvents = ref([])
 
+    // Watch WebSocket connection status and update health immediately
+    if (wsStore) {
+        watch(() => wsStore.isConnected, (newValue) => {
+            systemHealth.value.websocket = newValue
+        }, { immediate: true })
+    }
+ 
     // Computed
     const overallHealthStatus = computed(() => {
         const { api, database, websocket } = systemHealth.value
@@ -118,11 +125,11 @@ export const useAdminStore = defineStore('admin', () => {
                     services: data.services || {}
                 }
 
-                // Update system health status
+                // Update system health status (WebSocket is handled by watcher above)
                 systemHealth.value = {
                     api: data.status === 'healthy',
                     database: data.services?.database === 'connected',
-                    websocket: wsStore?.isConnected || false
+                    websocket: wsStore?.isConnected || false // This will be updated by the watcher
                 }
 
                 return true
@@ -132,11 +139,11 @@ export const useAdminStore = defineStore('admin', () => {
         } catch (error) {
             console.error('Failed to load system health:', error)
 
-            // Set error state
+            // Set error state (WebSocket status maintained by watcher)
             systemHealth.value = {
                 api: false,
                 database: false,
-                websocket: false
+                websocket: wsStore?.isConnected || false // Keep current WebSocket status
             }
             healthData.value = {
                 status: 'unhealthy',
