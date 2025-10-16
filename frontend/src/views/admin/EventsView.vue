@@ -1,7 +1,8 @@
 <template>
     <div class="p-6 space-y-6">
         <!-- Header -->
-        <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 flex items-center justify-between">
+        <div
+            class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-mun-gray-900">Event Management</h1>
                 <p class="text-mun-gray-600">Create and manage MUN events</p>
@@ -476,20 +477,34 @@ const deleteConfirmMessage = computed(() => {
 })
 
 // Methods
+// Complete fix for frontend/src/views/admin/EventsView.vue
+// Replace the methods section with this corrected version
+
+// Methods
 const loadEvents = async () => {
     try {
         isLoading.value = true
 
+        // Use the generic get method since admin.events might not be defined
         const response = await apiMethods.get('/api/admin/events')
-        if (response?.data) {
+
+        // Handle different response structures
+        if (response?.data?.success && response.data.events) {
+            // Backend returns { success: true, events: [...], pagination: {...} }
+            events.value = response.data.events || []
+        } else if (response?.data && Array.isArray(response.data)) {
+            // Direct array response
             events.value = response.data
+        } else if (response?.data) {
+            // Single data object with events property
+            events.value = response.data.events || response.data || []
         } else {
-            // Fallback if API fails
             events.value = []
         }
 
     } catch (error) {
-        toast.error('Load events error:', error)
+        console.error('Failed to load events:', error)
+        // Show only one error message
         toast.error('Failed to load events')
         events.value = []
     } finally {
@@ -543,12 +558,19 @@ const duplicateEvent = async (event) => {
         }
 
         const response = await apiMethods.post('/api/admin/events', duplicateData)
-        if (response?.data) {
+
+        if (response?.data?.success && response.data.event) {
+            events.value.unshift(response.data.event)
+            toast.success(`Event "${response.data.event.name}" duplicated successfully`)
+        } else if (response?.data) {
+            // Fallback if structure is different
             events.value.unshift(response.data)
-            toast.success(`Event "${response.data.name}" created successfully`)
+            toast.success(`Event "${response.data.name}" duplicated successfully`)
+        } else {
+            throw new Error('Unexpected response structure')
         }
     } catch (error) {
-        toast.error('Duplicate event error:', error)
+        console.error('Failed to duplicate event:', error)
         toast.error('Failed to duplicate event')
     }
 }
@@ -560,16 +582,29 @@ const deleteEvent = (event) => {
 
 const confirmDelete = async () => {
     try {
-        const response = await apiMethods.delete(`/api/admin/events/${selectedEvent.value.id}`)
-        if (response?.success) {
-            events.value = events.value.filter(e => e.id !== selectedEvent.value.id)
+        // Handle both _id (MongoDB) and id field names
+        const eventId = selectedEvent.value._id || selectedEvent.value.id
+
+        if (!eventId) {
+            throw new Error('Event ID not found')
+        }
+
+        const response = await apiMethods.delete(`/api/admin/events/${eventId}`)
+
+        if (response?.data?.success || response?.status === 200) {
+            // Remove event from local array
+            events.value = events.value.filter(e =>
+                (e._id || e.id) !== eventId
+            )
             toast.success(`Event "${selectedEvent.value.name}" deleted successfully`)
+        } else {
+            throw new Error('Delete operation failed')
         }
 
         showDeleteConfirm.value = false
         selectedEvent.value = null
     } catch (error) {
-        toast.error('Delete event error:', error)
+        console.error('Failed to delete event:', error)
         toast.error('Failed to delete event')
     }
 }
@@ -580,9 +615,9 @@ const exportEvents = async () => {
             responseType: 'blob'
         })
 
-        if (response) {
+        if (response?.data) {
             // Create download link
-            const url = window.URL.createObjectURL(new Blob([response]))
+            const url = window.URL.createObjectURL(new Blob([response.data]))
             const link = document.createElement('a')
             link.href = url
             link.setAttribute('download', `events-export-${new Date().toISOString().split('T')[0]}.csv`)
@@ -592,9 +627,11 @@ const exportEvents = async () => {
             window.URL.revokeObjectURL(url)
 
             toast.success('Events exported successfully')
+        } else {
+            throw new Error('No data received')
         }
     } catch (error) {
-        toast.error('Export events error:', error)
+        console.error('Failed to export events:', error)
         toast.error('Failed to export events')
     }
 }
@@ -605,7 +642,9 @@ const handleEventCreated = (event) => {
 }
 
 const handleEventUpdated = (event) => {
-    const index = events.value.findIndex(e => e.id === event.id)
+    const index = events.value.findIndex(e =>
+        (e._id || e.id) === (event._id || event.id)
+    )
     if (index !== -1) {
         events.value[index] = event
         toast.success(`Event "${event.name}" updated successfully`)
