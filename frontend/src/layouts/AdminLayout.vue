@@ -32,10 +32,11 @@
                     <router-link to="/admin" :class="getNavLinkClass('AdminDashboard')">
                         <ChartBarIcon class="w-5 h-5" />
                         <span>Dashboard</span>
-                        <div v-if="unreadNotifications > 0" class="ml-auto">
+                        <div v-if="adminStore.stats.unreadNotifications > 0" class="ml-auto">
                             <span
                                 class="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
-                                {{ unreadNotifications > 99 ? '99+' : unreadNotifications }}
+                                {{ adminStore.stats.unreadNotifications > 99 ? '99+' :
+                                adminStore.stats.unreadNotifications }}
                             </span>
                         </div>
                     </router-link>
@@ -50,9 +51,9 @@
                     <router-link to="/admin/events" :class="getNavLinkClass('AdminEvents')">
                         <CalendarDaysIcon class="w-5 h-5" />
                         <span>Event Management</span>
-                        <div v-if="stats.activeEvents > 0" class="ml-auto">
+                        <div v-if="adminStore.stats.activeEvents > 0" class="ml-auto">
                             <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                                {{ stats.activeEvents }}
+                                {{ adminStore.stats.activeEvents }}
                             </span>
                         </div>
                     </router-link>
@@ -60,9 +61,9 @@
                     <router-link to="/admin/committees" :class="getNavLinkClass('AdminCommittees')">
                         <UserGroupIcon class="w-5 h-5" />
                         <span>Committee Management</span>
-                        <div v-if="stats.activeCommittees > 0" class="ml-auto">
+                        <div v-if="adminStore.stats.activeCommittees > 0" class="ml-auto">
                             <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                {{ stats.activeCommittees }}
+                                {{ adminStore.stats.activeCommittees }}
                             </span>
                         </div>
                     </router-link>
@@ -70,9 +71,9 @@
                     <router-link to="/admin/users" :class="getNavLinkClass('AdminUsers')">
                         <UsersIcon class="w-5 h-5" />
                         <span>User Management</span>
-                        <div v-if="stats.activeUsers > 0" class="ml-auto">
+                        <div v-if="adminStore.stats.activeUsers > 0" class="ml-auto">
                             <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
-                                {{ stats.activeUsers }}
+                                {{ adminStore.stats.activeUsers }}
                             </span>
                         </div>
                     </router-link>
@@ -80,9 +81,9 @@
                     <router-link to="/admin/documents" :class="getNavLinkClass('AdminDocuments')">
                         <DocumentTextIcon class="w-5 h-5" />
                         <span>Document Management</span>
-                        <div v-if="stats.documentsUploaded > 0" class="ml-auto">
+                        <div v-if="adminStore.stats.documentsUploaded > 0" class="ml-auto">
                             <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                                {{ stats.documentsUploaded }}
+                                {{ adminStore.stats.documentsUploaded }}
                             </span>
                         </div>
                     </router-link>
@@ -102,9 +103,9 @@
                     <router-link to="/admin/logs" :class="getNavLinkClass('AdminLogs')">
                         <ClipboardDocumentListIcon class="w-5 h-5" />
                         <span>System Logs</span>
-                        <div v-if="stats.recentErrors > 0" class="ml-auto">
+                        <div v-if="adminStore.stats.recentErrors > 0" class="ml-auto">
                             <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
-                                {{ stats.recentErrors }}
+                                {{ adminStore.stats.recentErrors }}
                             </span>
                         </div>
                     </router-link>
@@ -134,36 +135,24 @@
                     <div class="space-y-2">
                         <div class="grid text-xs text-mun-gray-500">
                             <div class="flex items-center justify-between">
-                                <span>
-                                    API: 
-                                </span>
+                                <span>API:</span>
                                 <div
-                                    :class="['w-2 h-2 rounded-full', systemHealth.api ? 'bg-green-500' : 'bg-red-500']">
+                                    :class="['w-2 h-2 rounded-full', adminStore.systemHealth.api ? 'bg-green-500' : 'bg-red-500']">
                                 </div>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span>
-                                    DB: 
-                                </span>
+                                <span>DB:</span>
                                 <div
-                                    :class="['w-2 h-2 rounded-full', systemHealth.api ? 'bg-green-500' : 'bg-red-500']">
+                                    :class="['w-2 h-2 rounded-full', adminStore.systemHealth.database ? 'bg-green-500' : 'bg-red-500']">
                                 </div>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span>
-                                    Response Time: 
-                                </span>
-                                <span>
-                                    {{ responseTime }}ms
-                                </span>
+                                <span>Response Time:</span>
+                                <span>{{ adminStore.performanceMetrics.responseTime }}ms</span>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span>
-                                    Active Connections: 
-                                </span>
-                                <span>
-                                    {{ activeConnections }}
-                                </span>
+                                <span>Active Connections:</span>
+                                <span>{{ adminStore.performanceMetrics.activeConnections }}</span>
                             </div>
                         </div>
                     </div>
@@ -172,11 +161,13 @@
                     <div class="text-xs text-mun-gray-500">
                         <div class="grid grid-cols-2 gap-2">
                             <div>
-                                <div class="font-semibold text-mun-gray-900">{{ stats.totalUsers || 0 }}</div>
+                                <div class="font-semibold text-mun-gray-900">{{ adminStore.stats.totalUsers || 0 }}
+                                </div>
                                 <div>Total Users</div>
                             </div>
                             <div>
-                                <div class="font-semibold text-mun-gray-900">{{ stats.totalEvents || 0 }}</div>
+                                <div class="font-semibold text-mun-gray-900">{{ adminStore.stats.totalEvents || 0 }}
+                                </div>
                                 <div>Events</div>
                             </div>
                         </div>
@@ -234,45 +225,27 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useAdminStore } from '@/stores/admin'
 import { useToast } from '@/plugins/toast'
 
 // Icons
 import {
-    XMarkIcon, ChartBarIcon, CalendarDaysIcon, UserGroupIcon, UsersIcon, DocumentTextIcon, DocumentChartBarIcon, CogIcon, UserIcon, ArrowRightOnRectangleIcon, ClipboardDocumentListIcon
+    XMarkIcon, ChartBarIcon, CalendarDaysIcon, UserGroupIcon, UsersIcon, DocumentTextIcon,
+    DocumentChartBarIcon, CogIcon, UserIcon, ArrowRightOnRectangleIcon, ClipboardDocumentListIcon
 } from '@heroicons/vue/24/outline'
 
 // Stores
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const adminStore = useAdminStore()
 const toast = useToast()
 
 // State
 const sidebarCollapsed = ref(false)
-const unreadNotifications = ref(0)
-
-// System data
-const stats = ref({
-    totalEvents: 0,
-    activeEvents: 0,
-    totalCommittees: 0,
-    activeCommittees: 0,
-    totalUsers: 0,
-    activeUsers: 0,
-    documentsUploaded: 0
-})
-
-const systemHealth = ref({
-    api: true,
-    database: true,
-    websocket: true
-})
-
-const responseTime = ref(0)
-const activeConnections = ref(0)
 
 // Methods
 const toggleSidebar = () => {
@@ -288,46 +261,30 @@ const getNavLinkClass = (routeName) => {
 
 const handleLogout = async () => {
     try {
+        // Stop auto-refresh when logging out
+        adminStore.stopAutoRefresh()
+
         await authStore.logout()
         toast.success('Logged out successfully')
         router.push('/auth/login')
     } catch (error) {
-        toast.error('Logout error:', error)
+        console.error('Logout error:', error)
         toast.error('Failed to logout')
-    }
-}
-
-const loadAdminData = async () => {
-    try {
-        // Load admin-specific data
-        // This would typically come from your API
-        stats.value = {
-            totalEvents: 0,
-            activeEvents: 0,
-            totalCommittees: 0,
-            activeCommittees: 0,
-            totalUsers: 0,
-            activeUsers: 0,
-            documentsUploaded: 0
-        }
-    } catch (error) {
-        toast.error('Failed to load admin data:', error)
     }
 }
 
 // Lifecycle
 onMounted(async () => {
-    await loadAdminData()
+    // Initialize admin data when layout loads
+    await adminStore.initializeAdminData()
 
-    // Set up data refresh interval
-    const refreshInterval = setInterval(async () => {
-        await loadAdminData()
-    }, 30000) // Refresh every 30 seconds
+    // Start auto-refresh for system health and stats
+    adminStore.startAutoRefresh(30000) // Refresh every 30 seconds
+})
 
-    // Cleanup on unmount
-    onUnmounted(() => {
-        clearInterval(refreshInterval)
-    })
+onUnmounted(() => {
+    // Clean up auto-refresh when component unmounts
+    adminStore.stopAutoRefresh()
 })
 </script>
 

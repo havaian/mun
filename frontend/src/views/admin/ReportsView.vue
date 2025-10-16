@@ -1,13 +1,14 @@
 <template>
     <div class="p-6 space-y-6">
         <!-- Header -->
-        <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 flex items-center justify-between">
+        <div
+            class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-mun-gray-900">Reports & Analytics</h1>
                 <p class="text-mun-gray-600">Generate reports and view system analytics</p>
             </div>
             <div class="flex items-center space-x-3">
-                <button @click="refreshData" :disabled="isLoading" class="btn-un-secondary">
+                <button @click="refreshData" :disabled="adminStore.isLoading" class="btn-un-secondary">
                     <ArrowPathIcon class="w-5 h-5 mr-2" />
                     Refresh
                 </button>
@@ -27,7 +28,7 @@
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Total Documents</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.totalDocuments || 0 }}</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.documentsUploaded || 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -117,7 +118,6 @@
         <!-- System Health -->
         <div class="mun-card p-6">
             <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">System Health</h3>
-            <!-- Made both columns consistent with equal height and proper alignment -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- System Status -->
                 <div class="space-y-4">
@@ -146,7 +146,8 @@
                         </div>
                         <div class="flex items-center justify-between py-2">
                             <span class="text-sm text-mun-gray-600">Memory Usage</span>
-                            <span class="font-medium text-mun-gray-900">{{ systemHealth.memoryUsage || '--' }}%</span>
+                            <span class="font-medium text-mun-gray-900">{{
+                                formatMemoryUsage(performanceMetrics.memoryUsage) }}</span>
                         </div>
                     </div>
                 </div>
@@ -157,7 +158,8 @@
                     <div class="space-y-3">
                         <div class="flex items-center justify-between py-2">
                             <span class="text-sm text-mun-gray-600">Uptime</span>
-                            <span class="font-medium text-mun-gray-900">{{ formatUptime(systemHealth.uptime) }}</span>
+                            <span class="font-medium text-mun-gray-900">{{ adminStore.formatUptime(healthData.uptime)
+                                }}</span>
                         </div>
                         <div class="flex items-center justify-between py-2">
                             <span class="text-sm text-mun-gray-600">Active Sessions</span>
@@ -165,12 +167,13 @@
                         </div>
                         <div class="flex items-center justify-between py-2">
                             <span class="text-sm text-mun-gray-600">Avg Response Time</span>
-                            <span class="font-medium text-mun-gray-900">{{ systemHealth.avgResponseTime || '--'
-                            }}ms</span>
+                            <span class="font-medium text-mun-gray-900">{{ performanceMetrics.responseTime || '--'
+                                }}ms</span>
                         </div>
                         <div class="flex items-center justify-between py-2">
                             <span class="text-sm text-mun-gray-600">Error Rate</span>
-                            <span class="font-medium text-mun-gray-900">{{ systemHealth.errorRate || 0 }}%</span>
+                            <span class="font-medium text-mun-gray-900">{{ formatErrorRate(performanceMetrics.errorRate)
+                                }}</span>
                         </div>
                     </div>
                 </div>
@@ -194,7 +197,7 @@
                 </div>
             </div>
 
-            <div v-if="isLoading" class="flex items-center justify-center py-12">
+            <div v-if="isLoadingActivity" class="flex items-center justify-center py-12">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
             </div>
 
@@ -205,12 +208,13 @@
             </div>
 
             <div v-else class="divide-y divide-mun-gray-200">
-                <div v-for="activity in recentActivity" :key="activity._id"
+                <div v-for="activity in recentActivity" :key="activity._id || activity.id"
                     class="px-6 py-4 hover:bg-mun-gray-50 transition-colors">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-mun-gray-900">{{ activity.action }}</p>
-                            <p class="text-sm text-mun-gray-600">{{ activity.details }}</p>
+                            <p class="text-sm font-medium text-mun-gray-900">{{ activity.action || activity.description
+                                }}</p>
+                            <p class="text-sm text-mun-gray-600">{{ activity.details || activity.description }}</p>
                         </div>
                         <div class="text-right">
                             <p class="text-sm text-mun-gray-500">{{ formatDate(activity.timestamp) }}</p>
@@ -230,7 +234,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useAppStore } from '@/stores/app'
+import { useAdminStore } from '@/stores/admin'
 import { useToast } from '@/plugins/toast'
 import { apiMethods } from '@/utils/api'
 
@@ -252,35 +256,22 @@ import CustomReportModal from '@/components/admin/CustomReportModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const appStore = useAppStore()
+const adminStore = useAdminStore()
 const toast = useToast()
 
-// State
-const isLoading = ref(false)
+// Local state for page-specific loading
 const isGenerating = ref({})
 const showCustomReportModal = ref(false)
 const activityFilter = ref('')
-
-const stats = ref({
-    totalDocuments: 0,
-    activeUsers: 0,
-    activeEvents: 0,
-    totalCommittees: 0,
-    activeSessions: 0
-})
-
-const systemHealth = ref({
-    api: true,
-    database: true,
-    websocket: true,
-    memoryUsage: null,
-    uptime: null,
-    avgResponseTime: null,
-    errorRate: null
-})
-
-const recentActivity = ref([])
+const isLoadingActivity = ref(false)
 const committees = ref([])
+
+// Use admin store data via computed properties
+const stats = computed(() => adminStore.stats)
+const systemHealth = computed(() => adminStore.systemHealth)
+const healthData = computed(() => adminStore.healthData)
+const performanceMetrics = computed(() => adminStore.performanceMetrics)
+const recentActivity = computed(() => adminStore.recentActivity)
 
 // System Exports
 const systemExports = [
@@ -305,76 +296,6 @@ const systemExports = [
 ]
 
 // Methods
-const loadReportsData = async () => {
-    try {
-        isLoading.value = true
-
-        // Load dashboard stats and system health using proper API methods
-        const [statsResponse, healthResponse, activityResponse] = await Promise.all([
-            apiMethods.admin.getDashboardStats(),
-            apiMethods.admin.getSystemHealth(),
-            apiMethods.admin.getRecentActivity({ limit: 10 })
-        ])
-
-        // Update stats
-        if (statsResponse?.data) {
-            stats.value = {
-                totalDocuments: statsResponse.data.stats?.totalDocuments || 0,
-                activeUsers: statsResponse.data.stats?.activeUsers || 0,
-                activeEvents: statsResponse.data.stats?.activeEvents || 0,
-                totalCommittees: statsResponse.data.stats?.totalCommittees || 0,
-                activeSessions: statsResponse.data.stats?.activeSessions || 0
-            }
-        }
-
-        // Update system health
-        if (healthResponse?.data) {
-            systemHealth.value = {
-                api: healthResponse.data.services?.api || true,
-                database: healthResponse.data.services?.database || true,
-                websocket: healthResponse.data.services?.websocket || true,
-                memoryUsage: healthResponse.data.memory?.usage || null,
-                uptime: healthResponse.data.uptime || null,
-                avgResponseTime: healthResponse.data.performance?.avgResponseTime || null,
-                errorRate: healthResponse.data.performance?.errorRate || null
-            }
-        }
-
-        // Update activity
-        if (activityResponse?.data?.activities) {
-            recentActivity.value = activityResponse.data.activities
-        }
-
-        // Load committees for exports
-        await loadCommittees()
-
-    } catch (error) {
-        toast.error('Failed to load reports data')
-        console.error('Load reports error:', error)
-
-        // Set defaults on error
-        stats.value = {
-            totalDocuments: 0,
-            activeUsers: 0,
-            activeEvents: 0,
-            totalCommittees: 0,
-            activeSessions: 0
-        }
-        systemHealth.value = {
-            api: false,
-            database: false,
-            websocket: false,
-            memoryUsage: null,
-            uptime: null,
-            avgResponseTime: null,
-            errorRate: null
-        }
-        recentActivity.value = []
-    } finally {
-        isLoading.value = false
-    }
-}
-
 const loadCommittees = async () => {
     try {
         const response = await apiMethods.committees.getAll()
@@ -383,28 +304,39 @@ const loadCommittees = async () => {
         }
     } catch (error) {
         console.error('Failed to load committees:', error)
+        toast.error('Failed to load committees')
     }
 }
 
 const loadActivity = async () => {
+    isLoadingActivity.value = true
     try {
         const params = { limit: 20 }
         if (activityFilter.value) {
             params.type = activityFilter.value
         }
 
-        const response = await apiMethods.admin.getRecentActivity(params)
-        if (response?.data?.activities) {
-            recentActivity.value = response.data.activities
-        }
+        await adminStore.loadRecentActivity(params.limit)
     } catch (error) {
         console.error('Failed to load activity:', error)
+        toast.error('Failed to load activity')
+    } finally {
+        isLoadingActivity.value = false
     }
 }
 
 const refreshData = async () => {
-    await loadReportsData()
-    toast.success('Reports data refreshed')
+    try {
+        await Promise.all([
+            adminStore.refreshAllData(),
+            loadCommittees(),
+            loadActivity()
+        ])
+        toast.success('Reports data refreshed')
+    } catch (error) {
+        console.error('Refresh error:', error)
+        toast.error('Failed to refresh data')
+    }
 }
 
 const downloadExport = async (exportItem) => {
@@ -479,16 +411,20 @@ const handleCustomReportGenerated = (report) => {
 }
 
 // Utility functions
-const formatUptime = (seconds) => {
-    if (!seconds) return '--'
+const formatMemoryUsage = (memoryData) => {
+    if (!memoryData) return '--'
 
-    const days = Math.floor(seconds / 86400)
-    const hours = Math.floor((seconds % 86400) / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
+    if (typeof memoryData === 'object' && memoryData.heapUsed && memoryData.heapTotal) {
+        const usagePercent = Math.round((memoryData.heapUsed / memoryData.heapTotal) * 100)
+        return `${usagePercent}%`
+    }
 
-    if (days > 0) return `${days}d ${hours}h`
-    if (hours > 0) return `${hours}h ${minutes}m`
-    return `${minutes}m`
+    return memoryData.toString() + '%'
+}
+
+const formatErrorRate = (errorRate) => {
+    if (errorRate === null || errorRate === undefined) return '0%'
+    return `${errorRate}%`
 }
 
 const formatDate = (dateString) => {
@@ -510,7 +446,11 @@ const formatDate = (dateString) => {
 }
 
 // Lifecycle
-onMounted(() => {
-    loadReportsData()
+onMounted(async () => {
+    // Load page-specific data that may not be in the admin store
+    await Promise.all([
+        loadCommittees(),
+        loadActivity()
+    ])
 })
 </script>

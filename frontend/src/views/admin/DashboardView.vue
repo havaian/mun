@@ -212,7 +212,7 @@
                                 </div>
                                 <div>
                                     <div class="text-lg font-bold text-mun-gray-900">{{ formatUptime(healthData.uptime)
-                                    }}</div>
+                                        }}</div>
                                     <div class="text-xs text-mun-gray-600">Uptime</div>
                                 </div>
                                 <div>
@@ -262,9 +262,9 @@
                                     <p class="text-sm text-mun-gray-900">{{ activity.description }}</p>
                                     <div class="flex items-center space-x-2 mt-1">
                                         <span class="text-xs text-mun-gray-500">{{ formatTimeAgo(activity.timestamp)
-                                            }}</span>
+                                        }}</span>
                                         <span v-if="activity.user" class="text-xs text-mun-gray-500">by {{ activity.user
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -330,7 +330,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useWebSocketStore } from '@/stores/websocket'
+import { useAdminStore } from '@/stores/admin'
 import { useToast } from '@/plugins/toast'
 import { apiMethods } from '@/utils/api'
 import format from '@/utils/time'
@@ -355,74 +355,33 @@ import {
 // Stores
 const router = useRouter()
 const authStore = useAuthStore()
-const wsStore = useWebSocketStore()
+const adminStore = useAdminStore()
 const toast = useToast()
 
-// State
+// Local state for component-specific loading
 const isInitialLoading = ref(true)
 const isRefreshing = ref(false)
 const isLoadingActivity = ref(false)
 const isLoadingEvents = ref(false)
 const isGeneratingQR = ref(false)
-const lastUpdated = ref(new Date())
 
-// Data
-const stats = ref({
-    totalEvents: 0,
-    activeEvents: 0,
-    totalCommittees: 0,
-    activeCommittees: 0,
-    registeredUsers: 0,
-    activeUsers: 0,
-    documentsUploaded: 0,
-    pendingModeration: 0
-})
+// Use admin store data directly
+const stats = computed(() => adminStore.stats)
+const systemHealth = computed(() => adminStore.systemHealth)
+const healthData = computed(() => adminStore.healthData)
+const performanceMetrics = computed(() => adminStore.performanceMetrics)
+const recentActivity = computed(() => adminStore.recentActivity)
+const activeEvents = computed(() => adminStore.activeEvents)
+const lastUpdated = computed(() => adminStore.lastUpdated)
+const responseTime = computed(() => adminStore.performanceMetrics.responseTime)
 
-const systemHealth = ref({
-    api: true,
-    database: true,
-    websocket: true
-})
+// Use admin store computed values
+const wsStatus = computed(() => adminStore.wsStatus)
 
-const healthData = ref({
-    status: 'healthy',
-    uptime: 0,
-    version: '1.0.0',
-    modules: {},
-    services: {}
-})
-
-const responseTime = ref(0)
-const recentActivity = ref([])
-const activeEvents = ref([])
-
-// Computed
-const wsStatus = computed(() => {
-    if (!wsStore) return { connected: false, text: 'Not Available' }
-    return {
-        connected: wsStore.isConnected,
-        text: wsStore.isConnected ? 'Connected' : wsStore.isConnecting ? 'Connecting...' : 'Disconnected'
-    }
-})
-
-// Health status methods
-const getOverallHealthColor = () => {
-    if (healthData.value.status === 'healthy') return 'bg-green-500'
-    if (healthData.value.status === 'degraded') return 'bg-yellow-500'
-    return 'bg-red-500'
-}
-
-const getOverallHealthTextColor = () => {
-    if (healthData.value.status === 'healthy') return 'text-green-700'
-    if (healthData.value.status === 'degraded') return 'text-yellow-700'
-    return 'text-red-700'
-}
-
-const getOverallHealthStatus = () => {
-    if (healthData.value.status === 'healthy') return 'All Systems Operational'
-    if (healthData.value.status === 'degraded') return 'Some Issues Detected'
-    return 'Major Issues'
-}
+// Health status methods - delegate to admin store
+const getOverallHealthColor = () => adminStore.getHealthColor(adminStore.overallHealthStatus)
+const getOverallHealthTextColor = () => adminStore.getHealthTextColor(adminStore.overallHealthStatus)
+const getOverallHealthStatus = () => adminStore.healthStatusText
 
 const getModuleStatusColor = (status) => {
     return status === 'active' ? 'bg-green-500' : 'bg-red-500'
@@ -454,35 +413,11 @@ const getServiceStatusTextColor = (status) => {
     return statusMap[status] || 'text-gray-700'
 }
 
-// API Methods - Using apiMethods from utils
-const loadDashboardStats = async () => {
-    try {
-        const response = await apiMethods.admin.getDashboardStats()
-
-        if (response?.data?.success) {
-            stats.value = { ...stats.value, ...response.data.stats }
-        } else {
-            throw new Error(response?.data?.error || 'Failed to load stats')
-        }
-    } catch (error) {
-        console.error('Failed to load dashboard stats:', error)
-        toast.error('Failed to load dashboard statistics')
-    }
-}
-
+// Component-specific methods
 const loadRecentActivity = async () => {
     isLoadingActivity.value = true
     try {
-        const response = await apiMethods.admin.getRecentActivity({ limit: 10 })
-
-        if (response?.data?.success) {
-            recentActivity.value = response.data.activities || []
-        } else {
-            throw new Error(response?.data?.error || 'Failed to load activity')
-        }
-    } catch (error) {
-        console.error('Failed to load recent activity:', error)
-        toast.error('Failed to load recent activity')
+        await adminStore.loadRecentActivity(10)
     } finally {
         isLoadingActivity.value = false
     }
@@ -491,57 +426,9 @@ const loadRecentActivity = async () => {
 const loadActiveEvents = async () => {
     isLoadingEvents.value = true
     try {
-        const response = await apiMethods.events.getAll({ status: 'active' })
-
-        activeEvents.value = Array.isArray(response?.data) ? response.data : response?.data?.events || []
-    } catch (error) {
-        console.error('Failed to load active events:', error)
-        toast.error('Failed to load active events')
+        await adminStore.loadActiveEvents()
     } finally {
         isLoadingEvents.value = false
-    }
-}
-
-const loadSystemHealth = async () => {
-    try {
-        const startTime = Date.now()
-        const response = await apiMethods.admin.getSystemHealth()
-        responseTime.value = Date.now() - startTime
-
-        if (response?.data) {
-            const data = response.data;
-
-            healthData.value = {
-                status: data.status || 'unknown',
-                uptime: data.uptime || 0,
-                version: data.version || '1.0.0',
-                modules: data.modules || {},
-                services: data.services || {}
-            }
-
-            systemHealth.value = {
-                api: data.status === 'healthy',
-                database: data.services?.database === 'connected',
-                websocket: wsStore?.isConnected || false
-            }
-        } else {
-            throw new Error('Invalid health response')
-        }
-    } catch (error) {
-        console.error('Failed to load system health:', error)
-        systemHealth.value = {
-            api: false,
-            database: false,
-            websocket: false
-        }
-        healthData.value = {
-            status: 'unhealthy',
-            uptime: 0,
-            version: 'unknown',
-            modules: {},
-            services: {}
-        }
-        toast.error('Failed to load system health')
     }
 }
 
@@ -550,17 +437,7 @@ const refreshAll = async () => {
 
     isRefreshing.value = true
     try {
-        await Promise.all([
-            loadDashboardStats(),
-            loadRecentActivity(),
-            loadActiveEvents(),
-            loadSystemHealth()
-        ])
-        lastUpdated.value = new Date()
-        toast.success('Dashboard refreshed')
-    } catch (error) {
-        console.error('Failed to refresh dashboard:', error)
-        toast.error('Failed to refresh dashboard')
+        await adminStore.refreshAllData()
     } finally {
         isRefreshing.value = false
     }
@@ -616,18 +493,7 @@ const formatEventDate = (dateString) => {
     }).format(date)
 }
 
-const formatUptime = (uptime) => {
-    if (!uptime) return '0s'
-
-    const days = Math.floor(uptime / 86400)
-    const hours = Math.floor((uptime % 86400) / 3600)
-    const minutes = Math.floor((uptime % 3600) / 60)
-
-    if (days > 0) return `${days}d ${hours}h`
-    if (hours > 0) return `${hours}h ${minutes}m`
-    if (minutes > 0) return `${minutes}m`
-    return `${Math.floor(uptime)}s`
-}
+const formatUptime = (uptime) => adminStore.formatUptime(uptime)
 
 const getActivityIcon = (type) => {
     const iconMap = {
@@ -656,13 +522,11 @@ const getActivityIconClass = (type) => {
 // Lifecycle
 onMounted(async () => {
     try {
+        // Load dashboard-specific data that may not be loaded by the layout
         await Promise.all([
-            loadDashboardStats(),
             loadRecentActivity(),
-            loadActiveEvents(),
-            loadSystemHealth()
+            loadActiveEvents()
         ])
-        lastUpdated.value = new Date()
     } catch (error) {
         console.error('Dashboard initialization error:', error)
         toast.error('Failed to load dashboard')
@@ -670,16 +534,16 @@ onMounted(async () => {
         isInitialLoading.value = false
     }
 
-    // Auto-refresh interval (every 60 seconds)
-    const refreshInterval = setInterval(async () => {
-        if (!isRefreshing.value) {
-            await loadSystemHealth()
-            await loadDashboardStats()
+    // Set up dashboard-specific auto-refresh for activity and events
+    const dashboardRefreshInterval = setInterval(async () => {
+        if (!isRefreshing.value && !isLoadingActivity.value && !isLoadingEvents.value) {
+            await loadRecentActivity()
+            await loadActiveEvents()
         }
-    }, 60000)
+    }, 120000) // Refresh every 2 minutes
 
     onUnmounted(() => {
-        clearInterval(refreshInterval)
+        clearInterval(dashboardRefreshInterval)
     })
 })
 </script>
