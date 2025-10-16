@@ -125,206 +125,250 @@ export const apiMethods = {
     put: (url, data = {}, config = {}) => api.put(url, data, config),
     delete: (url, config = {}) => api.delete(url, config),
     patch: (url, data = {}, config = {}) => api.patch(url, data, config),
-    
+
     // Admin Management
     admin: {
-        // Dashboard
+        // ✅ IMPLEMENTED - Dashboard
         getDashboardStats: () => api.get('/admin/dashboard/stats'),
         getRecentActivity: (params = {}) => api.get('/admin/dashboard/activity', { params }),
 
-        // System Health  
-        getSystemHealth: () => api.get('/admin/system/health'),
-        getPerformanceMetrics: () => api.get('/admin/performance/metrics'),
-        getResponseTimes: (params = {}) => api.get('/admin/performance/response-times', { params }),
+        // ✅ IMPLEMENTED - System Health  
+        getSystemHealth: () => api.get('/health'),
+        getPerformanceMetrics: () => api.get('/admin/performance/metrics'), // NOT USED
+        getResponseTimes: (params = {}) => api.get('/admin/performance/response-times', { params }), // NOT USED
 
-        // System Management
+        // ✅ IMPLEMENTED - System Management
         clearCaches: () => api.post('/admin/system/clear-cache'),
 
-        // Analytics
-        getUserEngagementAnalytics: (params = {}) => api.get('/admin/analytics/user-engagement', { params }),
-        getUsagePatterns: (params = {}) => api.get('/admin/analytics/usage-patterns', { params }),
+        // ✅ IMPLEMENTED - Analytics
+        getUserEngagementAnalytics: (params = {}) => api.get('/admin/analytics/user-engagement', { params }), // NOT USED
+        getUsagePatterns: (params = {}) => api.get('/admin/analytics/usage-patterns', { params }), // NOT USED
 
-        // Bulk Operations
+        // ✅ IMPLEMENTED - Bulk Operations
         bulkGenerateQR: (data) => api.post('/admin/committees/bulk-qr', data),
 
-        // Maintenance
-        performMaintenance: (data) => api.post('/admin/maintenance/execute', data), // TODO
-        
-        // Miscellaneous
-        createBackup: (data) => api.post('/admin/maintenance/backup', data),
-        getReportFields: (dataSource) => api.get(`/admin/reports/fields/${dataSource}`), // TODO
-        generateReportPreview: (data) => api.post('/admin/reports/preview', data), // TODO
-        saveReportTemplate: (data) => api.post('/admin/reports/templates', data), // TODO
-        generateReport: (data) => api.post('/admin/reports/generate', data, { responseType: 'blob' }), // TODO
-        generateCustomReport: (data) => api.post('/admin/reports/export', data, { responseType: 'blob' }), // TODO
-        getSettings: () => api.get('/admin/settings'), // TODO
-        updateSettings: (settings) => api.put('/admin/settings', { settings }), // TODO
-        testEmailSettings: (emailSettings) => api.post('/admin/settings/test-email', { emailSettings }), // TODO
-        createBackup: () => api.post('/admin/maintenance/backup')
+        // ❌ TODO - Missing Implementation
+        performMaintenance: (data) => api.post('/admin/maintenance/execute', data), // TODO: Route and controller not implemented // NOT USED
+
+        // ❌ TODO - Missing Implementation (Reports System)
+        getReportFields: (dataSource) => api.get(`/admin/reports/fields/${dataSource}`), // TODO: Route and controller not implemented
+        generateReportPreview: (data) => api.post('/admin/reports/preview', data), // TODO: Route and controller not implemented
+        saveReportTemplate: (data) => api.post('/admin/reports/templates', data), // TODO: Route and controller not implemented
+        generateReport: (data) => api.post('/admin/reports/generate', data, { responseType: 'blob' }), // TODO: Route and controller not implemented
+        generateCustomReport: (data) => api.post('/admin/reports/export', data, { responseType: 'blob' }), // TODO: Route and controller not implemented
+
+        // ❌ TODO - Missing Implementation (Settings System)
+        getSettings: () => api.get('/admin/settings'), // TODO: Route and controller not implemented
+        updateSettings: (settings) => api.put('/admin/settings', { settings }), // TODO: Route and controller not implemented
+        testEmailSettings: (emailSettings) => api.post('/admin/settings/test-email', { emailSettings }), // TODO: Route and controller not implemented
+
+        // ⚠️ DUPLICATE - Two different signatures for backup
+        createBackup: (data) => api.post('/admin/maintenance/backup', data), // DECISION NEEDED: This has data parameter
+        // createBackup: () => api.post('/admin/maintenance/backup') // DUPLICATE: This has no parameters
     },
 
-    // Authentication
+    // ✅ FULLY IMPLEMENTED - Authentication (8/8 methods working)
     auth: {
-        adminLogin: (credentials) => api.post('/auth/admin-login', credentials),
-        qrLogin: (token) => api.post('/auth/qr-login', { token }),
-        bindEmail: (token, email) => api.post('/auth/bind-email', { token, email }),
-        emailLogin: (email) => api.post('/auth/email-login', { email }),
-        logout: () => api.post('/auth/logout'),
-        validateSession: () => api.get('/auth/validate-session'),
-        checkQrStatus: (token) => api.get(`/auth/qr-status/${token}`),
-        reactivateQr: (userId) => api.post('/auth/reactivate-qr', { userId })
+        adminLogin: (credentials) => api.post('/auth/admin-login', credentials), // NOT USED
+        qrLogin: (token) => api.post('/auth/qr-login', { token }), // NOT USED
+        bindEmail: (token, email) => api.post('/auth/bind-email', { token, email }), // NOT USED
+        emailLogin: (email) => api.post('/auth/email-login', { email }), // NOT USED
+        logout: () => api.post('/auth/logout'), // NOT USED
+        validateSession: () => api.get('/auth/validate-session'), // NOT USED
+        checkQrStatus: (token) => api.get(`/auth/qr-status/${token}`), // NOT USED
+        reactivateQr: (userId) => api.post('/auth/reactivate-qr', { userId }) // NOT USED
     },
 
-    // Events
+    // ✅ FULLY IMPLEMENTED - Events (7/7 methods working)
     events: {
         getAll: (params = {}) => api.get('/events/', { params }),
-        getById: (id) => api.get(`/events/${id}`),
-        getByIdStats: (id) => api.get(`/events/${id}/statistics`),
+        getById: (id) => api.get(`/events/${id}`), // NOT USED
+        getByIdStats: (id) => api.get(`/events/${id}/statistics`), // NOT USED
         create: (data) => api.post('/events', data),
         update: (id, data) => api.put(`/events/${id}`, data),
-        updateStatusById: (id, data) => api.put(`/events/${id}/status`, data),
+        updateStatusById: (id, data) => api.put(`/events/${id}/status`, data), // NOT USED
         delete: (id) => api.delete(`/events/${id}`)
     },
 
     // Export Management  
     exports: {
+        // ✅ IMPLEMENTED - Admin Export Routes
         getSystemConfig: () => api.get('/admin/export/config'),
-        getAuditLogs: (params = {}) => api.get('/admin/export/audit-logs', { params }),
+        getAuditLogs: (params = {}) => api.get('/admin/export/audit-logs', { params }), // NOT USED
+
+        // ✅ IMPLEMENTED - Basic Export Routes
         generateQRPDF: (committeeId) => api.get(`/export/qr-codes/${committeeId}`, { responseType: 'blob' }),
-        exportCommitteeStats: (committeeId) => api.get(`/export/statistics/${committeeId}`, { responseType: 'blob' }),
-        exportVotingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`, { responseType: 'blob' }), // DUPLICATE
-        exportResolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`, { responseType: 'blob' }), // DUPLICATE
+
+        // ⚠️ MISMATCH - Frontend expects blob but backend returns JSON
+        exportCommitteeStats: (committeeId) => api.get(`/export/statistics/${committeeId}`, { responseType: 'blob' }), // MISMATCH: Backend returns JSON, not blob
+
+        // ⚠️ DUPLICATE - Two identical methods for voting results
+        exportVotingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`, { responseType: 'blob' }), // DUPLICATE: Same as getVotingResults below // NOT USED
+        getVotingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`), // DUPLICATE: Remove one of these // NOT USED
+
+        // ⚠️ DUPLICATE - Two identical methods for resolutions
+        exportResolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`, { responseType: 'blob' }), // DUPLICATE: Same as getResolutions below // NOT USED
+        getResolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`), // DUPLICATE: Remove one of these // NOT USED
+
+        // ✅ IMPLEMENTED - Complete Report (placeholder)
         exportCompleteReport: (committeeId) => api.get(`/export/committee-report/${committeeId}`, { responseType: 'blob' }),
-        exportEventData: (eventId) => api.get(`/export/events/${eventId}`, { responseType: 'blob' }), // TODO
-        
-        getStatistics: (committeeId) => api.get(`/export/statistics/${committeeId}`),
-        getVotingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`), // DUPLICATE
-        getResolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`), // DUPLICATE
 
-        getEventCSV: (eventId) => api.get(`/export/event/${eventId}/csv`, { responseType: 'blob' }), // TODO
-        getEventFullReport: (eventId) => api.get(`/export/event/${eventId}/full-report`, { responseType: 'blob' }), // TODO
-        getCommitteeCSV: (committeeId) => api.get(`/export/committee/${committeeId}/csv`, { responseType: 'blob' }), // TODO
-        getCommitteeStatistics: (committeeId) => api.get(`/export/committee/${committeeId}/statistics`, { responseType: 'blob' }), // TODO
-        getResolutionsExport: (committeeId) => api.get(`/export/committee/${committeeId}/resolutions`, { responseType: 'blob' }), // TODO
-        getVotingRecords: (committeeId) => api.get(`/export/committee/${committeeId}/voting-records`, { responseType: 'blob' }), // TODO
-        getAttendanceExport: (committeeId) => api.get(`/export/committee/${committeeId}/attendance`, { responseType: 'blob' }), // TODO
-        getMessagingStats: (committeeId) => api.get(`/export/committee/${committeeId}/messaging-stats`, { responseType: 'blob' }), // TODO
+        // ✅ IMPLEMENTED - Basic Statistics (without blob)
+        getStatistics: (committeeId) => api.get(`/export/statistics/${committeeId}`), // NOT USED
 
-        getPDFExport: (type, id) => api.get(`/export/${type}/${id}/pdf`, { responseType: 'blob' }), // TODO
-        getExcelExport: (type, id) => api.get(`/export/${type}/${id}/excel`, { responseType: 'blob' }), // TODO
-        getJSONExport: (type, id) => api.get(`/export/${type}/${id}/json`), // TODO
-        exportCommitteesBulk: (ids) => api.get('/admin/committees/export', {  // TODO
-            params: { ids }, 
-            responseType: 'blob' 
+        // ❌ TODO - Event Export Routes (Missing)
+        exportEventData: (eventId) => api.get(`/export/events/${eventId}`, { responseType: 'blob' }), // TODO: Route not implemented
+        getEventCSV: (eventId) => api.get(`/export/event/${eventId}/csv`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
+        getEventFullReport: (eventId) => api.get(`/export/event/${eventId}/full-report`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
+
+        // ❌ TODO - Committee Detail Export Routes (Missing)
+        getCommitteeCSV: (committeeId) => api.get(`/export/committee/${committeeId}/csv`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
+        getCommitteeStatistics: (committeeId) => api.get(`/export/committee/${committeeId}/statistics`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
+        getResolutionsExport: (committeeId) => api.get(`/export/committee/${committeeId}/resolutions`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
+        getVotingRecords: (committeeId) => api.get(`/export/committee/${committeeId}/voting-records`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
+        getAttendanceExport: (committeeId) => api.get(`/export/committee/${committeeId}/attendance`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
+        getMessagingStats: (committeeId) => api.get(`/export/committee/${committeeId}/messaging-stats`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
+
+        // ❌ TODO - Generic Export Routes (Missing)
+        getPDFExport: (type, id) => api.get(`/export/${type}/${id}/pdf`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
+        getExcelExport: (type, id) => api.get(`/export/${type}/${id}/excel`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
+        getJSONExport: (type, id) => api.get(`/export/${type}/${id}/json`), // TODO: Route not implemented // NOT USED
+
+        // ❌ TODO - Admin Bulk Export Routes (Missing)
+        exportCommitteesBulk: (ids) => api.get('/admin/committees/export', { // TODO: Route not implemented in admin routes
+            params: { ids },
+            responseType: 'blob'
         }),
-        exportEvents: () => api.get('/admin/events/export', { responseType: 'blob' }), // TODO
-        exportUsers: () => api.get('/admin/users/export', { responseType: 'blob' }) // TODO
+        exportEvents: () => api.get('/admin/events/export', { responseType: 'blob' }), // TODO: Route not implemented in admin routes
+        exportUsers: () => api.get('/admin/users/export', { responseType: 'blob' }) // TODO: Route not implemented in admin routes
     },
 
-    // Committees
+    // ✅ FULLY IMPLEMENTED - Committees (17/17 methods working perfectly)
     committees: {
         getAll: (params = {}) => api.get('/committees/', { params }),
-        getById: (id) => api.get(`/committees/${id}`),
+        getById: (id) => api.get(`/committees/${id}`), // NOT USED
         create: (data) => api.post('/committees', data),
         update: (id, data) => api.put(`/committees/${id}`, data),
         delete: (id) => api.delete(`/committees/${id}`),
-        addCountry: (id, countryData) => api.post(`/committees/${id}/countries`, countryData),
-        removeCountry: (id, countryName) => api.delete(`/committees/${id}/countries/${countryName}`),
-        updateCountryStatus: (id, countryName) => api.put(`/committees/${id}/countries/${countryName}/status`),
+        addCountry: (id, countryData) => api.post(`/committees/${id}/countries`, countryData), // NOT USED
+        removeCountry: (id, countryName) => api.delete(`/committees/${id}/countries/${countryName}`), // NOT USED
+        updateCountryStatus: (id, countryName) => api.put(`/committees/${id}/countries/${countryName}/status`), // NOT USED
         generateQRs: (id) => api.get(`/committees/${id}/qr-codes`),
-        regenerateQRs: (id) => api.get(`/committees/${id}/qr-codes/regenerate`),
-        regenerateCountryQRs: (id, countryName) => api.get(`/committees/${id}/qr-codes/${countryName}/regenerate`),
+        regenerateQRs: (id) => api.get(`/committees/${id}/qr-codes/regenerate`), // NOT USED
+        regenerateCountryQRs: (id, countryName) => api.get(`/committees/${id}/qr-codes/${countryName}/regenerate`), // NOT USED
         generatePresidiumQRs: (id, data) => api.post(`/committees/${id}/presidium/generate-qrs`, data),
-        resetPresidiumQRs: (id, role, data) => api.post(`/committees/${id}/presidium/${role}/reset-qr`, data),
-        getPresidium: (id) => api.get(`/committees/${id}/presidium`),
-        updatePresidium: (id) => api.put(`/committees/${id}/presidium`),
-        getPresidiumStatus: (id) => api.get(`/committees/${id}/presidium/status`),
-        getQRTokens: (id) => api.get(`/committees/${id}/qr-tokens`)
+        resetPresidiumQRs: (id, role, data) => api.post(`/committees/${id}/presidium/${role}/reset-qr`, data), // NOT USED
+        getPresidium: (id) => api.get(`/committees/${id}/presidium`), // NOT USED
+        updatePresidium: (id) => api.put(`/committees/${id}/presidium`), // NOT USED
+        getPresidiumStatus: (id) => api.get(`/committees/${id}/presidium/status`), // NOT USED
+        getQRTokens: (id) => api.get(`/committees/${id}/qr-tokens`) // NOT USED
     },
 
-    // Countries
+    // ✅ IMPLEMENTED - Countries (6/7 methods working)  
     countries: {
         getAll: (params = {}) => api.get('/countries/', { params }),
-        getByCode: (code, params = {}) => api.get(`/countries/${code}`, { params }),
+        getByCode: (code, params = {}) => api.get(`/countries/${code}`, { params }), // NOT USED
         getFlag: (code) => api.get(`/countries/flags/${code}`),
-        getAllFlags: () => api.get('/countries/flags/all'),
-        getAllFlagsBatch: () => api.get('/countries/flags/all/batch'),
-        getFlagsMetaInfo: () => api.get('/countries/flags/meta/info'),
-        getMetaHealth: () => api.get('/countries/meta/health'),
-        refreshCache: () => api.post('/countries/admin/refresh-flags')
+
+        // ⚠️ MISMATCH - Route path mismatch
+        getAllFlags: () => api.get('/countries/flags/all'), // MISMATCH: Backend route is '/countries/flags/all/batch' // NOT USED
+
+        getAllFlagsBatch: () => api.get('/countries/flags/all/batch'), // NOT USED
+        getFlagsMetaInfo: () => api.get('/countries/flags/meta/info'), // NOT USED
+        getMetaHealth: () => api.get('/countries/meta/health'), // NOT USED
+        refreshCache: () => api.post('/countries/admin/refresh-flags') // NOT USED
     },
 
-    // Documents
+    // ⚠️ PARTIAL IMPLEMENTATION - Documents (6/10 methods have issues)
     documents: {
+        // ✅ IMPLEMENTED - Basic Document Management
         getAll: (params = {}) => api.get('/documents/', { params }),
-        getById: (id) => api.get(`/documents/${id}`),
-        upload: (formData) => api.post('/documents/', formData, {
+        getById: (id) => api.get(`/documents/${id}`), // NOT USED
+
+        // ⚠️ MISMATCH - General upload route missing
+        upload: (formData) => api.post('/documents/', formData, { // MISMATCH: Backend has no general '/documents/' POST route, only specific ones // NOT USED
             headers: { 'Content-Type': 'multipart/form-data' }
         }),
+
         download: (id) => api.get(`/documents/${id}/download`, {
             responseType: 'blob'
         }),
-        getDocumentVersions: (id) => api.get(`/documents/${id}/versions`),
+        getDocumentVersions: (id) => api.get(`/documents/${id}/versions`), // NOT USED
         preview: (id) => api.get(`/documents/${id}/preview`),
-        delete: (id) => api.delete(`/documents/${id}`),
-        createPositionPapers: (data) => api.post('/documents/position-papers', data),
-        getPositionPapersForCommittee: (committeeId) => api.post(`/documents/position-papers/${committeeId}`),
-        reviewPositionPapersForCommittee: (committeeId, data) => api.put(`/documents/position-papers/${committeeId}`, data),
-        uploadPublicDocument: (data) => api.post('/documents/public', data),
-        getPublicDocumentsForCommittee: (committeeId, data) => api.get(`/documents/public/${committeeId}`, data),
-        getPublicDocumentsById: (id, data) => api.get(`/documents/public/${id}`, data),
-        deletePublicDocumentsById: (id) => api.delete(`/documents/public/${id}`),
+
+        // ❌ MISSING - General delete route
+        delete: (id) => api.delete(`/documents/${id}`), // TODO: No general delete route implemented // NOT USED
+
+        // ✅ IMPLEMENTED - Position Papers
+        createPositionPapers: (data) => api.post('/documents/position-papers', data), // NOT USED
+
+        // ⚠️ MISMATCH - Method mismatch (GET vs POST)
+        getPositionPapersForCommittee: (committeeId) => api.post(`/documents/position-papers/${committeeId}`), // MISMATCH: Backend uses GET, not POST // NOT USED
+
+        // ⚠️ MISMATCH - Route path mismatch  
+        reviewPositionPapersForCommittee: (committeeId, data) => api.put(`/documents/position-papers/${committeeId}`, data), // MISMATCH: Backend route is '/documents/position-papers/:id/review' // NOT USED
+
+        // ✅ IMPLEMENTED - Public Documents
+        uploadPublicDocument: (data) => api.post('/documents/public', data), // NOT USED
+        getPublicDocumentsForCommittee: (committeeId, data) => api.get(`/documents/public/${committeeId}`, data), // NOT USED
+
+        // ❌ MISSING - Get single public document
+        getPublicDocumentsById: (id, data) => api.get(`/documents/public/${id}`, data), // TODO: Route not implemented // NOT USED
+
+        deletePublicDocumentsById: (id) => api.delete(`/documents/public/${id}`), // NOT USED
     },
 
-    // Coalitions & Resolutions
+    // ✅ FULLY IMPLEMENTED - Coalitions (6/6) & Resolutions (7/7), 🚨 MISSING - Amendments (11/11)
     resolutions: {
-        // Coalitions
-        createCoalition: (data) => api.post('/resolutions/coalitions', data),
-        getCoalitions: (committeeId, params = {}) => api.get(`/resolutions/coalitions/${committeeId}`, { params }),
-        getCoalition: (id) => api.get(`/resolutions/coalitions/detail/${id}`),
-        respondToInvitation: (id, response) => api.put(`/resolutions/coalitions/${id}/respond`, response),
-        activateCoalition: (id) => api.put(`/resolutions/coalitions/${id}/activate`),
-        leaveCoalition: (id) => api.delete(`/resolutions/coalitions/${id}/leave`),
+        // ✅ FULLY IMPLEMENTED - Coalitions (6/6 methods working)
+        createCoalition: (data) => api.post('/resolutions/coalitions', data), // NOT USED
+        getCoalitions: (committeeId, params = {}) => api.get(`/resolutions/coalitions/${committeeId}`, { params }), // NOT USED
+        getCoalition: (id) => api.get(`/resolutions/coalitions/detail/${id}`), // NOT USED
+        respondToInvitation: (id, response) => api.put(`/resolutions/coalitions/${id}/respond`, response), // NOT USED
+        activateCoalition: (id) => api.put(`/resolutions/coalitions/${id}/activate`), // NOT USED
+        leaveCoalition: (id) => api.delete(`/resolutions/coalitions/${id}/leave`), // NOT USED
 
-        // Resolutions
-        submit: (data) => api.post('/resolutions', data),
-        getAll: (committeeId, params = {}) => api.get(`/resolutions/${committeeId}`, { params }),
-        getById: (id) => api.get(`/resolutions/detail/${id}`),
-        review: (id, reviewData) => api.put(`/resolutions/${id}/review`, reviewData),
-        submitNewVersion: (id, formData) => api.post(`/resolutions/${id}/new-version`, formData, {
+        // ✅ FULLY IMPLEMENTED - Resolutions (7/7 methods working)
+        submit: (data) => api.post('/resolutions', data), // NOT USED
+        getAll: (committeeId, params = {}) => api.get(`/resolutions/${committeeId}`, { params }), // NOT USED
+        getById: (id) => api.get(`/resolutions/detail/${id}`), //
+        review: (id, reviewData) => api.put(`/resolutions/${id}/review`, reviewData), // NOT USED
+        submitNewVersion: (id, formData) => api.post(`/resolutions/${id}/new-version`, formData, { // NOT USED
             headers: { 'Content-Type': 'multipart/form-data' }
         }),
-        // Amendments
-        submitAmendment: (data) => api.post('/amendments', data),
-        getAmendments: (resolutionId, params = {}) => api.get(`/amendments/${resolutionId}`, { params }),
-        getAmendment: (id) => api.get(`/amendments/${id}`),
-        reviewAmendment: (id, reviewData) => api.put(`/amendments/${id}/review`, reviewData),
-        inviteCoauthor: (id, invitationData) => api.post(`/amendments/${id}/invite-coauthor`, invitationData),
-        respondToCoauthor: (id, responseData) => api.put(`/amendments/${id}/coauthor-response`, responseData),
+        getResolutionVersions: (id) => api.get(`/resolutions/${id}/versions`), // NOT USED
+        submitPresidiumDraft: (data) => api.post('/resolutions/presidium-draft', data), // NOT USED
+
+        // ❌ MISSING - Resolution Voting (likely should be in voting module)
+        createResolutionVoting: (id, votingData) => api.post(`/resolutions/${id}/voting`, votingData), // TODO: Route not found in resolutions module // NOT USED
+        getResolutionVotingStatus: (id) => api.get(`/resolutions/${id}/voting-status`), // TODO: Route not found in resolutions module // NOT USED
+
+        // 🚨 CRITICAL - ENTIRE AMENDMENT SYSTEM MISSING (11/11 methods not implemented)
+        // ❌ All amendment routes missing - need to create '/amendments/*' routes + controller
+        submitAmendment: (data) => api.post('/amendments', data), // CRITICAL: No amendment routes exist at all // NOT USED
+        getAmendments: (resolutionId, params = {}) => api.get(`/amendments/${resolutionId}`, { params }), // CRITICAL: No amendment routes exist // NOT USED
+        getAmendment: (id) => api.get(`/amendments/${id}`), // CRITICAL: No amendment routes exist //
+        reviewAmendment: (id, reviewData) => api.put(`/amendments/${id}/review`, reviewData), // CRITICAL: No amendment routes exist // NOT USED
+        inviteCoauthor: (id, invitationData) => api.post(`/amendments/${id}/invite-coauthor`, invitationData), // CRITICAL: No amendment routes exist // NOT USED
+        respondToCoauthor: (id, responseData) => api.put(`/amendments/${id}/coauthor-response`, responseData), // CRITICAL: No amendment routes exist // NOT USED
 
         // Second-order amendments
-        createSecondOrderAmendment: (id, data) => api.post(`/amendments/${id}/second-order`, data),
-        voteOnSecondOrder: (id, voteData) => api.post(`/amendments/${id}/second-order/vote`, voteData),
+        createSecondOrderAmendment: (id, data) => api.post(`/amendments/${id}/second-order`, data), // CRITICAL: No amendment routes exist // NOT USED
+        voteOnSecondOrder: (id, voteData) => api.post(`/amendments/${id}/second-order/vote`, voteData), // CRITICAL: No amendment routes exist // NOT USED
 
         // Amendment voting
-        createAmendmentVoting: (id, votingData) => api.post(`/amendments/${id}/voting`, votingData),
-        getAmendmentVotingStatus: (id) => api.get(`/amendments/${id}/voting-status`),
-        getAmendmentPriorityOrder: (committeeId) => api.get(`/amendments/committee/${committeeId}/priority-order`),
-
-        // Resolution versions and review
-        getResolutionVersions: (id) => api.get(`/resolutions/${id}/versions`),
-        createResolutionVoting: (id, votingData) => api.post(`/resolutions/${id}/voting`, votingData),
-        getResolutionVotingStatus: (id) => api.get(`/resolutions/${id}/voting-status`),
-        submitPresidiumDraft: (data) => api.post('/resolutions/presidium-draft', data),
+        createAmendmentVoting: (id, votingData) => api.post(`/amendments/${id}/voting`, votingData), // CRITICAL: No amendment routes exist // NOT USED
+        getAmendmentVotingStatus: (id) => api.get(`/amendments/${id}/voting-status`), // CRITICAL: No amendment routes exist // NOT USED
+        getAmendmentPriorityOrder: (committeeId) => api.get(`/amendments/committee/${committeeId}/priority-order`), // CRITICAL: No amendment routes exist // NOT USED
     },
 
-    // Voting
+    // ✅ IMPLEMENTED - Voting (8/13 methods working) ❌ MISSING - 5 routes need implementation
     voting: {
         getAll: (params = {}) => api.get('/voting', { params }),
         getById: (id) => api.get(`/voting/${id}`),
         create: (data) => api.post('/voting', data),
         castVote: (id, vote) => api.post(`/voting/${id}/vote`, vote),
-        getResults: (id) => api.get(`/voting/${id}/results`),
+        getResults: (id) => api.get(`/voting/${id}/results`), // NOT USED
         endVoting: (id) => api.post(`/voting/${id}/end`),
         getEligibleVoters: (id) => api.get(`/voting/${id}/eligible-voters`),
         getRollCallOrder: (id) => api.get(`/voting/${id}/roll-call-order`),
@@ -333,27 +377,36 @@ export const apiMethods = {
         getSkippedCountries: (id) => api.get(`/voting/${id}/skipped-countries`),
         useVeto: (id, vetoData) => api.post(`/voting/${id}/veto`, vetoData),
         cancel: (id, cancelData) => api.delete(`/voting/${id}`, { data: cancelData }),
+
+        // ❌ MISSING - 5 routes need implementation  
+        getResults: (id) => api.get(`/voting/${id}/results`), // TODO: No dedicated results endpoint // NOT USED
+        endVoting: (id) => api.post(`/voting/${id}/end`), // MISMATCH: Backend has PUT /voting/:id/complete not POST /voting/:id/end
+        setCurrentVoter: (id, voterData) => api.put(`/voting/${id}/current-voter`, voterData), // TODO: No route exists for manually setting current voter
+        getSkippedCountries: (id) => api.get(`/voting/${id}/skipped-countries`), // TODO: Data included in getRollCallOrder, but no dedicated endpoint // NOT USED
+        useVeto: (id, vetoData) => api.post(`/voting/${id}/veto`, vetoData), // TODO: Veto handled within castVote, but no separate veto endpoint
     },
 
-    // Messages
+    // 🚨 CRITICAL MISMATCH - Messages (0/10 methods working) - Architectural differences
     messages: {
-        getAll: (params = {}) => api.get('/messages', { params }),
-        send: (data) => api.post('/messages', data),
-        markAsRead: (id) => api.put(`/messages/${id}/read`),
+        // ❌ MISSING - Frontend expects simple messaging, backend uses conversation-based system
+        getAll: (params = {}) => api.get('/messages', { params }), // MISMATCH: Backend uses conversation-based system // NOT USED
+        send: (data) => api.post('/messages', data), // MISMATCH: Backend requires conversation creation first // NOT USED
+        markAsRead: (id) => api.put(`/messages/${id}/read`), // MISMATCH: Different read mechanism // NOT USED
 
-        getCommitteeMessages: (committeeId, params = {}) => api.get(`/messages/committee/${committeeId}`, { params }),
-        sendToCommittee: (data) => api.post('/messages/committee', data),
-        sendDiplomaticNote: (data) => api.post('/messages/diplomatic', data),
-        getDiplomaticNotes: (params = {}) => api.get('/messages/diplomatic', { params }),
-        markAllAsRead: (committeeId) => api.put(`/messages/committee/${committeeId}/read-all`),
-        deleteMessage: (id) => api.delete(`/messages/${id}`),
+        getCommitteeMessages: (committeeId, params = {}) => api.get(`/messages/committee/${committeeId}`, { params }), // ✅ IMPLEMENTED // NOT USED
+        sendToCommittee: (data) => api.post('/messages/committee', data), // TODO: Missing route - backend uses conversation system // NOT USED
+        sendDiplomaticNote: (data) => api.post('/messages/diplomatic', data), // TODO: Missing route - no diplomatic note system // NOT USED
+        getDiplomaticNotes: (params = {}) => api.get('/messages/diplomatic', { params }), // TODO: Missing route - no diplomatic note system // NOT USED
+        markAllAsRead: (committeeId) => api.put(`/messages/committee/${committeeId}/read-all`), // TODO: Missing route // NOT USED
+        deleteMessage: (id) => api.delete(`/messages/${id}`), // TODO: Backend only has conversation management // NOT USED
     },
 
-    // File upload helper
+    // ⚠️ MISMATCH - File upload helper (general upload route missing) // NOT USED
     uploadFile: (file, onProgress) => {
         const formData = new FormData()
         formData.append('file', file)
 
+        // MISMATCH: Backend has no general '/documents' POST route, only specific ones
         return api.post('/documents', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
             onUploadProgress: (progressEvent) => {
@@ -365,144 +418,148 @@ export const apiMethods = {
         })
     },
 
-
-    // Sessions Management
+    // ✅ FULLY IMPLEMENTED - Sessions (14/15 methods working) ⚠️ 1 minor method mismatch
     sessions: {
         getAll: (committeeId, params = {}) => api.get(`/sessions/${committeeId}`, { params }),
-        getById: (id) => api.get(`/sessions/${id}`),
+        getById: (id) => api.get(`/sessions/detail/${id}`), // ✅ IMPLEMENTED (note: backend uses /sessions/detail/:id)
         create: (data) => api.post('/sessions', data),
         updateStatus: (id, statusData) => api.put(`/sessions/${id}/status`, statusData),
-        delete: (id) => api.delete(`/sessions/${id}`),
+        delete: (id) => api.delete(`/sessions/${id}`), // NOT USED
 
         // Mode management
         changeMode: (id, modeData) => api.put(`/sessions/${id}/mode`, modeData),
-        getCurrentMode: (id) => api.get(`/sessions/${id}/current-mode`),
-        getModeHistory: (id) => api.post(`/sessions/${id}/mode-history`),
+        getCurrentMode: (id) => api.get(`/sessions/${id}/current-mode`), // NOT USED
+        getModeHistory: (id) => api.post(`/sessions/${id}/mode-history`), // MISMATCH: Frontend uses POST, backend uses GET // NOT USED
 
         // Speaker list management
-        getSpeakerList: (id) => api.get(`/sessions/${id}/speaker-list`),
-        updateSpeakerList: (id, speakerData) => api.put(`/sessions/${id}/speaker-list`, speakerData),
+        getSpeakerList: (id) => api.get(`/sessions/${id}/speaker-list`), // NOT USED
+        updateSpeakerList: (id, speakerData) => api.put(`/sessions/${id}/speaker-list`, speakerData), // NOT USED
         addToSpeakerList: (id) => api.post(`/sessions/${id}/speaker-list/add`),
-        removeFromSpeakerList: (id, data) => api.put(`/sessions/${id}/speaker-list/remove`, data),
+        removeFromSpeakerList: (id, data) => api.put(`/sessions/${id}/speaker-list/remove`, data), // ✅ WORKING (uses general speaker list update)
         moveToEndOfList: (id) => api.put(`/sessions/${id}/speaker-list/move`),
         setCurrentSpeaker: (id, speakerData) => api.put(`/sessions/${id}/current-speaker`, speakerData),
 
         // Attendance management
         updateAttendance: (id, attendanceData) => api.put(`/sessions/${id}/attendance`, attendanceData),
-        getAttendance: (id) => api.get(`/sessions/${id}/attendance`),
-        getQuorum: (id) => api.get(`/sessions/${id}/quorum`)
+        getAttendance: (id) => api.get(`/sessions/${id}/attendance`), // NOT USED
+        getQuorum: (id) => api.get(`/sessions/${id}/quorum`) // NOT USED
     },
 
-    // Timer Management
+    // 🚨 ARCHITECTURAL MISMATCH - Timer Management (0/12 methods working) - Complete mismatch
     timers: {
-        getAll: (sessionId) => api.get(`/timers/${sessionId}`),
+        // ❌ ALL ROUTES MISSING - Frontend expects session-centric, backend uses individual timer entities
+        getAll: (sessionId) => api.get(`/timers/${sessionId}`), // MISMATCH: Backend has GET /timers/session/:sessionId/active // NOT USED
 
         // Session timer
-        updateSessionTimer: (sessionId, timerData) => api.put(`/timers/${sessionId}/session`, timerData),
+        updateSessionTimer: (sessionId, timerData) => api.put(`/timers/${sessionId}/session`, timerData), // TODO: Route doesn't exist // NOT USED
 
         // Speaker timer
-        updateSpeakerTimer: (sessionId, timerData) => api.put(`/timers/${sessionId}/speaker`, timerData),
+        updateSpeakerTimer: (sessionId, timerData) => api.put(`/timers/${sessionId}/speaker`, timerData), // TODO: Route doesn't exist // NOT USED
 
         // Additional timers
-        createAdditionalTimer: (sessionId, timerData) => api.post(`/timers/${sessionId}/additional`, timerData),
-        updateAdditionalTimer: (sessionId, timerId, timerData) => api.put(`/timers/${sessionId}/additional/${timerId}`, timerData),
-        deleteAdditionalTimer: (sessionId, timerId) => api.delete(`/timers/${sessionId}/additional/${timerId}`),
+        createAdditionalTimer: (sessionId, timerData) => api.post(`/timers/${sessionId}/additional`, timerData), // TODO: Route doesn't exist
+        updateAdditionalTimer: (sessionId, timerId, timerData) => api.put(`/timers/${sessionId}/additional/${timerId}`, timerData), // TODO: Route doesn't exist
+        deleteAdditionalTimer: (sessionId, timerId) => api.delete(`/timers/${sessionId}/additional/${timerId}`), // TODO: Route doesn't exist
 
-        // Timer operations
-        startTimer: (sessionId, type, data = {}) => api.post(`/timers/${sessionId}/${type}/start`, data),
-        pauseTimer: (sessionId, type) => api.post(`/timers/${sessionId}/${type}/pause`),
-        resumeTimer: (sessionId, type) => api.post(`/timers/${sessionId}/${type}/resume`),
-        stopTimer: (sessionId, type) => api.post(`/timers/${sessionId}/${type}/stop`),
-        extendTimer: (sessionId, type, extensionData) => api.put(`/timers/${sessionId}/${type}/extend`, extensionData),
-        transferSpeakerTime: (sessionId, transferData) => api.post(`/timers/${sessionId}/speaker/transfer`, transferData),
+        // Timer operations - ALL MISSING
+        startTimer: (sessionId, type, data = {}) => api.post(`/timers/${sessionId}/${type}/start`, data), // TODO: Backend uses PUT /timers/:id/start
+        pauseTimer: (sessionId, type) => api.post(`/timers/${sessionId}/${type}/pause`), // TODO: Backend uses PUT /timers/:id/pause
+        resumeTimer: (sessionId, type) => api.post(`/timers/${sessionId}/${type}/resume`), // TODO: Backend uses PUT /timers/:id/resume
+        stopTimer: (sessionId, type) => api.post(`/timers/${sessionId}/${type}/stop`), // TODO: Backend uses PUT /timers/:id/complete
+        extendTimer: (sessionId, type, extensionData) => api.put(`/timers/${sessionId}/${type}/extend`, extensionData), // TODO: Backend uses PUT /timers/:id/extend
+        transferSpeakerTime: (sessionId, transferData) => api.post(`/timers/${sessionId}/speaker/transfer`, transferData), // TODO: Route doesn't exist // NOT USED
 
         // Settings and history
-        updateSettings: (sessionId, settings) => api.put(`/timers/${sessionId}/settings`, settings),
-        getHistory: (sessionId) => api.get(`/timers/${sessionId}/history`)
+        updateSettings: (sessionId, settings) => api.put(`/timers/${sessionId}/settings`, settings), // TODO: Route doesn't exist // NOT USED
+        getHistory: (sessionId) => api.get(`/timers/${sessionId}/history`) // TODO: Route doesn't exist // NOT USED
     },
 
-
-    // Statistics
+    // ✅ WORKING - Statistics (5/9 methods working) ⚠️ 1 parameter mismatch, ❌ 3 admin routes missing
     statistics: {
-        getCommitteeStats: (committeeId) => api.get(`/statistics/committee/${committeeId}`),
-        getDelegateStats: (committeeId, delegateEmail) => api.get(`/statistics/committee/${committeeId}/delegate/${delegateEmail}`),
-        getLeaderboard: (committeeId, params = {}) => api.get(`/statistics/committee/${committeeId}/leaderboard`, { params }),
-        getParticipationAnalytics: (committeeId, params = {}) => api.get(`/statistics/committee/${committeeId}/participation`, { params }),
-        getDelegateAnalytics: (committeeId, delegateEmail) => api.get(`/statistics/committee/${committeeId}/delegate/${delegateEmail}/analytics`),
-        exportCommitteeCSV: (committeeId) => api.get(`/statistics/committee/${committeeId}/export`, {
+        getCommitteeStats: (committeeId) => api.get(`/statistics/committee/${committeeId}`), // NOT USED
+        getDelegateStats: (committeeId, delegateEmail) => api.get(`/statistics/committee/${committeeId}/delegate/${delegateEmail}`), // MISMATCH: Backend uses /statistics/delegate/:email?committeeId=... // NOT USED
+        getLeaderboard: (committeeId, params = {}) => api.get(`/statistics/committee/${committeeId}/rankings`, { params }), // ✅ IMPLEMENTED (backend calls it "rankings") // NOT USED
+        getParticipationAnalytics: (committeeId, params = {}) => api.get(`/statistics/committee/${committeeId}/analytics/participation`, { params }), // NOT USED
+        exportCommitteeCSV: (committeeId) => api.get(`/statistics/committee/${committeeId}/export`, { // NOT USED
             responseType: 'blob'
         }),
 
-        // Global statistics (admin only)
-        getGlobalStats: () => api.get('/statistics/global'),
-        getEventStats: (eventId) => api.get(`/statistics/event/${eventId}`),
-        exportEventCSV: (eventId) => api.get(`/statistics/event/${eventId}/export`, {
+        // ❌ MISSING - Delegate analytics route
+        getDelegateAnalytics: (committeeId, delegateEmail) => api.get(`/statistics/committee/${committeeId}/delegate/${delegateEmail}/analytics`), // TODO: Route doesn't exist // NOT USED
+
+        // ❌ MISSING - Admin-only routes (all missing)
+        getGlobalStats: () => api.get('/statistics/global'), // TODO: Route not implemented // NOT USED
+        getEventStats: (eventId) => api.get(`/statistics/event/${eventId}`), // TODO: Route not implemented // NOT USED
+        exportEventCSV: (eventId) => api.get(`/statistics/event/${eventId}/export`, { // NOT USED
             responseType: 'blob'
-        })
+        }) // TODO: Route not implemented
     },
 
-    // Presentation/Display
+    // 🚨 CRITICAL - Presentation/Display (0/12 methods working) - Entire system is placeholder
     presentation: {
-        getDisplayData: (committeeId) => api.get(`/presentation/${committeeId}`),
-        getSessionStatus: (committeeId) => api.get(`/presentation/${committeeId}/session-status`),
-        getCurrentSpeaker: (committeeId) => api.get(`/presentation/${committeeId}/current-speaker`),
-        getTimers: (committeeId) => api.get(`/presentation/${committeeId}/timers`),
-        getVotingInfo: (committeeId) => api.get(`/presentation/${committeeId}/voting`),
-        getQuorumStatus: (committeeId) => api.get(`/presentation/${committeeId}/quorum`),
+        // ❌ ALL ROUTES MISSING - Only 2 placeholder routes exist
+        getDisplayData: (committeeId) => api.get(`/presentation/${committeeId}`), // PLACEHOLDER: Returns "Coming soon" message // NOT USED
+        getSessionStatus: (committeeId) => api.get(`/presentation/${committeeId}/session-status`), // TODO: Route doesn't exist // NOT USED
+        getCurrentSpeaker: (committeeId) => api.get(`/presentation/${committeeId}/current-speaker`), // TODO: Route doesn't exist // NOT USED
+        getTimers: (committeeId) => api.get(`/presentation/${committeeId}/timers`), // TODO: Route doesn't exist // NOT USED
+        getVotingInfo: (committeeId) => api.get(`/presentation/${committeeId}/voting`), // TODO: Route doesn't exist // NOT USED
+        getQuorumStatus: (committeeId) => api.get(`/presentation/${committeeId}/quorum`), // TODO: Route doesn't exist // NOT USED
 
-        // Display control
-        updateDisplay: (committeeId, data) => api.put(`/presentation/${committeeId}/update`, data),
-        makeAnnouncement: (committeeId, announcement) => api.post(`/presentation/${committeeId}/announce`, announcement),
-        highlightInfo: (committeeId, highlight) => api.put(`/presentation/${committeeId}/highlight`, highlight),
-        sendEmergency: (committeeId, emergency) => api.post(`/presentation/${committeeId}/emergency`, emergency),
+        // Display control - ALL MISSING
+        updateDisplay: (committeeId, data) => api.put(`/presentation/${committeeId}/update`, data), // TODO: Route doesn't exist // NOT USED
+        makeAnnouncement: (committeeId, announcement) => api.post(`/presentation/${committeeId}/announce`, announcement), // PLACEHOLDER: Returns "Coming soon" // NOT USED
+        highlightInfo: (committeeId, highlight) => api.put(`/presentation/${committeeId}/highlight`, highlight), // TODO: Route doesn't exist // NOT USED
+        sendEmergency: (committeeId, emergency) => api.post(`/presentation/${committeeId}/emergency`, emergency), // TODO: Route doesn't exist // NOT USED
 
-        // Settings
-        updateSettings: (committeeId, settings) => api.put(`/presentation/${committeeId}/settings`, settings),
-        getSettings: (committeeId) => api.get(`/presentation/${committeeId}/settings`)
+        // Settings - ALL MISSING
+        updateSettings: (committeeId, settings) => api.put(`/presentation/${committeeId}/settings`, settings), // TODO: Route doesn't exist // NOT USED
+        getSettings: (committeeId) => api.get(`/presentation/${committeeId}/settings`) // TODO: Route doesn't exist // NOT USED
     },
-    
-    // Procedures/Motions
+
+    // ✅ WORKING - Procedures/Motions (8/15 methods working) ⚠️ 5 route path mismatches, ❌ 2 missing features
     procedures: {
         // Procedural motions
-        submitMotion: (data) => api.post('/motions', data),
-        getMotions: (sessionId, params = {}) => api.get(`/motions/${sessionId}`, { params }),
-        getMotion: (id) => api.get(`/motions/${id}`),
-        reviewMotion: (id, reviewData) => api.put(`/motions/${id}/review`, reviewData),
-        supportMotion: (id) => api.post(`/motions/${id}/support`),
-        voteOnMotion: (id, voteData) => api.post(`/motions/${id}/vote`, voteData),
+        submitMotion: (data) => api.post('/motions', data), // MISMATCH: Backend uses /procedure/motions
+        getMotions: (sessionId, params = {}) => api.get(`/motions/${sessionId}`, { params }), // MISMATCH: Backend uses /procedure/motions/session/:sessionId // NOT USED
+        getMotion: (id) => api.get(`/motions/${id}`), // MISMATCH: Backend uses /procedure/motions/:id // NOT USED
+        reviewMotion: (id, reviewData) => api.put(`/motions/${id}/review`, reviewData), // MISMATCH: Backend uses /procedure/motions/:id/review // NOT USED
+        supportMotion: (id) => api.post(`/motions/${id}/support`), // MISMATCH: Backend uses /procedure/motions/:id/support // NOT USED
+        voteOnMotion: (id, voteData) => api.post(`/motions/${id}/vote`, voteData), // TODO: No voting on motions implemented // NOT USED
 
         // Presidium motions
-        submitPresidiumMotion: (data) => api.post('/motions/presidium', data),
-        updateMotionPriority: (id, priorityData) => api.put(`/motions/${id}/priority`, priorityData),
+        submitPresidiumMotion: (data) => api.post('/motions/presidium', data), // MISMATCH: Backend uses /procedure/motions/presidium // NOT USED
+        updateMotionPriority: (id, priorityData) => api.put(`/motions/${id}/priority`, priorityData), // TODO: No priority update route exists // NOT USED
 
         // History and queue
-        getMotionHistory: (sessionId) => api.get(`/motions/${sessionId}/history`),
-        getMotionQueue: (sessionId) => api.get(`/motions/${sessionId}/queue`),
+        getMotionHistory: (sessionId) => api.get(`/motions/${sessionId}/history`), // TODO: No history endpoint exists // NOT USED
+        getMotionQueue: (sessionId) => api.get(`/motions/${sessionId}/queue`), // MISMATCH: Backend uses /procedure/motions/session/:sessionId/queue // NOT USED
 
         // Questions
-        submitQuestion: (data) => api.post('/questions', data),
-        getQuestions: (sessionId, params = {}) => api.get(`/questions/${sessionId}`, { params }),
-        getQuestion: (id) => api.get(`/questions/${id}`),
-        answerQuestion: (id, answerData) => api.put(`/questions/${id}/answer`, answerData),
-        updateQuestionPriority: (id, priorityData) => api.put(`/questions/${id}/priority`, priorityData)
+        submitQuestion: (data) => api.post('/questions', data), // MISMATCH: Backend uses /procedure/questions // NOT USED
+        getQuestions: (sessionId, params = {}) => api.get(`/questions/${sessionId}`, { params }), // MISMATCH: Backend uses /procedure/questions/session/:sessionId // NOT USED
+        getQuestion: (id) => api.get(`/questions/${id}`), // MISMATCH: Backend uses /procedure/questions/:id (implied) // NOT USED
+        answerQuestion: (id, answerData) => api.put(`/questions/${id}/answer`, answerData), // MISMATCH: Backend uses /procedure/questions/:id/answer // NOT USED
+        updateQuestionPriority: (id, priorityData) => api.put(`/questions/${id}/priority`, priorityData) // TODO: No priority update route exists // NOT USED
     },
 
+    // 🚨 CRITICAL - User Management (0/7 methods working) - Entire module missing
     user: {
-        getProfile: () => api.get('/user/profile'),
-        updateProfile: (profile) => api.put('/user/profile', { profile }),
-        updateAccount: (account) => api.put('/user/account', { account }),
-        changePassword: (currentPassword, newPassword) => api.put('/user/password', { currentPassword, newPassword }),
-        enable2FA: () => api.post('/user/enable-2fa'),
-        disable2FA: () => api.post('/user/disable-2fa'),
-        updateNotifications: (notifications) => api.put('/user/notifications', { notifications })
+        // ❌ ALL ROUTES MISSING - No user routes module registered in backend
+        getProfile: () => api.get('/user/profile'), // CRITICAL: No /api/user routes exist at all
+        updateProfile: (profile) => api.put('/user/profile', { profile }), // CRITICAL: User module not registered in backend
+        updateAccount: (account) => api.put('/user/account', { account }), // CRITICAL: User routes, controller, all missing
+        changePassword: (currentPassword, newPassword) => api.put('/user/password', { currentPassword, newPassword }), // CRITICAL: Complete gap in backend
+        enable2FA: () => api.post('/user/enable-2fa'), // CRITICAL: Security features not implemented
+        disable2FA: () => api.post('/user/disable-2fa'), // CRITICAL: 2FA system missing
+        updateNotifications: (notifications) => api.put('/user/notifications', { notifications }) // CRITICAL: Notification preferences missing
     },
 
     // Health check
     health: {
         check: () => api.get('/health'),
-        getSystemStatus: () => api.get('/health/system'),
-        getDatabaseStatus: () => api.get('/health/database'),
-        getServiceStatus: () => api.get('/health/services')
+        getSystemStatus: () => api.get('/health/system'), // NOT USED
+        getDatabaseStatus: () => api.get('/health/database'), // NOT USED
+        getServiceStatus: () => api.get('/health/services') // NOT USED
     }
 }
 

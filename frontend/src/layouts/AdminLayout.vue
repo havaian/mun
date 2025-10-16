@@ -132,20 +132,39 @@
 
                     <!-- System Health -->
                     <div class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-mun-gray-600">System Health</span>
-                            <div class="flex items-center space-x-2">
+                        <div class="grid text-xs text-mun-gray-500">
+                            <div class="flex items-center justify-between">
+                                <span>
+                                    API: 
+                                </span>
                                 <div
-                                    :class="['w-2 h-2 rounded-full', systemHealth.api && systemHealth.database ? 'bg-green-500' : 'bg-red-500']">
+                                    :class="['w-2 h-2 rounded-full', systemHealth.api ? 'bg-green-500' : 'bg-red-500']">
                                 </div>
-                                <span class="text-xs font-medium">{{ systemHealth.api && systemHealth.database ?
-                                    'Healthy' : 'Issues' }}</span>
                             </div>
-                        </div>
-
-                        <div class="text-xs text-mun-gray-500">
-                            <div>Response Time: {{ responseTime }}ms</div>
-                            <div>Active Connections: {{ activeConnections }}</div>
+                            <div class="flex items-center justify-between">
+                                <span>
+                                    DB: 
+                                </span>
+                                <div
+                                    :class="['w-2 h-2 rounded-full', systemHealth.api ? 'bg-green-500' : 'bg-red-500']">
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>
+                                    Response Time: 
+                                </span>
+                                <span>
+                                    {{ responseTime }}ms
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>
+                                    Active Connections: 
+                                </span>
+                                <span>
+                                    {{ activeConnections }}
+                                </span>
+                            </div>
                         </div>
                     </div>
 

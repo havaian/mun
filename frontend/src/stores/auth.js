@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import api from '@/utils/api'
+import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -62,7 +62,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             isLoading.value = true
 
-            const response = await api.post('/auth/admin-login', credentials)
+            const response = await apiMethods.auth.adminLogin(credentials)
 
             if (response.data.success) {
                 token.value = response.data.token
@@ -91,7 +91,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             isLoading.value = true
 
-            const response = await api.post('/auth/qr-login', { token: qrToken })
+            const response = await apiMethods.auth.qrLogin(qrToken)
 
             if (response.data.success) {
                 return {
@@ -122,10 +122,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             isLoading.value = true
 
-            const response = await api.post('/auth/bind-email', {
-                token: qrToken,
-                email
-            })
+            const response = await apiMethods.auth.bindEmail(qrToken, email)
 
             if (response.data.success) {
                 token.value = response.data.token
@@ -155,7 +152,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             isLoading.value = true
 
-            const response = await api.post('/auth/email-login', { email })
+            const response = await apiMethods.auth.emailLogin(email)
 
             if (response.data.success) {
                 token.value = response.data.token
@@ -185,7 +182,7 @@ export const useAuthStore = defineStore('auth', () => {
         if (!token.value) return false
 
         try {
-            const response = await api.get('/auth/validate-session')
+            const response = await apiMethods.auth.validateSession()
 
             if (response.data.success && response.data.user) {
                 user.value = response.data.user
@@ -201,11 +198,33 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    // Check QR token status
+    const checkQrStatus = async (qrToken) => {
+        try {
+            const response = await apiMethods.auth.checkQrStatus(qrToken)
+            return response.data
+        } catch (error) {
+            console.error('QR status check failed:', error)
+            throw error
+        }
+    }
+
+    // Reactivate QR token (admin only)
+    const reactivateQr = async (userId) => {
+        try {
+            const response = await apiMethods.auth.reactivateQr(userId)
+            return response.data
+        } catch (error) {
+            console.error('QR reactivation failed:', error)
+            throw error
+        }
+    }
+
     // Logout
     const logout = async (showMessage = true) => {
         try {
             if (token.value) {
-                await api.post('/auth/logout')
+                await apiMethods.auth.logout()
             }
         } catch (error) {
             console.error('Logout API error:', error)
@@ -339,6 +358,8 @@ export const useAuthStore = defineStore('auth', () => {
         bindEmail,
         emailLogin,
         validateSession,
+        checkQrStatus,
+        reactivateQr,
         logout,
         updateActivity,
         checkSessionTimeout,
