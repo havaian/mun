@@ -509,17 +509,19 @@ const loadSystemHealth = async () => {
         responseTime.value = Date.now() - startTime
 
         if (response?.data) {
+            const data = response.data;
+
             healthData.value = {
-                status: response.status || 'unknown',
-                uptime: response.uptime || 0,
-                version: response.version || '1.0.0',
-                modules: response.modules || {},
-                services: response.services || {}
+                status: data.status || 'unknown',
+                uptime: data.uptime || 0,
+                version: data.version || '1.0.0',
+                modules: data.modules || {},
+                services: data.services || {}
             }
 
             systemHealth.value = {
-                api: true,
-                database: response.services?.database === 'connected',
+                api: data.status === 'healthy',
+                database: data.services?.database === 'connected',
                 websocket: wsStore?.isConnected || false
             }
         } else {
