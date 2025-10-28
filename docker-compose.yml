@@ -15,7 +15,7 @@ services:
     environment:
       - PORT=${BACKEND_PORT}
       - PROJECT_URL=${PROJECT_URL}
-      - MONGODB_URI=mongodb://mongo:${MONGODB_PORT}/${MONGO_DATABASE}
+      - MONGODB_URI=${MONGO_URL}
     env_file: ./.env
     volumes:
       - ./backend:/app
@@ -49,28 +49,6 @@ services:
     networks:
       - mun-network
 
-  mongo:
-    image: mongo:latest
-    container_name: mun-uz-mongo
-    restart: unless-stopped
-    volumes:
-      - mongo-data:/data/db
-    ports:
-      - "${MONGODB_EXPOSE}:${MONGODB_PORT}"
-    networks:
-      - mun-network
-    command: mongod --port ${MONGODB_PORT}
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "--port", "${MONGODB_PORT}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
 networks:
   mun-network:
     driver: bridge
-
-volumes:
-  mongo-data:
-    driver: local
