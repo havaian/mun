@@ -448,6 +448,9 @@ import {
     CheckIcon
 } from '@heroicons/vue/24/outline'
 
+// Emits - Define this before using it
+const emit = defineEmits(['update:modelValue', 'created', 'updated', 'saved'])
+
 // Props
 const props = defineProps({
     modelValue: {
@@ -464,9 +467,6 @@ const props = defineProps({
         validator: (value) => ['create', 'edit'].includes(value)
     }
 })
-
-// Emits - Define this before using it
-const emit = defineEmits(['update:modelValue', 'created', 'updated', 'saved'])
 
 // Initialize toast
 const toast = useToast()
