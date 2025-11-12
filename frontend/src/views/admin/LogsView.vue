@@ -8,14 +8,12 @@
             </div>
 
             <div class="flex items-center space-x-3">
-                <button @click="refreshLogs" :disabled="isLoading"
-                    class="btn-un-fourth">
+                <button @click="refreshLogs" :disabled="isLoading" class="btn-un-fourth">
                     <ArrowPathIcon :class="['w-4 h-4 mr-2', { 'animate-spin': isLoading }]" />
                     Refresh
                 </button>
 
-                <button @click="exportLogs"
-                    class="btn-un-third">
+                <button @click="exportLogs" class="btn-un-third">
                     <ArrowDownTrayIcon class="w-4 h-4 mr-2" />
                     Export
                 </button>
@@ -34,7 +32,7 @@
                         { label: 'Warning', value: 'warn' },
                         { label: 'Info', value: 'info' },
                         { label: 'Debug', value: 'debug' }
-                    ]" placeholder="Select log level" />
+                    ]" placeholder="Select log level" container-class="w-full" />
                 </div>
 
                 <!-- Activity Type Filter -->
@@ -48,20 +46,19 @@
                         { label: 'Voting', value: 'voting' },
                         { label: 'System', value: 'system' },
                         { label: 'API', value: 'api' }
-                    ]" placeholder="Select activity type" />
+                    ]" placeholder="Select activity type" container-class="w-full" />
                 </div>
 
-                <!-- Date Range -->
+                <!-- Date From -->
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Date From</label>
-                    <input type="date" v-model="filters.dateFrom" @change="applyFilters"
-                        class="input-field w-full px-3 py-2">
+                    <input type="date" v-model="filters.dateFrom" @change="applyFilters" class="input-field w-full">
                 </div>
 
+                <!-- Date To -->
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Date To</label>
-                    <input type="date" v-model="filters.dateTo" @change="applyFilters"
-                        class="input-field w-full px-3 py-2">
+                    <input type="date" v-model="filters.dateTo" @change="applyFilters" class="input-field w-full">
                 </div>
             </div>
 
@@ -77,22 +74,59 @@
             </div>
 
             <!-- Quick Filters -->
-            <div class="mt-4 flex flex-wrap gap-2">
-                <button @click="applyQuickFilter('today')" :class="quickFilterClass('today')"
-                    class="px-3 py-1 text-xs font-medium rounded-full transition-colors">
-                    Today
+            <div class="mt-4 flex flex-wrap gap-2 items-center justify-between">
+                <div class="flex flex-wrap gap-2">
+                    <button @click="applyQuickFilter('today')" :class="quickFilterClass('today')"
+                        class="px-3 py-1 text-xs font-medium rounded-full transition-colors">
+                        Today
+                    </button>
+                    <button @click="applyQuickFilter('week')" :class="quickFilterClass('week')"
+                        class="px-3 py-1 text-xs font-medium rounded-full transition-colors">
+                        This Week
+                    </button>
+                    <button @click="applyQuickFilter('errors')" :class="quickFilterClass('errors')"
+                        class="px-3 py-1 text-xs font-medium rounded-full transition-colors">
+                        Errors Only
+                    </button>
+                    <button @click="clearFilters"
+                        class="px-3 py-1 text-xs font-medium rounded-full bg-mun-gray-100 text-mun-gray-700 hover:bg-mun-gray-200 transition-colors">
+                        Clear All
+                    </button>
+                </div>
+
+                <!-- Filter Status -->
+                <div v-if="hasActiveFilters" class="text-sm text-mun-gray-600">
+                    {{ logs.length }} logs found
+                </div>
+            </div>
+        </div>
+
+        <!-- View Toggle and Actions -->
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-4">
+                <!-- Table View Info -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-mun-gray-600">Table View</span>
+                </div>
+
+                <!-- Filter Status -->
+                <div v-if="hasActiveFilters" class="flex items-center space-x-2">
+                    <span class="text-sm text-mun-gray-600">
+                        {{ logs.length }} logs found
+                    </span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center space-x-3">
+                <button @click="exportLogs" class="btn-un-secondary px-3 py-2">
+                    <ArrowDownTrayIcon class="w-4 h-4 mr-2" />
+                    Export
                 </button>
-                <button @click="applyQuickFilter('week')" :class="quickFilterClass('week')"
-                    class="px-3 py-1 text-xs font-medium rounded-full transition-colors">
-                    This Week
-                </button>
-                <button @click="applyQuickFilter('errors')" :class="quickFilterClass('errors')"
-                    class="px-3 py-1 text-xs font-medium rounded-full transition-colors">
-                    Errors Only
-                </button>
-                <button @click="clearFilters"
-                    class="px-3 py-1 text-xs font-medium rounded-full bg-mun-gray-100 text-mun-gray-700 hover:bg-mun-gray-200 transition-colors">
-                    Clear All
+
+                <button @click="refreshLogs" :disabled="isLoading" class="btn-un-secondary px-3 py-2">
+                    <ArrowPathIcon :class="['w-4 h-4 mr-2', { 'animate-spin': isLoading }]" />
+                    Refresh
                 </button>
             </div>
         </div>
@@ -171,10 +205,21 @@
             </div>
 
             <!-- Empty State -->
-            <div v-else class="p-8 text-center">
-                <DocumentTextIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-3" />
-                <p class="text-mun-gray-500 mb-2">No logs found</p>
-                <p class="text-sm text-mun-gray-400">Try adjusting your filters or search terms</p>
+            <div v-else
+                class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
+                <DocumentTextIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
+                <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
+                    {{ hasActiveFilters ? 'No logs match your filters' : 'No logs found' }}
+                </h3>
+                <p class="text-mun-gray-600 mb-6">
+                    {{ hasActiveFilters
+                        ? 'Try adjusting your search criteria or filters.'
+                        : 'System logs will appear here as activity occurs.'
+                    }}
+                </p>
+                <button v-if="hasActiveFilters" @click="clearFilters" class="btn-un-secondary">
+                    Clear All Filters
+                </button>
             </div>
 
             <!-- Pagination -->
@@ -331,7 +376,7 @@ const getTimeRange = () => {
         const fromDate = new Date(filters.dateFrom)
         const toDate = new Date(filters.dateTo)
         const diffDays = Math.ceil(Math.abs(toDate - fromDate) / (1000 * 60 * 60 * 24))
-        
+
         if (diffDays === 0) return '24h'
         if (diffDays <= 7) return '7d'
         if (diffDays <= 30) return '30d'
@@ -437,6 +482,15 @@ const applyFilters = () => {
     activeQuickFilter.value = ''
     loadLogs()
 }
+
+const hasActiveFilters = computed(() => {
+    return filters.search.trim() !== '' ||
+        filters.level !== '' ||
+        filters.type !== '' ||
+        filters.dateFrom !== '' ||
+        filters.dateTo !== '' ||
+        activeQuickFilter.value !== ''
+})
 
 const debounceSearch = (() => {
     let timeout

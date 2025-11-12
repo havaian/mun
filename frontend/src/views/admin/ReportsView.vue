@@ -12,7 +12,7 @@
                     <ArrowPathIcon class="w-4 h-4 mr-2" />
                     Refresh
                 </button>
-                
+
                 <button @click="showCustomReportModal = true" class="btn-un-third">
                     <DocumentChartBarIcon class="w-4 h-4 mr-2" />
                     Custom Report
@@ -75,19 +75,24 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- System Exports -->
             <div class="mun-card p-6">
-                <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">System Exports</h3>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-mun-gray-900">System Exports</h3>
+                    <span class="text-sm text-mun-gray-500">{{ systemExports.length }} available</span>
+                </div>
+
                 <div class="space-y-3">
                     <div v-for="exportItem in systemExports" :key="exportItem.id"
                         class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg hover:bg-mun-gray-100 transition-colors">
-                        <div>
+                        <div class="flex-1">
                             <h4 class="font-medium text-mun-gray-900">{{ exportItem.title }}</h4>
-                            <p class="text-sm text-mun-gray-600">{{ exportItem.description }}</p>
+                            <p class="text-sm text-mun-gray-600 mt-1">{{ exportItem.description }}</p>
                         </div>
-                        <div class="flex items-center space-x-2">
+                        <div class="flex items-center space-x-2 ml-4">
                             <button @click="downloadExport(exportItem)" :disabled="isGenerating[exportItem.id]"
                                 class="btn-un-secondary px-3 py-2">
                                 <component :is="isGenerating[exportItem.id] ? ArrowPathIcon : DocumentArrowDownIcon"
-                                    :class="['w-4 h-4', isGenerating[exportItem.id] ? 'animate-spin' : '']" />
+                                    :class="['w-4 h-4 mr-2', isGenerating[exportItem.id] ? 'animate-spin' : '']" />
+                                {{ isGenerating[exportItem.id] ? 'Generating...' : 'Download' }}
                             </button>
                         </div>
                     </div>
@@ -96,19 +101,31 @@
 
             <!-- Committee Exports -->
             <div class="mun-card p-6">
-                <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Committee Reports</h3>
-                <div class="space-y-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-mun-gray-900">Committee Reports</h3>
+                    <span class="text-sm text-mun-gray-500">{{ committees.length }} committees</span>
+                </div>
+
+                <div v-if="committees.length === 0" class="text-center py-8">
+                    <BuildingLibraryIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
+                    <h3 class="text-lg font-medium text-mun-gray-900 mb-2">No committees found</h3>
+                    <p class="text-mun-gray-600">Committee reports will appear here once committees are created.</p>
+                </div>
+
+                <div v-else class="space-y-3">
                     <div v-for="committee in committees" :key="committee._id"
                         class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg hover:bg-mun-gray-100 transition-colors">
-                        <div>
+                        <div class="flex-1">
                             <h4 class="font-medium text-mun-gray-900">{{ committee.name }}</h4>
-                            <p class="text-sm text-mun-gray-600">{{ committee.countries?.length || 0 }} countries</p>
+                            <p class="text-sm text-mun-gray-600 mt-1">{{ committee.countries?.length || 0 }} countries •
+                                {{ committee.type || 'No type' }}</p>
                         </div>
-                        <div class="flex items-center space-x-2">
+                        <div class="flex items-center space-x-2 ml-4">
                             <button @click="exportCommitteeReport(committee)" :disabled="isGenerating[committee._id]"
                                 class="btn-un-secondary px-3 py-2">
                                 <component :is="isGenerating[committee._id] ? ArrowPathIcon : DocumentArrowDownIcon"
-                                    :class="['w-4 h-4', isGenerating[committee._id] ? 'animate-spin' : '']" />
+                                    :class="['w-4 h-4 mr-2', isGenerating[committee._id] ? 'animate-spin' : '']" />
+                                {{ isGenerating[committee._id] ? 'Generating...' : 'Export' }}
                             </button>
                         </div>
                     </div>
@@ -193,7 +210,12 @@
                             { label: 'Documents', value: 'document' },
                             { label: 'Voting', value: 'voting' },
                             { label: 'System', value: 'system' }
-                        ]" containerClass="max-w-xs" placeholder="Filter activities" />
+                        ]" container-class="min-w-[150px]" placeholder="Filter activities" />
+
+                        <button @click="loadActivity" :disabled="isLoadingActivity" class="btn-un-secondary px-3 py-2">
+                            <ArrowPathIcon :class="['w-4 h-4 mr-2', isLoadingActivity ? 'animate-spin' : '']" />
+                            Refresh
+                        </button>
                     </div>
                 </div>
             </div>
@@ -203,23 +225,23 @@
             </div>
 
             <div v-else-if="recentActivity.length === 0" class="text-center py-12">
-                <DocumentChartBarIcon class="mx-auto h-12 w-12 text-mun-gray-300" />
-                <h3 class="mt-4 text-lg font-medium text-mun-gray-900">No Recent Activity</h3>
-                <p class="mt-2 text-mun-gray-600">Activity will appear here as users interact with the system</p>
+                <DocumentChartBarIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
+                <h3 class="text-lg font-medium text-mun-gray-900 mb-2">No Recent Activity</h3>
+                <p class="text-mun-gray-600">Activity will appear here as users interact with the system</p>
             </div>
 
             <div v-else class="divide-y divide-mun-gray-200">
                 <div v-for="activity in recentActivity" :key="activity._id || activity.id"
                     class="px-6 py-4 hover:bg-mun-gray-50 transition-colors">
                     <div class="flex items-center justify-between">
-                        <div>
+                        <div class="flex-1">
                             <p class="text-sm font-medium text-mun-gray-900">{{ activity.action || activity.description
                                 }}</p>
-                            <p class="text-sm text-mun-gray-600">{{ activity.details || activity.description }}</p>
+                            <p class="text-sm text-mun-gray-600 mt-1">{{ activity.details || activity.description }}</p>
                         </div>
-                        <div class="text-right">
+                        <div class="text-right ml-4">
                             <p class="text-sm text-mun-gray-500">{{ formatDate(activity.timestamp) }}</p>
-                            <p class="text-xs text-mun-gray-400">{{ activity.user || 'System' }}</p>
+                            <p class="text-xs text-mun-gray-400 mt-1">{{ activity.user || 'System' }}</p>
                         </div>
                     </div>
                 </div>

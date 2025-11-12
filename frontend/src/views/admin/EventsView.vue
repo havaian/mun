@@ -73,70 +73,92 @@
 
         <!-- Filters and Search -->
         <div class="mun-card p-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-                <div class="flex items-center space-x-4">
-                    <div class="">
-                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                            Status
-                        </label>
-                        <SleekSelect v-model="filters.status" :options="[
-                            { label: 'All Statuses', value: '' },
-                            { label: 'Draft', value: 'draft' },
-                            { label: 'Active', value: 'active' },
-                            { label: 'Completed', value: 'completed' },
-                            { label: 'Cancelled', value: 'cancelled' }
-                        ]" @change="filterEvents" container-class="max-w-xs" />
-                    </div>
-
-                    <div class="">
-                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                            Date
-                        </label>
-                        <SleekSelect v-model="filters.dateRange" :options="[
-                            { label: 'All Dates', value: '' },
-                            { label: 'This Week', value: 'this_week' },
-                            { label: 'This Month', value: 'this_month' },
-                            { label: 'Next Month', value: 'next_month' },
-                            { label: 'Past Events', value: 'past' }
-                        ]" @change="filterEvents" container-class="max-w-xs" />
-                    </div>
-
-                    <div class="flex items-center space-x-2">
-                        <button @click="viewMode = 'grid'" :class="[
-                            'p-2 rounded-lg transition-colors',
-                            viewMode === 'grid' ? 'bg-mun-blue text-white' : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
-                        ]">
-                            <Squares2X2Icon class="w-5 h-5" />
-                        </button>
-                        <button @click="viewMode = 'list'" :class="[
-                            'p-2 rounded-lg transition-colors',
-                            viewMode === 'list' ? 'bg-mun-blue text-white' : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
-                        ]">
-                            <ListBulletIcon class="w-5 h-5" />
-                        </button>
-                    </div>
-                </div>
-
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
                 <!-- Search -->
-                <div class="flex items-center space-x-3 lg:col-span-2">
-                    <div class="lg:col-span-2">
-                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                            Search Events
-                        </label>
-                        <input v-model="searchQuery" @input="debouncedSearch" type="text" placeholder="Search..."
-                            class="input-field max-w-xs">
+                <div class="lg:col-span-2">
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                        Search Events
+                    </label>
+                    <div class="relative">
+                        <input v-model="searchQuery" type="text" placeholder="Search by name or description..."
+                            class="input-field pl-10" @input="debouncedSearch" />
                         <MagnifyingGlassIcon
                             class="w-5 h-5 text-mun-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                     </div>
-                    <SleekSelect v-model="sortBy" :options="[
-                        { label: 'Newest First', value: 'created_desc' },
-                        { label: 'Oldest First', value: 'created_asc' },
-                        { label: 'Name A-Z', value: 'name_asc' },
-                        { label: 'Name Z-A', value: 'name_desc' },
-                        { label: 'Start Date', value: 'date_asc' },
-                        { label: 'End Date', value: 'date_desc' }
-                    ]" @change="sortEvents" size="sm" container-class="max-w-xs" />
                 </div>
+
+                <!-- Status Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                        Status
+                    </label>
+                    <SleekSelect v-model="filters.status" placeholder="Select status" :options="[
+                        { label: 'All Statuses', value: '' },
+                        { label: 'Draft', value: 'draft' },
+                        { label: 'Active', value: 'active' },
+                        { label: 'Completed', value: 'completed' },
+                        { label: 'Cancelled', value: 'cancelled' }
+                    ]" @change="filterEvents" container-class="w-full" />
+                </div>
+
+                <!-- Date Range Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                        Date Range
+                    </label>
+                    <SleekSelect v-model="filters.dateRange" placeholder="Select time period" :options="[
+                        { label: 'All Dates', value: '' },
+                        { label: 'This Week', value: 'this_week' },
+                        { label: 'This Month', value: 'this_month' },
+                        { label: 'Next Month', value: 'next_month' },
+                        { label: 'Past Events', value: 'past' }
+                    ]" @change="filterEvents" container-class="w-full" />
+                </div>
+            </div>
+        </div>
+
+        <!-- View Toggle and Bulk Actions -->
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <!-- View Toggle -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-mun-gray-600">View:</span>
+                    <button @click="viewMode = 'grid'" :class="[
+                        'p-2 rounded-lg transition-colors',
+                        viewMode === 'grid' ? 'bg-mun-blue text-white' : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
+                    ]">
+                        <Squares2X2Icon class="w-4 h-4" />
+                    </button>
+                    <button @click="viewMode = 'list'" :class="[
+                        'p-2 rounded-lg transition-colors',
+                        viewMode === 'list' ? 'bg-mun-blue text-white' : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
+                    ]">
+                        <ListBulletIcon class="w-4 h-4" />
+                    </button>
+                </div>
+
+                <!-- Filter Status -->
+                <div v-if="hasActiveFilters" class="flex items-center space-x-2">
+                    <span class="text-sm text-mun-gray-600">
+                        {{ filteredEvents.length }} of {{ events.length }} events
+                    </span>
+                    <button @click="clearFilters" class="btn-un-secondary px-3 py-2">
+                        Clear Filters
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sort Options -->
+            <div class="flex items-center space-x-2">
+                <span class="text-sm text-mun-gray-600">Sort by:</span>
+                <SleekSelect v-model="sortBy" :options="[
+                    { label: 'Newest First', value: 'created_desc' },
+                    { label: 'Oldest First', value: 'created_asc' },
+                    { label: 'Name A-Z', value: 'name_asc' },
+                    { label: 'Name Z-A', value: 'name_desc' },
+                    { label: 'Start Date', value: 'date_asc' },
+                    { label: 'End Date', value: 'date_desc' }
+                ]" @change="sortEvents" size="sm" container-class="min-w-[150px]" />
             </div>
         </div>
 
@@ -145,15 +167,10 @@
             <div class="px-6 py-4 border-b border-mun-gray-200">
                 <div class="flex items-center justify-between">
                     <h2 class="text-lg font-semibold text-mun-gray-900">Events</h2>
-                    <div class="flex items-center space-x-3">
-                        <span class="text-sm text-mun-gray-500">
-                            {{ filteredEvents.length }} of {{ events.length }} events
-                        </span>
-                        <button @click="exportEvents" class="btn-un-secondary px-3 py-2">
-                            <DocumentArrowDownIcon class="w-4 h-4 mr-2" />
-                            Export
-                        </button>
-                    </div>
+                    <button @click="exportEvents" class="btn-un-secondary px-3 py-2">
+                        <DocumentArrowDownIcon class="w-4 h-4 mr-2" />
+                        Export
+                    </button>
                 </div>
             </div>
 
@@ -161,18 +178,24 @@
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
             </div>
 
-            <div v-else-if="filteredEvents.length === 0" class="text-center py-12">
-                <CalendarDaysIcon class="mx-auto h-12 w-12 text-mun-gray-300" />
-                <h3 class="mt-4 text-lg font-medium text-mun-gray-900">
-                    {{searchQuery || Object.values(filters).some(v => v) ? 'No events found' : 'No events yet'}}
+            <div v-else-if="filteredEvents.length === 0"
+                class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
+                <CalendarDaysIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
+                <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
+                    {{ hasActiveFilters ? 'No events match your filters' : 'No events found' }}
                 </h3>
-                <p class="mt-2 text-mun-gray-600 mb-4">
-                    {{searchQuery || Object.values(filters).some(v => v) ? 'Try adjusting your search or filters' :
-                        'Create your first event to get started'}}
+                <p class="text-mun-gray-600 mb-6">
+                    {{ hasActiveFilters
+                        ? 'Try adjusting your search criteria or filters.'
+                        : 'Get started by creating your first event.'
+                    }}
                 </p>
-                <button v-if="!searchQuery && !Object.values(filters).some(v => v)" @click="showCreateModal = true"
-                    class="btn-un-primary">
+                <button v-if="!hasActiveFilters" @click="showCreateModal = true" class="btn-un-primary">
+                    <PlusIcon class="w-4 h-4 mr-2" />
                     Create First Event
+                </button>
+                <button v-else @click="clearFilters" class="btn-un-secondary">
+                    Clear All Filters
                 </button>
             </div>
 
@@ -481,6 +504,11 @@ const filteredEvents = computed(() => {
     })
 })
 
+const hasActiveFilters = computed(() => {
+    return searchQuery.value.trim() !== '' ||
+        Object.values(filters.value).some(value => value !== '')
+})
+
 const totalPages = computed(() => {
     return Math.ceil(filteredEvents.value.length / pagination.value.pageSize)
 })
@@ -537,6 +565,14 @@ const refreshEvents = async () => {
 }
 
 const filterEvents = () => {
+    pagination.value.currentPage = 1
+}
+
+const clearFilters = () => {
+    searchQuery.value = ''
+    Object.keys(filters.value).forEach(key => {
+        filters.value[key] = ''
+    })
     pagination.value.currentPage = 1
 }
 

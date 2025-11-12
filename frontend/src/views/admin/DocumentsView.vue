@@ -7,9 +7,8 @@
                 <p class="text-mun-gray-600 mt-1">Manage position papers, resolutions, and other committee documents</p>
             </div>
 
-            <div class="flex items-center space-x-3">                
-                <button @click="refreshDocuments" :disabled="isLoading"
-                    class="btn-un-third">
+            <div class="flex items-center space-x-3">
+                <button @click="refreshDocuments" :disabled="isLoading" class="btn-un-third">
                     <ArrowPathIcon :class="['w-4 h-4 mr-2', { 'animate-spin': isLoading }]" />
                     {{ isLoading ? 'Loading...' : 'Refresh' }}
                 </button>
@@ -69,56 +68,86 @@
 
         <!-- Advanced Filters -->
         <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">Search</label>
-                    <input v-model="filters.search" type="text" placeholder="Search documents..."
-                        class="input-field w-full px-3 py-2" />
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <!-- Search -->
+                <div class="lg:col-span-2">
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                        Search Documents
+                    </label>
+                    <div class="relative">
+                        <input v-model="filters.search" type="text" placeholder="Search by title, author, or content..."
+                            class="input-field pl-10" />
+                        <MagnifyingGlassIcon
+                            class="w-5 h-5 text-mun-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                    </div>
                 </div>
 
+                <!-- Document Type -->
                 <div>
-                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">Document Type</label>
-                    <SleekSelect
-                        v-model="filters.type"
-                        :options="documentTypeOptions"
-                        placeholder="All Types"
-                        searchable
-                        size="md"
-                    />
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                        Document Type
+                    </label>
+                    <SleekSelect v-model="filters.type" :options="documentTypeOptions" placeholder="All Types"
+                        searchable size="md" container-class="w-full" />
                 </div>
 
+                <!-- Committee -->
                 <div>
-                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">Committee</label>
-                    <SleekSelect
-                        v-model="filters.committee"
-                        :options="committeeOptions"
-                        placeholder="All Committees"
-                        searchable
-                        size="md"
-                    />
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                        Committee
+                    </label>
+                    <SleekSelect v-model="filters.committee" :options="committeeOptions" placeholder="All Committees"
+                        searchable size="md" container-class="w-full" />
                 </div>
 
+                <!-- Document Status -->
                 <div>
-                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">Date Range</label>
-                    <SleekSelect
-                        v-model="filters.dateRange"
-                        :options="dateRangeOptions"
-                        placeholder="All Time"
-                        size="md"
-                    />
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                        Status
+                    </label>
+                    <SleekSelect v-model="filters.status" :options="statusFilterOptions" placeholder="Filter by status"
+                        size="md" container-class="w-full" @change="handleStatusFilterChange" />
                 </div>
 
+                <!-- Date Range -->
                 <div>
-                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">Document Status</label>
-                    <!-- Quick Filter using SleekSelect -->
-                    <SleekSelect
-                        v-model="filters.status"
-                        :options="statusFilterOptions"
-                        placeholder="Filter by status"
-                        size="md"
-                        @change="handleStatusFilterChange"
-                    />
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                        Date Range
+                    </label>
+                    <SleekSelect v-model="filters.dateRange" :options="dateRangeOptions" placeholder="All Time"
+                        size="md" container-class="w-full" />
                 </div>
+            </div>
+        </div>
+
+        <!-- View Toggle and Actions -->
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <!-- Table View Info -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-mun-gray-600">Table View</span>
+                </div>
+
+                <!-- Filter Status -->
+                <div v-if="hasActiveFilters" class="flex items-center space-x-2">
+                    <span class="text-sm text-mun-gray-600">
+                        {{ documents.length }} documents found
+                    </span>
+                    <button @click="clearFilters" class="btn-un-secondary px-3 py-2">
+                        Clear Filters
+                    </button>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center space-x-3">
+                <SleekSelect v-model="pagination.pageSize" :options="pageSizeOptions" size="sm"
+                    container-class="min-w-[120px]" @change="loadDocuments" />
+
+                <button @click="exportDocuments" class="btn-un-secondary px-3 py-2">
+                    <ArrowDownTrayIcon class="w-4 h-4 mr-2" />
+                    Export
+                </button>
             </div>
         </div>
 
@@ -128,13 +157,8 @@
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-mun-gray-900">Documents</h3>
                     <div class="flex items-center space-x-3">
-                        <SleekSelect
-                            v-model="pagination.pageSize"
-                            :options="pageSizeOptions"
-                            size="sm"
-                            container-class="min-w-[120px]"
-                            @change="loadDocuments"
-                        />
+                        <SleekSelect v-model="pagination.pageSize" :options="pageSizeOptions" size="sm"
+                            container-class="min-w-[120px]" @change="loadDocuments" />
                     </div>
                 </div>
             </div>
@@ -143,10 +167,21 @@
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue-600"></div>
             </div>
 
-            <div v-else-if="documents.length === 0" class="text-center py-12">
-                <DocumentTextIcon class="mx-auto h-12 w-12 text-mun-gray-300 mb-4" />
-                <h3 class="text-sm font-medium text-mun-gray-900 mb-2">No documents found</h3>
-                <p class="text-sm text-mun-gray-500">Try adjusting your filters or check back later.</p>
+            <div v-else-if="documents.length === 0"
+                class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
+                <DocumentTextIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
+                <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
+                    {{ hasActiveFilters ? 'No documents match your filters' : 'No documents found' }}
+                </h3>
+                <p class="text-mun-gray-600 mb-6">
+                    {{ hasActiveFilters
+                        ? 'Try adjusting your search criteria or filters.'
+                        : 'Documents will appear here once uploaded by users.'
+                    }}
+                </p>
+                <button v-if="hasActiveFilters" @click="clearFilters" class="btn-un-secondary">
+                    Clear All Filters
+                </button>
             </div>
 
             <div v-else>
@@ -154,22 +189,28 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Document
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Committee
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Author
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Status
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Uploaded
                                 </th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Actions
                                 </th>
                             </tr>
@@ -179,13 +220,16 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10">
-                                            <div class="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                                            <div
+                                                class="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
                                                 <DocumentTextIcon class="h-6 w-6 text-gray-500" />
                                             </div>
                                         </div>
                                         <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">{{ document.title || document.originalName || document.filename || 'Untitled' }}</div>
-                                            <div class="text-sm text-gray-500">{{ getDocumentTypeLabel(document.type) }}</div>
+                                            <div class="text-sm font-medium text-gray-900">{{ document.title ||
+                                                document.originalName || document.filename || 'Untitled' }}</div>
+                                            <div class="text-sm text-gray-500">{{ getDocumentTypeLabel(document.type) }}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -194,7 +238,8 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     <div>
-                                        <div class="font-medium">{{ document.authorEmail || document.uploadedBy?.username || 'Unknown' }}</div>
+                                        <div class="font-medium">{{ document.authorEmail ||
+                                            document.uploadedBy?.username || 'Unknown' }}</div>
                                         <div class="text-gray-500">{{ document.countryName || 'N/A' }}</div>
                                     </div>
                                 </td>
@@ -219,7 +264,8 @@
                                             class="text-gray-600 hover:text-gray-900 transition-colors">
                                             <ArrowDownTrayIcon class="w-4 h-4" />
                                         </button>
-                                        <button v-if="document.status === 'pending' || document.status === 'under_review'"
+                                        <button
+                                            v-if="document.status === 'pending' || document.status === 'under_review'"
                                             @click="moderateDocument(document)"
                                             class="text-purple-600 hover:text-purple-900 transition-colors">
                                             <CheckCircleIcon class="w-4 h-4" />
@@ -348,7 +394,7 @@ const pageSizeOptions = [
     { label: '50 per page', value: 50 }
 ]
 
-// Computed options for committees
+// Computed
 const committeeOptions = computed(() => {
     return [
         { label: 'All Committees', value: '' },
@@ -357,6 +403,14 @@ const committeeOptions = computed(() => {
             value: committee._id
         }))
     ]
+})
+
+const hasActiveFilters = computed(() => {
+    return filters.value.search.trim() !== '' ||
+        filters.value.status !== 'all' ||
+        filters.value.type !== '' ||
+        filters.value.committee !== '' ||
+        filters.value.dateRange !== ''
 })
 
 // Methods
@@ -416,6 +470,39 @@ const loadCommittees = async () => {
         }
     } catch (error) {
         console.error('Failed to load committees:', error)
+    }
+}
+
+const clearFilters = () => {
+    filters.value.search = ''
+    filters.value.status = 'all'
+    filters.value.type = ''
+    filters.value.committee = ''
+    filters.value.dateRange = ''
+    pagination.value.currentPage = 1
+    loadDocuments()
+}
+
+const exportDocuments = async () => {
+    try {
+        const response = await apiMethods.exports.exportDocuments()
+        
+        if (response) {
+            // Create download link
+            const url = window.URL.createObjectURL(new Blob([response]))
+            const link = document.createElement('a')
+            link.href = url
+            link.setAttribute('download', `documents-export-${new Date().toISOString().split('T')[0]}.csv`)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.URL.revokeObjectURL(url)
+            
+            toast.success('Documents exported successfully')
+        }
+    } catch (error) {
+        console.error('Export documents error:', error)
+        toast.error('Failed to export documents')
     }
 }
 
@@ -556,5 +643,4 @@ tbody tr:hover {
         transform: rotate(360deg);
     }
 }
-
 </style>

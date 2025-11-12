@@ -1,7 +1,8 @@
 <template>
     <div class="p-6 space-y-6">
         <!-- Header -->
-        <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 flex items-center justify-between">
+        <div
+            class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-mun-gray-900">User Management</h1>
                 <p class="text-mun-gray-600">Manage system users and their permissions</p>
@@ -75,42 +76,113 @@
 
         <!-- Filters and Search -->
         <div class="mun-card p-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-                <div class="flex items-center space-x-4">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <!-- Search -->
+                <div class="lg:col-span-2">
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                        Search Users
+                    </label>
+                    <div class="relative">
+                        <input v-model="searchQuery" type="text" placeholder="Search by name, email, or country..."
+                            class="input-field pl-10" @input="debouncedSearch" />
+                        <MagnifyingGlassIcon
+                            class="w-5 h-5 text-mun-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                    </div>
+                </div>
+
+                <!-- Role Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                        Role
+                    </label>
                     <SleekSelect v-model="filters.role" @change="filterUsers" :options="[
                         { label: 'All Roles', value: '' },
                         { label: 'Admin', value: 'admin' },
                         { label: 'Presidium', value: 'presidium' },
                         { label: 'Delegate', value: 'delegate' }
-                    ]" containerClass="max-w-xs" placeholder="Filter by role" />
+                    ]" container-class="w-full" placeholder="Filter by role" />
+                </div>
 
+                <!-- Status Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                        Status
+                    </label>
                     <SleekSelect v-model="filters.status" @change="filterUsers" :options="[
                         { label: 'All Statuses', value: '' },
                         { label: 'Active', value: 'active' },
                         { label: 'Pending', value: 'pending' },
                         { label: 'Inactive', value: 'inactive' }
-                    ]" containerClass="max-w-xs" placeholder="Filter by status" />
+                    ]" container-class="w-full" placeholder="Filter by status" />
+                </div>
 
+                <!-- Committee Filter -->
+                <div class="lg:col-span-2">
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                        Committee
+                    </label>
                     <SleekSelect v-model="filters.committee" @change="filterUsers" :options="[
                         { label: 'All Committees', value: '' },
                         ...committees.map(committee => ({
                             label: committee.name,
                             value: committee.id
                         }))
-                    ]" containerClass="max-w-xs" placeholder="Filter by committee" />
+                    ]" container-class="w-full" placeholder="Filter by committee" />
+                </div>
+            </div>
+        </div>
+
+        <!-- View Toggle and Bulk Actions -->
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <!-- Table View Info -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-mun-gray-600">Table View</span>
                 </div>
 
-                <div class="flex items-center space-x-3">
-                    <input v-model="searchQuery" @input="debouncedSearch" type="text" placeholder="Search users..."
-                        class="input-field max-w-xs">
-                    <SleekSelect v-model="sortBy" @change="sortUsers" :options="[
-                        { label: 'Newest First', value: 'created_desc' },
-                        { label: 'Oldest First', value: 'created_asc' },
-                        { label: 'Name A-Z', value: 'name_asc' },
-                        { label: 'Name Z-A', value: 'name_desc' },
-                        { label: 'Last Login', value: 'lastLogin_desc' }
-                    ]" containerClass="max-w-xs" placeholder="Sort by" />
+                <!-- Bulk Actions -->
+                <div v-if="selectedUsers.length > 0" class="flex items-center space-x-2">
+                    <span class="text-sm text-mun-gray-600">
+                        {{ selectedUsers.length }} selected
+                    </span>
+
+                    <button @click="bulkAction('activate')" :disabled="selectedUsers.length === 0"
+                        class="btn-un-secondary px-3 py-2">
+                        <CheckIcon class="w-4 h-4 mr-2" />
+                        Activate
+                    </button>
+
+                    <button @click="exportUsers" class="btn-un-secondary px-3 py-2">
+                        <DocumentArrowDownIcon class="w-4 h-4 mr-2" />
+                        Export
+                    </button>
+
+                    <button @click="selectedUsers = []" class="btn-un-secondary px-3 py-2">
+                        Clear
+                    </button>
                 </div>
+
+                <!-- Filter Status -->
+                <div v-else-if="hasActiveFilters" class="flex items-center space-x-2">
+                    <span class="text-sm text-mun-gray-600">
+                        {{ filteredUsers.length }} of {{ users.length }} users
+                    </span>
+                    <button @click="clearFilters" class="btn-un-secondary px-3 py-2">
+                        Clear Filters
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sort Options -->
+            <div class="flex items-center space-x-2">
+                <span class="text-sm text-mun-gray-600">Sort by:</span>
+                <SleekSelect v-model="sortBy" @change="sortUsers" :options="[
+                    { label: 'Newest First', value: 'created_desc' },
+                    { label: 'Oldest First', value: 'created_asc' },
+                    { label: 'Name A-Z', value: 'name_asc' },
+                    { label: 'Name Z-A', value: 'name_desc' },
+                    { label: 'Last Login', value: 'lastLogin_desc' }
+                ]" container-class="min-w-[150px]" placeholder="Sort by" />
             </div>
         </div>
 
@@ -135,18 +207,24 @@
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
             </div>
 
-            <div v-else-if="filteredUsers.length === 0" class="text-center py-12">
-                <UsersIcon class="mx-auto h-12 w-12 text-mun-gray-300" />
-                <h3 class="mt-4 text-lg font-medium text-mun-gray-900">
-                    {{searchQuery || Object.values(filters).some(v => v) ? 'No users found' : 'No users yet'}}
+            <div v-else-if="filteredUsers.length === 0"
+                class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
+                <UsersIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
+                <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
+                    {{ hasActiveFilters ? 'No users match your filters' : 'No users found' }}
                 </h3>
-                <p class="mt-2 text-mun-gray-600 mb-4">
-                    {{searchQuery || Object.values(filters).some(v => v) ? 'Try adjusting your search or filters' :
-                        'Add your first user to get started'}}
+                <p class="text-mun-gray-600 mb-6">
+                    {{ hasActiveFilters
+                        ? 'Try adjusting your search criteria or filters.'
+                        : 'Add your first user to get started.'
+                    }}
                 </p>
-                <button v-if="!searchQuery && !Object.values(filters).some(v => v)" @click="showCreateModal = true"
-                    class="btn-un-primary">
+                <button v-if="!hasActiveFilters" @click="showCreateModal = true" class="btn-un-primary">
+                    <PlusIcon class="w-4 h-4 mr-2" />
                     Add First User
+                </button>
+                <button v-else @click="clearFilters" class="btn-un-secondary">
+                    Clear All Filters
                 </button>
             </div>
 
@@ -188,8 +266,7 @@
                         <tr v-for="user in paginatedUsers" :key="user.id"
                             class="hover:bg-mun-gray-50 transition-colors">
                             <td class="px-6 py-4">
-                                <input type="checkbox" v-model="selectedUsers" :value="user.id"
-                                    class="input-field">
+                                <input type="checkbox" v-model="selectedUsers" :value="user.id" class="input-field">
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
@@ -433,6 +510,11 @@ const filteredUsers = computed(() => {
     })
 })
 
+const hasActiveFilters = computed(() => {
+    return searchQuery.value.trim() !== '' ||
+        Object.values(filters.value).some(value => value !== '')
+})
+
 const totalPages = computed(() => {
     return Math.ceil(filteredUsers.value.length / pagination.value.pageSize)
 })
@@ -491,6 +573,15 @@ const refreshUsers = async () => {
 }
 
 const filterUsers = () => {
+    pagination.value.currentPage = 1
+}
+
+const clearFilters = () => {
+    searchQuery.value = ''
+    Object.keys(filters.value).forEach(key => {
+        filters.value[key] = ''
+    })
+    selectedUsers.value = []
     pagination.value.currentPage = 1
 }
 
