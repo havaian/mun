@@ -153,22 +153,12 @@
 
         <!-- Documents Table -->
         <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-mun-gray-200">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-mun-gray-900">Documents</h3>
-                    <div class="flex items-center space-x-3">
-                        <SleekSelect v-model="pagination.pageSize" :options="pageSizeOptions" size="sm"
-                            container-class="min-w-[120px]" @change="loadDocuments" />
-                    </div>
-                </div>
-            </div>
-
             <div v-if="isLoading" class="flex items-center justify-center py-12">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue-600"></div>
             </div>
 
             <div v-else-if="documents.length === 0"
-                class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
+                class="bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
                 <DocumentTextIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
                 <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
                     {{ hasActiveFilters ? 'No documents match your filters' : 'No documents found' }}

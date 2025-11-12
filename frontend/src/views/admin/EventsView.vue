@@ -164,22 +164,12 @@
 
         <!-- Events List/Grid -->
         <div class="mun-card">
-            <div class="px-6 py-4 border-b border-mun-gray-200">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-mun-gray-900">Events</h2>
-                    <button @click="exportEvents" class="btn-un-secondary px-3 py-2">
-                        <DocumentArrowDownIcon class="w-4 h-4 mr-2" />
-                        Export
-                    </button>
-                </div>
-            </div>
-
             <div v-if="isLoading" class="flex items-center justify-center py-12">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
             </div>
 
             <div v-else-if="filteredEvents.length === 0"
-                class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
+                class="bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
                 <CalendarDaysIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
                 <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
                     {{ hasActiveFilters ? 'No events match your filters' : 'No events found' }}

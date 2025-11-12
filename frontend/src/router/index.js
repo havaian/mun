@@ -8,14 +8,14 @@ const EmailBindingView = () => import('@/views/auth/EmailBindingView.vue')
 const LanguageSelectionView = () => import('@/views/auth/LanguageSelectionView.vue')
 
 // Admin views
-const AdminDashboard = () => import('@/views/admin/DashboardView.vue')
-const AdminEvents = () => import('@/views/admin/EventsView.vue')
-const AdminCommittees = () => import('@/views/admin/CommitteesView.vue')
-const AdminUsers = () => import('@/views/admin/UsersView.vue')
-const AdminReports = () => import('@/views/admin/ReportsView.vue')
-const AdminLogs = () => import('@/views/admin/LogsView.vue')
-const AdminSettings = () => import('@/views/admin/SettingsView.vue')
-const AdminDocuments = () => import('@/views/admin/DocumentsView.vue')
+const AdminDashboard = () => import(/* webpackChunkName: "admin-dashboard" */ '@/views/admin/DashboardView.vue')
+const AdminEvents = () => import(/* webpackChunkName: "admin-events" */ '@/views/admin/EventsView.vue')
+const AdminCommittees = () => import(/* webpackChunkName: "admin-committees" */ '@/views/admin/CommitteesView.vue')
+const AdminUsers = () => import(/* webpackChunkName: "admin-users" */ '@/views/admin/UsersView.vue')
+const AdminDocuments = () => import(/* webpackChunkName: "admin-documents" */ '@/views/admin/DocumentsView.vue')
+const AdminReports = () => import(/* webpackChunkName: "admin-reports" */ '@/views/admin/ReportsView.vue')
+const AdminLogs = () => import(/* webpackChunkName: "admin-logs" */ '@/views/admin/LogsView.vue')
+const AdminSettings = () => import(/* webpackChunkName: "admin-settings" */ '@/views/admin/SettingsView.vue')
 
 // Presidium views
 const PresidiumDashboard = () => import('@/views/presidium/DashboardView.vue')
@@ -34,6 +34,98 @@ const DelegateVoting = () => import('@/views/delegate/VotingView.vue')
 // Shared views
 const ProfileView = () => import('@/views/shared/ProfileView.vue')
 const NotFoundView = () => import('@/views/NotFoundView.vue')
+
+export const adminRoutes = {
+  path: '/admin',
+  component: () => import(/* webpackChunkName: "admin-layout" */ '@/layouts/AdminLayout.vue'),
+  meta: { 
+    requiresAuth: true, 
+    roles: ['admin'],
+    keepAlive: true // Keep the layout alive
+  },
+  children: [
+    {
+      path: '',
+      name: 'AdminDashboard',
+      component: AdminDashboard,
+      meta: { 
+        title: 'Admin Dashboard',
+        keepAlive: true, // Cache this component
+        transition: 'fade' // Smooth transition
+      }
+    },
+    {
+      path: 'events',
+      name: 'AdminEvents', 
+      component: AdminEvents,
+      meta: { 
+        title: 'Event Management',
+        keepAlive: true,
+        transition: 'fade'
+      }
+    },
+    {
+      path: 'committees',
+      name: 'AdminCommittees',
+      component: AdminCommittees,
+      meta: { 
+        title: 'Committee Management',
+        keepAlive: true,
+        transition: 'fade'
+      }
+    },
+    {
+      path: 'users',
+      name: 'AdminUsers',
+      component: AdminUsers,
+      meta: { 
+        title: 'User Management',
+        keepAlive: true,
+        transition: 'fade'
+      }
+    },
+    {
+      path: 'documents',
+      name: 'AdminDocuments',
+      component: AdminDocuments,
+      meta: { 
+        title: 'Document Management',
+        keepAlive: true,
+        transition: 'fade'
+      }
+    },
+    {
+      path: 'reports',
+      name: 'AdminReports',
+      component: AdminReports,
+      meta: { 
+        title: 'Reports & Analytics',
+        keepAlive: true,
+        transition: 'fade'
+      }
+    },
+    {
+      path: 'logs',
+      name: 'AdminLogs',
+      component: AdminLogs,
+      meta: { 
+        title: 'System Logs',
+        keepAlive: false, // Don't cache logs for real-time updates
+        transition: 'fade'
+      }
+    },
+    {
+      path: 'settings',
+      name: 'AdminSettings',
+      component: AdminSettings,
+      meta: { 
+        title: 'System Settings',
+        keepAlive: true,
+        transition: 'fade'
+      }
+    }
+  ]
+}
 
 const routes = [
   // Authentication routes
@@ -330,5 +422,31 @@ router.afterEach(() => {
   const appStore = useAppStore()
   appStore.setLoading(false)
 })
+
+export const routerConfig = {
+  // Scroll behavior for smooth navigation
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { top: 0, behavior: 'smooth' }
+    }
+  },
+
+  // Route guards for layout optimization
+  beforeEach: (to, from, next) => {
+    // Preload layout if navigating to admin routes
+    if (to.path.startsWith('/admin') && !from.path.startsWith('/admin')) {
+      // The layout will be loaded automatically by Vue Router
+    }
+
+    // Update document title
+    if (to.meta.title) {
+      document.title = `${to.meta.title} - MUN.UZ`
+    }
+
+    next()
+  }
+}
 
 export default router

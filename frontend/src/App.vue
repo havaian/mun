@@ -27,6 +27,16 @@
       </transition>
     </router-view>
 
+    <router-view v-slot="{ Component, route }">
+      <transition 
+        :name="route.meta.transition || 'fade'" 
+        mode="out-in"
+        appear
+      >
+        <component :is="Component" :key="route.fullPath" />
+      </transition>
+    </router-view>
+
     <!-- Global Toast Container -->
     <ToastContainer />
 

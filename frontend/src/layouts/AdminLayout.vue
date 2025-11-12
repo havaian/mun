@@ -29,7 +29,7 @@
             <nav class="flex-1 px-4 py-6 space-y-6 overflow-y-auto">
                 <!-- Dashboard -->
                 <div class="space-y-2">
-                    <router-link to="/admin" :class="getNavLinkClass('AdminDashboard')">
+                    <router-link to="/admin" :class="getNavLinkClass('AdminDashboard')" exact-active-class="nav-active">
                         <ChartBarIcon class="w-5 h-5" />
                         <span>Dashboard</span>
                         <div v-if="adminStore.stats.unreadNotifications > 0" class="ml-auto">
@@ -81,9 +81,9 @@
                     <router-link to="/admin/documents" :class="getNavLinkClass('AdminDocuments')">
                         <DocumentTextIcon class="w-5 h-5" />
                         <span>Document Management</span>
-                        <div v-if="adminStore.stats.documentsUploaded > 0" class="ml-auto">
+                        <div v-if="adminStore.stats.recentDocuments > 0" class="ml-auto">
                             <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
-                                {{ adminStore.stats.documentsUploaded }}
+                                {{ adminStore.stats.recentDocuments }}
                             </span>
                         </div>
                     </router-link>
@@ -103,11 +103,6 @@
                     <router-link to="/admin/logs" :class="getNavLinkClass('AdminLogs')">
                         <ClipboardDocumentListIcon class="w-5 h-5" />
                         <span>System Logs</span>
-                        <div v-if="adminStore.stats.recentErrors > 0" class="ml-auto">
-                            <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
-                                {{ adminStore.stats.recentErrors }}
-                            </span>
-                        </div>
                     </router-link>
                 </div>
 
@@ -124,68 +119,45 @@
                 </div>
             </nav>
 
-            <!-- System Status -->
-            <div class="border-t border-mun-gray-200 p-4">
+            <!-- System Status Footer -->
+            <div class="p-4 border-t border-mun-gray-200 bg-mun-gray-50">
                 <div class="space-y-3">
                     <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wider">
                         System Status
                     </h4>
-
-                    <!-- System Health -->
-                    <div class="space-y-2">
-                        <div class="grid text-xs text-mun-gray-500">
-                            <div class="flex items-center justify-between">
-                                <span>API:</span>
-                                <div
-                                    :class="['w-2 h-2 rounded-full', adminStore.systemHealth.api ? 'bg-green-500' : 'bg-red-500']">
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span>DB:</span>
-                                <div
-                                    :class="['w-2 h-2 rounded-full', adminStore.systemHealth.database ? 'bg-green-500' : 'bg-red-500']">
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span>Response Time:</span>
-                                <span>{{ adminStore.performanceMetrics.responseTime }}ms</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span>Active Connections:</span>
-                                <span>{{ adminStore.performanceMetrics.activeConnections }}</span>
-                            </div>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex items-center justify-between">
+                            <span class="text-mun-gray-600">API Status</span>
+                            <span :class="adminStore.systemHealth.api ? 'text-green-600' : 'text-red-600'">
+                                {{ adminStore.systemHealth.api ? 'Healthy' : 'Issues' }}
+                            </span>
                         </div>
-                    </div>
-
-                    <!-- Quick Stats -->
-                    <div class="text-xs text-mun-gray-500">
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <div class="font-semibold text-mun-gray-900">{{ adminStore.stats.totalUsers || 0 }}
-                                </div>
-                                <div>Total Users</div>
-                            </div>
-                            <div>
-                                <div class="font-semibold text-mun-gray-900">{{ adminStore.stats.totalEvents || 0 }}
-                                </div>
-                                <div>Events</div>
-                            </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-mun-gray-600">Database</span>
+                            <span :class="adminStore.systemHealth.database ? 'text-green-600' : 'text-red-600'">
+                                {{ adminStore.systemHealth.database ? 'Connected' : 'Disconnected' }}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-mun-gray-600">WebSocket</span>
+                            <span :class="adminStore.systemHealth.websocket ? 'text-green-600' : 'text-red-600'">
+                                {{ adminStore.systemHealth.websocket ? 'Active' : 'Inactive' }}
+                            </span>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- User Profile -->
-            <div class="border-t border-mun-gray-200 p-4">
-                <div class="space-y-3">
-                    <!-- User Info -->
+                <!-- User Info -->
+                <div class="mt-4 pt-4 border-t border-mun-gray-200">
                     <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-mun-blue-500 rounded-full flex items-center justify-center">
-                            <UserIcon class="w-5 h-5 text-white" />
+                        <div class="w-8 h-8 bg-mun-blue rounded-lg flex items-center justify-center">
+                            <span class="text-xs font-semibold text-white">
+                                {{ getUserInitials() }}
+                            </span>
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-mun-gray-900 truncate">
-                                {{ authStore.user?.fullName || 'Admin User' }}
+                                {{ authStore.user?.username || 'Admin' }}
                             </p>
                             <p class="text-xs text-mun-gray-500 truncate">
                                 {{ authStore.user?.email || 'admin@mun.uz' }}
@@ -194,7 +166,7 @@
                     </div>
 
                     <!-- User Actions -->
-                    <div class="space-y-1">
+                    <div class="space-y-1 mt-3">
                         <router-link to="/shared/profile"
                             class="flex items-center px-3 py-2 text-sm text-mun-gray-700 hover:bg-mun-gray-100 rounded-lg transition-colors">
                             <UserIcon class="w-4 h-4 mr-3" />
@@ -214,7 +186,13 @@
         <!-- Main Content -->
         <div :class="['transition-all duration-200 ease-in-out', sidebarCollapsed ? 'ml-0' : 'ml-72']">
             <main class="min-h-screen bg-mun-gray-50">
-                <router-view />
+                <!-- Use keep-alive to cache components and prevent unnecessary re-renders -->
+                <!-- Remove key attribute to prevent forced remounting -->
+                <router-view v-slot="{ Component, route }">
+                    <keep-alive :include="keepAlivePages">
+                        <component :is="Component" :key="route.fullPath" />
+                    </keep-alive>
+                </router-view>
             </main>
         </div>
 
@@ -225,8 +203,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAdminStore } from '@/stores/admin'
 import { useToast } from '@/plugins/toast'
@@ -247,6 +225,16 @@ const toast = useToast()
 // State
 const sidebarCollapsed = ref(false)
 
+// Pages to keep alive for better performance
+const keepAlivePages = computed(() => [
+    'AdminDashboard',
+    'AdminEvents',
+    'AdminCommittees',
+    'AdminUsers',
+    'AdminDocuments',
+    'AdminReports'
+])
+
 // Methods
 const toggleSidebar = () => {
     sidebarCollapsed.value = !sidebarCollapsed.value
@@ -255,8 +243,16 @@ const toggleSidebar = () => {
 const getNavLinkClass = (routeName) => {
     const baseClasses = 'group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors space-x-3'
     return route.name === routeName
-        ? `${baseClasses} bg-mun-blue-600 text-white shadow-lg`
+        ? `${baseClasses} bg-mun-blue text-white shadow-lg`
         : `${baseClasses} text-mun-gray-700 hover:bg-mun-gray-100 hover:text-mun-blue-600`
+}
+
+const getUserInitials = () => {
+    const user = authStore.user
+    if (user?.username) {
+        return user.username.substring(0, 2).toUpperCase()
+    }
+    return 'AD'
 }
 
 const handleLogout = async () => {
@@ -286,12 +282,40 @@ onUnmounted(() => {
     // Clean up auto-refresh when component unmounts
     adminStore.stopAutoRefresh()
 })
+
+onBeforeRouteLeave((to, from, next) => {
+  // Clear any active intervals/timers before leaving
+  console.log('Admin layout route guard - layout staying mounted')
+  
+  // Clean up any component-specific timers if needed
+  if (refreshTimer.value) {
+    clearInterval(refreshTimer.value)
+  }
+  
+  next()
+})
+
+const refreshTimer = ref(null)
+
+onBeforeUnmount(() => {
+  // Clean up timers and event listeners
+  if (refreshTimer.value) {
+    clearInterval(refreshTimer.value)
+  }
+  adminStore.stopAutoRefresh()
+  console.log('Admin layout component unmounting - cleaning up')
+})
 </script>
 
 <style scoped>
 /* Navigation styles */
 .nav-link {
     @apply flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors space-x-3;
+}
+
+/* Active navigation state */
+.nav-active {
+    @apply bg-mun-blue text-white shadow-lg;
 }
 
 /* Scrollbar styling */
