@@ -211,146 +211,60 @@
         </div>
 
         <!-- Committees Display -->
-        <div v-if="isLoading" class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden flex justify-center py-12">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
-        </div>
-
-        <div v-else-if="filteredCommittees.length === 0"
-            class="overflow-hidden text-center py-12">
-            <UserGroupIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
-            <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
-                {{ hasActiveFilters ? 'No committees match your filters' : 'No committees found' }}
-            </h3>
-            <p class="text-mun-gray-600 mb-6">
-                {{ hasActiveFilters
-                    ? 'Try adjusting your search criteria or filters.'
-                    : 'Get started by creating your first committee.'
-                }}
-            </p>
-            <button v-if="!hasActiveFilters" @click="showCreateModal = true" class="btn-un-primary">
-                <PlusIcon class="w-4 h-4 mr-2" />
-                Create First Committee
-            </button>
-            <button v-else @click="clearFilters" class="btn-un-secondary">
-                Clear All Filters
-            </button>
-        </div>
-
-        <!-- Grid View -->
-        <div v-else-if="viewMode === 'grid'" class="mun-card overflow-hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div v-for="committee in paginatedCommittees" :key="committee._id"
-                class="p-6 hover:shadow-lg transition-shadow cursor-pointer" @click="viewCommittee(committee)">
-
-                <!-- Committee Header -->
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex-1">
-                        <h3 class="text-lg font-medium text-mun-gray-900">{{ committee.name }}</h3>
-                        <p class="text-sm text-mun-gray-600 mt-1">{{ committee.description || 'No description' }}</p>
-                    </div>
-                    <input type="checkbox" v-model="selectedCommittees" :value="committee._id" @click.stop
-                        class="input-field">
-                </div>
-
-                <!-- Committee Info -->
-                <div class="space-y-2 text-sm text-mun-gray-600">
-                    <div class="flex items-center justify-between">
-                        <span>Type:</span>
-                        <span class="font-medium">{{ committee.type || 'Not set' }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span>Countries:</span>
-                        <span class="font-medium">{{ committee.countries?.length || 0 }}</span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span>Status:</span>
-                        <span :class="[
-                            'px-2 py-1 rounded-full text-xs font-medium',
-                            committee.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
-                                committee.status === 'setup' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
-                                    'bg-mun-gray-100 text-mun-gray-700'
-                        ]">
-                            {{ formatStatus(committee.status) }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Committee Actions -->
-                <div class="flex items-center justify-between mt-4 pt-4 border-t border-mun-gray-200">
-                    <span class="text-xs text-mun-gray-500">
-                        {{ committee.eventId?.name || 'No event' }}
-                    </span>
-                    <div class="flex items-center space-x-2">
-                        <button @click.stop="editCommittee(committee)"
-                            class="p-1 text-mun-gray-400 hover:text-mun-blue transition-colors">
-                            <PencilIcon class="w-4 h-4" />
-                        </button>
-                        <button @click.stop="duplicateCommittee(committee)"
-                            class="p-1 text-mun-gray-400 hover:text-mun-green-500 transition-colors">
-                            <DocumentDuplicateIcon class="w-4 h-4" />
-                        </button>
-                        <button @click.stop="deleteCommittee(committee)"
-                            class="p-1 text-mun-gray-400 hover:text-mun-red-500 transition-colors">
-                            <TrashIcon class="w-4 h-4" />
-                        </button>
-                    </div>
-                </div>
+        <div class="mun-card">
+            <div v-if="isLoading" class="flex items-center justify-center py-12">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
             </div>
-        </div>
 
-        <!-- List View -->
-        <div v-else class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden overflow-x-auto">
-            <table class="min-w-full divide-y divide-mun-gray-200">
-                <thead class="bg-mun-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left">
-                            <input type="checkbox" @change="toggleSelectAll" :checked="isAllSelected"
-                                class="input-field">
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                            Committee
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                            Type
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                            Event
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                            Countries
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                            Status
-                        </th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                            Actions
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-mun-gray-200">
-                    <tr v-for="committee in paginatedCommittees" :key="committee._id"
-                        class="hover:bg-mun-gray-50 cursor-pointer transition-colors" @click="viewCommittee(committee)">
-                        <td class="px-6 py-4">
-                            <input type="checkbox" v-model="selectedCommittees" :value="committee._id" @click.stop
-                                class="input-field">
-                        </td>
-                        <td class="px-6 py-4">
-                            <div>
-                                <div class="text-sm font-medium text-mun-gray-900">{{ committee.name }}</div>
-                                <div class="text-sm text-mun-gray-500 max-w-xs truncate">
-                                    {{ committee.description || 'No description' }}
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-900">
-                            {{ committee.type || 'Not set' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-500">
-                            {{ committee.eventId?.name || 'No event' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-900">
-                            {{ committee.countries?.length || 0 }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+            <div v-else-if="filteredCommittees.length === 0" class="overflow-hidden text-center py-12">
+                <UserGroupIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
+                <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
+                    {{ hasActiveFilters ? 'No committees match your filters' : 'No committees found' }}
+                </h3>
+                <p class="text-mun-gray-600 mb-6">
+                    {{ hasActiveFilters
+                        ? 'Try adjusting your search criteria or filters.'
+                        : 'Get started by creating your first committee.'
+                    }}
+                </p>
+                <button v-if="!hasActiveFilters" @click="showCreateModal = true" class="btn-un-primary">
+                    <PlusIcon class="w-4 h-4 mr-2" />
+                    Create First Committee
+                </button>
+                <button v-else @click="clearFilters" class="btn-un-secondary">
+                    Clear All Filters
+                </button>
+            </div>
+
+
+            <!-- Grid View -->
+            <div v-else-if="viewMode === 'grid'" class="p-6">
+                <div v-for="committee in paginatedCommittees" :key="committee._id"
+                    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" @click="viewCommittee(committee)">
+
+                    <!-- Committee Header -->
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-medium text-mun-gray-900">{{ committee.name }}</h3>
+                            <p class="text-sm text-mun-gray-600 mt-1">{{ committee.description || 'No description' }}
+                            </p>
+                        </div>
+                        <input type="checkbox" v-model="selectedCommittees" :value="committee._id" @click.stop
+                            class="input-field">
+                    </div>
+
+                    <!-- Committee Info -->
+                    <div class="space-y-2 text-sm text-mun-gray-600">
+                        <div class="flex items-center justify-between">
+                            <span>Type:</span>
+                            <span class="font-medium">{{ committee.type || 'Not set' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span>Countries:</span>
+                            <span class="font-medium">{{ committee.countries?.length || 0 }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span>Status:</span>
                             <span :class="[
                                 'px-2 py-1 rounded-full text-xs font-medium',
                                 committee.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
@@ -359,30 +273,127 @@
                             ]">
                                 {{ formatStatus(committee.status) }}
                             </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex items-center justify-end space-x-2">
-                                <button @click.stop="editCommittee(committee)"
-                                    class="text-mun-blue hover:text-mun-blue-600 transition-colors">
-                                    <PencilIcon class="w-4 h-4" />
-                                </button>
-                                <button @click.stop="duplicateCommittee(committee)"
-                                    class="text-mun-gray-400 hover:text-mun-green-500 transition-colors">
-                                    <DocumentDuplicateIcon class="w-4 h-4" />
-                                </button>
-                                <button @click.stop="deleteCommittee(committee)"
-                                    class="text-mun-gray-400 hover:text-mun-red-500 transition-colors">
-                                    <TrashIcon class="w-4 h-4" />
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                        </div>
+                    </div>
+
+                    <!-- Committee Actions -->
+                    <div class="flex items-center justify-between mt-4 pt-4 border-t border-mun-gray-200">
+                        <span class="text-xs text-mun-gray-500">
+                            {{ committee.eventId?.name || 'No event' }}
+                        </span>
+                        <div class="flex items-center space-x-2">
+                            <button @click.stop="editCommittee(committee)"
+                                class="p-1 text-mun-gray-400 hover:text-mun-blue transition-colors">
+                                <PencilIcon class="w-4 h-4" />
+                            </button>
+                            <button @click.stop="duplicateCommittee(committee)"
+                                class="p-1 text-mun-gray-400 hover:text-mun-green-500 transition-colors">
+                                <DocumentDuplicateIcon class="w-4 h-4" />
+                            </button>
+                            <button @click.stop="deleteCommittee(committee)"
+                                class="p-1 text-mun-gray-400 hover:text-mun-red-500 transition-colors">
+                                <TrashIcon class="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List View -->
+            <div v-else class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-mun-gray-200">
+                    <thead class="bg-mun-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left">
+                                <input type="checkbox" @change="toggleSelectAll" :checked="isAllSelected"
+                                    class="input-field">
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                Committee
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                Type
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                Event
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                Countries
+                            </th>
+                            <th
+                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th
+                                class="px-6 py-3 text-right text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-mun-gray-200">
+                        <tr v-for="committee in paginatedCommittees" :key="committee._id"
+                            class="hover:bg-mun-gray-50 cursor-pointer transition-colors"
+                            @click="viewCommittee(committee)">
+                            <td class="px-6 py-4">
+                                <input type="checkbox" v-model="selectedCommittees" :value="committee._id" @click.stop
+                                    class="input-field">
+                            </td>
+                            <td class="px-6 py-4">
+                                <div>
+                                    <div class="text-sm font-medium text-mun-gray-900">{{ committee.name }}</div>
+                                    <div class="text-sm text-mun-gray-500 max-w-xs truncate">
+                                        {{ committee.description || 'No description' }}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-900">
+                                {{ committee.type || 'Not set' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-500">
+                                {{ committee.eventId?.name || 'No event' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-900">
+                                {{ committee.countries?.length || 0 }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span :class="[
+                                    'px-2 py-1 rounded-full text-xs font-medium',
+                                    committee.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
+                                        committee.status === 'setup' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
+                                            'bg-mun-gray-100 text-mun-gray-700'
+                                ]">
+                                    {{ formatStatus(committee.status) }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <button @click.stop="editCommittee(committee)"
+                                        class="text-mun-blue hover:text-mun-blue-600 transition-colors">
+                                        <PencilIcon class="w-4 h-4" />
+                                    </button>
+                                    <button @click.stop="duplicateCommittee(committee)"
+                                        class="text-mun-gray-400 hover:text-mun-green-500 transition-colors">
+                                        <DocumentDuplicateIcon class="w-4 h-4" />
+                                    </button>
+                                    <button @click.stop="deleteCommittee(committee)"
+                                        class="text-mun-gray-400 hover:text-mun-red-500 transition-colors">
+                                        <TrashIcon class="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Pagination -->
-        <div v-if="filteredCommittees.length > pagination.pageSize" class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden flex justify-center">
+        <div v-if="filteredCommittees.length > pagination.pageSize"
+            class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden flex justify-center">
             <Pagination :current-page="pagination.currentPage" :total-pages="pagination.totalPages"
                 @page-change="handlePageChange" />
         </div>
