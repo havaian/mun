@@ -77,8 +77,8 @@
                                     online</span>
                             </div>
                         </div>
-                        <div class="p-3 bg-green-100 rounded-lg">
-                            <UsersIcon class="w-8 h-8 text-green-600" />
+                        <div class="p-3 rounded-lg bg-mun-blue/10">
+                            <UsersIcon class="w-8 h-8 text-mun-blue" />
                         </div>
                     </div>
                 </div>
