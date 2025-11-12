@@ -1,20 +1,20 @@
 <template>
     <div class="p-6 space-y-6">
         <!-- Header -->
-        <div class="mun-card flex items-center justify-between bg-white rounded-xl shadow-sm border border-mun-gray-200 flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+        <div class="page-header">
             <div>
                 <h1 class="text-2xl font-bold text-mun-gray-900">Reports & Analytics</h1>
                 <p class="text-mun-gray-600">Generate reports and view system analytics</p>
             </div>
 
             <div class="flex items-center space-x-3">
-                <button @click="refreshData" :disabled="adminStore.isLoading" class="btn-un-secondary">
-                    <ArrowPathIcon class="w-5 h-5 mr-2" />
+                <button @click="refreshData" :disabled="adminStore.isLoading" class="btn-un-fourth">
+                    <ArrowPathIcon class="w-4 h-4 mr-2" />
                     Refresh
                 </button>
                 
-                <button @click="showCustomReportModal = true" class="btn-un-primary">
-                    <DocumentChartBarIcon class="w-5 h-5 mr-2" />
+                <button @click="showCustomReportModal = true" class="btn-un-third">
+                    <DocumentChartBarIcon class="w-4 h-4 mr-2" />
                     Custom Report
                 </button>
             </div>

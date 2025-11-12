@@ -14,7 +14,7 @@
                     :options="statusFilterOptions"
                     placeholder="Filter by status"
                     size="md"
-                    container-class="btn-un-fourth"
+                    container-class="min-w-[160px]"
                     @change="handleStatusFilterChange"
                 />
                 
@@ -535,10 +535,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.admin-documents {
-    @apply min-h-screen bg-mun-gray-50;
-}
-
 /* Table hover effects */
 tbody tr:hover {
     @apply bg-gray-50;

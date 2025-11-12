@@ -1,5 +1,5 @@
 <template>
-    <div class="admin-logs">
+    <div class="admin-logs p-6 space-y-6">
         <!-- Header -->
         <div class="page-header">
             <div>
