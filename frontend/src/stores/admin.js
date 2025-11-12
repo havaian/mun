@@ -60,7 +60,7 @@ export const useAdminStore = defineStore('admin', () => {
             systemHealth.value.websocket = newValue
         }, { immediate: true })
     }
-
+ 
     // Computed
     const overallHealthStatus = computed(() => {
         const { api, database, websocket } = systemHealth.value
@@ -330,20 +330,5 @@ export const useAdminStore = defineStore('admin', () => {
         formatUptime,
         getHealthColor,
         getHealthTextColor
-    }
-}, {
-    persist: {
-        enabled: true,
-        strategies: [
-            {
-                key: 'admin-cache',
-                storage: sessionStorage, // Use session storage for admin data
-                paths: ['stats', 'systemHealth', 'recentActivity'], // Only persist specific data
-                serializer: {
-                    serialize: JSON.stringify,
-                    deserialize: JSON.parse
-                }
-            }
-        ]
     }
 })

@@ -14,20 +14,6 @@ import AppButton from './components/ui/AppButton.vue'
 import AppCard from './components/ui/AppCard.vue'
 import SleekSelect from './components/ui/SleekSelect.vue'
 
-const prefetchAdminRoutes = () => {
-  const adminLinks = document.querySelectorAll('a[href*="/admin"]')
-  
-  adminLinks.forEach(link => {
-    link.addEventListener('mouseenter', () => {
-      const href = link.getAttribute('href')
-      if (href && href.startsWith('/admin')) {
-        // Prefetch the component
-        import(/* webpackChunkName: "admin-prefetch" */ '@/layouts/AdminLayout.vue')
-      }
-    }, { once: true })
-  })
-}
-
 // Initialize Vue app
 const app = createApp(App)
 
@@ -72,7 +58,3 @@ if (import.meta.env.DEV) {
 
 // Mount app
 app.mount('#app')
-
-setTimeout(() => {
-  prefetchAdminRoutes()
-}, 1000)
