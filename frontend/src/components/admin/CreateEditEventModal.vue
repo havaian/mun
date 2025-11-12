@@ -706,7 +706,7 @@ const removeTag = (tag) => {
     }
 }
 
-const submitForm = async () => {
+async function submitForm() {
     if (!validateForm()) {
         toast.error('Please fix the form errors before submitting')
         return

@@ -301,21 +301,21 @@
 
             <!-- Pagination -->
             <div v-if="totalPages > 1" class="px-6 py-4 border-t border-mun-gray-200">
-                <Pagination :current-page="pagination.currentPage" :total-pages="totalPages"
-                    @page-change="handlePageChange" />
+                <!-- <Pagination :current-page="pagination.currentPage" :total-pages="totalPages"
+                    @page-change="handlePageChange" /> -->
             </div>
         </div>
 
         <!-- Modals -->
-        <CreateEditEventModal v-model="showCreateModal" mode="create" @saved="handleEventCreated" />
+        <!-- <CreateEditEventModal v-model="showCreateModal" mode="create" @saved="handleEventCreated" /> -->
 
-        <CreateEditEventModal v-model="showEditModal" mode="edit" :event="selectedEvent" @saved="handleEventUpdated" />
+        <!-- <CreateEditEventModal v-model="showEditModal" mode="edit" :event="selectedEvent" @saved="handleEventUpdated" /> -->
 
-        <EventDetailsModal v-model="showDetailsModal" :event="selectedEvent" @edit="editEventFromDetails"
-            @delete="deleteEvent" />
+        <!-- <EventDetailsModal v-model="showDetailsModal" :event="selectedEvent" @edit="editEventFromDetails"
+            @delete="deleteEvent" /> -->
 
-        <ConfirmDeleteModal v-model="showDeleteConfirm" :title="`Delete Event: ${selectedEvent?.name}`"
-            :message="deleteConfirmMessage" @confirmed="confirmDelete" />
+        <!-- <ConfirmDeleteModal v-model="showDeleteConfirm" :title="`Delete Event: ${selectedEvent?.name}`"
+            :message="deleteConfirmMessage" @confirmed="confirmDelete" /> -->
     </div>
 </template>
 
@@ -347,10 +347,10 @@ import {
 } from '@heroicons/vue/24/outline'
 
 // Components
-import CreateEditEventModal from '@/components/admin/CreateEditEventModal.vue'
-import EventDetailsModal from '@/components/admin/EventDetailsModal.vue'
-import ConfirmDeleteModal from '@/components/admin/ConfirmDeleteModal.vue'
-import Pagination from '@/components/ui/Pagination.vue'
+// import CreateEditEventModal from '@/components/admin/CreateEditEventModal.vue'
+// import EventDetailsModal from '@/components/admin/EventDetailsModal.vue'
+// import ConfirmDeleteModal from '@/components/admin/ConfirmDeleteModal.vue'
+// import Pagination from '@/components/ui/Pagination.vue'
 
 const router = useRouter()
 const route = useRoute()
