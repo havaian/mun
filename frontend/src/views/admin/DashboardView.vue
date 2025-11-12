@@ -45,8 +45,8 @@
                                     active</span>
                             </div>
                         </div>
-                        <div class="p-3 bg-blue-100 rounded-lg">
-                            <CalendarDaysIcon class="w-8 h-8 text-blue-600" />
+                        <div class="p-3 rounded-lg bg-mun-blue/10">
+                            <CalendarDaysIcon class="w-8 h-8 text-mun-blue" />
                         </div>
                     </div>
                 </div>
@@ -61,8 +61,8 @@
                                     active</span>
                             </div>
                         </div>
-                        <div class="p-3 bg-purple-100 rounded-lg">
-                            <UserGroupIcon class="w-8 h-8 text-purple-600" />
+                        <div class="p-3 rounded-lg bg-mun-blue/10">
+                            <BuildingLibraryIcon class="w-8 h-8 text-mun-blue" />
                         </div>
                     </div>
                 </div>
@@ -93,8 +93,8 @@
                                     pending</span>
                             </div>
                         </div>
-                        <div class="p-3 bg-orange-100 rounded-lg">
-                            <DocumentTextIcon class="w-8 h-8 text-orange-600" />
+                        <div class="p-3 rounded-lg bg-mun-blue/10">
+                            <DocumentTextIcon class="w-8 h-8 text-mun-blue" />
                         </div>
                     </div>
                 </div>
@@ -314,10 +314,6 @@
                         <div v-else class="text-center py-8">
                             <CalendarDaysIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-3" />
                             <p class="text-mun-gray-500 mb-2">No active events</p>
-                            <button @click="$router.push('/admin/events')"
-                                class="text-sm text-mun-blue-600 hover:text-mun-blue-700 font-medium">
-                                Create your first event
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -349,7 +345,8 @@ import {
     DocumentIcon,
     ServerIcon,
     PuzzlePieceIcon,
-    CloudIcon
+    CloudIcon,
+    BuildingLibraryIcon
 } from '@heroicons/vue/24/outline'
 
 // Stores

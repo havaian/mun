@@ -171,10 +171,10 @@
             </div>
 
             <!-- Empty State -->
-            <div v-else class="p-8 text-center">
-                <DocumentTextIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-3" />
-                <p class="text-mun-gray-500 mb-2">No logs found</p>
-                <p class="text-sm text-mun-gray-400">Try adjusting your filters or search terms</p>
+            <div v-else-if="recentActivity.length === 0" class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
+                <DocumentChartBarIcon class="mx-auto h-12 w-12 text-mun-gray-300 mb-4" />
+                <h3 class="mt-4 text-lg font-medium text-mun-gray-900">No logs found</h3>
+                <p class="text-mun-gray-600 mb-6">Try adjusting your filters or search terms</p>
             </div>
 
             <!-- Pagination -->

@@ -138,17 +138,17 @@
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
             </div>
 
-            <div v-else-if="filteredUsers.length === 0" class="text-center py-12">
-                <UsersIcon class="mx-auto h-12 w-12 text-mun-gray-300" />
-                <h3 class="mt-4 text-lg font-medium text-mun-gray-900">
+            <div v-else-if="filteredCommittees.length === 0" class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
+                <UsersIcon class="mx-auto h-12 w-12 text-mun-gray-300 mb-4" />
+                <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
                     {{searchQuery || Object.values(filters).some(v => v) ? 'No users found' : 'No users yet'}}
                 </h3>
-                <p class="mt-2 text-mun-gray-600 mb-4">
+                <p class="text-mun-gray-600 mb-6">
                     {{searchQuery || Object.values(filters).some(v => v) ? 'Try adjusting your search or filters' :
                         'Add your first user to get started'}}
                 </p>
-                <button v-if="!searchQuery && !Object.values(filters).some(v => v)" @click="showCreateModal = true"
-                    class="btn-un-primary">
+                <button v-if="!searchQuery && !Object.values(filters).some(v => v)" class="btn-un-primary">
+                    <PlusIcon class="w-4 h-4 mr-2" />
                     Add First User
                 </button>
             </div>

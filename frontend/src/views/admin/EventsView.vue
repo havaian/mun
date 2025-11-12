@@ -100,21 +100,6 @@
                             { label: 'Past Events', value: 'past' }
                         ]" @change="filterEvents" container-class="max-w-xs" />
                     </div>
-
-                    <div class="flex items-center space-x-2">
-                        <button @click="viewMode = 'grid'" :class="[
-                            'p-2 rounded-lg transition-colors',
-                            viewMode === 'grid' ? 'bg-mun-blue text-white' : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
-                        ]">
-                            <Squares2X2Icon class="w-5 h-5" />
-                        </button>
-                        <button @click="viewMode = 'list'" :class="[
-                            'p-2 rounded-lg transition-colors',
-                            viewMode === 'list' ? 'bg-mun-blue text-white' : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
-                        ]">
-                            <ListBulletIcon class="w-5 h-5" />
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Search -->
@@ -128,37 +113,88 @@
                         <MagnifyingGlassIcon
                             class="w-5 h-5 text-mun-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                     </div>
-                    <SleekSelect v-model="sortBy" :options="[
-                        { label: 'Newest First', value: 'created_desc' },
-                        { label: 'Oldest First', value: 'created_asc' },
-                        { label: 'Name A-Z', value: 'name_asc' },
-                        { label: 'Name Z-A', value: 'name_desc' },
-                        { label: 'Start Date', value: 'date_asc' },
-                        { label: 'End Date', value: 'date_desc' }
-                    ]" @change="sortEvents" size="sm" container-class="max-w-xs" />
+
+                    <div class="">
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Sort
+                        </label>
+                        <SleekSelect v-model="sortBy" :options="[
+                            { label: 'Newest First', value: 'created_desc' },
+                            { label: 'Oldest First', value: 'created_asc' },
+                            { label: 'Name A-Z', value: 'name_asc' },
+                            { label: 'Name Z-A', value: 'name_desc' },
+                            { label: 'Start Date', value: 'date_asc' },
+                            { label: 'End Date', value: 'date_desc' }
+                        ]" @change="sortEvents" size="sm" container-class="max-w-xs" />
+                    </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- View Toggle and Bulk Actions -->
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <!-- View Toggle -->
+                <div class="flex items-center space-x-2">
+                    <button @click="viewMode = 'grid'" :class="[
+                        'p-2 rounded-lg transition-colors',
+                        viewMode === 'grid' ? 'bg-mun-blue text-white' : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
+                    ]">
+                        <Squares2X2Icon class="w-5 h-5" />
+                    </button>
+                    <button @click="viewMode = 'list'" :class="[
+                        'p-2 rounded-lg transition-colors',
+                        viewMode === 'list' ? 'bg-mun-blue text-white' : 'bg-mun-gray-100 text-mun-gray-600 hover:bg-mun-gray-200'
+                    ]">
+                        <ListBulletIcon class="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div class="px-6 py-4 border-b border-mun-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-sm text-mun-gray-500">
+                                {{ filteredEvents.length }} of {{ events.length }} events
+                            </span>
+                            <button @click="exportEvents" class="btn-un-secondary px-3 py-2">
+                                <DocumentArrowDownIcon class="w-4 h-4 mr-2" />
+                                Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sort Options -->
+            <div class="flex items-center space-x-2">
+                <span class="text-sm text-mun-gray-600">Sort by:</span>
+                <SleekSelect v-model="sortBy" :options="[
+                    { label: 'Newest First', value: 'created_desc' },
+                    { label: 'Oldest First', value: 'created_asc' },
+                    { label: 'Name A-Z', value: 'name_asc' },
+                    { label: 'Name Z-A', value: 'name_desc' },
+                    { label: 'Type A-Z', value: 'type_asc' },
+                    { label: 'Most Countries', value: 'countries_desc' },
+                    { label: 'Least Countries', value: 'countries_asc' }
+                ]" @change="applySorting" size="sm" container-class="min-w-[150px]" />
             </div>
         </div>
 
         <!-- Events List/Grid -->
         <div class="mun-card">
-            <div class="px-6 py-4 border-b border-mun-gray-200">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-mun-gray-900">Events</h2>
-                    <div class="flex items-center space-x-3">
-                        <span class="text-sm text-mun-gray-500">
-                            {{ filteredEvents.length }} of {{ events.length }} events
-                        </span>
-                        <button @click="exportEvents" class="btn-un-secondary px-3 py-2">
-                            <DocumentArrowDownIcon class="w-4 h-4 mr-2" />
-                            Export
-                        </button>
-                    </div>
-                </div>
-            </div>
-
             <div v-if="isLoading" class="flex items-center justify-center py-12">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
+            </div>
+
+            <div v-else-if="filteredEvents.length === 0" class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
+                <CalendarDaysIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-4" />
+                <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
+                    {{searchQuery || Object.values(filters).some(v => v) ? 'No events found' : 'No events yet'}}
+                </h3>
+                <button v-if="!searchQuery && !Object.values(filters).some(v => v)" @click="showCreateModal = true" class="btn-un-primary">
+                    <PlusIcon class="w-4 h-4 mr-2" />
+                    Create First Event
+                </button>
             </div>
 
             <div v-else-if="filteredEvents.length === 0" class="text-center py-12">
@@ -362,7 +398,8 @@ import {
     DocumentArrowDownIcon,
     PencilIcon,
     DocumentDuplicateIcon,
-    TrashIcon
+    TrashIcon,
+    XMarkIcon
 } from '@heroicons/vue/24/outline'
 
 // Components

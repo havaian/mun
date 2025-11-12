@@ -216,7 +216,7 @@
         </div>
 
         <div v-else-if="filteredCommittees.length === 0" class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
-            <UserGroupIcon class="w-16 h-16 text-mun-gray-400 mx-auto mb-4" />
+            <UserGroupIcon class="w-12 h-12 text-mun-gray-300 mx-auto mb-4" />
             <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
                 {{ hasActiveFilters ? 'No committees match your filters' : 'No committees found' }}
             </h3>
@@ -231,6 +231,7 @@
                 Create First Committee
             </button>
             <button v-else @click="clearFilters" class="btn-un-secondary">
+                <XMarkIcon class="w-4 h-4 mr-2" />
                 Clear All Filters
             </button>
         </div>
@@ -238,7 +239,7 @@
         <!-- Grid View -->
         <div v-else-if="viewMode === 'grid'" class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div v-for="committee in paginatedCommittees" :key="committee._id"
-                class="mun-card p-6 hover:shadow-lg transition-shadow cursor-pointer" @click="viewCommittee(committee)">
+                class="p-6 hover:shadow-lg transition-shadow cursor-pointer" @click="viewCommittee(committee)">
 
                 <!-- Committee Header -->
                 <div class="flex items-start justify-between mb-4">
@@ -431,7 +432,8 @@ import {
     TrashIcon,
     ClipboardDocumentCheckIcon,
     ClipboardDocumentIcon,
-    BuildingLibraryIcon
+    BuildingLibraryIcon,
+    XMarkIcon
 } from '@heroicons/vue/24/outline'
 
 // Components

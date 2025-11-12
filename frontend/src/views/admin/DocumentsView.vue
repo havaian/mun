@@ -143,10 +143,10 @@
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue-600"></div>
             </div>
 
-            <div v-else-if="documents.length === 0" class="text-center py-12">
+            <div v-else-if="documents.length === 0" class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
                 <DocumentTextIcon class="mx-auto h-12 w-12 text-mun-gray-300 mb-4" />
-                <h3 class="text-sm font-medium text-mun-gray-900 mb-2">No documents found</h3>
-                <p class="text-sm text-mun-gray-500">Try adjusting your filters or check back later.</p>
+                <h3 class="text-lg font-medium text-mun-gray-900 mb-2">No documents found</h3>
+                <p class="text-mun-gray-600 mb-6">Try adjusting your filters or check back later.</p>
             </div>
 
             <div v-else>
