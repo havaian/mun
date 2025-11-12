@@ -103,7 +103,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Start Date *
                                         </label>
-                                        <input v-model="formData.startDate" type="datetime-local" required
+                                        <input v-model="formData.startDate" type="date" required
                                             class="input-field" :class="{ 'border-mun-red-300': errors.startDate }" />
                                         <p v-if="errors.startDate" class="mt-1 text-sm text-mun-red-600">
                                             {{ errors.startDate }}
@@ -115,7 +115,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             End Date *
                                         </label>
-                                        <input v-model="formData.endDate" type="datetime-local" required
+                                        <input v-model="formData.endDate" type="date" required
                                             class="input-field" :class="{ 'border-mun-red-300': errors.endDate }" />
                                         <p v-if="errors.endDate" class="mt-1 text-sm text-mun-red-600">
                                             {{ errors.endDate }}
