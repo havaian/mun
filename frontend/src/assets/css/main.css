@@ -56,6 +56,12 @@
         background-size: 400% 400%;
         animation: gradientShift 15s ease infinite;
     }
+    
+    .page-header {
+        @apply mun-card;
+        @apply flex items-center justify-between bg-white border border-mun-gray-200;
+        @apply rounded-xl shadow-sm flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0;
+    }
 
     @keyframes gradientShift {
         0% {
@@ -88,6 +94,20 @@
         @apply font-medium px-6 py-3 rounded-xl transition-all duration-200;
         @apply hover:border-mun-blue/40 hover:shadow-mun;
         @apply focus:ring-2 focus:ring-mun-blue focus:ring-opacity-50 focus:ring-offset-2;
+    }
+
+    /* Third button style */
+    .btn-un-third {
+        @apply inline-flex items-center px-4 py-2 bg-mun-blue-600 text-white;
+        @apply rounded-lg text-sm font-medium transition-colors;
+        @apply hover:bg-mun-blue-700;
+    }
+
+    /* Fourth button style */
+    .btn-un-fourth {
+        @apply inline-flex items-center px-4 py-2 border border-mun-gray-300 text-mun-gray-700 bg-white;
+        @apply rounded-lg text-sm font-medium transition-colors;
+        @apply hover:bg-mun-gray-50 disabled:opacity-50;
     }
 
     button {

@@ -1,31 +1,28 @@
 <template>
     <div class="admin-documents p-6 space-y-6">
-        <!-- Page Header -->
-        <div class="bg-white rounded-xl shadow-sm border border-mun-gray-200 p-6">
-            <div class="mun-card flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                <div>
-                    <h1 class="text-2xl font-bold text-mun-gray-900">Document Management</h1>
-                    <p class="text-mun-gray-600 mt-1">
-                        Manage position papers, resolutions, and other committee documents
-                    </p>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <!-- Quick Filter using SleekSelect -->
-                    <SleekSelect
-                        v-model="filters.status"
-                        :options="statusFilterOptions"
-                        placeholder="Filter by status"
-                        size="md"
-                        container-class="min-w-[160px]"
-                        @change="handleStatusFilterChange"
-                    />
-                    
-                    <button @click="refreshDocuments" :disabled="isLoading"
-                        class="inline-flex items-center px-4 py-2 bg-mun-blue-600 text-white text-sm font-medium rounded-lg hover:bg-mun-blue-700 focus:ring-2 focus:ring-mun-blue-500 disabled:opacity-50 transition-colors">
-                        <ArrowPathIcon :class="['w-4 h-4 mr-2', { 'animate-spin': isLoading }]" />
-                        {{ isLoading ? 'Loading...' : 'Refresh' }}
-                    </button>
-                </div>
+        <!-- Header -->
+        <div class="page-header">
+            <div>
+                <h1 class="text-2xl font-bold text-mun-gray-900">Document Management</h1>
+                <p class="text-mun-gray-600 mt-1">Manage position papers, resolutions, and other committee documents</p>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <!-- Quick Filter using SleekSelect -->
+                <SleekSelect
+                    v-model="filters.status"
+                    :options="statusFilterOptions"
+                    placeholder="Filter by status"
+                    size="md"
+                    container-class="btn-un-fourth"
+                    @change="handleStatusFilterChange"
+                />
+                
+                <button @click="refreshDocuments" :disabled="isLoading"
+                    class="btn-un-third">
+                    <ArrowPathIcon :class="['w-4 h-4 mr-2', { 'animate-spin': isLoading }]" />
+                    {{ isLoading ? 'Loading...' : 'Refresh' }}
+                </button>
             </div>
         </div>
 

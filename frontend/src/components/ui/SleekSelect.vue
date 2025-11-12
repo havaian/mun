@@ -2,7 +2,7 @@
 <template>
     <div class="sleek-select relative" :class="containerClass">
         <button ref="trigger" @click="toggleDropdown" @blur="handleBlur" @keydown="handleKeydown" :class="[
-            'sleek-select__trigger w-full flex items-center justify-between px-4 py-2.5 text-left border rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2',
+            'sleek-select__trigger w-full flex items-center justify-between px-4 py-2.5 text-left border rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 min-w-0',
             disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-mun-blue-400',
             isOpen ? 'border-mun-blue-500 ring-2 ring-mun-blue-200 shadow-md' : 'border-gray-300',
             triggerClass,
@@ -31,12 +31,12 @@
                 </div>
 
                 <!-- Placeholder for empty state -->
-                <span v-else class="text-gray-500">{{ placeholder }}</span>
+                <span v-else class="text-gray-500 whitespace-nowrap">{{ placeholder }}</span>
             </div>
 
             <!-- Single Selection Display -->
             <span v-else :class="[
-                'flex items-center transition-colors duration-150',
+                'flex items-center transition-colors duration-150 whitespace-nowrap',
                 selectedOption ? 'text-gray-900' : 'text-gray-500'
             ]">
                 <component v-if="selectedOption?.icon" :is="selectedOption.icon" class="w-4 h-4 mr-2 flex-shrink-0" />
@@ -68,8 +68,7 @@
                     <div v-if="multiple && showSelectAll && filteredOptions.length > 1" @click="toggleSelectAll"
                         class="sleek-select__option flex items-center px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 border-b border-gray-100">
                         <input type="checkbox" :checked="isAllSelected" :indeterminate="isPartiallySelected"
-                            class="input-field mr-3 w-4 h-4"
-                            readonly />
+                            class="input-field mr-3 w-4 h-4" readonly />
                         <span class="font-medium">{{ isAllSelected ? 'Deselect All' : 'Select All' }}</span>
                     </div>
 
@@ -85,8 +84,7 @@
 
                         <!-- Checkbox for multiple selection -->
                         <input v-if="multiple" type="checkbox" :checked="isSelected(option)"
-                            class="input-field mr-3 w-4 h-4"
-                            readonly />
+                            class="input-field mr-3 w-4 h-4" readonly />
 
                         <!-- Option Icon -->
                         <component v-if="option.icon" :is="option.icon" class="w-4 h-4 mr-3 flex-shrink-0" />

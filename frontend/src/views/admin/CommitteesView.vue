@@ -1,19 +1,19 @@
 <template>
     <div class="p-6 space-y-6">
-        <!-- Page Header -->
-        <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200  flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+        <!-- Header -->
+        <div class="page-header">
             <div>
                 <h1 class="text-2xl font-bold text-mun-gray-900">Committee Management</h1>
                 <p class="text-mun-gray-600 mt-1">Create and manage MUN committees</p>
             </div>
 
             <div class="flex items-center space-x-3">
-                <button @click="refreshCommittees" :disabled="isLoading" class="btn-un-secondary">
+                <button @click="refreshCommittees" :disabled="isLoading" class="btn-un-fourth">
                     <ArrowPathIcon class="w-4 h-4 mr-2" />
                     Refresh
                 </button>
 
-                <button @click="showCreateCommittee = true" class="btn-un-primary">
+                <button @click="showCreateCommittee = true" class="btn-un-third">
                     <PlusIcon class="w-4 h-4 mr-2" />
                     Create Committee
                 </button>

@@ -1,22 +1,25 @@
 <template>
     <div class="p-6 space-y-6">
         <!-- Header -->
-        <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 flex items-center justify-between">
+        <div class="page-header">
             <div>
                 <h1 class="text-2xl font-bold text-mun-gray-900">User Management</h1>
-                <p class="text-mun-gray-600">Manage system users and their permissions</p>
+                <p class="text-mun-gray-600 mt-1">Manage system users and their permissions</p>
             </div>
+
             <div class="flex items-center space-x-3">
-                <button @click="refreshUsers" :disabled="isLoading" class="btn-un-secondary">
-                    <ArrowPathIcon class="w-5 h-5 mr-2" />
+                <button @click="refreshUsers" :disabled="isLoading" class="btn-un-fourth">
+                    <ArrowPathIcon class="w-4 h-4 mr-2" />
                     Refresh
                 </button>
-                <button @click="exportUsers" class="btn-un-secondary">
-                    <DocumentArrowDownIcon class="w-5 h-5 mr-2" />
+
+                <button @click="exportUsers" class="btn-un-fourth">
+                    <DocumentArrowDownIcon class="w-4 h-4 mr-2" />
                     Export
                 </button>
-                <button @click="showCreateModal = true" class="btn-un-primary">
-                    <PlusIcon class="w-5 h-5 mr-2" />
+
+                <button @click="showCreateModal = true" class="btn-un-third">
+                    <PlusIcon class="w-4 h-4 mr-2" />
                     Add User
                 </button>
             </div>

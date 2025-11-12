@@ -1,19 +1,20 @@
 <template>
     <div class="p-6 space-y-6">
         <!-- Header -->
-        <div
-            class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 flex items-center justify-between">
+        <div class="page-header">
             <div>
                 <h1 class="text-2xl font-bold text-mun-gray-900">Event Management</h1>
-                <p class="text-mun-gray-600">Create and manage MUN events</p>
+                <p class="text-mun-gray-600 mt-1">Create and manage MUN events</p>
             </div>
+
             <div class="flex items-center space-x-3">
-                <button @click="refreshEvents" :disabled="isLoading" class="btn-un-secondary">
-                    <ArrowPathIcon class="w-5 h-5 mr-2" />
+                <button @click="refreshEvents" :disabled="isLoading" class="btn-un-fourth">
+                    <ArrowPathIcon class="w-4 h-4 mr-2" />
                     Refresh
                 </button>
-                <button @click="showCreateModal = true" class="btn-un-primary">
-                    <PlusIcon class="w-5 h-5 mr-2" />
+
+                <button @click="showCreateModal = true" class="btn-un-third">
+                    <PlusIcon class="w-4 h-4 mr-2" />
                     Create Event
                 </button>
             </div>
@@ -74,21 +75,31 @@
         <div class="mun-card p-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                 <div class="flex items-center space-x-4">
-                    <SleekSelect v-model="filters.status" :options="[
-                        { label: 'All Statuses', value: '' },
-                        { label: 'Draft', value: 'draft' },
-                        { label: 'Active', value: 'active' },
-                        { label: 'Completed', value: 'completed' },
-                        { label: 'Cancelled', value: 'cancelled' }
-                    ]" @change="filterEvents" container-class="max-w-xs" />
+                    <div class="">
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Status
+                        </label>
+                        <SleekSelect v-model="filters.status" :options="[
+                            { label: 'All Statuses', value: '' },
+                            { label: 'Draft', value: 'draft' },
+                            { label: 'Active', value: 'active' },
+                            { label: 'Completed', value: 'completed' },
+                            { label: 'Cancelled', value: 'cancelled' }
+                        ]" @change="filterEvents" container-class="max-w-xs" />
+                    </div>
 
-                    <SleekSelect v-model="filters.dateRange" :options="[
-                        { label: 'All Dates', value: '' },
-                        { label: 'This Week', value: 'this_week' },
-                        { label: 'This Month', value: 'this_month' },
-                        { label: 'Next Month', value: 'next_month' },
-                        { label: 'Past Events', value: 'past' }
-                    ]" @change="filterEvents" container-class="max-w-xs" />
+                    <div class="">
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Date
+                        </label>
+                        <SleekSelect v-model="filters.dateRange" :options="[
+                            { label: 'All Dates', value: '' },
+                            { label: 'This Week', value: 'this_week' },
+                            { label: 'This Month', value: 'this_month' },
+                            { label: 'Next Month', value: 'next_month' },
+                            { label: 'Past Events', value: 'past' }
+                        ]" @change="filterEvents" container-class="max-w-xs" />
+                    </div>
 
                     <div class="flex items-center space-x-2">
                         <button @click="viewMode = 'grid'" :class="[
@@ -106,9 +117,17 @@
                     </div>
                 </div>
 
-                <div class="flex items-center space-x-3">
-                    <input v-model="searchQuery" @input="debouncedSearch" type="text" placeholder="Search events..."
-                        class="input-field max-w-xs">
+                <!-- Search -->
+                <div class="flex items-center space-x-3 lg:col-span-2">
+                    <div class="lg:col-span-2">
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Search Events
+                        </label>
+                        <input v-model="searchQuery" @input="debouncedSearch" type="text" placeholder="Search..."
+                            class="input-field max-w-xs">
+                        <MagnifyingGlassIcon
+                            class="w-5 h-5 text-mun-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                    </div>
                     <SleekSelect v-model="sortBy" :options="[
                         { label: 'Newest First', value: 'created_desc' },
                         { label: 'Oldest First', value: 'created_asc' },
