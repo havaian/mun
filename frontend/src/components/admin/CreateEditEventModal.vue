@@ -579,6 +579,37 @@ watch(() => props.modelValue, (newVal) => {
     }
 })
 
+const validateDates = () => {
+    if (formData.startDate && formData.endDate) {
+        const start = new Date(formData.startDate)
+        const end = new Date(formData.endDate)
+
+        if (start >= end) {
+            errors.value.endDate = 'End date must be after start date'
+        } else {
+            delete errors.value.endDate
+        }
+    }
+
+    if (formData.registrationOpens && formData.startDate) {
+        const regOpen = new Date(formData.registrationOpens)
+        const start = new Date(formData.startDate)
+
+        if (regOpen >= start) {
+            errors.value.registrationOpens = 'Registration must open before event starts'
+        }
+    }
+
+    if (formData.registrationCloses && formData.startDate) {
+        const regClose = new Date(formData.registrationCloses)
+        const start = new Date(formData.startDate)
+
+        if (regClose > start) {
+            errors.value.registrationCloses = 'Registration must close before event starts'
+        }
+    }
+}
+
 watch(() => formData.startDate, validateDates)
 watch(() => formData.endDate, validateDates)
 watch(() => formData.name, () => {
@@ -658,37 +689,6 @@ const validateForm = () => {
     validateDates()
 
     return Object.keys(errors.value).length === 0
-}
-
-const validateDates = () => {
-    if (formData.startDate && formData.endDate) {
-        const start = new Date(formData.startDate)
-        const end = new Date(formData.endDate)
-
-        if (start >= end) {
-            errors.value.endDate = 'End date must be after start date'
-        } else {
-            delete errors.value.endDate
-        }
-    }
-
-    if (formData.registrationOpens && formData.startDate) {
-        const regOpen = new Date(formData.registrationOpens)
-        const start = new Date(formData.startDate)
-
-        if (regOpen >= start) {
-            errors.value.registrationOpens = 'Registration must open before event starts'
-        }
-    }
-
-    if (formData.registrationCloses && formData.startDate) {
-        const regClose = new Date(formData.registrationCloses)
-        const start = new Date(formData.startDate)
-
-        if (regClose > start) {
-            errors.value.registrationCloses = 'Registration must close before event starts'
-        }
-    }
 }
 
 const addTag = () => {
