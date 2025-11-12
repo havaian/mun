@@ -4,7 +4,7 @@
         <div class="page-header">
             <div>
                 <h1 class="text-2xl font-bold text-mun-gray-900">Reports & Analytics</h1>
-                <p class="text-mun-gray-600">Generate reports and view system analytics</p>
+                <p class="text-mun-gray-600 mt-1">Generate reports and view system analytics</p>
             </div>
 
             <div class="flex items-center space-x-3">
@@ -36,8 +36,8 @@
 
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-green-500/10">
-                        <DocumentArrowDownIcon class="w-6 h-6 text-mun-green-500" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <DocumentArrowDownIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Active Users</p>
@@ -48,8 +48,8 @@
 
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-yellow-500/10">
-                        <ClockIcon class="w-6 h-6 text-mun-yellow-500" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <ClockIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Active Events</p>
@@ -60,8 +60,8 @@
 
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-red-500/10">
-                        <CalendarDaysIcon class="w-6 h-6 text-mun-red-500" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <CalendarDaysIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Committees</p>

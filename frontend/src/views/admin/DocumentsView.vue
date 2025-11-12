@@ -7,17 +7,7 @@
                 <p class="text-mun-gray-600 mt-1">Manage position papers, resolutions, and other committee documents</p>
             </div>
 
-            <div class="flex items-center space-x-3">
-                <!-- Quick Filter using SleekSelect -->
-                <SleekSelect
-                    v-model="filters.status"
-                    :options="statusFilterOptions"
-                    placeholder="Filter by status"
-                    size="md"
-                    container-class="min-w-[160px]"
-                    @change="handleStatusFilterChange"
-                />
-                
+            <div class="flex items-center space-x-3">                
                 <button @click="refreshDocuments" :disabled="isLoading"
                     class="btn-un-third">
                     <ArrowPathIcon :class="['w-4 h-4 mr-2', { 'animate-spin': isLoading }]" />
@@ -30,8 +20,8 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-blue-100">
-                        <DocumentTextIcon class="w-6 h-6 text-blue-600" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <DocumentTextIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Total Documents</p>
@@ -42,8 +32,8 @@
 
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-yellow-100">
-                        <ClockIcon class="w-6 h-6 text-yellow-600" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <ClockIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Pending Review</p>
@@ -54,8 +44,8 @@
 
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-green-100">
-                        <CheckCircleIcon class="w-6 h-6 text-green-600" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <CheckCircleIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Approved</p>
@@ -66,8 +56,8 @@
 
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-red-100">
-                        <XCircleIcon class="w-6 h-6 text-red-600" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <XCircleIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Rejected</p>
@@ -115,6 +105,18 @@
                         :options="dateRangeOptions"
                         placeholder="All Time"
                         size="md"
+                    />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">Document Status</label>
+                    <!-- Quick Filter using SleekSelect -->
+                    <SleekSelect
+                        v-model="filters.status"
+                        :options="statusFilterOptions"
+                        placeholder="Filter by status"
+                        size="md"
+                        @change="handleStatusFilterChange"
                     />
                 </div>
             </div>

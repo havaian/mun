@@ -25,18 +25,10 @@
             <div v-for="stat in committeeStats" :key="stat.title" class="mun-card p-6">
                 <div class="flex items-center">
                     <div :class="[
-                        'p-3 rounded-lg',
-                        stat.color === 'blue' ? 'bg-mun-blue/10' :
-                            stat.color === 'green' ? 'bg-mun-green-500/10' :
-                                stat.color === 'purple' ? 'bg-purple-500/10' :
-                                    'bg-orange-500/10'
+                        'p-3 rounded-lg bg-mun-blue/10'
                     ]">
                         <component :is="stat.icon" :class="[
-                            'w-6 h-6',
-                            stat.color === 'blue' ? 'text-mun-blue' :
-                                stat.color === 'green' ? 'text-mun-green-500' :
-                                    stat.color === 'purple' ? 'text-purple-500' :
-                                        'text-orange-500'
+                            'w-6 h-6 text-mun-blue',
                         ]" />
                     </div>
                     <div class="ml-4">
@@ -436,7 +428,10 @@ import {
     DocumentArrowDownIcon,
     PencilIcon,
     DocumentDuplicateIcon,
-    TrashIcon
+    TrashIcon,
+    ClipboardDocumentCheckIcon,
+    ClipboardDocumentIcon,
+    BuildingLibraryIcon
 } from '@heroicons/vue/24/outline'
 
 // Components
@@ -497,19 +492,19 @@ const committeeStats = computed(() => [
     {
         title: 'Total Committees',
         value: totalCommittees.value,
-        icon: UserGroupIcon,
+        icon: BuildingLibraryIcon,
         color: 'blue'
     },
     {
         title: 'Active Committees',
         value: committees.value.filter(c => c.status === 'active').length,
-        icon: UserGroupIcon,
+        icon: ClipboardDocumentCheckIcon,
         color: 'green'
     },
     {
         title: 'Total Countries',
         value: committees.value.reduce((total, c) => total + (c.countries?.length || 0), 0),
-        icon: UserGroupIcon,
+        icon: ClipboardDocumentIcon,
         color: 'purple'
     },
     {

@@ -41,8 +41,8 @@
 
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-green-500/10">
-                        <CheckCircleIcon class="w-6 h-6 text-mun-green-500" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <CheckCircleIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Active</p>
@@ -53,8 +53,8 @@
 
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-yellow-500/10">
-                        <ClockIcon class="w-6 h-6 text-mun-yellow-500" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <ClockIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Pending</p>
@@ -65,8 +65,8 @@
 
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-red-500/10">
-                        <XCircleIcon class="w-6 h-6 text-mun-red-500" />
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <XCircleIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Inactive</p>
