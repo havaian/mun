@@ -301,8 +301,8 @@
 
             <!-- Pagination -->
             <div v-if="totalPages > 1" class="px-6 py-4 border-t border-mun-gray-200">
-                <!-- <Pagination :current-page="pagination.currentPage" :total-pages="totalPages"
-                    @page-change="handlePageChange" /> -->
+                <Pagination :current-page="pagination.currentPage" :total-pages="totalPages"
+                    @page-change="handlePageChange" />
             </div>
         </div>
 
@@ -350,7 +350,7 @@ import {
 // import CreateEditEventModal from '@/components/admin/CreateEditEventModal.vue'
 // import EventDetailsModal from '@/components/admin/EventDetailsModal.vue'
 // import ConfirmDeleteModal from '@/components/admin/ConfirmDeleteModal.vue'
-// import Pagination from '@/components/ui/Pagination.vue'
+import Pagination from '@/components/ui/Pagination.vue'
 
 const router = useRouter()
 const route = useRoute()
