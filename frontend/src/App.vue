@@ -20,11 +20,9 @@
       </div>
     </transition>
 
-    <!-- Main Router View -->
+    <!-- Main Router View - SIMPLIFIED for performance -->
     <router-view v-slot="{ Component, route }">
-      <transition name="page" mode="out-in">
-        <component :is="Component" :key="route.path" />
-      </transition>
+      <component :is="Component" />
     </router-view>
 
     <!-- Global Toast Container -->
@@ -37,15 +35,16 @@
     <SessionTimeoutModal ref="sessionTimeoutModal" />
 
     <!-- WebSocket Connection Status -->
-    <div v-if="showWebSocketStatus" class="fixed bottom-4 right-4 z-40 transition-all duration-300"
-      :class="webSocketStatusClass">
-      <div class="bg-white rounded-lg shadow-lg border p-3 flex items-center space-x-2">
-        <div :class="['w-2 h-2 rounded-full', webSocketIndicatorClass]"></div>
-        <span class="text-sm font-medium text-mun-gray-700">
-          {{ webSocketStatusText }}
-        </span>
+    <transition name="websocket-status">
+      <div v-if="showWebSocketStatus" class="fixed bottom-4 right-4 z-40">
+        <div class="bg-white rounded-lg shadow-lg border p-3 flex items-center space-x-2">
+          <div :class="['w-2 h-2 rounded-full', webSocketIndicatorClass]"></div>
+          <span class="text-sm font-medium text-mun-gray-700">
+            {{ webSocketStatusText }}
+          </span>
+        </div>
       </div>
-    </div>
+    </transition>
 
     <!-- Maintenance Mode Notice -->
     <div v-if="isMaintenanceMode" class="fixed top-0 left-0 right-0 z-50 bg-mun-yellow-500 text-white p-3">
@@ -61,9 +60,19 @@
       </div>
     </div>
 
+    <!-- Network Status Indicator -->
+    <transition name="slide-up">
+      <div v-if="appStore.networkStatus === 'offline'" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-40">
+        <div class="bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2">
+          <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+          <span class="text-sm font-medium">Working offline</span>
+        </div>
+      </div>
+    </transition>
+
     <!-- Debug Information (Development Only) -->
     <div v-if="isDevelopment && showDebugInfo"
-      class="fixed bottom-4 left-4 z-40 bg-black/80 text-white rounded-lg p-3 text-xs font-mono max-w-xs">
+      class="fixed bottom-4 left-4 z-40 bg-black/90 text-white rounded-lg p-3 text-xs font-mono max-w-xs">
       <div class="space-y-1">
         <div class="flex justify-between">
           <span>Auth:</span>
@@ -85,7 +94,18 @@
           <span>Lang:</span>
           <span class="text-yellow-400">{{ appStore.currentLanguage }}</span>
         </div>
-        <button @click="showDebugInfo = false" class="text-gray-400 hover:text-white mt-2">
+        <div class="flex justify-between">
+          <span>Route:</span>
+          <span class="text-purple-400">{{ route.name }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span>Cache:</span>
+          <span class="text-cyan-400">{{ Object.keys(apiCache.cache || {}).length }} items</span>
+        </div>
+        <button @click="clearAllCache" class="text-red-400 hover:text-red-300 mt-2 text-xs">
+          Clear Cache
+        </button>
+        <button @click="showDebugInfo = false" class="text-gray-400 hover:text-white mt-1 text-xs">
           Hide Debug
         </button>
       </div>
@@ -93,19 +113,40 @@
 
     <!-- Quick Debug Toggle (Development Only) -->
     <button v-if="isDevelopment && !showDebugInfo" @click="showDebugInfo = true"
-      class="fixed bottom-4 left-4 z-40 bg-gray-800 text-white rounded-full p-2 opacity-50 hover:opacity-100">
+      class="fixed bottom-4 left-4 z-40 bg-gray-800 text-white rounded-full p-2 opacity-50 hover:opacity-100 transition-opacity">
       <span class="text-xs">🐛</span>
     </button>
+
+    <!-- Performance Monitor (Development Only) -->
+    <div v-if="isDevelopment && showDebugInfo"
+      class="fixed top-4 right-4 z-40 bg-black/90 text-white rounded-lg p-3 text-xs font-mono max-w-xs">
+      <div class="space-y-1">
+        <div class="text-yellow-400 font-bold">Performance</div>
+        <div class="flex justify-between">
+          <span>Load Time:</span>
+          <span class="text-green-400">{{ appLoadTime }}ms</span>
+        </div>
+        <div class="flex justify-between">
+          <span>Memory:</span>
+          <span class="text-blue-400">{{ memoryUsage }}MB</span>
+        </div>
+        <div class="flex justify-between">
+          <span>API Calls:</span>
+          <span class="text-purple-400">{{ apiCallCount }}</span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
 import { useWebSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
+import { apiCache } from '@/utils/performance'
 
 // Components
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
@@ -120,6 +161,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const appStore = useAppStore()
 const wsStore = useWebSocketStore()
@@ -137,18 +179,19 @@ const isMaintenanceMode = ref(false)
 const maintenanceMessage = ref('')
 const showDebugInfo = ref(false)
 
+// Performance monitoring
+const appStartTime = Date.now()
+const appLoadTime = ref(0)
+const memoryUsage = ref(0)
+const apiCallCount = ref(0)
+
 // Environment
 const isDevelopment = import.meta.env.DEV
 
 // Computed
-const webSocketStatusClass = computed(() => ({
-  'transform translate-y-0 opacity-100': showWebSocketStatus.value,
-  'transform translate-y-full opacity-0': !showWebSocketStatus.value
-}))
-
 const webSocketIndicatorClass = computed(() => {
-  if (wsStore.isConnected) return 'bg-mun-green-500 animate-pulse'
-  if (wsStore.isConnecting) return 'bg-mun-yellow-500 animate-spin'
+  if (wsStore.isConnected) return 'bg-mun-green-500'
+  if (wsStore.isConnecting) return 'bg-mun-yellow-500 animate-pulse'
   return 'bg-mun-red-500'
 })
 
@@ -167,7 +210,7 @@ const initializeApplication = async () => {
 
     // Step 1: Basic setup
     loadingProgress.value = 20
-    await new Promise(resolve => setTimeout(resolve, 100)) // Brief pause for UX
+    await new Promise(resolve => setTimeout(resolve, 50))
 
     // Step 2: Check for existing session
     loadingMessage.value = 'Checking authentication...'
@@ -188,8 +231,8 @@ const initializeApplication = async () => {
         try {
           await wsStore.connect()
         } catch (wsError) {
-          toast.warn('WebSocket connection failed:', wsError)
-          // Continue without WebSocket - not critical for basic functionality
+          console.warn('WebSocket connection failed:', wsError)
+          // Continue without WebSocket - not critical
         }
       }
     }
@@ -204,6 +247,9 @@ const initializeApplication = async () => {
     loadingMessage.value = 'Ready!'
     loadingProgress.value = 100
 
+    // Calculate load time
+    appLoadTime.value = Date.now() - appStartTime
+
     // Set app as initialized
     appStore.setInitialized(true)
 
@@ -212,16 +258,18 @@ const initializeApplication = async () => {
       authStore.startSessionMonitoring()
     }
 
+    // Start performance monitoring in development
+    if (isDevelopment) {
+      startPerformanceMonitoring()
+    }
+
   } catch (error) {
-    toast.error('App initialization error:', error)
-
-    // Clear potentially corrupted state
+    console.error('App initialization error:', error)
     authStore.logout(false)
-
     toast.error('Failed to initialize application. Please refresh the page.')
   } finally {
-    // Delay hiding loading to show completion
-    await new Promise(resolve => setTimeout(resolve, 500))
+    // Small delay for UX
+    await new Promise(resolve => setTimeout(resolve, 300))
     isGlobalLoading.value = false
     loadingProgress.value = 0
   }
@@ -229,26 +277,24 @@ const initializeApplication = async () => {
 
 const loadUserPreferences = async () => {
   try {
-    // Load saved language preference
+    // Load saved preferences from localStorage
     const savedLanguage = localStorage.getItem('mun_language')
     if (savedLanguage) {
       appStore.setLanguage(savedLanguage)
     }
 
-    // Load saved theme preference
     const savedTheme = localStorage.getItem('mun_theme')
     if (savedTheme) {
       appStore.setTheme(savedTheme)
     }
 
-    // Load saved sidebar state
     const savedSidebarState = localStorage.getItem('mun_sidebar_collapsed')
     if (savedSidebarState !== null) {
       appStore.setSidebarCollapsed(savedSidebarState === 'true')
     }
 
   } catch (error) {
-    toast.warn('Failed to load user preferences:', error)
+    console.warn('Failed to load user preferences:', error)
   }
 }
 
@@ -259,11 +305,6 @@ const handleRouteChange = (to, from) => {
   // Update breadcrumbs if needed
   if (to.meta.breadcrumbs) {
     appStore.setBreadcrumbs(to.meta.breadcrumbs)
-  }
-
-  // Track page navigation in production
-  if (import.meta.env.PROD) {
-    // Add analytics tracking here if needed
   }
 
   // Handle authentication requirements
@@ -284,34 +325,25 @@ const handleRouteChange = (to, from) => {
     router.push({ name: authStore.getDashboardRoute() })
     return
   }
-
-  // Handle new user language selection
-  if (to.meta.newUserOnly && authStore.user?.hasCompletedSetup) {
-    router.push({ name: authStore.getDashboardRoute() })
-    return
-  }
 }
 
 const handleAuthStateChange = (mutation, state) => {
   if (state.isAuthenticated && !wsStore.isConnected && !wsStore.isConnecting) {
     // Connect WebSocket when user logs in
     wsStore.connect().catch(error => {
-      toast.warn('Failed to connect WebSocket after login:', error)
+      console.warn('Failed to connect WebSocket after login:', error)
     })
   } else if (!state.isAuthenticated && wsStore.isConnected) {
-    // Add a small delay to avoid disconnecting during temporary auth state changes
+    // Disconnect WebSocket on logout
     setTimeout(() => {
-      // Double-check that user is still not authenticated
       if (!authStore.isAuthenticated && wsStore.isConnected) {
-        console.log('🔌 Disconnecting WebSocket due to logout')
         wsStore.disconnect()
       }
-    }, 500) // 500ms delay to let auth validation complete
+    }, 500)
   }
 }
 
 const handleWebSocketStateChange = () => {
-  // Show/hide WebSocket status based on connection state
   if (authStore.isAuthenticated) {
     if (wsStore.isConnecting || !wsStore.isConnected) {
       showWebSocketStatus.value = true
@@ -330,26 +362,30 @@ const handleWebSocketStateChange = () => {
 
 const handleKeyboardShortcuts = (event) => {
   // Global keyboard shortcuts
-
-  // Ctrl/Cmd + K for search (when implemented)
   if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
     event.preventDefault()
-    // TODO: Open global search when implemented
     toast.log('Global search shortcut triggered')
   }
 
-  // Escape key to close modals
   if (event.key === 'Escape') {
     appStore.closeAllModals()
   }
 
-  // Debug toggle (Development only)
-  if (isDevelopment && event.ctrlKey && event.shiftKey && event.key === 'D') {
-    event.preventDefault()
-    showDebugInfo.value = !showDebugInfo.value
+  // Development shortcuts
+  if (isDevelopment) {
+    if (event.ctrlKey && event.shiftKey && event.key === 'D') {
+      event.preventDefault()
+      showDebugInfo.value = !showDebugInfo.value
+    }
+
+    if (event.ctrlKey && event.shiftKey && event.key === 'C') {
+      event.preventDefault()
+      clearAllCache()
+      toast.success('Cache cleared')
+    }
   }
 
-  // Force logout (Ctrl+Shift+L)
+  // Force logout
   if (event.ctrlKey && event.shiftKey && event.key === 'L') {
     event.preventDefault()
     if (authStore.isAuthenticated) {
@@ -359,22 +395,9 @@ const handleKeyboardShortcuts = (event) => {
 }
 
 const handleWindowFocus = () => {
-  // Update activity when window gains focus
   if (authStore.isAuthenticated) {
     authStore.updateActivity()
   }
-}
-
-const handleWindowBlur = () => {
-  // Could pause real-time updates when window loses focus to save bandwidth
-  // For now, just log the event in development
-  if (isDevelopment) {
-    toast.log('Window lost focus')
-  }
-}
-
-const dismissMaintenance = () => {
-  isMaintenanceMode.value = false
 }
 
 const handleOnlineOffline = () => {
@@ -382,7 +405,6 @@ const handleOnlineOffline = () => {
     appStore.setNetworkStatus('online')
     toast.success('Connection restored')
 
-    // Reconnect WebSocket if needed
     if (authStore.isAuthenticated && !wsStore.isConnected) {
       wsStore.connect()
     }
@@ -392,15 +414,39 @@ const handleOnlineOffline = () => {
   }
 }
 
+const dismissMaintenance = () => {
+  isMaintenanceMode.value = false
+}
+
+const clearAllCache = () => {
+  apiCache.clear()
+  // Clear any other caches you might have
+  if (isDevelopment) {
+    console.log('All caches cleared')
+  }
+}
+
+const startPerformanceMonitoring = () => {
+  // Monitor memory usage in development
+  setInterval(() => {
+    if (performance.memory) {
+      memoryUsage.value = Math.round(performance.memory.usedJSHeapSize / 1024 / 1024)
+    }
+  }, 5000)
+
+  // Track API call count (this would be incremented in your API utility)
+  window.addEventListener('api-call', () => {
+    apiCallCount.value++
+  })
+}
+
 // Lifecycle hooks
 onMounted(async () => {
-  // Initialize the application
   await initializeApplication()
 
   // Set up event listeners
   document.addEventListener('keydown', handleKeyboardShortcuts)
   window.addEventListener('focus', handleWindowFocus)
-  window.addEventListener('blur', handleWindowBlur)
   window.addEventListener('online', handleOnlineOffline)
   window.addEventListener('offline', handleOnlineOffline)
 
@@ -409,12 +455,9 @@ onMounted(async () => {
 
   // Set up store watchers
   authStore.$subscribe(handleAuthStateChange)
-
-  // Watch WebSocket state
   watch(() => wsStore.connectionState, handleWebSocketStateChange)
 
-  // Check for maintenance mode (could be from backend)
-  // This is just a placeholder - in real app this would come from API
+  // Check for maintenance mode
   if (import.meta.env.VITE_MAINTENANCE_MODE === 'true') {
     isMaintenanceMode.value = true
     maintenanceMessage.value = import.meta.env.VITE_MAINTENANCE_MESSAGE || 'System maintenance in progress'
@@ -425,7 +468,6 @@ onUnmounted(() => {
   // Cleanup event listeners
   document.removeEventListener('keydown', handleKeyboardShortcuts)
   window.removeEventListener('focus', handleWindowFocus)
-  window.removeEventListener('blur', handleWindowBlur)
   window.removeEventListener('online', handleOnlineOffline)
   window.removeEventListener('offline', handleOnlineOffline)
 
@@ -433,13 +475,10 @@ onUnmounted(() => {
   wsStore.disconnect()
 })
 
-// Watch for authentication changes to handle redirects
+// Watch for authentication changes
 watch(() => authStore.isAuthenticated, async (newVal, oldVal) => {
   if (newVal && !oldVal) {
-    // User just logged in
     const currentRoute = router.currentRoute.value
-
-    // If on auth page, redirect to dashboard
     if (currentRoute.path.startsWith('/auth')) {
       await nextTick()
       router.push({ name: authStore.getDashboardRoute() })
@@ -447,43 +486,26 @@ watch(() => authStore.isAuthenticated, async (newVal, oldVal) => {
   }
 })
 
-// Watch for language changes to update document
+// Watch for language changes
 watch(() => appStore.currentLanguage, (newLang) => {
   document.documentElement.lang = newLang
-
-  // Update direction for RTL languages if needed
   const rtlLanguages = ['ar', 'he', 'fa']
   document.documentElement.dir = rtlLanguages.includes(newLang) ? 'rtl' : 'ltr'
 })
 
-// Expose methods for external use (e.g., error boundary)
+// Expose methods for external use
 defineExpose({
   initializeApplication,
-  sessionTimeoutModal
+  sessionTimeoutModal,
+  clearAllCache
 })
 </script>
 
 <style scoped>
-/* Page transition animations */
-.page-enter-active,
-.page-leave-active {
-  transition: all 0.3s ease;
-}
-
-.page-enter-from {
-  opacity: 0;
-  transform: translateX(20px);
-}
-
-.page-leave-to {
-  opacity: 0;
-  transform: translateX(-20px);
-}
-
-/* Fade transition */
+/* Optimized transitions */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s ease;
 }
 
 .fade-enter-from,
@@ -491,7 +513,6 @@ defineExpose({
   opacity: 0;
 }
 
-/* WebSocket status animation */
 .websocket-status-enter-active,
 .websocket-status-leave-active {
   transition: all 0.3s ease;
@@ -499,6 +520,17 @@ defineExpose({
 
 .websocket-status-enter-from,
 .websocket-status-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
   transform: translateY(100%);
   opacity: 0;
 }

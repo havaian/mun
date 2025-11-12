@@ -42,9 +42,56 @@
     *:focus-visible {
         @apply ring-2 ring-mun-blue ring-opacity-50 ring-offset-2;
     }
+
+    /* Simple performance optimizations */
+    * {
+        box-sizing: border-box;
+    }
+
+    /* Optimize font loading */
+    body {
+        font-display: swap;
+        /* Improves font loading performance */
+    }
+
+    /* Simple transitions - no complex animations */
+    .transition-colors {
+        transition: color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .transition-opacity {
+        transition: opacity 0.15s ease;
+    }
+
+    /* Optimize images */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* Simple loading spinner */
+    .spinner {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Prevent layout shifts */
+    .mun-card {
+        contain: layout;
+    }
 }
 
 @layer components {
+
     /* Glass card component */
     .glass-card {
         @apply bg-white/50 backdrop-blur-sm border border-white/20 shadow-glass;
@@ -56,7 +103,7 @@
         background-size: 400% 400%;
         animation: gradientShift 15s ease infinite;
     }
-    
+
     .page-header {
         @apply mun-card;
         @apply flex items-center justify-between bg-white border border-mun-gray-200;
@@ -278,6 +325,7 @@
 }
 
 @layer utilities {
+
     /* Text utilities */
     .text-balance {
         text-wrap: balance;
@@ -327,21 +375,21 @@
 }
 
 /* Input sizing - override the .input-field defaults when needed */
-input[type="text"].input-field:not(.pl-10), 
-input[type="email"].input-field:not(.pl-10), 
-input[type="password"].input-field:not(.pl-10), 
-input[type="number"].input-field:not(.pl-10), 
-input[type="tel"].input-field:not(.pl-10), 
-input[type="url"].input-field:not(.pl-10), 
-input[type="search"].input-field:not(.pl-10), 
-input[type="date"].input-field:not(.pl-10), 
-input[type="time"].input-field:not(.pl-10), 
-input[type="datetime-local"].input-field:not(.pl-10), 
-input[type="month"].input-field:not(.pl-10), 
-input[type="week"].input-field:not(.pl-10), 
-textarea.input-field:not(.pl-10), 
-select.input-field:not(.pl-10) { 
-    @apply px-4 py-2.5 text-sm; 
+input[type="text"].input-field:not(.pl-10),
+input[type="email"].input-field:not(.pl-10),
+input[type="password"].input-field:not(.pl-10),
+input[type="number"].input-field:not(.pl-10),
+input[type="tel"].input-field:not(.pl-10),
+input[type="url"].input-field:not(.pl-10),
+input[type="search"].input-field:not(.pl-10),
+input[type="date"].input-field:not(.pl-10),
+input[type="time"].input-field:not(.pl-10),
+input[type="datetime-local"].input-field:not(.pl-10),
+input[type="month"].input-field:not(.pl-10),
+input[type="week"].input-field:not(.pl-10),
+textarea.input-field:not(.pl-10),
+select.input-field:not(.pl-10) {
+    @apply px-4 py-2.5 text-sm;
 }
 
 /* For inputs with icons (pl-10) - maintain left padding, adjust others */

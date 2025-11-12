@@ -156,22 +156,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Quick Stats -->
-                    <div class="text-xs text-mun-gray-500">
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <div class="font-semibold text-mun-gray-900">{{ adminStore.stats.totalUsers || 0 }}
-                                </div>
-                                <div>Total Users</div>
-                            </div>
-                            <div>
-                                <div class="font-semibold text-mun-gray-900">{{ adminStore.stats.totalEvents || 0 }}
-                                </div>
-                                <div>Events</div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 

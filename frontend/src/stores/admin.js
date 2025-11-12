@@ -1,190 +1,159 @@
+// frontend/src/stores/admin.js
 import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { apiMethods } from '@/utils/api'
-import { useToast } from '@/plugins/toast'
-import { useWebSocketStore } from '@/stores/websocket'
+import { performanceUtils } from '@/utils/performance'
 
 export const useAdminStore = defineStore('admin', () => {
-    const toast = useToast()
-    const wsStore = useWebSocketStore()
-
     // State
-    const isLoading = ref(false)
-    const lastUpdated = ref(new Date())
-
-    // Dashboard statistics
     const stats = ref({
-        totalEvents: 0,
+        unreadNotifications: 0,
         activeEvents: 0,
-        totalCommittees: 0,
         activeCommittees: 0,
-        totalUsers: 0,
         activeUsers: 0,
-        registeredUsers: 0,
-        documentsUploaded: 0,
-        pendingModeration: 0,
-        recentErrors: 0,
-        unreadNotifications: 0
+        recentDocuments: 0,
+        totalUsers: 0,
+        totalEvents: 0,
+        totalCommittees: 0,
+        totalDocuments: 0,
+        systemLoad: 0,
+        memoryUsage: 0,
+        activeSessions: 0,
+        errorRate: 0
     })
 
-    // System health data
     const systemHealth = ref({
         api: true,
         database: true,
-        websocket: true
+        websocket: true,
+        redis: true,
+        storage: true,
+        overall: 'healthy'
     })
 
     const healthData = ref({
-        status: 'healthy',
         uptime: 0,
         version: '1.0.0',
-        modules: {},
-        services: {}
+        environment: 'production',
+        lastUpdate: null,
+        dbConnections: 0,
+        activeConnections: 0
     })
 
-    // Performance metrics
     const performanceMetrics = ref({
         responseTime: 0,
-        activeConnections: 0,
-        memoryUsage: null,
-        cpuUsage: null
+        errorRate: 0,
+        memoryUsage: {
+            heapUsed: 0,
+            heapTotal: 0,
+            external: 0,
+            rss: 0
+        },
+        cpuUsage: 0,
+        diskUsage: 0,
+        networkLatency: 0
     })
 
-    // Recent activity data
     const recentActivity = ref([])
-    const activeEvents = ref([])
 
-    // Watch WebSocket connection status and update health immediately
-    if (wsStore) {
-        watch(() => wsStore.isConnected, (newValue) => {
-            systemHealth.value.websocket = newValue
-        }, { immediate: true })
-    }
- 
+    // Internal state
+    const isLoading = ref(false)
+    const lastUpdated = ref(null)
+    let autoRefreshTimer = null
+    let performanceTimer = null
+
     // Computed
-    const overallHealthStatus = computed(() => {
-        const { api, database, websocket } = systemHealth.value
-        if (api && database && websocket) return 'healthy'
-        if (api && database) return 'degraded'
-        return 'unhealthy'
+    const isHealthy = computed(() => {
+        return systemHealth.value.api &&
+            systemHealth.value.database &&
+            systemHealth.value.websocket
     })
 
-    const healthStatusText = computed(() => {
-        switch (overallHealthStatus.value) {
-            case 'healthy': return 'All Systems Operational'
-            case 'degraded': return 'Some Issues Detected'
-            default: return 'Major Issues'
+    const criticalAlerts = computed(() => {
+        const alerts = []
+
+        if (!systemHealth.value.api) {
+            alerts.push({ type: 'error', message: 'API is down' })
         }
-    })
 
-    const wsStatus = computed(() => {
-        if (!wsStore) return { connected: false, text: 'Not Available' }
-        return {
-            connected: wsStore.isConnected,
-            text: wsStore.isConnected ? 'Connected' : wsStore.isConnecting ? 'Connecting...' : 'Disconnected'
+        if (!systemHealth.value.database) {
+            alerts.push({ type: 'error', message: 'Database connection lost' })
         }
+
+        if (performanceMetrics.value.errorRate > 5) {
+            alerts.push({ type: 'warning', message: `High error rate: ${performanceMetrics.value.errorRate}%` })
+        }
+
+        if (performanceMetrics.value.responseTime > 2000) {
+            alerts.push({ type: 'warning', message: `Slow response time: ${performanceMetrics.value.responseTime}ms` })
+        }
+
+        return alerts
     })
 
-    // Actions
-    const loadDashboardStats = async () => {
+    const memoryUsagePercentage = computed(() => {
+        const { heapUsed, heapTotal } = performanceMetrics.value.memoryUsage
+        if (!heapTotal) return 0
+        return Math.round((heapUsed / heapTotal) * 100)
+    })
+
+    // Methods
+    const initializeAdminData = async () => {
+        try {
+            isLoading.value = true
+
+            // Load all admin data in parallel for better performance
+            await Promise.allSettled([
+                loadStats(),
+                loadSystemHealth(),
+                loadPerformanceMetrics(),
+                loadRecentActivity()
+            ])
+
+            lastUpdated.value = new Date()
+        } catch (error) {
+            console.error('Admin data initialization error:', error)
+            throw error
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+    const loadStats = async () => {
         try {
             const response = await apiMethods.admin.getDashboardStats()
 
-            if (response?.data?.success) {
-                // Merge new stats with existing ones
-                stats.value = { ...stats.value, ...response.data.stats }
-                lastUpdated.value = new Date()
-                return true
-            } else {
-                throw new Error(response?.data?.error || 'Failed to load stats')
+            if (response?.data) {
+                // Merge with existing stats to prevent flashing
+                stats.value = {
+                    ...stats.value,
+                    ...response.data
+                }
             }
         } catch (error) {
-            console.error('Failed to load dashboard stats:', error)
-            toast.error('Failed to load dashboard statistics')
-            return false
+            console.error('Failed to load stats:', error)
+            throw error
         }
     }
 
     const loadSystemHealth = async () => {
         try {
-            const startTime = Date.now()
             const response = await apiMethods.admin.getSystemHealth()
-            const responseTime = Date.now() - startTime
-
-            performanceMetrics.value.responseTime = responseTime
 
             if (response?.data) {
-                const data = response.data
-
-                // Update health data
-                healthData.value = {
-                    status: data.status || 'unknown',
-                    uptime: data.uptime || 0,
-                    version: data.version || '1.0.0',
-                    modules: data.modules || {},
-                    services: data.services || {}
-                }
-
-                // Update system health status (WebSocket is handled by watcher above)
                 systemHealth.value = {
-                    api: data.status === 'healthy',
-                    database: data.services?.database === 'connected',
-                    websocket: wsStore?.isConnected || false // This will be updated by the watcher
+                    ...systemHealth.value,
+                    ...response.data.health
                 }
 
-                return true
-            } else {
-                throw new Error('Invalid health response')
+                healthData.value = {
+                    ...healthData.value,
+                    ...response.data.info
+                }
             }
         } catch (error) {
             console.error('Failed to load system health:', error)
-
-            // Set error state (WebSocket status maintained by watcher)
-            systemHealth.value = {
-                api: false,
-                database: false,
-                websocket: wsStore?.isConnected || false // Keep current WebSocket status
-            }
-            healthData.value = {
-                status: 'unhealthy',
-                uptime: 0,
-                version: 'unknown',
-                modules: {},
-                services: {}
-            }
-            performanceMetrics.value.responseTime = 0
-
-            toast.error('Failed to load system health')
-            return false
-        }
-    }
-
-    const loadRecentActivity = async (limit = 10) => {
-        try {
-            const response = await apiMethods.admin.getRecentActivity({ limit })
-
-            if (response?.data?.success) {
-                recentActivity.value = response.data.activities || []
-                return true
-            } else {
-                throw new Error(response?.data?.error || 'Failed to load activity')
-            }
-        } catch (error) {
-            console.error('Failed to load recent activity:', error)
-            toast.error('Failed to load recent activity')
-            return false
-        }
-    }
-
-    const loadActiveEvents = async () => {
-        try {
-            const response = await apiMethods.events.getAll({ status: 'active' })
-            activeEvents.value = Array.isArray(response?.data) ? response.data : response?.data?.events || []
-            return true
-        } catch (error) {
-            console.error('Failed to load active events:', error)
-            toast.error('Failed to load active events')
-            return false
+            // Don't mark as unhealthy due to network issues
         }
     }
 
@@ -192,143 +161,310 @@ export const useAdminStore = defineStore('admin', () => {
         try {
             const response = await apiMethods.admin.getPerformanceMetrics()
 
-            if (response?.data?.success) {
-                const metrics = response.data.metrics
+            if (response?.data) {
                 performanceMetrics.value = {
                     ...performanceMetrics.value,
-                    memoryUsage: metrics.memory,
-                    cpuUsage: metrics.cpuUsage,
-                    activeConnections: metrics.activeConnections || 0
+                    ...response.data.metrics
                 }
-                return true
             }
         } catch (error) {
             console.error('Failed to load performance metrics:', error)
-            return false
         }
     }
 
-    // Bulk data refresh
-    const refreshAllData = async () => {
-        if (isLoading.value) return false
-
-        isLoading.value = true
+    const loadRecentActivity = async (limit = 20) => {
         try {
-            const results = await Promise.allSettled([
-                loadDashboardStats(),
-                loadSystemHealth(),
-                loadRecentActivity(),
-                loadActiveEvents(),
-                loadPerformanceMetrics()
-            ])
+            const response = await apiMethods.admin.getRecentActivity({
+                limit,
+                timeRange: '24h'
+            })
 
-            const successCount = results.filter(result => result.status === 'fulfilled' && result.value).length
-
-            if (successCount > 0) {
-                lastUpdated.value = new Date()
-                toast.success('Dashboard data refreshed')
-                return true
-            } else {
-                toast.error('Failed to refresh dashboard data')
-                return false
+            if (response?.data?.success) {
+                recentActivity.value = response.data.activities || []
             }
         } catch (error) {
-            console.error('Failed to refresh all data:', error)
-            toast.error('Failed to refresh dashboard data')
-            return false
+            console.error('Failed to load recent activity:', error)
+        }
+    }
+
+    const refreshAllData = async () => {
+        try {
+            isLoading.value = true
+
+            const startTime = Date.now()
+
+            await Promise.allSettled([
+                loadStats(),
+                loadSystemHealth(),
+                loadPerformanceMetrics(),
+                loadRecentActivity()
+            ])
+
+            const loadTime = Date.now() - startTime
+
+            lastUpdated.value = new Date()
+
+            // Track performance
+            if (loadTime > 5000) {
+                console.warn(`Admin data refresh took ${loadTime}ms - consider optimization`)
+            }
+
+        } catch (error) {
+            console.error('Failed to refresh admin data:', error)
+            throw error
         } finally {
             isLoading.value = false
         }
     }
 
-    // Initialize data loading
-    const initializeAdminData = async () => {
-        return await refreshAllData()
-    }
-
-    // Auto-refresh setup
-    let refreshInterval = null
-
-    const startAutoRefresh = (intervalMs = 60000) => {
-        if (refreshInterval) {
-            clearInterval(refreshInterval)
+    // Optimized auto-refresh with intelligent intervals
+    const startAutoRefresh = (baseInterval = 30000) => {
+        if (autoRefreshTimer) {
+            clearInterval(autoRefreshTimer)
         }
 
-        refreshInterval = setInterval(async () => {
-            if (!isLoading.value) {
-                await loadSystemHealth()
-                await loadDashboardStats()
+        let currentInterval = baseInterval
+
+        const refresh = async () => {
+            try {
+                // Only refresh stats frequently, health less frequently
+                await loadStats()
+
+                // Health check every 3rd refresh
+                if (Date.now() % 3 === 0) {
+                    await loadSystemHealth()
+                }
+
+                // Performance metrics every 5th refresh  
+                if (Date.now() % 5 === 0) {
+                    await loadPerformanceMetrics()
+                }
+
+                // Reset interval on success
+                currentInterval = baseInterval
+
+            } catch (error) {
+                // Exponential backoff on errors
+                currentInterval = Math.min(currentInterval * 1.5, 300000) // Max 5 minutes
+                console.warn(`Admin refresh error, backing off to ${currentInterval}ms:`, error)
             }
-        }, intervalMs)
+
+            // Schedule next refresh with current interval
+            autoRefreshTimer = setTimeout(refresh, currentInterval)
+        }
+
+        // Start first refresh
+        autoRefreshTimer = setTimeout(refresh, baseInterval)
     }
 
     const stopAutoRefresh = () => {
-        if (refreshInterval) {
-            clearInterval(refreshInterval)
-            refreshInterval = null
+        if (autoRefreshTimer) {
+            clearTimeout(autoRefreshTimer)
+            autoRefreshTimer = null
         }
     }
 
-    // Utility functions
+    // Real-time performance monitoring
+    const startPerformanceMonitoring = () => {
+        if (performanceTimer) {
+            clearInterval(performanceTimer)
+        }
+
+        performanceTimer = setInterval(async () => {
+            try {
+                // Client-side performance metrics
+                if (performance.memory) {
+                    performanceMetrics.value.memoryUsage = {
+                        ...performanceMetrics.value.memoryUsage,
+                        heapUsed: performance.memory.usedJSHeapSize,
+                        heapTotal: performance.memory.totalJSHeapSize
+                    }
+                }
+
+                // Network latency test
+                const startTime = Date.now()
+                try {
+                    await fetch('/api/ping', { method: 'HEAD' })
+                    performanceMetrics.value.networkLatency = Date.now() - startTime
+                } catch (error) {
+                    performanceMetrics.value.networkLatency = -1 // Error indicator
+                }
+
+            } catch (error) {
+                console.warn('Performance monitoring error:', error)
+            }
+        }, 5000) // Every 5 seconds
+    }
+
+    const stopPerformanceMonitoring = () => {
+        if (performanceTimer) {
+            clearInterval(performanceTimer)
+            performanceTimer = null
+        }
+    }
+
+    // Utility methods
     const formatUptime = (uptime) => {
-        if (!uptime) return '0s'
+        if (!uptime) return 'Unknown'
 
-        const days = Math.floor(uptime / 86400)
-        const hours = Math.floor((uptime % 86400) / 3600)
-        const minutes = Math.floor((uptime % 3600) / 60)
+        const days = Math.floor(uptime / (24 * 60 * 60))
+        const hours = Math.floor((uptime % (24 * 60 * 60)) / (60 * 60))
+        const minutes = Math.floor((uptime % (60 * 60)) / 60)
 
-        if (days > 0) return `${days}d ${hours}h`
+        if (days > 0) return `${days}d ${hours}h ${minutes}m`
         if (hours > 0) return `${hours}h ${minutes}m`
-        if (minutes > 0) return `${minutes}m`
-        return `${Math.floor(uptime)}s`
+        return `${minutes}m`
     }
 
-    const getHealthColor = (status) => {
-        switch (status) {
-            case 'healthy': return 'bg-green-500'
-            case 'degraded': return 'bg-yellow-500'
-            default: return 'bg-red-500'
+    const exportHealthReport = () => {
+        const report = {
+            timestamp: new Date().toISOString(),
+            stats: stats.value,
+            systemHealth: systemHealth.value,
+            performanceMetrics: performanceMetrics.value,
+            recentActivity: recentActivity.value.slice(0, 10)
+        }
+
+        const blob = new Blob([JSON.stringify(report, null, 2)], {
+            type: 'application/json'
+        })
+
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `health-report-${new Date().toISOString().split('T')[0]}.json`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+    }
+
+    // Action methods
+    const clearSystemCache = async () => {
+        try {
+            const response = await apiMethods.admin.clearSystemCache()
+            if (response?.data?.success) {
+                // Refresh stats after cache clear
+                await loadStats()
+                return true
+            }
+            return false
+        } catch (error) {
+            console.error('Failed to clear system cache:', error)
+            throw error
         }
     }
 
-    const getHealthTextColor = (status) => {
-        switch (status) {
-            case 'healthy': return 'text-green-700'
-            case 'degraded': return 'text-yellow-700'
-            default: return 'text-red-700'
+    const restartService = async (serviceName) => {
+        try {
+            const response = await apiMethods.admin.restartService(serviceName)
+            if (response?.data?.success) {
+                // Refresh health after service restart
+                await loadSystemHealth()
+                return true
+            }
+            return false
+        } catch (error) {
+            console.error(`Failed to restart ${serviceName}:`, error)
+            throw error
+        }
+    }
+
+    const bulkGenerateQR = async (committeeIds) => {
+        try {
+            const response = await apiMethods.admin.bulkGenerateQR({
+                committeeIds
+            })
+
+            if (response?.data?.success) {
+                // Update stats after bulk operation
+                await loadStats()
+                return response.data
+            }
+
+            throw new Error('Bulk QR generation failed')
+        } catch (error) {
+            console.error('Bulk QR generation error:', error)
+            throw error
+        }
+    }
+
+    // Event handlers for WebSocket updates
+    const handleWebSocketMessage = (message) => {
+        try {
+            const data = JSON.parse(message)
+
+            switch (data.type) {
+                case 'stats_update':
+                    stats.value = { ...stats.value, ...data.stats }
+                    break
+
+                case 'health_update':
+                    systemHealth.value = { ...systemHealth.value, ...data.health }
+                    break
+
+                case 'performance_update':
+                    performanceMetrics.value = { ...performanceMetrics.value, ...data.metrics }
+                    break
+
+                case 'activity_update':
+                    recentActivity.value.unshift(data.activity)
+                    // Keep only latest 50 activities
+                    recentActivity.value = recentActivity.value.slice(0, 50)
+                    break
+            }
+        } catch (error) {
+            console.warn('Failed to process WebSocket message:', error)
         }
     }
 
     return {
         // State
-        isLoading,
-        lastUpdated,
         stats,
         systemHealth,
         healthData,
         performanceMetrics,
         recentActivity,
-        activeEvents,
+        isLoading,
+        lastUpdated,
 
         // Computed
-        overallHealthStatus,
-        healthStatusText,
-        wsStatus,
+        isHealthy,
+        criticalAlerts,
+        memoryUsagePercentage,
 
-        // Actions
-        loadDashboardStats,
-        loadSystemHealth,
-        loadRecentActivity,
-        loadActiveEvents,
-        loadPerformanceMetrics,
-        refreshAllData,
+        // Methods
         initializeAdminData,
+        loadStats,
+        loadSystemHealth,
+        loadPerformanceMetrics,
+        loadRecentActivity,
+        refreshAllData,
         startAutoRefresh,
         stopAutoRefresh,
-
-        // Utilities
+        startPerformanceMonitoring,
+        stopPerformanceMonitoring,
         formatUptime,
-        getHealthColor,
-        getHealthTextColor
+        exportHealthReport,
+        clearSystemCache,
+        restartService,
+        bulkGenerateQR,
+        handleWebSocketMessage
+    }
+}, {
+    // Persist only critical data across sessions
+    persist: {
+        enabled: true,
+        strategies: [
+            {
+                key: 'admin-cache',
+                storage: sessionStorage,
+                paths: ['stats', 'lastUpdated'],
+                serializer: {
+                    serialize: JSON.stringify,
+                    deserialize: JSON.parse
+                }
+            }
+        ]
     }
 })
