@@ -1,8 +1,8 @@
 <template>
   <div class="min-h-screen bg-gradient-mun">
     <!-- Simple Auth Content - No navbar needed for guests -->
-    <div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+    <div class="min-h-screen flex flex-col justify-center items-center sm:px-6 lg:px-8">
+      <div class="mt-4 mb-4 sm:mx-auto sm:w-full sm:max-w-md">
         <div class="bg-white backdrop-blur-sm py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-white/20">
           <!-- Dynamic route content -->
           <router-view />
