@@ -202,10 +202,10 @@
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
             </div>
 
-            <div v-else-if="recentActivity.length === 0" class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
-                <DocumentChartBarIcon class="mx-auto h-12 w-12 text-mun-gray-300 mb-4" />
-                <h3 class="text-lg font-medium text-mun-gray-900 mb-2">No Recent Activity</h3>
-                <p class="text-mun-gray-600 mb-6">Activity will appear here as users interact with the system</p>
+            <div v-else-if="recentActivity.length === 0" class="text-center py-12">
+                <DocumentChartBarIcon class="mx-auto h-12 w-12 text-mun-gray-300" />
+                <h3 class="mt-4 text-lg font-medium text-mun-gray-900">No Recent Activity</h3>
+                <p class="mt-2 text-mun-gray-600">Activity will appear here as users interact with the system</p>
             </div>
 
             <div v-else class="divide-y divide-mun-gray-200">

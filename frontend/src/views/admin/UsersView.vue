@@ -1,25 +1,22 @@
 <template>
     <div class="p-6 space-y-6">
         <!-- Header -->
-        <div class="page-header">
+        <div class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-mun-gray-900">User Management</h1>
-                <p class="text-mun-gray-600 mt-1">Manage system users and their permissions</p>
+                <p class="text-mun-gray-600">Manage system users and their permissions</p>
             </div>
-
             <div class="flex items-center space-x-3">
-                <button @click="refreshUsers" :disabled="isLoading" class="btn-un-fourth">
-                    <ArrowPathIcon class="w-4 h-4 mr-2" />
+                <button @click="refreshUsers" :disabled="isLoading" class="btn-un-secondary">
+                    <ArrowPathIcon class="w-5 h-5 mr-2" />
                     Refresh
                 </button>
-
-                <button @click="exportUsers" class="btn-un-fourth">
-                    <DocumentArrowDownIcon class="w-4 h-4 mr-2" />
+                <button @click="exportUsers" class="btn-un-secondary">
+                    <DocumentArrowDownIcon class="w-5 h-5 mr-2" />
                     Export
                 </button>
-
-                <button @click="showCreateModal = true" class="btn-un-third">
-                    <PlusIcon class="w-4 h-4 mr-2" />
+                <button @click="showCreateModal = true" class="btn-un-primary">
+                    <PlusIcon class="w-5 h-5 mr-2" />
                     Add User
                 </button>
             </div>
@@ -41,8 +38,8 @@
 
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-blue/10">
-                        <CheckCircleIcon class="w-6 h-6 text-mun-blue" />
+                    <div class="p-3 rounded-lg bg-mun-green-500/10">
+                        <CheckCircleIcon class="w-6 h-6 text-mun-green-500" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Active</p>
@@ -53,8 +50,8 @@
 
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-blue/10">
-                        <ClockIcon class="w-6 h-6 text-mun-blue" />
+                    <div class="p-3 rounded-lg bg-mun-yellow-500/10">
+                        <ClockIcon class="w-6 h-6 text-mun-yellow-500" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Pending</p>
@@ -65,8 +62,8 @@
 
             <div class="mun-card p-6">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-blue/10">
-                        <XCircleIcon class="w-6 h-6 text-mun-blue" />
+                    <div class="p-3 rounded-lg bg-mun-red-500/10">
+                        <XCircleIcon class="w-6 h-6 text-mun-red-500" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Inactive</p>
@@ -138,17 +135,17 @@
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
             </div>
 
-            <div v-else-if="filteredCommittees.length === 0" class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
-                <UsersIcon class="mx-auto h-12 w-12 text-mun-gray-300 mb-4" />
-                <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
+            <div v-else-if="filteredUsers.length === 0" class="text-center py-12">
+                <UsersIcon class="mx-auto h-12 w-12 text-mun-gray-300" />
+                <h3 class="mt-4 text-lg font-medium text-mun-gray-900">
                     {{searchQuery || Object.values(filters).some(v => v) ? 'No users found' : 'No users yet'}}
                 </h3>
-                <p class="text-mun-gray-600 mb-6">
+                <p class="mt-2 text-mun-gray-600 mb-4">
                     {{searchQuery || Object.values(filters).some(v => v) ? 'Try adjusting your search or filters' :
                         'Add your first user to get started'}}
                 </p>
-                <button v-if="!searchQuery && !Object.values(filters).some(v => v)" class="btn-un-primary">
-                    <PlusIcon class="w-4 h-4 mr-2" />
+                <button v-if="!searchQuery && !Object.values(filters).some(v => v)" @click="showCreateModal = true"
+                    class="btn-un-primary">
                     Add First User
                 </button>
             </div>
