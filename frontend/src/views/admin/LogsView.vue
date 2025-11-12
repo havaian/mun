@@ -206,7 +206,7 @@
 
             <!-- Empty State -->
             <div v-else
-                class="bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden text-center py-12">
+                class="overflow-hidden text-center py-12">
                 <DocumentTextIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
                 <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
                     {{ hasActiveFilters ? 'No logs match your filters' : 'No logs found' }}

@@ -236,7 +236,7 @@
         </div>
 
         <!-- Grid View -->
-        <div v-else-if="viewMode === 'grid'" class="mun-card bg-white rounded-xl shadow-sm border border-mun-gray-200 overflow-hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-else-if="viewMode === 'grid'" class="mun-card overflow-hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div v-for="committee in paginatedCommittees" :key="committee._id"
                 class="p-6 hover:shadow-lg transition-shadow cursor-pointer" @click="viewCommittee(committee)">
 
