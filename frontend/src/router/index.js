@@ -35,10 +35,6 @@ const DelegateVoting = () => import('@/views/delegate/VotingView.vue')
 const ProfileView = () => import('@/views/shared/ProfileView.vue')
 const NotFoundView = () => import('@/views/NotFoundView.vue')
 
-// Import shared layouts
-// const SharedLayout = () => import('@/layouts/SharedLayout.vue')
-const UniversalLayout = () => import('@/layouts/UniversalLayout.vue')
-
 const routes = [
   // Authentication routes
   {
@@ -81,7 +77,7 @@ const routes = [
   // Admin routes
   {
     path: '/admin',
-    component: UniversalLayout,
+    component: () => import('@/layouts/AdminLayout.vue'),
     meta: { requiresAuth: true, roles: ['admin'] },
     children: [
       {
@@ -138,7 +134,7 @@ const routes = [
   // Presidium routes
   {
     path: '/presidium',
-    component: UniversalLayout,
+    component: () => import('@/layouts/PresidiumLayout.vue'),
     meta: { requiresAuth: true, roles: ['presidium'] },
     children: [
       {
@@ -177,7 +173,7 @@ const routes = [
   // Delegate routes
   {
     path: '/delegate',
-    component: UniversalLayout,
+    component: () => import('@/layouts/DelegateLayout.vue'),
     meta: { requiresAuth: true, roles: ['delegate'] },
     children: [
       {
