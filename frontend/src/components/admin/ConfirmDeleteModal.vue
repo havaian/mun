@@ -236,7 +236,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['update:modelValue', 'confirm', 'cancel'])
+const emit = defineEmits(['update:modelValue', 'confirmed', 'cancel'])
 
 // State
 const isDeleting = ref(false)
@@ -282,7 +282,7 @@ const confirmDelete = async () => {
             confirmed: true
         }
 
-        await emit('confirm', props.item, deleteOptions)
+        await emit('confirmed', props.item, deleteOptions)
 
         resetForm()
         emit('update:modelValue', false)
