@@ -4,7 +4,7 @@
             <div v-if="modelValue"
                 class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
 
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden flex flex-col">
                     <!-- Modal Header -->
                     <div class="flex items-center justify-between p-6 border-b border-mun-gray-200">
                         <div>
@@ -22,8 +22,8 @@
                     </div>
 
                     <!-- Modal Content -->
-                    <div class="overflow-y-auto max-h-[calc(90vh-140px)]">
-                        <form @submit.prevent="submitForm" class="p-6 space-y-8">
+                    <div class="flex-1 overflow-y-auto">
+                        <form @submit.prevent="submitForm" class="p-6 space-y-8" novalidate>
                             <!-- Basic Information -->
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
@@ -37,7 +37,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Event Name *
                                         </label>
-                                        <input v-model="formData.name" type="text" required class="input-field"
+                                        <input v-model="formData.name" type="text" class="input-field"
                                             placeholder="e.g., MUNUZ 2024 Conference"
                                             :class="{ 'border-mun-red-300': errors.name }" />
                                         <p v-if="errors.name" class="mt-1 text-sm text-mun-red-600">
@@ -57,7 +57,7 @@
                                             { label: 'Training', value: 'training' },
                                             { label: 'Competition', value: 'competition' }
                                         ]" placeholder="Select type"
-                                            :trigger-class="errors.eventType ? 'border-mun-red-300' : ''" required
+                                            :trigger-class="errors.eventType ? 'border-mun-red-300' : ''"
                                             size="md" />
                                         <p v-if="errors.eventType" class="mt-1 text-sm text-mun-red-600">
                                             {{ errors.eventType }}
@@ -103,7 +103,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Start Date *
                                         </label>
-                                        <input v-model="formData.startDate" type="date" required
+                                        <input v-model="formData.startDate" type="datetime-local"
                                             class="input-field" :class="{ 'border-mun-red-300': errors.startDate }" />
                                         <p v-if="errors.startDate" class="mt-1 text-sm text-mun-red-600">
                                             {{ errors.startDate }}
@@ -115,7 +115,7 @@
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             End Date *
                                         </label>
-                                        <input v-model="formData.endDate" type="date" required
+                                        <input v-model="formData.endDate" type="datetime-local"
                                             class="input-field" :class="{ 'border-mun-red-300': errors.endDate }" />
                                         <p v-if="errors.endDate" class="mt-1 text-sm text-mun-red-600">
                                             {{ errors.endDate }}

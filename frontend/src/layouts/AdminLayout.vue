@@ -263,7 +263,7 @@ onMounted(async () => {
     await adminStore.initializeAdminData()
 
     // Start auto-refresh for system health and stats
-    adminStore.startAutoRefresh(30000) // Refresh every 30 seconds
+    adminStore.startAutoRefresh(120000) // Refresh every 120 seconds
 })
 
 onUnmounted(() => {

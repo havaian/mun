@@ -249,7 +249,7 @@ export const useAdminStore = defineStore('admin', () => {
     // Auto-refresh setup
     let refreshInterval = null
 
-    const startAutoRefresh = (intervalMs = 60000) => {
+    const startAutoRefresh = (intervalMs = 120000) => {
         if (refreshInterval) {
             clearInterval(refreshInterval)
         }

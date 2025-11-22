@@ -168,8 +168,7 @@
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
             </div>
 
-            <div v-else-if="filteredEvents.length === 0"
-                class="overflow-hidden text-center py-12">
+            <div v-else-if="filteredEvents.length === 0" class="overflow-hidden text-center py-12">
                 <CalendarDaysIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
                 <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
                     {{ hasActiveFilters ? 'No events match your filters' : 'No events found' }}
@@ -234,10 +233,6 @@
                                 <button @click.stop="editEvent(event)"
                                     class="p-1 text-mun-gray-400 hover:text-mun-blue transition-colors">
                                     <PencilIcon class="w-4 h-4" />
-                                </button>
-                                <button @click.stop="duplicateEvent(event)"
-                                    class="p-1 text-mun-gray-400 hover:text-mun-green-500 transition-colors">
-                                    <DocumentDuplicateIcon class="w-4 h-4" />
                                 </button>
                                 <button @click.stop="deleteEvent(event)"
                                     class="p-1 text-mun-gray-400 hover:text-mun-red-500 transition-colors">
@@ -315,10 +310,6 @@
                                     <button @click.stop="editEvent(event)"
                                         class="text-mun-blue hover:text-mun-blue-600 transition-colors">
                                         <PencilIcon class="w-4 h-4" />
-                                    </button>
-                                    <button @click.stop="duplicateEvent(event)"
-                                        class="text-mun-gray-400 hover:text-mun-green-500 transition-colors">
-                                        <DocumentDuplicateIcon class="w-4 h-4" />
                                     </button>
                                     <button @click.stop="deleteEvent(event)"
                                         class="text-mun-gray-400 hover:text-mun-red-500 transition-colors">
@@ -514,15 +505,10 @@ const deleteConfirmMessage = computed(() => {
 })
 
 // Methods
-// Complete fix for frontend/src/views/admin/EventsView.vue
-// Replace the methods section with this corrected version
-
-// Methods
 const loadEvents = async () => {
     try {
         isLoading.value = true
 
-        // Use the generic get method since admin.events might not be defined
         const response = await apiMethods.events.getAll()
 
         // Handle different response structures
@@ -541,7 +527,6 @@ const loadEvents = async () => {
 
     } catch (error) {
         console.error('Failed to load events:', error)
-        // Show only one error message
         toast.error('Failed to load events')
         events.value = []
     } finally {
@@ -634,9 +619,12 @@ const confirmDelete = async () => {
             throw new Error('Event ID not found')
         }
 
+        console.log('Deleting event with ID:', eventId)
         const response = await apiMethods.events.delete(eventId)
+        console.log('Delete response:', response)
 
-        if (response?.data?.success || response?.status === 200) {
+        // Check for successful deletion
+        if (response?.status === 200 || response?.data?.success) {
             // Remove event from local array
             events.value = events.value.filter(e =>
                 (e._id || e.id) !== eventId
@@ -650,7 +638,18 @@ const confirmDelete = async () => {
         selectedEvent.value = null
     } catch (error) {
         console.error('Failed to delete event:', error)
-        toast.error('Failed to delete event')
+
+        // Check for specific error messages
+        if (error.response?.data?.error) {
+            const errorMessage = error.response.data.error
+            if (errorMessage.includes('Cannot delete event with existing committees')) {
+                toast.error('Cannot delete event with existing committees. Delete committees first.')
+            } else {
+                toast.error(errorMessage)
+            }
+        } else {
+            toast.error('Failed to delete event')
+        }
     }
 }
 

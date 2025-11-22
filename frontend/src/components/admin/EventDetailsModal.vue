@@ -257,7 +257,7 @@ V<template>
                                                 Edit Event
                                             </AppButton>
 
-                                            <AppButton @click="viewRegistrations" variant="outline" size="sm"
+                                            <!-- <AppButton @click="viewRegistrations" variant="outline" size="sm"
                                                 class="w-full">
                                                 <UsersIcon class="w-4 h-4 mr-2" />
                                                 View Registrations
@@ -273,7 +273,7 @@ V<template>
                                                 class="w-full">
                                                 <DocumentDuplicateIcon class="w-4 h-4 mr-2" />
                                                 Duplicate Event
-                                            </AppButton>
+                                            </AppButton> -->
                                         </div>
                                     </div>
 
