@@ -227,7 +227,7 @@
                         : 'Get started by creating your first committee.'
                     }}
                 </p>
-                <button v-if="!hasActiveFilters" @click="showCreateModal = true" class="btn-un-primary">
+                <button v-if="!hasActiveFilters" @click="showCreateCommittee = true" class="btn-un-primary">
                     <PlusIcon class="w-4 h-4 mr-2" />
                     Create First Committee
                 </button>

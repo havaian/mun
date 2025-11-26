@@ -553,7 +553,7 @@ watch(() => formData.name, () => {
 const loadEvents = async () => {
     try {
         const response = await apiMethods.events.getAll({
-            status: 'active,published',
+            // status: 'active,published',
             limit: 100
         })
 
