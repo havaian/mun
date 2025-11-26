@@ -309,7 +309,7 @@
             </div>
 
             <!-- List View -->
-            <div v-else class="overflow-hidden">
+            <div v-else class="mun-card overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-mun-gray-200">
                         <thead class="bg-mun-gray-50">
