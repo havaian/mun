@@ -23,8 +23,8 @@
 
                     <!-- Modal Content -->
                     <div class="flex-1 overflow-y-auto">
-                        <form @submit.prevent="handleFormSubmit" class="p-6 space-y-8" novalidate>
-                            <!-- Basic Information -->
+                        <!-- <form @submit.prevent="handleFormSubmit" class="p-6 space-y-8" novalidate>
+                            <!-- Basic Information
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
                                     <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
@@ -32,7 +32,7 @@
                                 </h3>
 
                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <!-- Event Name -->
+                                    <!-- Event Name
                                     <div class="lg:col-span-2">
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Event Name *
@@ -45,7 +45,7 @@
                                         </p>
                                     </div>
 
-                                    <!-- Event Type -->
+                                    <!-- Event Type
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Event Type *
@@ -64,7 +64,7 @@
                                         </p>
                                     </div>
 
-                                    <!-- Status -->
+                                    <!-- Status
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Status
@@ -78,7 +78,7 @@
                                         ]" size="md" />
                                     </div>
 
-                                    <!-- Description -->
+                                    <!-- Description
                                     <div class="lg:col-span-2">
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Description
@@ -90,7 +90,7 @@
                                 </div>
                             </div>
 
-                            <!-- Event Details -->
+                            <!-- Event Details
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
                                     <CalendarDaysIcon class="w-5 h-5 mr-2 text-mun-blue" />
@@ -98,7 +98,7 @@
                                 </h3>
 
                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <!-- Start Date -->
+                                    <!-- Start Date
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Start Date *
@@ -110,7 +110,7 @@
                                         </p>
                                     </div>
 
-                                    <!-- End Date -->
+                                    <!-- End Date
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             End Date *
@@ -122,7 +122,7 @@
                                         </p>
                                     </div>
 
-                                    <!-- Location -->
+                                    <!-- Location
                                     <div class="lg:col-span-2">
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Location
@@ -131,7 +131,7 @@
                                             placeholder="e.g., University of Uzbekistan, Tashkent" />
                                     </div>
 
-                                    <!-- Organizer -->
+                                    <!-- Organizer
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Organizer
@@ -140,7 +140,7 @@
                                             placeholder="e.g., MUNUZ Organization" />
                                     </div>
 
-                                    <!-- Max Participants -->
+                                    <!-- Max Participants
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Maximum Participants
@@ -154,7 +154,7 @@
                                 </div>
                             </div>
 
-                            <!-- Registration Settings -->
+                            <!-- Registration Settings
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
                                     <UserPlusIcon class="w-5 h-5 mr-2 text-mun-blue" />
@@ -162,7 +162,7 @@
                                 </h3>
 
                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <!-- Registration Opens -->
+                                    <!-- Registration Opens
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Registration Opens
@@ -171,7 +171,7 @@
                                             class="input-field" />
                                     </div>
 
-                                    <!-- Registration Closes -->
+                                    <!-- Registration Closes
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Registration Closes
@@ -180,7 +180,7 @@
                                             class="input-field" />
                                     </div>
 
-                                    <!-- Registration Fee -->
+                                    <!-- Registration Fee
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Registration Fee (USD)
@@ -189,7 +189,7 @@
                                             step="0.01" class="input-field" placeholder="0.00" />
                                     </div>
 
-                                    <!-- Currency -->
+                                    <!-- Currency
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Currency
@@ -203,7 +203,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Registration Options -->
+                                <!-- Registration Options
                                 <div class="space-y-4">
                                     <div class="flex items-center">
                                         <input id="requireApproval" v-model="formData.requireApproval" type="checkbox"
@@ -231,7 +231,7 @@
                                 </div>
                             </div>
 
-                            <!-- Contact Information -->
+                            <!-- Contact Information
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
                                     <EnvelopeIcon class="w-5 h-5 mr-2 text-mun-blue" />
@@ -239,7 +239,7 @@
                                 </h3>
 
                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <!-- Contact Email -->
+                                    <!-- Contact Email
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Contact Email
@@ -248,7 +248,7 @@
                                             placeholder="support@mun.uz" />
                                     </div>
 
-                                    <!-- Contact Phone -->
+                                    <!-- Contact Phone
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Contact Phone
@@ -257,7 +257,7 @@
                                             placeholder="+998 90 985 53 68" />
                                     </div>
 
-                                    <!-- Website -->
+                                    <!-- Website
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Website
@@ -266,7 +266,7 @@
                                             placeholder="https://mun.uz" />
                                     </div>
 
-                                    <!-- Social Media -->
+                                    <!-- Social Media
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Social Media
@@ -277,7 +277,7 @@
                                 </div>
                             </div>
 
-                            <!-- Additional Settings -->
+                            <!-- Additional Settings
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
                                     <CogIcon class="w-5 h-5 mr-2 text-mun-blue" />
@@ -285,7 +285,7 @@
                                 </h3>
 
                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <!-- Time Zone -->
+                                    <!-- Time Zone
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Time Zone
@@ -300,7 +300,7 @@
                                         ]" size="md" />
                                     </div>
 
-                                    <!-- Language -->
+                                    <!-- Language
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Primary Language
@@ -313,7 +313,7 @@
                                         ]" size="md" />
                                     </div>
 
-                                    <!-- Tags -->
+                                    <!-- Tags
                                     <div class="lg:col-span-2">
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Tags
@@ -341,7 +341,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Advanced Options -->
+                                <!-- Advanced Options
                                 <div class="space-y-4">
                                     <div class="flex items-center">
                                         <input id="isPublic" v-model="formData.isPublic" type="checkbox"
@@ -370,7 +370,7 @@
                                 </div>
                             </div>
 
-                            <!-- Notes/Instructions -->
+                            <!-- Notes/Instructions
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
                                     <DocumentTextIcon class="w-5 h-5 mr-2 text-mun-blue" />
@@ -391,6 +391,157 @@
                                     </label>
                                     <textarea v-model="formData.internalNotes" rows="3" class="input-field resize-none"
                                         placeholder="Internal notes for organizers (not visible to participants)..."></textarea>
+                                </div>
+                            </div>
+                        </form> -->
+                        <form @submit.prevent="handleFormSubmit" class="p-6 space-y-8" novalidate>
+                            <!-- Basic Information -->
+                            <div class="space-y-6">
+                                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
+                                    <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
+                                    Basic Information
+                                </h3>
+
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <!-- Event Name -->
+                                    <div class="lg:col-span-2">
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Event Name *
+                                        </label>
+                                        <input v-model="formData.name" type="text" class="input-field"
+                                            placeholder="e.g., MUNUZ 2024 Conference"
+                                            :class="{ 'border-mun-red-300': errors.name }" />
+                                        <p v-if="errors.name" class="mt-1 text-sm text-mun-red-600">
+                                            {{ errors.name }}
+                                        </p>
+                                    </div>
+
+                                    <!-- Status -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Status
+                                        </label>
+                                        <SleekSelect v-model="formData.status" :options="[
+                                            { label: 'Draft', value: 'draft' },
+                                            { label: 'Active', value: 'active' },
+                                            { label: 'Completed', value: 'completed' }
+                                        ]" size="md" />
+                                    </div>
+
+                                    <!-- Description -->
+                                    <div class="lg:col-span-2">
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Description
+                                        </label>
+                                        <textarea v-model="formData.description" rows="4"
+                                            class="input-field resize-none"
+                                            placeholder="Describe the event, its goals, and what participants can expect..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Event Details -->
+                            <div class="space-y-6">
+                                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
+                                    <CalendarDaysIcon class="w-5 h-5 mr-2 text-mun-blue" />
+                                    Event Schedule
+                                </h3>
+
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <!-- Start Date -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Start Date *
+                                        </label>
+                                        <input v-model="formData.startDate" type="datetime-local"
+                                            class="input-field" :class="{ 'border-mun-red-300': errors.startDate }" />
+                                        <p v-if="errors.startDate" class="mt-1 text-sm text-mun-red-600">
+                                            {{ errors.startDate }}
+                                        </p>
+                                    </div>
+
+                                    <!-- End Date -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            End Date *
+                                        </label>
+                                        <input v-model="formData.endDate" type="datetime-local"
+                                            class="input-field" :class="{ 'border-mun-red-300': errors.endDate }" />
+                                        <p v-if="errors.endDate" class="mt-1 text-sm text-mun-red-600">
+                                            {{ errors.endDate }}
+                                        </p>
+                                    </div>
+
+                                    <!-- Registration Deadline -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Registration Deadline *
+                                        </label>
+                                        <input v-model="formData.registrationDeadline" type="datetime-local"
+                                            class="input-field" :class="{ 'border-mun-red-300': errors.registrationDeadline }" />
+                                        <p v-if="errors.registrationDeadline" class="mt-1 text-sm text-mun-red-600">
+                                            {{ errors.registrationDeadline }}
+                                        </p>
+                                    </div>
+
+                                    <!-- Timezone -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Timezone
+                                        </label>
+                                        <SleekSelect v-model="formData.timezone" :options="[
+                                            { label: 'Asia/Tashkent (UTC+5)', value: 'Asia/Tashkent' },
+                                            { label: 'UTC (UTC+0)', value: 'UTC' },
+                                            { label: 'Europe/Moscow (UTC+3)', value: 'Europe/Moscow' },
+                                            { label: 'Europe/London (UTC+0)', value: 'Europe/London' },
+                                            { label: 'America/New_York (UTC-5)', value: 'America/New_York' }
+                                        ]" size="md" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Event Settings -->
+                            <div class="space-y-6">
+                                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
+                                    <CogIcon class="w-5 h-5 mr-2 text-mun-blue" />
+                                    Event Settings
+                                </h3>
+
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <!-- Max Committees -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Maximum Committees
+                                        </label>
+                                        <input v-model.number="formData.maxCommittees" type="number" min="1" max="50"
+                                            class="input-field" placeholder="10" />
+                                        <p class="mt-1 text-xs text-mun-gray-500">
+                                            Maximum number of committees for this event (1-50)
+                                        </p>
+                                    </div>
+
+                                    <!-- QR Expiration Period -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            QR Code Expiration (hours)
+                                        </label>
+                                        <input v-model.number="formData.qrExpirationPeriod" type="number" min="1" max="720"
+                                            class="input-field" placeholder="168" />
+                                        <p class="mt-1 text-xs text-mun-gray-500">
+                                            How long QR codes remain valid (1-720 hours)
+                                        </p>
+                                    </div>
+
+                                    <!-- Allow Late Registration -->
+                                    <div class="lg:col-span-2">
+                                        <div class="flex items-center">
+                                            <input id="allowLateRegistration" v-model="formData.allowLateRegistration" type="checkbox"
+                                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
+                                            <label for="allowLateRegistration" class="ml-2 text-sm text-mun-gray-700">
+                                                Allow late registration after deadline
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </form>
@@ -478,46 +629,63 @@ const newTag = ref('')
 const errors = ref({})
 
 // Form data with comprehensive event structure
+// const formData = reactive({
+//     // Basic Information
+//     name: '',
+//     eventType: '',
+//     status: 'draft',
+//     description: '',
+
+//     // Event Details
+//     startDate: '',
+//     endDate: '',
+//     location: '',
+//     organizer: '',
+//     maxParticipants: null,
+
+//     // Registration Settings
+//     registrationOpens: '',
+//     registrationCloses: '',
+//     registrationFee: 0,
+//     currency: 'USD',
+//     requireApproval: false,
+//     allowWaitlist: true,
+//     sendWelcomeEmail: true,
+
+//     // Contact Information
+//     contactEmail: '',
+//     contactPhone: '',
+//     website: '',
+//     socialMedia: '',
+
+//     // Additional Settings
+//     timeZone: 'Asia/Tashkent',
+//     language: 'en',
+//     tags: [],
+//     isPublic: true,
+//     enableFeedback: true,
+//     allowGuestObservers: false,
+
+//     // Additional Information
+//     instructions: '',
+//     internalNotes: ''
+// })
 const formData = reactive({
     // Basic Information
     name: '',
-    eventType: '',
-    status: 'draft',
     description: '',
+    status: 'draft',
 
-    // Event Details
+    // Event Schedule  
     startDate: '',
     endDate: '',
-    location: '',
-    organizer: '',
-    maxParticipants: null,
+    registrationDeadline: '',
+    timezone: 'UTC',
 
-    // Registration Settings
-    registrationOpens: '',
-    registrationCloses: '',
-    registrationFee: 0,
-    currency: 'USD',
-    requireApproval: false,
-    allowWaitlist: true,
-    sendWelcomeEmail: true,
-
-    // Contact Information
-    contactEmail: '',
-    contactPhone: '',
-    website: '',
-    socialMedia: '',
-
-    // Additional Settings
-    timeZone: 'Asia/Tashkent',
-    language: 'en',
-    tags: [],
-    isPublic: true,
-    enableFeedback: true,
-    allowGuestObservers: false,
-
-    // Additional Information
-    instructions: '',
-    internalNotes: ''
+    // Settings
+    maxCommittees: 10,
+    qrExpirationPeriod: 168,
+    allowLateRegistration: false
 })
 
 // Select options
@@ -706,6 +874,64 @@ const removeTag = (tag) => {
     }
 }
 
+// async function submitForm() {
+//     if (!validateForm()) {
+//         toast.error('Please fix the form errors before submitting')
+//         return
+//     }
+
+//     try {
+//         isSubmitting.value = true
+
+//         // Prepare data for API
+//         const submitData = { ...formData }
+
+//         // Convert datetime-local strings back to ISO strings
+//         if (submitData.startDate) {
+//             submitData.startDate = new Date(submitData.startDate).toISOString()
+//         }
+//         if (submitData.endDate) {
+//             submitData.endDate = new Date(submitData.endDate).toISOString()
+//         }
+//         if (submitData.registrationOpens) {
+//             submitData.registrationOpens = new Date(submitData.registrationOpens).toISOString()
+//         }
+//         if (submitData.registrationCloses) {
+//             submitData.registrationCloses = new Date(submitData.registrationCloses).toISOString()
+//         }
+
+//         let response
+//         if (props.mode === 'edit') {
+//             const eventId = props.event._id || props.event.id
+//             response = await apiMethods.events.update(eventId, submitData)
+//         } else {
+//             response = await apiMethods.events.create(submitData)
+//         }
+
+//         if (response?.data) {
+//             const eventData = response.data.event || response.data
+            
+//             if (props.mode === 'edit') {
+//                 emit('updated', eventData)
+//                 toast.success('Event updated successfully')
+//             } else {
+//                 emit('created', eventData)
+//                 toast.success('Event created successfully')
+//             }
+
+//             // Emit saved for both cases
+//             emit('saved', eventData)
+//             closeModal()
+//         }
+
+//     } catch (error) {
+//         console.error('Submit form error:', error)
+//         toast.error(props.mode === 'edit' ? 'Failed to update event' : 'Failed to create event')
+//     } finally {
+//         isSubmitting.value = false
+//     }
+// }
+
 async function submitForm() {
     if (!validateForm()) {
         toast.error('Please fix the form errors before submitting')
@@ -715,21 +941,20 @@ async function submitForm() {
     try {
         isSubmitting.value = true
 
-        // Prepare data for API
-        const submitData = { ...formData }
-
-        // Convert datetime-local strings back to ISO strings
-        if (submitData.startDate) {
-            submitData.startDate = new Date(submitData.startDate).toISOString()
-        }
-        if (submitData.endDate) {
-            submitData.endDate = new Date(submitData.endDate).toISOString()
-        }
-        if (submitData.registrationOpens) {
-            submitData.registrationOpens = new Date(submitData.registrationOpens).toISOString()
-        }
-        if (submitData.registrationCloses) {
-            submitData.registrationCloses = new Date(submitData.registrationCloses).toISOString()
+        // Prepare data for API - match backend structure
+        const submitData = {
+            name: formData.name,
+            description: formData.description,
+            status: formData.status,
+            startDate: new Date(formData.startDate).toISOString(),
+            endDate: new Date(formData.endDate).toISOString(),
+            settings: {
+                registrationDeadline: new Date(formData.registrationDeadline).toISOString(),
+                qrExpirationPeriod: formData.qrExpirationPeriod,
+                allowLateRegistration: formData.allowLateRegistration,
+                maxCommittees: formData.maxCommittees,
+                timezone: formData.timezone
+            }
         }
 
         let response
@@ -751,7 +976,6 @@ async function submitForm() {
                 toast.success('Event created successfully')
             }
 
-            // Emit saved for both cases
             emit('saved', eventData)
             closeModal()
         }

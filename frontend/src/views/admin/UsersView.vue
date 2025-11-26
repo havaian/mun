@@ -187,13 +187,12 @@
         </div>
 
         <!-- Users Table -->
-        <div class="mun-card">
+        <div>
             <div v-if="isLoading" class="flex items-center justify-center py-12">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
             </div>
 
-            <div v-else-if="filteredUsers.length === 0"
-                class="overflow-hidden text-center py-12">
+            <div v-else-if="filteredUsers.length === 0" class="mun-card overflow-hidden text-center py-12">
                 <UsersIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
                 <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
                     {{ hasActiveFilters ? 'No users match your filters' : 'No users found' }}

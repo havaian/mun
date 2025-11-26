@@ -152,13 +152,12 @@
         </div>
 
         <!-- Documents Table -->
-        <div class="mun-card bg-white overflow-hidden">
+        <div class="bg-white overflow-hidden">
             <div v-if="isLoading" class="flex items-center justify-center py-12">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue-600"></div>
             </div>
 
-            <div v-else-if="documents.length === 0"
-                class="overflow-hidden text-center py-12">
+            <div v-else-if="documents.length === 0" class="mun-card overflow-hidden text-center py-12">
                 <DocumentTextIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
                 <h3 class="text-lg font-medium text-mun-gray-900 mb-2">
                     {{ hasActiveFilters ? 'No documents match your filters' : 'No documents found' }}
