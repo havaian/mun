@@ -930,7 +930,7 @@ const removeTag = (tag) => {
 
 //             // Emit saved for both cases
 //             emit('saved', eventData)
-//             closeModal()
+//             close()
 //         }
 
 //     } catch (error) {
@@ -986,7 +986,7 @@ async function submitForm() {
             }
 
             emit('saved', eventData)
-            closeModal()
+            close()
         }
 
     } catch (error) {
@@ -1027,7 +1027,7 @@ const saveDraft = async () => {
             emit('saved', eventData)
             
             if (props.mode === 'create') {
-                closeModal()
+                close()
             }
         }
 
