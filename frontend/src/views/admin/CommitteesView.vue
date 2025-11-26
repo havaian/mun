@@ -295,10 +295,10 @@
                                 class="p-2 text-mun-gray-400 hover:text-mun-blue hover:bg-mun-blue-50 rounded-lg transition-colors">
                                 <PencilIcon class="w-4 h-4" />
                             </button>
-                            <button @click.stop="duplicateCommittee(committee)"
+                            <!-- <button @click.stop="duplicateCommittee(committee)"
                                 class="p-2 text-mun-gray-400 hover:text-mun-green-500 hover:bg-mun-green-50 rounded-lg transition-colors">
                                 <DocumentDuplicateIcon class="w-4 h-4" />
-                            </button>
+                            </button> -->
                             <button @click.stop="deleteCommittee(committee)"
                                 class="p-2 text-mun-gray-400 hover:text-mun-red-500 hover:bg-mun-red-50 rounded-lg transition-colors">
                                 <TrashIcon class="w-4 h-4" />
@@ -397,10 +397,10 @@
                                             class="p-2 text-mun-gray-400 hover:text-mun-blue hover:bg-mun-blue-50 rounded-lg transition-colors">
                                             <PencilIcon class="w-4 h-4" />
                                         </button>
-                                        <button @click.stop="duplicateCommittee(committee)"
+                                        <!-- <button @click.stop="duplicateCommittee(committee)"
                                             class="p-2 text-mun-gray-400 hover:text-mun-green-500 hover:bg-mun-green-50 rounded-lg transition-colors">
                                             <DocumentDuplicateIcon class="w-4 h-4" />
-                                        </button>
+                                        </button> -->
                                         <button @click.stop="deleteCommittee(committee)"
                                             class="p-2 text-mun-gray-400 hover:text-mun-red-500 hover:bg-mun-red-50 rounded-lg transition-colors">
                                             <TrashIcon class="w-4 h-4" />
