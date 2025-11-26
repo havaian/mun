@@ -23,7 +23,7 @@
 
                     <!-- Modal Content -->
                     <div class="flex-1 overflow-y-auto">
-                        <form @submit.prevent="submitForm" class="p-6 space-y-8" novalidate>
+                        <form @submit.prevent="handleFormSubmit" class="p-6 space-y-8" novalidate>
                             <!-- Basic Information -->
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
@@ -411,13 +411,13 @@
                         </div>
 
                         <div class="flex items-center space-x-3">
-                            <AppButton v-if="mode === 'create'" variant="outline" @click="saveDraft"
+                            <AppButton v-if="mode === 'create'" variant="outline" @click.stop="handleSaveDraft"
                                 :loading="isDraftSaving" :disabled="isSubmitting">
                                 <DocumentIcon class="w-4 h-4 mr-2" />
                                 Save as Draft
                             </AppButton>
 
-                            <AppButton variant="primary" @click="submitForm" :loading="isSubmitting">
+                            <AppButton variant="primary" @click.stop="handleCreateEvent" :loading="isSubmitting" type="button">
                                 <CheckIcon class="w-4 h-4 mr-2" />
                                 {{ mode === 'edit' ? 'Update Event' : 'Create Event' }}
                             </AppButton>
@@ -804,6 +804,20 @@ const saveDraft = async () => {
     } finally {
         isDraftSaving.value = false
     }
+}
+
+const handleFormSubmit = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    // Do nothing - only allow explicit button clicks
+}
+
+const handleCreateEvent = async () => {
+    await submitForm()
+}
+
+const handleSaveDraft = async () => {
+    await saveDraft()
 }
 
 const close = () => {
