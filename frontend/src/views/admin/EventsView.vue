@@ -192,7 +192,7 @@
             <div v-else-if="viewMode === 'grid'" class="p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div v-for="event in paginatedEvents" :key="event.id"
-                        class="border border-mun-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                        class="mun-card border border-mun-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
                         @click="viewEvent(event)">
                         <div class="flex items-start justify-between mb-4">
                             <div>
@@ -308,7 +308,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end space-x-2">
                                     <button @click.stop="editEvent(event)"
-                                        class="text-mun-blue hover:text-mun-blue-600 transition-colors">
+                                        class="text-mun-gray-400 hover:text-mun-blue transition-colors">
                                         <PencilIcon class="w-4 h-4" />
                                     </button>
                                     <button @click.stop="deleteEvent(event)"
