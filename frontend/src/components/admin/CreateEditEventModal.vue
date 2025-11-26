@@ -759,23 +759,32 @@ const validateDates = () => {
         }
     }
 
-    if (formData.registrationOpens && formData.startDate) {
-        const regOpen = new Date(formData.registrationOpens)
+    if (formData.registrationDeadline && formData.startDate) {
+        const regOpen = new Date(formData.registrationDeadline)
         const start = new Date(formData.startDate)
 
         if (regOpen >= start) {
-            errors.value.registrationOpens = 'Registration must open before event starts'
+            errors.value.registrationOpens = 'Registration must end before event starts'
         }
     }
 
-    if (formData.registrationCloses && formData.startDate) {
-        const regClose = new Date(formData.registrationCloses)
-        const start = new Date(formData.startDate)
+    // if (formData.registrationOpens && formData.startDate) {
+    //     const regOpen = new Date(formData.registrationOpens)
+    //     const start = new Date(formData.startDate)
 
-        if (regClose > start) {
-            errors.value.registrationCloses = 'Registration must close before event starts'
-        }
-    }
+    //     if (regOpen >= start) {
+    //         errors.value.registrationOpens = 'Registration must open before event starts'
+    //     }
+    // }
+
+    // if (formData.registrationCloses && formData.startDate) {
+    //     const regClose = new Date(formData.registrationCloses)
+    //     const start = new Date(formData.startDate)
+
+    //     if (regClose > start) {
+    //         errors.value.registrationCloses = 'Registration must close before event starts'
+    //     }
+    // }
 }
 
 watch(() => formData.startDate, validateDates)
@@ -841,9 +850,9 @@ const validateForm = () => {
         errors.value.name = 'Event name is required'
     }
 
-    if (!formData.eventType) {
-        errors.value.eventType = 'Event type is required'
-    }
+    // if (!formData.eventType) {
+    //     errors.value.eventType = 'Event type is required'
+    // }
 
     if (!formData.startDate) {
         errors.value.startDate = 'Start date is required'
