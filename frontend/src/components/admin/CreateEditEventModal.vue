@@ -828,16 +828,16 @@ const initializeForm = () => {
         formData.description = props.event.description || ''
         formData.status = props.event.status || 'draft'
         
-        // Handle dates - convert from ISO to datetime-local format
+        // Handle dates - convert UTC from backend to local time for display
         formData.startDate = props.event.startDate ? 
-            new Date(props.event.startDate).toISOString().slice(0, 16) : ''
+            convertUTCToLocal(props.event.startDate) : ''
         formData.endDate = props.event.endDate ? 
-            new Date(props.event.endDate).toISOString().slice(0, 16) : ''
+            convertUTCToLocal(props.event.endDate) : ''
         
         // Handle nested settings
         if (props.event.settings) {
             formData.registrationDeadline = props.event.settings.registrationDeadline ? 
-                new Date(props.event.settings.registrationDeadline).toISOString().slice(0, 16) : ''
+                convertUTCToLocal(props.event.settings.registrationDeadline) : ''
             formData.timezone = props.event.settings.timezone || 'UTC'
             formData.maxCommittees = props.event.settings.maxCommittees || 10
             formData.qrExpirationPeriod = props.event.settings.qrExpirationPeriod || 168
@@ -847,6 +847,22 @@ const initializeForm = () => {
         // Reset form for new event
         resetForm()
     }
+}
+
+// Helper function to convert UTC date to local datetime-local format
+const convertUTCToLocal = (utcDateString) => {
+    const utcDate = new Date(utcDateString)
+    // Get local time by subtracting timezone offset
+    const localDate = new Date(utcDate.getTime() - (utcDate.getTimezoneOffset() * 60000))
+    return localDate.toISOString().slice(0, 16)
+}
+
+// Helper function to convert local datetime-local to UTC
+const convertLocalToUTC = (localDateTimeString) => {
+    if (!localDateTimeString) return null
+    // datetime-local is already in local time, just create Date object
+    const localDate = new Date(localDateTimeString)
+    return localDate.toISOString()
 }
 
 
@@ -1006,15 +1022,15 @@ async function submitForm() {
     try {
         isSubmitting.value = true
 
-        // Prepare data for API - match backend structure
+        // Prepare data for API - convert local times to UTC
         const submitData = {
             name: formData.name,
             description: formData.description,
             status: formData.status,
-            startDate: new Date(formData.startDate).toISOString(),
-            endDate: new Date(formData.endDate).toISOString(),
+            startDate: convertLocalToUTC(formData.startDate),
+            endDate: convertLocalToUTC(formData.endDate),
             settings: {
-                registrationDeadline: new Date(formData.registrationDeadline).toISOString(),
+                registrationDeadline: convertLocalToUTC(formData.registrationDeadline),
                 qrExpirationPeriod: formData.qrExpirationPeriod,
                 allowLateRegistration: formData.allowLateRegistration,
                 maxCommittees: formData.maxCommittees,
@@ -1053,19 +1069,65 @@ async function submitForm() {
     }
 }
 
+// const saveDraft = async () => {
+//     try {
+//         isDraftSaving.value = true
+
+//         const draftData = { ...formData }
+//         draftData.status = 'draft'
+
+//         // Convert dates if present
+//         if (draftData.startDate) {
+//             draftData.startDate = new Date(draftData.startDate).toISOString()
+//         }
+//         if (draftData.endDate) {
+//             draftData.endDate = new Date(draftData.endDate).toISOString()
+//         }
+
+//         let response
+//         if (props.mode === 'edit') {
+//             const eventId = props.event._id || props.event.id
+//             response = await apiMethods.events.update(eventId, draftData)
+//         } else {
+//             response = await apiMethods.events.create(draftData)
+//         }
+
+//         if (response?.data) {
+//             toast.success('Draft saved successfully')
+            
+//             const eventData = response.data.event || response.data
+//             emit('saved', eventData)
+            
+//             if (props.mode === 'create') {
+//                 close()
+//             }
+//         }
+
+//     } catch (error) {
+//         console.error('Save draft error:', error)
+//         toast.error('Failed to save draft')
+//     } finally {
+//         isDraftSaving.value = false
+//     }
+// }
+
 const saveDraft = async () => {
     try {
         isDraftSaving.value = true
 
-        const draftData = { ...formData }
-        draftData.status = 'draft'
-
-        // Convert dates if present
-        if (draftData.startDate) {
-            draftData.startDate = new Date(draftData.startDate).toISOString()
-        }
-        if (draftData.endDate) {
-            draftData.endDate = new Date(draftData.endDate).toISOString()
+        const draftData = {
+            name: formData.name,
+            description: formData.description,
+            status: 'draft',
+            startDate: convertLocalToUTC(formData.startDate),
+            endDate: convertLocalToUTC(formData.endDate),
+            settings: {
+                registrationDeadline: convertLocalToUTC(formData.registrationDeadline),
+                qrExpirationPeriod: formData.qrExpirationPeriod,
+                allowLateRegistration: formData.allowLateRegistration,
+                maxCommittees: formData.maxCommittees,
+                timezone: formData.timezone
+            }
         }
 
         let response
