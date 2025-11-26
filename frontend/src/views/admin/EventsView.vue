@@ -609,6 +609,35 @@ const sortEvents = () => {
     pagination.value.currentPage = 1
 }
 
+const formatDate = (dateString) => {
+    if (!dateString) return 'N/A'
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: 'numeric'
+    })
+}
+
+const getDaysUntilEvent = (startDate) => {
+    if (!startDate) return 'No date set'
+    
+    const now = new Date()
+    const eventDate = new Date(startDate)
+    const diffTime = eventDate - now
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    if (diffDays < 0) {
+        return `${Math.abs(diffDays)} days ago`
+    } else if (diffDays === 0) {
+        return 'Today'
+    } else if (diffDays === 1) {
+        return 'Tomorrow'
+    } else {
+        return `in ${diffDays} days`
+    }
+}
+
 const debouncedSearch = debounce(() => {
     pagination.value.currentPage = 1
 }, 300)
@@ -799,3 +828,11 @@ onMounted(() => {
     loadEvents()
 })
 </script>
+<style scoped>
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>
