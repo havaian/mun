@@ -764,7 +764,7 @@ const validateDates = () => {
         const start = new Date(formData.startDate)
 
         if (regOpen >= start) {
-            errors.value.registrationOpens = 'Registration must end before event starts'
+            errors.value.registrationDeadline = 'Registration must end before event starts'
         }
     }
 
@@ -787,6 +787,7 @@ const validateDates = () => {
     // }
 }
 
+watch(() => formData.registrationDeadline, validateDates)
 watch(() => formData.startDate, validateDates)
 watch(() => formData.endDate, validateDates)
 watch(() => formData.name, () => {
@@ -796,27 +797,82 @@ watch(() => formData.name, () => {
 })
 
 // Methods
+// const initializeForm = () => {
+//     errors.value = {}
+
+//     if (props.mode === 'edit' && props.event) {
+//         // Populate form with existing event data
+//         Object.keys(formData).forEach(key => {
+//             if (props.event[key] !== undefined) {
+//                 if (key === 'startDate' || key === 'endDate' || key === 'registrationOpens' || key === 'registrationCloses') {
+//                     // Convert dates to datetime-local format
+//                     formData[key] = props.event[key] ?
+//                         new Date(props.event[key]).toISOString().slice(0, 16) : ''
+//                 } else {
+//                     formData[key] = props.event[key]
+//                 }
+//             }
+//         })
+//     } else {
+//         // Reset form for new event
+//         resetForm()
+//     }
+// }
+
 const initializeForm = () => {
     errors.value = {}
 
     if (props.mode === 'edit' && props.event) {
         // Populate form with existing event data
-        Object.keys(formData).forEach(key => {
-            if (props.event[key] !== undefined) {
-                if (key === 'startDate' || key === 'endDate' || key === 'registrationOpens' || key === 'registrationCloses') {
-                    // Convert dates to datetime-local format
-                    formData[key] = props.event[key] ?
-                        new Date(props.event[key]).toISOString().slice(0, 16) : ''
-                } else {
-                    formData[key] = props.event[key]
-                }
-            }
-        })
+        formData.name = props.event.name || ''
+        formData.description = props.event.description || ''
+        formData.status = props.event.status || 'draft'
+        
+        // Handle dates - convert from ISO to datetime-local format
+        formData.startDate = props.event.startDate ? 
+            new Date(props.event.startDate).toISOString().slice(0, 16) : ''
+        formData.endDate = props.event.endDate ? 
+            new Date(props.event.endDate).toISOString().slice(0, 16) : ''
+        
+        // Handle nested settings
+        if (props.event.settings) {
+            formData.registrationDeadline = props.event.settings.registrationDeadline ? 
+                new Date(props.event.settings.registrationDeadline).toISOString().slice(0, 16) : ''
+            formData.timezone = props.event.settings.timezone || 'UTC'
+            formData.maxCommittees = props.event.settings.maxCommittees || 10
+            formData.qrExpirationPeriod = props.event.settings.qrExpirationPeriod || 168
+            formData.allowLateRegistration = props.event.settings.allowLateRegistration || false
+        }
     } else {
         // Reset form for new event
         resetForm()
     }
 }
+
+
+// const resetForm = () => {
+//     Object.keys(formData).forEach(key => {
+//         if (key === 'tags') {
+//             formData[key] = []
+//         } else if (typeof formData[key] === 'boolean') {
+//             formData[key] = key === 'allowWaitlist' || key === 'sendWelcomeEmail' ||
+//                 key === 'isPublic' || key === 'enableFeedback'
+//         } else if (typeof formData[key] === 'number') {
+//             formData[key] = key === 'registrationFee' ? 0 : null
+//         } else if (key === 'status') {
+//             formData[key] = 'draft'
+//         } else if (key === 'timeZone') {
+//             formData[key] = 'Asia/Tashkent'
+//         } else if (key === 'language') {
+//             formData[key] = 'en'
+//         } else if (key === 'currency') {
+//             formData[key] = 'USD'
+//         } else {
+//             formData[key] = ''
+//         }
+//     })
+//     errors.value = {}
+// }
 
 const resetForm = () => {
     Object.keys(formData).forEach(key => {
