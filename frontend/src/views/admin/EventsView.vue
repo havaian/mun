@@ -189,137 +189,191 @@
             </div>
 
             <!-- Grid View -->
-            <div v-else-if="viewMode === 'grid'" class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div v-for="event in paginatedEvents" :key="event.id"
-                        class="mun-card border border-mun-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow cursor-pointer"
-                        @click="viewEvent(event)">
-                        <div class="flex items-start justify-between mb-4">
-                            <div>
-                                <h3 class="text-lg font-medium text-mun-gray-900">{{ event.name }}</h3>
-                                <p class="text-sm text-mun-gray-600">{{ event.description }}</p>
-                            </div>
-                            <span :class="[
-                                'px-2 py-1 rounded-full text-xs font-medium',
-                                event.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
-                                    event.status === 'draft' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
-                                        event.status === 'completed' ? 'bg-mun-gray-100 text-mun-gray-700' :
-                                            'bg-mun-red-100 text-mun-red-700'
-                            ]">
-                                {{ formatStatus(event.status) }}
-                            </span>
-                        </div>
+            <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div v-for="event in paginatedEvents" :key="event._id || event.id"
+                    class="mun-card p-6 cursor-pointer hover:shadow-lg transition-all duration-200 border border-mun-gray-200"
+                    @click="viewEvent(event)">
 
-                        <div class="space-y-2 text-sm text-mun-gray-600">
-                            <div class="flex items-center">
-                                <CalendarDaysIcon class="w-4 h-4 mr-2" />
-                                <span>{{ formatDateRange(event.startDate, event.endDate) }}</span>
-                            </div>
-                            <div class="flex items-center">
-                                <UserGroupIcon class="w-4 h-4 mr-2" />
-                                <span>{{ event.committees?.length || 0 }} committees</span>
-                            </div>
-                            <div class="flex items-center">
-                                <UsersIcon class="w-4 h-4 mr-2" />
-                                <span>{{ event.participants || 0 }} participants</span>
+                    <!-- Event Header -->
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-lg font-semibold text-mun-gray-900 mb-1 truncate">{{ event.name }}</h3>
+                            <p class="text-sm text-mun-gray-600 line-clamp-2">
+                                {{ event.description || 'No description available' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Status Badge -->
+                    <div class="flex items-center justify-between mb-4">
+                        <span :class="[
+                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                            event.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
+                                event.status === 'draft' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
+                                    event.status === 'completed' ? 'bg-mun-blue-100 text-mun-blue-700' :
+                                        'bg-mun-red-100 text-mun-red-700'
+                        ]">
+                            {{ formatStatus(event.status) }}
+                        </span>
+                        <div class="flex items-center text-xs text-mun-gray-500">
+                            <CalendarDaysIcon class="w-3 h-3 mr-1" />
+                            {{ getDaysUntilEvent(event.startDate) }}
+                        </div>
+                    </div>
+
+                    <!-- Event Stats -->
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-mun-gray-900">{{ event.statistics?.totalCommittees || 0 }}</div>
+                            <div class="text-xs text-mun-gray-600">Committees</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-mun-gray-900">{{ event.statistics?.totalParticipants || 0 }}</div>
+                            <div class="text-xs text-mun-gray-600">Participants</div>
+                        </div>
+                    </div>
+
+                    <!-- Event Timeline -->
+                    <div class="space-y-3 mb-4">
+                        <div class="flex items-center text-sm">
+                            <div class="w-2 h-2 rounded-full bg-mun-blue mr-3 flex-shrink-0"></div>
+                            <div class="flex-1">
+                                <span class="text-mun-gray-600">Event:</span>
+                                <span class="text-mun-gray-900 font-medium ml-1">
+                                    {{ formatDateRange(event.startDate, event.endDate) }}
+                                </span>
                             </div>
                         </div>
-
-                        <div class="flex items-center justify-between mt-4 pt-4 border-t border-mun-gray-200">
-                            <span class="text-xs text-mun-gray-500">
-                                Created {{ formatRelativeDate(event.createdAt) }}
-                            </span>
-                            <div class="flex items-center space-x-2">
-                                <button @click.stop="editEvent(event)"
-                                    class="p-1 text-mun-gray-400 hover:text-mun-blue transition-colors">
-                                    <PencilIcon class="w-4 h-4" />
-                                </button>
-                                <button @click.stop="deleteEvent(event)"
-                                    class="p-1 text-mun-gray-400 hover:text-mun-red-500 transition-colors">
-                                    <TrashIcon class="w-4 h-4" />
-                                </button>
+                        <div v-if="event.settings?.registrationDeadline" class="flex items-center text-sm">
+                            <div class="w-2 h-2 rounded-full bg-mun-orange mr-3 flex-shrink-0"></div>
+                            <div class="flex-1">
+                                <span class="text-mun-gray-600">Registration:</span>
+                                <span class="text-mun-gray-900 font-medium ml-1">
+                                    {{ formatDate(event.settings.registrationDeadline) }}
+                                </span>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Event Actions -->
+                    <div class="flex items-center justify-between pt-4 border-t border-mun-gray-200">
+                        <div class="text-xs text-mun-gray-500">
+                            Created {{ formatRelativeDate(event.createdAt) }}
+                        </div>
+                        <div class="flex items-center space-x-1">
+                            <button @click.stop="editEvent(event)"
+                                class="p-2 text-mun-gray-400 hover:text-mun-blue hover:bg-mun-blue-50 rounded-lg transition-colors">
+                                <PencilIcon class="w-4 h-4" />
+                            </button>
+                            <button @click.stop="duplicateEvent(event)"
+                                class="p-2 text-mun-gray-400 hover:text-mun-green-500 hover:bg-mun-green-50 rounded-lg transition-colors">
+                                <DocumentDuplicateIcon class="w-4 h-4" />
+                            </button>
+                            <button @click.stop="deleteEvent(event)"
+                                class="p-2 text-mun-gray-400 hover:text-mun-red-500 hover:bg-mun-red-50 rounded-lg transition-colors">
+                                <TrashIcon class="w-4 h-4" />
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- List View -->
-            <div v-else class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-mun-gray-200">
-                    <thead class="bg-mun-gray-50">
-                        <tr>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                                Event
-                            </th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                                Status
-                            </th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                                Dates
-                            </th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                                Committees
-                            </th>
-                            <th
-                                class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                                Participants
-                            </th>
-                            <th
-                                class="px-6 py-3 text-right text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
-                                Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-mun-gray-200">
-                        <tr v-for="event in paginatedEvents" :key="event.id"
-                            class="hover:bg-mun-gray-50 cursor-pointer transition-colors" @click="viewEvent(event)">
-                            <td class="px-6 py-4">
-                                <div>
-                                    <div class="text-sm font-medium text-mun-gray-900">{{ event.name }}</div>
-                                    <div class="text-sm text-mun-gray-500 max-w-xs truncate">{{ event.description }}
+            <div v-else class="mun-card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-mun-gray-200">
+                        <thead class="bg-mun-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                    Event
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                    Status & Timeline
+                                </th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                    Committees
+                                </th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                    Participants
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                    Dates
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-mun-gray-500 uppercase tracking-wider w-32">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-mun-gray-200">
+                            <tr v-for="event in paginatedEvents" :key="event._id || event.id"
+                                class="hover:bg-mun-gray-50 cursor-pointer transition-colors"
+                                @click="viewEvent(event)">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="text-sm font-medium text-mun-gray-900 truncate">{{ event.name }}</div>
+                                            <div class="text-sm text-mun-gray-500 truncate">
+                                                {{ event.description || 'No description' }}
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span :class="[
-                                    'px-2 py-1 rounded-full text-xs font-medium',
-                                    event.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
-                                        event.status === 'draft' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
-                                            event.status === 'completed' ? 'bg-mun-gray-100 text-mun-gray-700' :
-                                                'bg-mun-red-100 text-mun-red-700'
-                                ]">
-                                    {{ formatStatus(event.status) }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-500">
-                                {{ formatDateRange(event.startDate, event.endDate) }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-900">
-                                {{ event.committees?.length || 0 }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-mun-gray-900">
-                                {{ event.participants || 0 }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex items-center justify-end space-x-2">
-                                    <button @click.stop="editEvent(event)"
-                                        class="text-mun-gray-400 hover:text-mun-blue transition-colors">
-                                        <PencilIcon class="w-4 h-4" />
-                                    </button>
-                                    <button @click.stop="deleteEvent(event)"
-                                        class="text-mun-gray-400 hover:text-mun-red-500 transition-colors">
-                                        <TrashIcon class="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col space-y-1">
+                                        <span :class="[
+                                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium w-fit',
+                                            event.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
+                                                event.status === 'draft' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
+                                                    event.status === 'completed' ? 'bg-mun-blue-100 text-mun-blue-700' :
+                                                        'bg-mun-red-100 text-mun-red-700'
+                                        ]">
+                                            {{ formatStatus(event.status) }}
+                                        </span>
+                                        <span class="text-xs text-mun-gray-500">
+                                            {{ getDaysUntilEvent(event.startDate) }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <div class="text-lg font-semibold text-mun-gray-900">
+                                        {{ event.statistics?.totalCommittees || 0 }}
+                                    </div>
+                                    <div class="text-xs text-mun-gray-500">committees</div>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <div class="text-lg font-semibold text-mun-gray-900">
+                                        {{ event.statistics?.totalParticipants || 0 }}
+                                    </div>
+                                    <div class="text-xs text-mun-gray-500">registered</div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-mun-gray-900 font-medium">
+                                        {{ formatDateRange(event.startDate, event.endDate) }}
+                                    </div>
+                                    <div v-if="event.settings?.registrationDeadline" class="text-sm text-mun-gray-500">
+                                        Reg: {{ formatDate(event.settings.registrationDeadline) }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-right w-32">
+                                    <div class="flex items-center justify-end space-x-1">
+                                        <button @click.stop="editEvent(event)"
+                                            class="p-2 text-mun-gray-400 hover:text-mun-blue hover:bg-mun-blue-50 rounded-lg transition-colors">
+                                            <PencilIcon class="w-4 h-4" />
+                                        </button>
+                                        <button @click.stop="duplicateEvent(event)"
+                                            class="p-2 text-mun-gray-400 hover:text-mun-green-500 hover:bg-mun-green-50 rounded-lg transition-colors">
+                                            <DocumentDuplicateIcon class="w-4 h-4" />
+                                        </button>
+                                        <button @click.stop="deleteEvent(event)"
+                                            class="p-2 text-mun-gray-400 hover:text-mun-red-500 hover:bg-mun-red-50 rounded-lg transition-colors">
+                                            <TrashIcon class="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Pagination -->
