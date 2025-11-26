@@ -23,8 +23,8 @@
 
                     <!-- Modal Content -->
                     <div class="overflow-y-auto max-h-[calc(90vh-140px)]">
-                        <form @submit.prevent="submitForm" class="p-6 space-y-8">
-                            <!-- Basic Information -->
+                        <!-- <form @submit.prevent="submitForm" class="p-6 space-y-8">
+                            <!-- Basic Information
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
                                     <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
@@ -32,7 +32,7 @@
                                 </h3>
 
                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <!-- Committee Name -->
+                                    <!-- Committee Name
                                     <div class="lg:col-span-2">
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Committee Name *
@@ -45,7 +45,7 @@
                                         </p>
                                     </div>
 
-                                    <!-- Committee Type -->
+                                    <!-- Committee Type
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Committee Type *
@@ -67,7 +67,7 @@
                                         </p>
                                     </div>
 
-                                    <!-- Event -->
+                                    <!-- Event
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Event *
@@ -85,7 +85,7 @@
                                         </p>
                                     </div>
 
-                                    <!-- Status -->
+                                    <!-- Status
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Status
@@ -99,7 +99,7 @@
                                         ]" size="md" />
                                     </div>
 
-                                    <!-- Abbreviation -->
+                                    <!-- Abbreviation
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Abbreviation
@@ -108,7 +108,7 @@
                                             placeholder="e.g., UNGA" maxlength="10" />
                                     </div>
 
-                                    <!-- Description -->
+                                    <!-- Description
                                     <div class="lg:col-span-2">
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Description
@@ -120,7 +120,7 @@
                                 </div>
                             </div>
 
-                            <!-- Committee Settings -->
+                            <!-- Committee Settings
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
                                     <CogIcon class="w-5 h-5 mr-2 text-mun-blue" />
@@ -128,7 +128,7 @@
                                 </h3>
 
                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <!-- Topic -->
+                                    <!-- Topic
                                     <div class="lg:col-span-2">
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Committee Topic
@@ -137,7 +137,7 @@
                                             placeholder="e.g., Addressing Climate Change and Sustainable Development" />
                                     </div>
 
-                                    <!-- Language -->
+                                    <!-- Language
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Working Language
@@ -150,7 +150,7 @@
                                         ]" size="md" />
                                     </div>
 
-                                    <!-- Max Countries -->
+                                    <!-- Max Countries
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Maximum Countries
@@ -163,7 +163,7 @@
                                         </p>
                                     </div>
 
-                                    <!-- Session Duration -->
+                                    <!-- Session Duration
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Session Duration (hours)
@@ -172,7 +172,7 @@
                                             class="input-field" placeholder="8" />
                                     </div>
 
-                                    <!-- Time Zone -->
+                                    <!-- Time Zone
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Time Zone
@@ -187,7 +187,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Committee Features -->
+                                <!-- Committee Features
                                 <div class="space-y-4">
                                     <h4 class="font-medium text-mun-gray-900">Committee Features</h4>
 
@@ -229,7 +229,7 @@
                                 </div>
                             </div>
 
-                            <!-- Security Council Specific Settings -->
+                            <!-- Security Council Specific Settings
                             <div v-if="formData.type === 'SC'" class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
                                     <ShieldCheckIcon class="w-5 h-5 mr-2 text-mun-blue" />
@@ -275,7 +275,7 @@
                                 </div>
                             </div>
 
-                            <!-- Presidium Setup -->
+                            <!-- Presidium Setup
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
                                     <UsersIcon class="w-5 h-5 mr-2 text-mun-blue" />
@@ -343,7 +343,7 @@
                                 </div>
                             </div>
 
-                            <!-- Advanced Settings -->
+                            <!-- Advanced Settings
                             <div class="space-y-6">
                                 <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
                                     <AdjustmentsHorizontalIcon class="w-5 h-5 mr-2 text-mun-blue" />
@@ -351,7 +351,7 @@
                                 </h3>
 
                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <!-- Speaking Time -->
+                                    <!-- Speaking Time
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Default Speaking Time (seconds)
@@ -360,7 +360,7 @@
                                             class="input-field" placeholder="120" />
                                     </div>
 
-                                    <!-- Debate Format -->
+                                    <!-- Debate Format
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Debate Format
@@ -372,7 +372,7 @@
                                         ]" size="md" />
                                     </div>
 
-                                    <!-- Roll Call Voting -->
+                                    <!-- Roll Call Voting
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Voting Method
@@ -384,7 +384,7 @@
                                         ]" size="md" />
                                     </div>
 
-                                    <!-- Document Deadline -->
+                                    <!-- Document Deadline
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                             Document Submission Deadline
@@ -394,13 +394,106 @@
                                     </div>
                                 </div>
 
-                                <!-- Additional Notes -->
+                                <!-- Additional Notes
                                 <div>
                                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                                         Additional Notes
                                     </label>
                                     <textarea v-model="formData.notes" rows="3" class="input-field resize-none"
                                         placeholder="Any additional notes or special instructions for this committee..."></textarea>
+                                </div>
+                            </div>
+                        </form> -->
+                        <form @submit.prevent="handleFormSubmit" class="p-6 space-y-8" novalidate>
+                            <!-- Basic Information -->
+                            <div class="space-y-6">
+                                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
+                                    <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
+                                    Basic Information
+                                </h3>
+
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <!-- Committee Name -->
+                                    <div class="lg:col-span-2">
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Committee Name *
+                                        </label>
+                                        <input v-model="formData.name" type="text" required class="input-field"
+                                            placeholder="e.g., United Nations General Assembly"
+                                            :class="{ 'border-mun-red-300': errors.name }" />
+                                        <p v-if="errors.name" class="mt-1 text-sm text-mun-red-600">
+                                            {{ errors.name }}
+                                        </p>
+                                    </div>
+
+                                    <!-- Committee Type -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Committee Type *
+                                        </label>
+                                        <SleekSelect v-model="formData.type" :options="[
+                                            { label: 'Select committee type', value: '' },
+                                            { label: 'General Assembly', value: 'GA' },
+                                            { label: 'Security Council', value: 'SC' },
+                                            { label: 'Other', value: 'other' }
+                                        ]" placeholder="Select committee type" :trigger-class="errors.type ? 'border-mun-red-300' : ''"
+                                            required size="md" />
+                                        <p v-if="errors.type" class="mt-1 text-sm text-mun-red-600">
+                                            {{ errors.type }}
+                                        </p>
+                                    </div>
+
+                                    <!-- Event -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Event *
+                                        </label>
+                                        <SleekSelect v-model="formData.eventId" :options="[
+                                            { label: 'Select event', value: '' },
+                                            ...availableEvents.map(event => ({
+                                                label: event.name,
+                                                value: event._id
+                                            }))
+                                        ]" placeholder="Select event" :trigger-class="errors.eventId ? 'border-mun-red-300' : ''" 
+                                            searchable required size="md" />
+                                        <p v-if="errors.eventId" class="mt-1 text-sm text-mun-red-600">
+                                            {{ errors.eventId }}
+                                        </p>
+                                    </div>
+
+                                    <!-- Language -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Working Language
+                                        </label>
+                                        <SleekSelect v-model="formData.language" :options="[
+                                            { label: 'English', value: 'english' },
+                                            { label: 'Russian', value: 'russian' },
+                                            { label: 'Uzbek', value: 'uzbek' }
+                                        ]" size="md" />
+                                    </div>
+
+                                    <!-- Status -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Status
+                                        </label>
+                                        <SleekSelect v-model="formData.status" :options="[
+                                            { label: 'Setup', value: 'setup' },
+                                            { label: 'Active', value: 'active' },
+                                            { label: 'Completed', value: 'completed' }
+                                        ]" size="md" />
+                                    </div>
+
+                                    <!-- Description -->
+                                    <div class="lg:col-span-2">
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Description
+                                        </label>
+                                        <textarea v-model="formData.description" rows="3"
+                                            class="input-field resize-none"
+                                            placeholder="Describe the committee's purpose and scope..."></textarea>
+                                    </div>
                                 </div>
                             </div>
                         </form>
@@ -427,7 +520,7 @@
                                 Save as Draft
                             </AppButton>
 
-                            <AppButton variant="primary" @click="submitForm" :loading="isSubmitting">
+                            <AppButton variant="primary" @click.stop="handleCreateCommittee" :loading="isSubmitting" type="button">
                                 <CheckIcon class="w-4 h-4 mr-2" />
                                 {{ mode === 'edit' ? 'Update Committee' : 'Create Committee' }}
                             </AppButton>
@@ -487,44 +580,54 @@ const errors = ref({})
 const availableEvents = ref([])
 
 // Form data
+// const formData = reactive({
+//     // Basic Information
+//     name: '',
+//     type: '',
+//     eventId: '',
+//     status: 'draft',
+//     abbreviation: '',
+//     description: '',
+
+//     // Committee Settings
+//     topic: '',
+//     language: 'en',
+//     maxCountries: null,
+//     sessionDuration: 8,
+//     timeZone: 'Asia/Tashkent',
+//     allowObservers: false,
+//     enableVoting: true,
+//     allowAmendments: true,
+//     requirePositionPapers: true,
+
+//     // Security Council Specific
+//     scSettings: {
+//         enableVetoPower: true,
+//         requireUnanimity: false,
+//         votingThreshold: 'qualified'
+//     },
+
+//     // Presidium
+//     presidium: [
+//         { role: 'chairman', email: '', name: '', institution: '' }
+//     ],
+
+//     // Advanced Settings
+//     speakingTime: 120,
+//     debateFormat: 'formal',
+//     votingMethod: 'placard',
+//     documentDeadline: '',
+//     notes: ''
+// })
+
 const formData = reactive({
-    // Basic Information
+    // Basic Information - matches backend schema exactly
     name: '',
     type: '',
     eventId: '',
-    status: 'draft',
-    abbreviation: '',
     description: '',
-
-    // Committee Settings
-    topic: '',
-    language: 'en',
-    maxCountries: null,
-    sessionDuration: 8,
-    timeZone: 'Asia/Tashkent',
-    allowObservers: false,
-    enableVoting: true,
-    allowAmendments: true,
-    requirePositionPapers: true,
-
-    // Security Council Specific
-    scSettings: {
-        enableVetoPower: true,
-        requireUnanimity: false,
-        votingThreshold: 'qualified'
-    },
-
-    // Presidium
-    presidium: [
-        { role: 'chairman', email: '', name: '', institution: '' }
-    ],
-
-    // Advanced Settings
-    speakingTime: 120,
-    debateFormat: 'formal',
-    votingMethod: 'placard',
-    documentDeadline: '',
-    notes: ''
+    language: 'english',
+    status: 'setup'
 })
 
 // Computed
@@ -595,34 +698,44 @@ const initializeForm = () => {
     }
 }
 
+// const resetForm = () => {
+//     Object.keys(formData).forEach(key => {
+//         if (key === 'presidium') {
+//             formData[key] = [{ role: 'chairman', email: '', name: '', institution: '' }]
+//         } else if (key === 'scSettings') {
+//             formData[key] = {
+//                 enableVetoPower: true,
+//                 requireUnanimity: false,
+//                 votingThreshold: 'qualified'
+//             }
+//         } else if (typeof formData[key] === 'boolean') {
+//             formData[key] = ['enableVoting', 'allowAmendments', 'requirePositionPapers'].includes(key)
+//         } else if (typeof formData[key] === 'number') {
+//             formData[key] = key === 'sessionDuration' ? 8 : key === 'speakingTime' ? 120 : null
+//         } else if (key === 'status') {
+//             formData[key] = 'draft'
+//         } else if (key === 'language') {
+//             formData[key] = 'en'
+//         } else if (key === 'timeZone') {
+//             formData[key] = 'Asia/Tashkent'
+//         } else if (key === 'debateFormat') {
+//             formData[key] = 'formal'
+//         } else if (key === 'votingMethod') {
+//             formData[key] = 'placard'
+//         } else {
+//             formData[key] = ''
+//         }
+//     })
+//     errors.value = {}
+// }
+
 const resetForm = () => {
-    Object.keys(formData).forEach(key => {
-        if (key === 'presidium') {
-            formData[key] = [{ role: 'chairman', email: '', name: '', institution: '' }]
-        } else if (key === 'scSettings') {
-            formData[key] = {
-                enableVetoPower: true,
-                requireUnanimity: false,
-                votingThreshold: 'qualified'
-            }
-        } else if (typeof formData[key] === 'boolean') {
-            formData[key] = ['enableVoting', 'allowAmendments', 'requirePositionPapers'].includes(key)
-        } else if (typeof formData[key] === 'number') {
-            formData[key] = key === 'sessionDuration' ? 8 : key === 'speakingTime' ? 120 : null
-        } else if (key === 'status') {
-            formData[key] = 'draft'
-        } else if (key === 'language') {
-            formData[key] = 'en'
-        } else if (key === 'timeZone') {
-            formData[key] = 'Asia/Tashkent'
-        } else if (key === 'debateFormat') {
-            formData[key] = 'formal'
-        } else if (key === 'votingMethod') {
-            formData[key] = 'placard'
-        } else {
-            formData[key] = ''
-        }
-    })
+    formData.name = ''
+    formData.type = ''
+    formData.eventId = ''
+    formData.description = ''
+    formData.language = 'english'
+    formData.status = 'setup'
     errors.value = {}
 }
 
@@ -718,7 +831,60 @@ const validateForm = () => {
     return Object.keys(errors.value).length === 0
 }
 
-const submitForm = async () => {
+// const submitForm = async () => {
+//     if (!validateForm()) {
+//         toast.error('Please fix the form errors before submitting')
+//         return
+//     }
+
+//     try {
+//         isSubmitting.value = true
+
+//         // Prepare data for API
+//         const submitData = { ...formData }
+
+//         // Convert datetime-local string to ISO string
+//         if (submitData.documentDeadline) {
+//             submitData.documentDeadline = new Date(submitData.documentDeadline).toISOString()
+//         }
+
+//         // Clean up presidium data
+//         submitData.presidium = submitData.presidium.filter(member =>
+//             member.role && (member.email || member.name)
+//         )
+
+//         let response
+//         if (props.mode === 'edit') {
+//             response = await apiMethods.committees.update(props.committee._id, submitData)
+//         } else {
+//             response = await apiMethods.committees.create(submitData)
+//         }
+
+//         if (response.data.success) {
+//             const committee = response.data.committee
+
+//             if (props.mode === 'edit') {
+//                 emit('updated', committee)
+//                 toast.success('Committee updated successfully')
+//             } else {
+//                 emit('created', committee)
+//                 toast.success('Committee created successfully')
+//             }
+
+//             close()
+//         } else {
+//             throw new Error(response.data.error || 'Failed to save committee')
+//         }
+
+//     } catch (error) {
+//         toast.error('Submit committee error:', error)
+//         toast.error(error.message || 'Failed to save committee')
+//     } finally {
+//         isSubmitting.value = false
+//     }
+// }
+
+async function submitForm() {
     if (!validateForm()) {
         toast.error('Please fix the form errors before submitting')
         return
@@ -727,18 +893,19 @@ const submitForm = async () => {
     try {
         isSubmitting.value = true
 
-        // Prepare data for API
-        const submitData = { ...formData }
-
-        // Convert datetime-local string to ISO string
-        if (submitData.documentDeadline) {
-            submitData.documentDeadline = new Date(submitData.documentDeadline).toISOString()
+        // Prepare data for API - matches backend exactly
+        const submitData = {
+            name: formData.name,
+            type: formData.type,
+            eventId: formData.eventId,
+            description: formData.description,
+            language: formData.language
         }
 
-        // Clean up presidium data
-        submitData.presidium = submitData.presidium.filter(member =>
-            member.role && (member.email || member.name)
-        )
+        // Only include status for edit mode
+        if (props.mode === 'edit') {
+            submitData.status = formData.status
+        }
 
         let response
         if (props.mode === 'edit') {
@@ -747,7 +914,7 @@ const submitForm = async () => {
             response = await apiMethods.committees.create(submitData)
         }
 
-        if (response.data.success) {
+        if (response?.data?.success) {
             const committee = response.data.committee
 
             if (props.mode === 'edit') {
@@ -760,11 +927,11 @@ const submitForm = async () => {
 
             close()
         } else {
-            throw new Error(response.data.error || 'Failed to save committee')
+            throw new Error(response?.data?.error || 'Failed to save committee')
         }
 
     } catch (error) {
-        toast.error('Submit committee error:', error)
+        console.error('Submit committee error:', error)
         toast.error(error.message || 'Failed to save committee')
     } finally {
         isSubmitting.value = false
@@ -799,6 +966,20 @@ const saveDraft = async () => {
     } finally {
         isDraftSaving.value = false
     }
+}
+
+const handleFormSubmit = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    // Do nothing - only allow explicit button clicks
+}
+
+const handleCreateCommittee = async () => {
+    await submitForm()
+}
+
+const handleSaveDraft = async () => {
+    await saveDraft()
 }
 
 const close = () => {
