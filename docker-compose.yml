@@ -17,6 +17,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+      - ./uploads:/uploads:rw,Z
       - ./backend/logs:/app/logs  # Mount logs directory
     networks:
       - mun-network
