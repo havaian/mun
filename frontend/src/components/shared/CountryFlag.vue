@@ -333,29 +333,41 @@ const loadFlag = () => {
         isLoading.value = true
         hasError.value = false
 
-        if (props.countryCode) {
+        // Debug logging
+        console.log('🏳️ Loading flag for:', props.countryCode, {
+            storeInitialized: flagsStore.isInitialized,
+            flagCount: flagsStore.flagCount,
+            hasFlag: flagsStore.hasFlag(props.countryCode)
+        })
+
+        if (props.countryCode && flagsStore.isInitialized) {
             // Try to get flag from store
             const url = flagsStore.getFlagUrl(props.countryCode)
-            
-            if (url) {
+
+            console.log('🏳️ Flag URL from store:', url)
+
+            if (url && url.startsWith('data:')) {
                 flagUrl.value = url
                 isLoading.value = false
+                console.log('✅ Using cached flag for:', props.countryCode)
                 return
             }
         }
 
-        // Fallback if no flag in store
-        const code = props.countryCode?.toLowerCase() || 
-                    props.countryName?.replace(/\s+/g, '-').toLowerCase()
-        
+        // Fallback to API endpoint
+        const code = props.countryCode?.toLowerCase() ||
+            props.countryName?.replace(/\s+/g, '-').toLowerCase()
+
         if (code) {
             flagUrl.value = `/api/countries/flags/${code}`
+            console.log('🔄 Using API endpoint for:', code)
         } else {
             hasError.value = true
+            console.log('❌ No country code available for:', props.countryName)
         }
 
     } catch (error) {
-        console.warn('Flag loading error:', error)
+        console.warn('🚨 Flag loading error:', error)
         hasError.value = true
     } finally {
         isLoading.value = false
@@ -374,12 +386,12 @@ const onFlagLoad = () => {
 const onFlagError = () => {
     hasError.value = true
     // Don't clear flagUrl immediately to avoid flashing
-    
+
     emit('flag-error', {
         countryName: props.countryName,
         countryCode: props.countryCode
     })
-    
+
     // Try fallback after a short delay
     setTimeout(() => {
         if (hasError.value) {

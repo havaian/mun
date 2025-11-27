@@ -86,11 +86,10 @@ export const useFlagsStore = defineStore('flags', () => {
 
         const code = countryCode.toLowerCase()
 
-        // If we have the flag in cache, create blob URL
+        // If we have the flag in cache, create data URL
         const flagSvg = flags.value.get(code)
         if (flagSvg) {
-            const blob = new Blob([flagSvg], { type: 'image/svg+xml' })
-            return URL.createObjectURL(blob)
+            return `data:image/svg+xml;base64,${btoa(flagSvg)}`
         }
 
         // Fallback to API endpoint

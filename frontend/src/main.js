@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import router from './router'
 import App from './App.vue'
+import { useFlagsStore } from '@/stores/flags'
 
 // Import CSS
 import './assets/css/main.css'
@@ -19,9 +20,20 @@ const app = createApp(App)
 
 // Install plugins
 app.use(createPinia())
+// Initialize flags store immediately after Pinia setup
+const flagsStore = useFlagsStore()
+
 app.use(router)
 app.use(Toast)
 app.use(Modal)
+
+// Initialize flags on app startup
+flagsStore.initializeFlags().then(() => {
+    console.log('✅ Flags initialized:', flagsStore.flagCount, 'flags loaded')
+}).catch((error) => {
+    console.error('❌ Failed to initialize flags:', error)
+})
+
 
 // Register global components
 app.component('LoadingSpinner', LoadingSpinner)
