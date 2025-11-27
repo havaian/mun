@@ -698,9 +698,7 @@ const confirmDelete = async () => {
             throw new Error('Event ID not found')
         }
 
-        console.log('Deleting event with ID:', eventId)
         const response = await apiMethods.events.delete(eventId)
-        console.log('Delete response:', response)
 
         // Check for successful deletion
         if (response?.status === 200 || response?.data?.success) {

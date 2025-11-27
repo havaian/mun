@@ -36,15 +36,7 @@ export const useFlagsStore = defineStore('flags', () => {
             isLoading.value = true
             error.value = null
 
-            console.log('Fetching flags batch...')
-
             const response = await apiMethods.countries.getAllFlagsBatch()
-
-            console.log('🏳️ Flags API response structure:', {
-                hasSuccess: !!response.data.success,
-                hasFlags: !!response.data.flags,
-                flagCount: response.data.flags ? Object.keys(response.data.flags).length : 0
-            })
 
             if (response.data.success && response.data.flags) {
                 // Clear existing flags
@@ -58,7 +50,7 @@ export const useFlagsStore = defineStore('flags', () => {
                 lastFetched.value = Date.now()
                 isInitialized.value = true
 
-                console.log(`✅ Flags initialized: ${flags.value.size} flags cached`)
+                console.log(`✅ Flags loaded: ${flags.value.size} flags cached`)
 
                 return true
             } else {

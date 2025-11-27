@@ -67,7 +67,7 @@
                                             </div>
 
                                             <div class="grid">
-                                                <label class="text-sm font-medium text-mun-gray-600">Status</label>
+                                                <label class="text-sm w-fit font-medium text-mun-gray-600">Status</label>
                                                 <span :class="[
                                                     'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
                                                     getStatusClasses(committee.status)

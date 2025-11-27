@@ -254,10 +254,6 @@
                                 Cancel
                             </AppButton>
 
-                            <AppButton variant="outline" @click="resetChanges" :disabled="isSaving">
-                                Reset
-                            </AppButton>
-
                             <AppButton variant="primary" @click="saveCountries" :loading="isSaving">
                                 <CheckIcon class="w-4 h-4 mr-2" />
                                 Save Countries

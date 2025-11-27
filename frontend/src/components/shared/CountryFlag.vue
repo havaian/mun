@@ -62,14 +62,12 @@
             </div>
         </div>
     </div>
-    <FlagTest />
 </template>
 
 <script setup>
 import { computed, ref, onMounted, watch } from 'vue'
 import { CheckIcon, ClockIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useFlagsStore } from '@/stores/flags'
-import FlagsTest from '@/components/dev/FlagsTest.vue'
 
 // Props
 const props = defineProps({
@@ -335,23 +333,13 @@ const loadFlag = () => {
         isLoading.value = true
         hasError.value = false
 
-        // Debug logging
-        console.log('🏳️ Loading flag for:', props.countryCode, {
-            storeInitialized: flagsStore.isInitialized,
-            flagCount: flagsStore.flagCount,
-            hasFlag: flagsStore.hasFlag(props.countryCode)
-        })
-
         if (props.countryCode && flagsStore.isInitialized) {
             // Try to get flag from store
             const url = flagsStore.getFlagUrl(props.countryCode)
 
-            console.log('🏳️ Flag URL from store:', url)
-
             if (url && url.startsWith('data:')) {
                 flagUrl.value = url
                 isLoading.value = false
-                console.log('✅ Using cached flag for:', props.countryCode)
                 return
             }
         }
@@ -362,7 +350,6 @@ const loadFlag = () => {
 
         if (code) {
             flagUrl.value = `/api/countries/flags/${code}`
-            console.log('🔄 Using API endpoint for:', code)
         } else {
             hasError.value = true
             console.log('❌ No country code available for:', props.countryName)
