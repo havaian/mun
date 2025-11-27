@@ -54,19 +54,19 @@
                                         </h3>
 
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
+                                            <div class="grid">
                                                 <label class="text-sm font-medium text-mun-gray-600">Committee
                                                     Name</label>
                                                 <p class="text-mun-gray-900 font-medium">{{ committee.name }}</p>
                                             </div>
 
-                                            <div>
+                                            <div class="grid">
                                                 <label class="text-sm font-medium text-mun-gray-600">Type</label>
                                                 <p class="text-mun-gray-900">{{ formatCommitteeType(committee.type) }}
                                                 </p>
                                             </div>
 
-                                            <div>
+                                            <div class="grid">
                                                 <label class="text-sm font-medium text-mun-gray-600">Status</label>
                                                 <span :class="[
                                                     'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
@@ -76,20 +76,20 @@
                                                 </span>
                                             </div>
 
-                                            <div>
+                                            <div class="grid">
                                                 <label class="text-sm font-medium text-mun-gray-600">Working
                                                     Language</label>
                                                 <p class="text-mun-gray-900">{{ getLanguageName(committee.language) }}
                                                 </p>
                                             </div>
 
-                                            <div>
+                                            <div class="grid">
                                                 <label class="text-sm font-medium text-mun-gray-600">Event</label>
                                                 <p class="text-mun-gray-900">{{ committee.eventId?.name || 'Not assigned' }}</p>
                                             </div>
                                         </div>
 
-                                        <div v-if="committee.description" class="mt-4">
+                                        <div class="grid mt-4" v-if="committee.description">
                                             <label class="text-sm font-medium text-mun-gray-600">Description</label>
                                             <p class="text-mun-gray-900 mt-1">{{ committee.description }}</p>
                                         </div>
@@ -293,31 +293,31 @@
 
                                             <div class="flex justify-between items-center">
                                                 <span class="text-sm text-mun-gray-600">Registered Participants</span>
-                                                <span class="font-semibold text-green-600">{{ getRegisteredCount()
+                                                <span class="font-semibold text-mun-gray-900">{{ getRegisteredCount()
                                                     }}</span>
                                             </div>
 
                                             <div class="flex justify-between items-center">
                                                 <span class="text-sm text-mun-gray-600">Total Sessions</span>
-                                                <span class="font-semibold text-blue-600">{{
+                                                <span class="font-semibold text-mun-gray-900">{{
                                                     committee.statistics?.totalSessions || 0 }}</span>
                                             </div>
 
                                             <div class="flex justify-between items-center">
                                                 <span class="text-sm text-mun-gray-600">Total Votings</span>
-                                                <span class="font-semibold text-purple-600">{{
+                                                <span class="font-semibold text-mun-gray-900">{{
                                                     committee.statistics?.totalVotings || 0 }}</span>
                                             </div>
 
                                             <div class="flex justify-between items-center">
                                                 <span class="text-sm text-mun-gray-600">Resolutions Passed</span>
-                                                <span class="font-semibold text-green-600">{{
+                                                <span class="font-semibold text-mun-gray-900">{{
                                                     committee.statistics?.resolutionsPassed || 0 }}</span>
                                             </div>
 
                                             <div class="flex justify-between items-center">
                                                 <span class="text-sm text-mun-gray-600">Amendments Passed</span>
-                                                <span class="font-semibold text-yellow-600">{{
+                                                <span class="font-semibold text-mun-gray-900">{{
                                                     committee.statistics?.amendmentsPassed || 0 }}</span>
                                             </div>
                                         </div>
