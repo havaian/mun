@@ -273,8 +273,8 @@ import { apiMethods } from '@/utils/api'
 
 // Components
 import CountryFlag from '@/components/shared/CountryFlag.vue'
-import AppButton from '@/components/shared/AppButton.vue'
-import SleekSelect from '@/components/shared/SleekSelect.vue'
+import AppButton from '@/components/ui/AppButton.vue'
+import SleekSelect from '@/components/ui/SleekSelect.vue'
 
 // Icons
 import {
