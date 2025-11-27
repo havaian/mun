@@ -22,7 +22,7 @@
                     </div>
 
                     <!-- Content -->
-                    <div class="flex overflow-y-auto h-[calc(90vh-200px)]">
+                    <div class="flex h-[calc(90vh-140px)]">
                         <!-- Country Search & Selection -->
                         <div class="w-1/2 border-r border-mun-gray-200 flex flex-col">
                             <div class="p-6 border-b border-mun-gray-200">
@@ -39,7 +39,7 @@
                                 </div>
 
                                 <!-- Quick Filters -->
-                                <!-- <div class="flex flex-wrap gap-2 mb-4">
+                                <div class="flex flex-wrap gap-2 mb-4">
                                     <button v-for="region in regions" :key="region.code"
                                         @click="toggleRegionFilter(region.code)" :class="[
                                             'px-3 py-1 rounded-full text-sm font-medium transition-colors',
@@ -49,12 +49,15 @@
                                         ]">
                                         {{ region.name }}
                                     </button>
-                                </div> -->
+                                </div>
 
                                 <!-- Quick Actions -->
                                 <div class="flex items-center space-x-2 mb-4">
                                     <AppButton variant="outline" size="sm" @click="selectAllVisible">
                                         Select All Visible
+                                    </AppButton>
+                                    <AppButton variant="outline" size="sm" @click="clearSelection">
+                                        Clear Selection
                                     </AppButton>
                                     <AppButton v-if="committee?.type === 'SC'" variant="outline" size="sm"
                                         @click="addP5Countries">
@@ -84,7 +87,7 @@
                                         <!-- Selection Checkbox -->
                                         <input type="checkbox" :checked="selectedCountries.includes(country.code)"
                                             @click.stop="toggleCountrySelection(country)"
-                                            class="hidden input-field h-4 w-4 mr-3" />
+                                            class="input-field h-4 w-4 mr-3" />
 
                                         <!-- Flag -->
                                         <div class="mr-3">
@@ -111,7 +114,7 @@
                                         <!-- Assign Action Icon (shown on hover) -->
                                         <div class="transition-all duration-200"
                                             :class="hoveredCountry === country.code ? 'opacity-100' : 'opacity-0'">
-                                            <ChevronRightIcon class="w-5 h-5 text-mun-blue-600" />
+                                            <ChevronDoubleRightIcon class="w-5 h-5 text-mun-blue-600" />
                                         </div>
                                     </div>
                                 </div>
@@ -254,6 +257,10 @@
                                 Cancel
                             </AppButton>
 
+                            <AppButton variant="outline" @click="resetChanges" :disabled="isSaving">
+                                Reset
+                            </AppButton>
+
                             <AppButton variant="primary" @click="saveCountries" :loading="isSaving">
                                 <CheckIcon class="w-4 h-4 mr-2" />
                                 Save Countries
@@ -274,8 +281,8 @@ import { apiMethods } from '@/utils/api'
 
 // Components
 import CountryFlag from '@/components/shared/CountryFlag.vue'
-import AppButton from '@/components/ui/AppButton.vue'
-import SleekSelect from '@/components/ui/SleekSelect.vue'
+import AppButton from '@/components/shared/AppButton.vue'
+import SleekSelect from '@/components/shared/SleekSelect.vue'
 
 // Icons
 import {
@@ -285,7 +292,7 @@ import {
     UserGroupIcon,
     ArrowPathIcon,
     CheckIcon,
-    ChevronRightIcon
+    ChevronDoubleRightIcon
 } from '@heroicons/vue/24/outline'
 
 // Props
@@ -321,14 +328,14 @@ const availableCountries = ref([])
 const assignedCountries = ref([])
 const originalAssigned = ref([])
 
-// // Regions for filtering
-// const regions = [
-//     { code: 'africa', name: 'Africa' },
-//     { code: 'asia', name: 'Asia' },
-//     { code: 'europe', name: 'Europe' },
-//     { code: 'americas', name: 'Americas' },
-//     { code: 'oceania', name: 'Oceania' }
-// ]
+// Regions for filtering
+const regions = [
+    { code: 'africa', name: 'Africa' },
+    { code: 'asia', name: 'Asia' },
+    { code: 'europe', name: 'Europe' },
+    { code: 'americas', name: 'Americas' },
+    { code: 'oceania', name: 'Oceania' }
+]
 
 // P5 countries (Security Council permanent members)
 const p5Countries = ['US', 'RU', 'CN', 'GB', 'FR']
@@ -404,18 +411,41 @@ const loadCountries = async () => {
 
 const initializeAssignedCountries = () => {
     if (props.committee?.countries) {
-        assignedCountries.value = [...props.committee.countries.map(country => ({
-            ...country,
-            qrToken: country.qrToken || generateQRToken(),
-            isQrActive: country.isQrActive !== false,
-            role: country.role || 'non-permanent'
-        }))]
+        assignedCountries.value = props.committee.countries.map(country => {
+            // Handle both backend format and ensure frontend display fields exist
+            return {
+                // Backend schema fields
+                name: country.name,
+                flagUrl: country.flagUrl || `/api/countries/flags/${country.code?.toLowerCase() || 'unknown'}`,
+                isPermanentMember: country.isPermanentMember || false,
+                hasVetoRight: country.hasVetoRight || false,
+                isObserver: country.isObserver || false,
+                specialRole: country.specialRole || null,
+                email: country.email || null,
+                qrToken: country.qrToken || generateQRToken(),
+                isQrActive: country.isQrActive !== false,
+                registeredAt: country.registeredAt || null,
+                lastActivity: country.lastActivity || new Date(),
+
+                // Frontend display fields (derived from backend data or fallback)
+                code: country.code || extractCodeFromFlagUrl(country.flagUrl) || 'unknown',
+                region: country.region || 'Unknown',
+                role: country.isPermanentMember ? 'permanent' : 'non-permanent'
+            }
+        })
 
         originalAssigned.value = [...assignedCountries.value]
     } else {
         assignedCountries.value = []
         originalAssigned.value = []
     }
+}
+
+// Helper function to extract country code from flag URL
+const extractCodeFromFlagUrl = (flagUrl) => {
+    if (!flagUrl) return null
+    const match = flagUrl.match(/\/([a-z]{2})\.svg$/i)
+    return match ? match[1].toUpperCase() : null
 }
 
 const toggleRegionFilter = (regionCode) => {
@@ -450,15 +480,24 @@ const assignCountry = (country) => {
         return
     }
 
+    const isPermanent = isP5Country(country.code)
+
     const newCountry = {
-        code: country.code,
         name: country.name,
-        region: country.region,
+        flagUrl: `/api/countries/flags/${country.code.toLowerCase()}`,
+        isPermanentMember: isPermanent,
+        hasVetoRight: isPermanent, // P5 countries have veto right
+        isObserver: false,
+        specialRole: null,
+        email: null,
         qrToken: generateQRToken(),
         isQrActive: true,
-        role: isP5Country(country.code) ? 'permanent' : 'non-permanent',
-        email: null,
-        registeredAt: null
+        registeredAt: null,
+        lastActivity: new Date(),
+        // Frontend-only fields for display (these won't be sent to backend)
+        code: country.code,
+        region: country.region,
+        role: isPermanent ? 'permanent' : 'non-permanent'
     }
 
     assignedCountries.value.push(newCountry)
@@ -519,8 +558,13 @@ const removeAllCountries = () => {
 }
 
 const updateCountryRole = (country) => {
-    // Role updated directly through v-model
-    toast.success(`${country.name} role updated`)
+    // Update both frontend display field and backend schema fields
+    const isPermanent = country.role === 'permanent'
+
+    country.isPermanentMember = isPermanent
+    country.hasVetoRight = isPermanent
+
+    toast.success(`${country.name} role updated to ${country.role}`)
 }
 
 const regenerateQR = (country) => {
@@ -568,8 +612,19 @@ const saveCountries = async () => {
     try {
         isSaving.value = true
 
+        // Clean the countries data to match backend schema
+        const cleanedCountries = assignedCountries.value.map(country => {
+            // Remove frontend-only fields and keep only backend schema fields
+            const {
+                code, region, role, // Remove frontend-only fields
+                ...backendCountry
+            } = country
+
+            return backendCountry
+        })
+
         const response = await apiMethods.committees.update(props.committee._id, {
-            countries: assignedCountries.value
+            countries: cleanedCountries
         })
 
         if (response.data.success) {
