@@ -62,12 +62,14 @@
             </div>
         </div>
     </div>
+    <FlagTest />
 </template>
 
 <script setup>
 import { computed, ref, onMounted, watch } from 'vue'
 import { CheckIcon, ClockIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { useFlagsStore } from '@/stores/flags'
+import FlagsTest from '@/components/dev/FlagsTest.vue'
 
 // Props
 const props = defineProps({
