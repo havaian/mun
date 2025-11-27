@@ -104,7 +104,7 @@
 
                                         <div v-if="committee.countries && committee.countries.length > 0"
                                             class="space-y-4">
-                                            
+
                                             <!-- Countries Header with Manage Button -->
                                             <div class="flex items-center justify-between">
                                                 <div class="text-sm text-mun-gray-600">
@@ -115,33 +115,36 @@
                                                     Manage Countries
                                                 </AppButton>
                                             </div>
-                                            
-                                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                <div v-for="country in committee.countries" :key="country.name"
-                                                    class="p-3 bg-mun-gray-50 rounded-lg flex items-center justify-between">
-                                                    <div class="flex items-center space-x-3">
-                                                        <div class="flex-1">
-                                                            <p class="font-medium text-mun-gray-900">{{ country.name }}
-                                                            </p>
-                                                            <div class="flex items-center space-x-2 mt-1">
-                                                                <span v-if="country.isPermanentMember"
-                                                                    class="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">
-                                                                    Permanent
-                                                                </span>
-                                                                <span v-if="country.hasVetoRight"
-                                                                    class="px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded">
-                                                                    Veto
-                                                                </span>
-                                                                <span v-if="country.isObserver"
-                                                                    class="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs rounded">
-                                                                    Observer
-                                                                </span>
+
+                                            <!-- Countries Grid -->
+                                            <div class="max-h-60 overflow-y-auto border border-mun-gray-200 rounded-lg">
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
+                                                    <div v-for="country in committee.countries" :key="country.name"
+                                                        class="p-3 bg-mun-gray-50 rounded-lg flex items-center justify-between">
+                                                        <div class="flex items-center space-x-3">
+                                                            <div class="flex-1">
+                                                                <p class="font-medium text-mun-gray-900 text-sm">{{
+                                                                    country.name }}</p>
+                                                                <div class="flex items-center space-x-2 mt-1">
+                                                                    <span v-if="country.isPermanentMember"
+                                                                        class="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">
+                                                                        Permanent
+                                                                    </span>
+                                                                    <span v-if="country.hasVetoRight"
+                                                                        class="px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded">
+                                                                        Veto
+                                                                    </span>
+                                                                    <span v-if="country.isObserver"
+                                                                        class="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs rounded">
+                                                                        Observer
+                                                                    </span>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                        <div :class="[
-                                                            'w-3 h-3 rounded-full',
-                                                            country.email ? 'bg-green-500' : 'bg-gray-400'
-                                                        ]" :title="country.email ? 'Registered' : 'Not registered'">
+                                                            <div :class="[
+                                                                'w-3 h-3 rounded-full',
+                                                                country.email ? 'bg-green-500' : 'bg-transparent'
+                                                            ]" :title="country.email ? 'Registered' : 'Not registered'">
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -224,7 +227,7 @@
                                                     Majority</label>
                                                 <p class="text-mun-gray-900">{{
                                                     formatMajorityType(committee.settings?.votingRules?.defaultMajority)
-                                                    }}</p>
+                                                }}</p>
                                             </div>
 
                                             <div class="grid">
@@ -244,11 +247,12 @@
                                                     committee.settings?.speechSettings?.allowExtensions ? 'text-green-600' : 'text-red-600'
                                                 ]">
                                                     {{ committee.settings?.speechSettings?.allowExtensions ? 'Allowed' :
-                                                    'Not allowed' }}
+                                                        'Not allowed' }}
                                                 </span>
                                             </div>
 
-                                            <div class="grid" v-if="committee.settings?.speechSettings?.allowExtensions">
+                                            <div class="grid"
+                                                v-if="committee.settings?.speechSettings?.allowExtensions">
                                                 <label class="text-sm font-medium text-mun-gray-600">Extension
                                                     Time</label>
                                                 <p class="text-mun-gray-900">{{
@@ -266,7 +270,7 @@
                                                         Papers</label>
                                                     <p class="text-sm text-mun-gray-900">{{
                                                         formatDate(committee.settings.documentDeadlines.positionPapers)
-                                                        }}</p>
+                                                    }}</p>
                                                 </div>
                                                 <div v-if="committee.settings.documentDeadlines.resolutions">
                                                     <label
@@ -306,7 +310,7 @@
                                             <div class="flex justify-between items-center">
                                                 <span class="text-sm text-mun-gray-600">Registered Participants</span>
                                                 <span class="font-semibold text-mun-gray-900">{{ getRegisteredCount()
-                                                    }}</span>
+                                                }}</span>
                                             </div>
 
                                             <div class="flex justify-between items-center">
