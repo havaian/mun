@@ -39,7 +39,7 @@
                                 </div>
 
                                 <!-- Quick Filters -->
-                                <div class="flex flex-wrap gap-2 mb-4">
+                                <!-- <div class="flex flex-wrap gap-2 mb-4">
                                     <button v-for="region in regions" :key="region.code"
                                         @click="toggleRegionFilter(region.code)" :class="[
                                             'px-3 py-1 rounded-full text-sm font-medium transition-colors',
@@ -49,15 +49,12 @@
                                         ]">
                                         {{ region.name }}
                                     </button>
-                                </div>
+                                </div> -->
 
                                 <!-- Quick Actions -->
                                 <div class="flex items-center space-x-2 mb-4">
                                     <AppButton variant="outline" size="sm" @click="selectAllVisible">
-                                        Select All Visible
-                                    </AppButton>
-                                    <AppButton variant="outline" size="sm" @click="clearSelection">
-                                        Clear Selection
+                                        Select All
                                     </AppButton>
                                     <AppButton v-if="committee?.type === 'SC'" variant="outline" size="sm"
                                         @click="addP5Countries">
@@ -257,7 +254,7 @@
                                 Cancel
                             </AppButton>
 
-                            <AppButton variant="outline" @click="resetChanges" :disabled="isSaving">
+                            <AppButton variant="outline" @click="clearSelection" :disabled="isSaving">
                                 Reset
                             </AppButton>
 
@@ -328,14 +325,14 @@ const availableCountries = ref([])
 const assignedCountries = ref([])
 const originalAssigned = ref([])
 
-// Regions for filtering
-const regions = [
-    { code: 'africa', name: 'Africa' },
-    { code: 'asia', name: 'Asia' },
-    { code: 'europe', name: 'Europe' },
-    { code: 'americas', name: 'Americas' },
-    { code: 'oceania', name: 'Oceania' }
-]
+// // Regions for filtering
+// const regions = [
+//     { code: 'africa', name: 'Africa' },
+//     { code: 'asia', name: 'Asia' },
+//     { code: 'europe', name: 'Europe' },
+//     { code: 'americas', name: 'Americas' },
+//     { code: 'oceania', name: 'Oceania' }
+// ]
 
 // P5 countries (Security Council permanent members)
 const p5Countries = ['US', 'RU', 'CN', 'GB', 'FR']
@@ -533,6 +530,7 @@ const selectAllVisible = () => {
 
 const clearSelection = () => {
     selectedCountries.value = []
+    toast.log('Selected countries reset')
 }
 
 const addP5Countries = () => {
@@ -600,12 +598,6 @@ const regenerateAllQRs = async () => {
     } finally {
         isRegeneratingQRs.value = false
     }
-}
-
-const resetChanges = () => {
-    assignedCountries.value = [...originalAssigned.value]
-    selectedCountries.value = []
-    toast.log('Changes reset')
 }
 
 const saveCountries = async () => {
