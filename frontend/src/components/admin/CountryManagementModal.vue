@@ -22,7 +22,7 @@
                     </div>
 
                     <!-- Content -->
-                    <div class="flex h-[calc(90vh-140px)]">
+                    <div class="flex overflow-y-auto h-[calc(90vh-200px)]">
                         <!-- Country Search & Selection -->
                         <div class="w-1/2 border-r border-mun-gray-200 flex flex-col">
                             <div class="p-6 border-b border-mun-gray-200">
@@ -39,7 +39,7 @@
                                 </div>
 
                                 <!-- Quick Filters -->
-                                <div class="flex flex-wrap gap-2 mb-4">
+                                <!-- <div class="flex flex-wrap gap-2 mb-4">
                                     <button v-for="region in regions" :key="region.code"
                                         @click="toggleRegionFilter(region.code)" :class="[
                                             'px-3 py-1 rounded-full text-sm font-medium transition-colors',
@@ -49,15 +49,12 @@
                                         ]">
                                         {{ region.name }}
                                     </button>
-                                </div>
+                                </div> -->
 
                                 <!-- Quick Actions -->
                                 <div class="flex items-center space-x-2 mb-4">
                                     <AppButton variant="outline" size="sm" @click="selectAllVisible">
                                         Select All Visible
-                                    </AppButton>
-                                    <AppButton variant="outline" size="sm" @click="clearSelection">
-                                        Clear Selection
                                     </AppButton>
                                     <AppButton v-if="committee?.type === 'SC'" variant="outline" size="sm"
                                         @click="addP5Countries">
@@ -87,7 +84,7 @@
                                         <!-- Selection Checkbox -->
                                         <input type="checkbox" :checked="selectedCountries.includes(country.code)"
                                             @click.stop="toggleCountrySelection(country)"
-                                            class="input-field h-4 w-4 mr-3" />
+                                            class="hidden input-field h-4 w-4 mr-3" />
 
                                         <!-- Flag -->
                                         <div class="mr-3">
@@ -114,7 +111,7 @@
                                         <!-- Assign Action Icon (shown on hover) -->
                                         <div class="transition-all duration-200"
                                             :class="hoveredCountry === country.code ? 'opacity-100' : 'opacity-0'">
-                                            <ChevronDoubleRightIcon class="w-5 h-5 text-mun-blue-600" />
+                                            <ChevronRightIcon class="w-5 h-5 text-mun-blue-600" />
                                         </div>
                                     </div>
                                 </div>
@@ -292,7 +289,7 @@ import {
     UserGroupIcon,
     ArrowPathIcon,
     CheckIcon,
-    ChevronDoubleRightIcon
+    ChevronRightIcon
 } from '@heroicons/vue/24/outline'
 
 // Props
@@ -328,14 +325,14 @@ const availableCountries = ref([])
 const assignedCountries = ref([])
 const originalAssigned = ref([])
 
-// Regions for filtering
-const regions = [
-    { code: 'africa', name: 'Africa' },
-    { code: 'asia', name: 'Asia' },
-    { code: 'europe', name: 'Europe' },
-    { code: 'americas', name: 'Americas' },
-    { code: 'oceania', name: 'Oceania' }
-]
+// // Regions for filtering
+// const regions = [
+//     { code: 'africa', name: 'Africa' },
+//     { code: 'asia', name: 'Asia' },
+//     { code: 'europe', name: 'Europe' },
+//     { code: 'americas', name: 'Americas' },
+//     { code: 'oceania', name: 'Oceania' }
+// ]
 
 // P5 countries (Security Council permanent members)
 const p5Countries = ['US', 'RU', 'CN', 'GB', 'FR']
