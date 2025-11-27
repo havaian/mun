@@ -254,6 +254,13 @@ const getAllFlags = async (req, res) => {
             });
         }
 
+        // CONSISTENT RESPONSE FORMAT
+        const responseData = {
+            success: true,
+            flagCount: Object.keys(allFlagsCache).length,
+            flags: allFlagsCache
+        };
+
         // Check if client accepts gzip compression
         const acceptsGzip = req.headers['accept-encoding'] &&
             req.headers['accept-encoding'].includes('gzip');
@@ -268,17 +275,23 @@ const getAllFlags = async (req, res) => {
         };
 
         // Send compressed response if client supports it
-        if (acceptsGzip && allFlagsCacheCompressed) {
-            headers['Content-Encoding'] = 'gzip';
-            res.set(headers);
-            res.send(allFlagsCacheCompressed);
+        if (acceptsGzip) {
+            const jsonString = JSON.stringify(responseData);
+
+            zlib.gzip(jsonString, (err, compressed) => {
+                if (err) {
+                    logger.error('Compression error:', err);
+                    res.set(headers);
+                    res.json(responseData);
+                } else {
+                    headers['Content-Encoding'] = 'gzip';
+                    res.set(headers);
+                    res.send(compressed); // Now sends compressed WRAPPED response
+                }
+            });
         } else {
             res.set(headers);
-            res.json({
-                success: true,
-                flagCount: Object.keys(allFlagsCache).length,
-                flags: allFlagsCache
-            });
+            res.json(responseData);
         }
 
         logger.info(`Served batch flags to ${req.user.role}: ${Object.keys(allFlagsCache).length} flags`);

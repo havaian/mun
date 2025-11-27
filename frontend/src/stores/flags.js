@@ -40,6 +40,12 @@ export const useFlagsStore = defineStore('flags', () => {
 
             const response = await apiMethods.countries.getAllFlagsBatch()
 
+            console.log('🏳️ Flags API response structure:', {
+                hasSuccess: !!response.data.success,
+                hasFlags: !!response.data.flags,
+                flagCount: response.data.flags ? Object.keys(response.data.flags).length : 0
+            })
+
             if (response.data.success && response.data.flags) {
                 // Clear existing flags
                 flags.value.clear()
@@ -52,11 +58,11 @@ export const useFlagsStore = defineStore('flags', () => {
                 lastFetched.value = Date.now()
                 isInitialized.value = true
 
-                console.log(`Flags initialized: ${flags.value.size} flags cached`)
+                console.log(`✅ Flags initialized: ${flags.value.size} flags cached`)
 
                 return true
             } else {
-                throw new Error('Invalid response format')
+                throw new Error('Invalid response format: expected { success: true, flags: {...} }')
             }
 
         } catch (err) {
