@@ -219,7 +219,7 @@ router.get('/',
 
             // Execute query with population
             const committees = await Committee.find(filter)
-                .select('name description type status language eventId countries.length createdAt updatedAt')
+                .select('name description type status language eventId countries createdAt updatedAt')  // REMOVED .length
                 .populate('eventId', 'name status')
                 .sort({ createdAt: -1 })
                 .skip(skip)
@@ -228,10 +228,13 @@ router.get('/',
             const total = await Committee.countDocuments(filter);
 
             // Add computed fields
-            const committeesWithCounts = committees.map(committee => ({
-                ...committee.toObject(),
-                countriesCount: committee.countries?.length || 0
-            }));
+            const committeesWithCounts = committees.map(committee => {
+                const committeeObj = committee.toObject();
+                return {
+                    ...committeeObj,
+                    countriesCount: committeeObj.countries?.length || 0
+                };
+            });
 
             res.json({
                 success: true,

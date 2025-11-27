@@ -184,6 +184,10 @@ const props = defineProps({
         type: String,
         default: 'create',
         validator: (value) => ['create', 'edit'].includes(value)
+    },
+    events: {
+        type: Array,
+        default: () => []
     }
 })
 
@@ -221,15 +225,22 @@ const isValid = computed(() => {
 watch(() => props.modelValue, (newVal) => {
     if (newVal) {
         initializeForm()
-        loadEvents()
+        
+        // Only load events if not provided by parent
+        if (props.events.length === 0) {
+            loadEvents()
+        } else {
+            // Use events passed from parent
+            availableEvents.value = props.events
+        }
     }
 })
 
-watch(() => formData.name, () => {
-    if (errors.value.name) {
-        delete errors.value.name
+watch(() => props.events, (newEvents) => {
+    if (newEvents && newEvents.length > 0) {
+        availableEvents.value = newEvents
     }
-})
+}, { immediate: true })
 
 // Methods
 const loadEvents = async () => {

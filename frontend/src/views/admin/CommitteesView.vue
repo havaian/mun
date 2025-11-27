@@ -422,9 +422,16 @@
         </div>
 
         <!-- Modals -->
-        <CreateEditCommitteeModal v-model="showCreateCommittee" @created="handleCommitteeCreated" />
+        <CreateEditCommitteeModal 
+            v-model="showCreateCommittee" 
+            :events="availableEvents"
+            @created="handleCommitteeCreated" />
 
-        <CreateEditCommitteeModal v-model="showEditCommittee" :committee="selectedCommittee" mode="edit"
+        <CreateEditCommitteeModal 
+            v-model="showEditCommittee" 
+            :committee="selectedCommittee" 
+            :events="availableEvents"
+            mode="edit"
             @updated="handleCommitteeUpdated" />
 
         <CommitteeDetailsModal v-model="showCommitteeDetails" :committee="selectedCommittee"
