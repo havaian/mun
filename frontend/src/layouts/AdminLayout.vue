@@ -51,41 +51,41 @@
                     <router-link to="/admin/events" :class="getNavLinkClass('AdminEvents')">
                         <CalendarDaysIcon class="w-5 h-5" />
                         <span>Event Management</span>
-                        <div v-if="adminStore.stats.activeEvents > 0" class="ml-auto">
+                        <!-- <div v-if="adminStore.stats.activeEvents > 0" class="ml-auto">
                             <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                                 {{ adminStore.stats.activeEvents }}
                             </span>
-                        </div>
+                        </div> -->
                     </router-link>
 
                     <router-link to="/admin/committees" :class="getNavLinkClass('AdminCommittees')">
                         <UserGroupIcon class="w-5 h-5" />
                         <span>Committee Management</span>
-                        <div v-if="adminStore.stats.activeCommittees > 0" class="ml-auto">
+                        <!-- <div v-if="adminStore.stats.activeCommittees > 0" class="ml-auto">
                             <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                                 {{ adminStore.stats.activeCommittees }}
                             </span>
-                        </div>
+                        </div> -->
                     </router-link>
 
                     <router-link to="/admin/users" :class="getNavLinkClass('AdminUsers')">
                         <UsersIcon class="w-5 h-5" />
                         <span>User Management</span>
-                        <div v-if="adminStore.stats.activeUsers > 0" class="ml-auto">
+                        <!-- <div v-if="adminStore.stats.activeUsers > 0" class="ml-auto">
                             <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
                                 {{ adminStore.stats.activeUsers }}
                             </span>
-                        </div>
+                        </div> -->
                     </router-link>
 
                     <router-link to="/admin/documents" :class="getNavLinkClass('AdminDocuments')">
                         <DocumentTextIcon class="w-5 h-5" />
                         <span>Document Management</span>
-                        <div v-if="adminStore.stats.documentsUploaded > 0" class="ml-auto">
+                        <!-- <div v-if="adminStore.stats.documentsUploaded > 0" class="ml-auto">
                             <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
                                 {{ adminStore.stats.documentsUploaded }}
                             </span>
-                        </div>
+                        </div> -->
                     </router-link>
                 </div>
 

@@ -18,9 +18,12 @@
                                     {{ committee?.name || 'Committee Details' }}
                                 </h2>
                                 <p class="text-white/80 text-sm flex items-center space-x-2">
-                                    <span>{{ committee?.acronym }}</span>
                                     <span v-if="committee?.type" class="px-2 py-0.5 bg-white/20 rounded text-xs">
                                         {{ formatCommitteeType(committee.type) }}
+                                    </span>
+                                    <span v-if="committee?.eventId?.name"
+                                        class="px-2 py-0.5 bg-white/20 rounded text-xs">
+                                        {{ committee.eventId.name }}
                                     </span>
                                 </p>
                             </div>
@@ -35,7 +38,7 @@
                     <!-- Content -->
                     <div class="overflow-y-auto max-h-[calc(90vh-200px)]">
                         <div v-if="!committee" class="flex items-center justify-center py-12">
-                            <LoadingSpinner size="lg" />
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
                         </div>
 
                         <div v-else class="p-6 space-y-8">
@@ -52,13 +55,9 @@
 
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <label class="text-sm font-medium text-mun-gray-600">Full Name</label>
+                                                <label class="text-sm font-medium text-mun-gray-600">Committee
+                                                    Name</label>
                                                 <p class="text-mun-gray-900 font-medium">{{ committee.name }}</p>
-                                            </div>
-
-                                            <div>
-                                                <label class="text-sm font-medium text-mun-gray-600">Acronym</label>
-                                                <p class="text-mun-gray-900 font-medium">{{ committee.acronym }}</p>
                                             </div>
 
                                             <div>
@@ -85,10 +84,8 @@
                                             </div>
 
                                             <div>
-                                                <label class="text-sm font-medium text-mun-gray-600">Session
-                                                    Duration</label>
-                                                <p class="text-mun-gray-900">{{ committee.sessionDuration ?
-                                                    `${committee.sessionDuration} minutes` : 'Not set' }}</p>
+                                                <label class="text-sm font-medium text-mun-gray-600">Event</label>
+                                                <p class="text-mun-gray-900">{{ committee.eventId?.name || 'Not assigned' }}</p>
                                             </div>
                                         </div>
 
@@ -98,24 +95,54 @@
                                         </div>
                                     </div>
 
-                                    <!-- Agenda Topics -->
-                                    <div v-if="committee.agendaTopics && committee.agendaTopics.length"
-                                        class="mun-card p-6">
+                                    <!-- Countries & Participants -->
+                                    <div class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <DocumentTextIcon class="w-5 h-5 mr-2 text-mun-blue" />
-                                            Agenda Topics
+                                            <GlobeAltIcon class="w-5 h-5 mr-2 text-mun-blue" />
+                                            Countries & Participants
                                         </h3>
 
-                                        <div class="space-y-4">
-                                            <div v-for="(topic, index) in committee.agendaTopics" :key="index"
-                                                class="p-4 bg-mun-gray-50 rounded-lg">
-                                                <h4 class="font-medium text-mun-gray-900 mb-2">
-                                                    {{ index + 1 }}. {{ topic.title }}
-                                                </h4>
-                                                <p v-if="topic.description" class="text-sm text-mun-gray-600">
-                                                    {{ topic.description }}
-                                                </p>
+                                        <div v-if="committee.countries && committee.countries.length > 0"
+                                            class="space-y-3">
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                <div v-for="country in committee.countries" :key="country.name"
+                                                    class="p-3 bg-mun-gray-50 rounded-lg flex items-center justify-between">
+                                                    <div class="flex items-center space-x-3">
+                                                        <div class="flex-1">
+                                                            <p class="font-medium text-mun-gray-900">{{ country.name }}
+                                                            </p>
+                                                            <div class="flex items-center space-x-2 mt-1">
+                                                                <span v-if="country.isPermanentMember"
+                                                                    class="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">
+                                                                    Permanent
+                                                                </span>
+                                                                <span v-if="country.hasVetoRight"
+                                                                    class="px-2 py-0.5 bg-red-100 text-red-800 text-xs rounded">
+                                                                    Veto
+                                                                </span>
+                                                                <span v-if="country.isObserver"
+                                                                    class="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs rounded">
+                                                                    Observer
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div :class="[
+                                                            'w-3 h-3 rounded-full',
+                                                            country.email ? 'bg-green-500' : 'bg-gray-400'
+                                                        ]" :title="country.email ? 'Registered' : 'Not registered'">
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
+                                        </div>
+
+                                        <div v-else class="text-center py-8 text-mun-gray-500">
+                                            <GlobeAltIcon class="w-12 h-12 mx-auto mb-3 opacity-30" />
+                                            <p>No countries assigned yet</p>
+                                            <AppButton @click="manageCountries" variant="outline" size="sm"
+                                                class="mt-3">
+                                                Add Countries
+                                            </AppButton>
                                         </div>
                                     </div>
 
@@ -126,60 +153,34 @@
                                             Presidium
                                         </h3>
 
-                                        <div class="space-y-4">
-                                            <!-- Chairman -->
-                                            <div v-if="committee.chairmanInfo"
-                                                class="flex items-center space-x-4 p-4 bg-blue-50 rounded-lg">
-                                                <div
-                                                    class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                                                    <UserIcon class="w-5 h-5 text-white" />
+                                        <div v-if="committee.presidium && committee.presidium.length > 0"
+                                            class="space-y-3">
+                                            <div v-for="member in committee.presidium" :key="member.userId"
+                                                class="flex items-center space-x-4 p-4 bg-mun-gray-50 rounded-lg">
+                                                <div :class="[
+                                                    'w-10 h-10 rounded-full flex items-center justify-center text-white',
+                                                    getPresidiumRoleColor(member.role)
+                                                ]">
+                                                    <UserIcon class="w-5 h-5" />
                                                 </div>
                                                 <div class="flex-1">
-                                                    <h4 class="font-medium text-blue-900">Chairman</h4>
-                                                    <p class="text-blue-700">{{ committee.chairmanInfo.name }}</p>
-                                                    <p class="text-sm text-blue-600">{{ committee.chairmanInfo.email }}
-                                                    </p>
+                                                    <h4 class="font-medium text-mun-gray-900">{{
+                                                        formatPresidiumRole(member.role) }}</h4>
+                                                    <p class="text-sm text-mun-gray-600">{{ member.userId?.username ||
+                                                        member.userId || 'User ID: ' + member.userId }}</p>
+                                                    <p class="text-xs text-mun-gray-500">Appointed {{
+                                                        formatDate(member.appointedAt) }}</p>
                                                 </div>
                                             </div>
+                                        </div>
 
-                                            <!-- Co-Chairman -->
-                                            <div v-if="committee.coChairmanInfo"
-                                                class="flex items-center space-x-4 p-4 bg-green-50 rounded-lg">
-                                                <div
-                                                    class="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
-                                                    <UserIcon class="w-5 h-5 text-white" />
-                                                </div>
-                                                <div class="flex-1">
-                                                    <h4 class="font-medium text-green-900">Co-Chairman</h4>
-                                                    <p class="text-green-700">{{ committee.coChairmanInfo.name }}</p>
-                                                    <p class="text-sm text-green-600">{{ committee.coChairmanInfo.email
-                                                        }}</p>
-                                                </div>
-                                            </div>
-
-                                            <!-- Additional Presidium Members -->
-                                            <div v-if="committee.presidiumMembersInfo && committee.presidiumMembersInfo.length"
-                                                class="space-y-3">
-                                                <h4 class="font-medium text-mun-gray-900">Additional Members</h4>
-                                                <div v-for="member in committee.presidiumMembersInfo" :key="member.id"
-                                                    class="flex items-center space-x-4 p-3 bg-mun-gray-50 rounded-lg">
-                                                    <div
-                                                        class="w-8 h-8 bg-mun-gray-600 rounded-full flex items-center justify-center">
-                                                        <UserIcon class="w-4 h-4 text-white" />
-                                                    </div>
-                                                    <div class="flex-1">
-                                                        <p class="font-medium text-mun-gray-900">{{ member.name }}</p>
-                                                        <p class="text-sm text-mun-gray-600">{{ member.email }} • {{
-                                                            formatRole(member.role) }}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- No Presidium -->
-                                            <div v-if="!hasPresidium" class="text-center py-8 text-mun-gray-500">
-                                                <UsersIcon class="w-12 h-12 mx-auto mb-3 opacity-30" />
-                                                <p>No presidium members assigned</p>
-                                            </div>
+                                        <div v-else class="text-center py-8 text-mun-gray-500">
+                                            <UsersIcon class="w-12 h-12 mx-auto mb-3 opacity-30" />
+                                            <p>No presidium members assigned</p>
+                                            <AppButton @click="managePresidium" variant="outline" size="sm"
+                                                class="mt-3">
+                                                Assign Presidium
+                                            </AppButton>
                                         </div>
                                     </div>
 
@@ -187,86 +188,87 @@
                                     <div class="mun-card p-6">
                                         <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
                                             <CogIcon class="w-5 h-5 mr-2 text-mun-blue" />
-                                            Committee Features
+                                            Committee Settings
                                         </h3>
 
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div
-                                                class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg">
-                                                <span class="text-sm font-medium text-mun-gray-900">Guest
-                                                    Speakers</span>
-                                                <span
-                                                    :class="committee.allowGuestSpeakers ? 'text-green-600' : 'text-mun-gray-400'">
-                                                    {{ committee.allowGuestSpeakers ? 'Enabled' : 'Disabled' }}
+                                            <div>
+                                                <label class="text-sm font-medium text-mun-gray-600">Min Coalition
+                                                    Size</label>
+                                                <p class="text-mun-gray-900">{{ committee.settings?.minCoalitionSize ||
+                                                    3 }}</p>
+                                            </div>
+
+                                            <div>
+                                                <label class="text-sm font-medium text-mun-gray-600">Default Speech
+                                                    Time</label>
+                                                <p class="text-mun-gray-900">{{
+                                                    committee.settings?.speechSettings?.defaultSpeechTime || 90 }}
+                                                    seconds</p>
+                                            </div>
+
+                                            <div>
+                                                <label class="text-sm font-medium text-mun-gray-600">Default
+                                                    Majority</label>
+                                                <p class="text-mun-gray-900">{{
+                                                    formatMajorityType(committee.settings?.votingRules?.defaultMajority)
+                                                    }}</p>
+                                            </div>
+
+                                            <div>
+                                                <label class="text-sm font-medium text-mun-gray-600">Allow
+                                                    Consensus</label>
+                                                <span :class="[
+                                                    committee.settings?.votingRules?.allowConsensus ? 'text-green-600' : 'text-red-600'
+                                                ]">
+                                                    {{ committee.settings?.votingRules?.allowConsensus ? 'Yes' : 'No' }}
                                                 </span>
                                             </div>
 
-                                            <div
-                                                class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg">
-                                                <span class="text-sm font-medium text-mun-gray-900">Voting System</span>
-                                                <span
-                                                    :class="committee.enableVoting ? 'text-green-600' : 'text-mun-gray-400'">
-                                                    {{ committee.enableVoting ? 'Enabled' : 'Disabled' }}
+                                            <div>
+                                                <label class="text-sm font-medium text-mun-gray-600">Speech
+                                                    Extensions</label>
+                                                <span :class="[
+                                                    committee.settings?.speechSettings?.allowExtensions ? 'text-green-600' : 'text-red-600'
+                                                ]">
+                                                    {{ committee.settings?.speechSettings?.allowExtensions ? 'Allowed' :
+                                                    'Not allowed' }}
                                                 </span>
                                             </div>
 
-                                            <div
-                                                class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg">
-                                                <span class="text-sm font-medium text-mun-gray-900">Document
-                                                    Sharing</span>
-                                                <span
-                                                    :class="committee.enableDocumentSharing ? 'text-green-600' : 'text-mun-gray-400'">
-                                                    {{ committee.enableDocumentSharing ? 'Enabled' : 'Disabled' }}
-                                                </span>
-                                            </div>
-
-                                            <div
-                                                class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg">
-                                                <span class="text-sm font-medium text-mun-gray-900">Private
-                                                    Messaging</span>
-                                                <span
-                                                    :class="committee.enablePrivateMessaging ? 'text-green-600' : 'text-mun-gray-400'">
-                                                    {{ committee.enablePrivateMessaging ? 'Enabled' : 'Disabled' }}
-                                                </span>
+                                            <div v-if="committee.settings?.speechSettings?.allowExtensions">
+                                                <label class="text-sm font-medium text-mun-gray-600">Extension
+                                                    Time</label>
+                                                <p class="text-mun-gray-900">{{
+                                                    committee.settings?.speechSettings?.extensionTime || 30 }} seconds
+                                                </p>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <!-- Additional Information -->
-                                    <div v-if="committee.backgroundGuideUrl || committee.meetingRoom || committee.internalNotes"
-                                        class="mun-card p-6">
-                                        <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <AdjustmentsHorizontalIcon class="w-5 h-5 mr-2 text-mun-blue" />
-                                            Additional Information
-                                        </h3>
-
-                                        <div class="space-y-4">
-                                            <div v-if="committee.backgroundGuideUrl">
-                                                <label class="text-sm font-medium text-mun-gray-600">Background
-                                                    Guide</label>
-                                                <a :href="committee.backgroundGuideUrl" target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    class="block text-mun-blue hover:text-mun-blue-dark mt-1">
-                                                    {{ committee.backgroundGuideUrl }}
-                                                </a>
-                                            </div>
-
-                                            <div v-if="committee.meetingRoom">
-                                                <label class="text-sm font-medium text-mun-gray-600">Meeting
-                                                    Room</label>
-                                                <p class="text-mun-gray-900 mt-1">{{ committee.meetingRoom }}</p>
-                                            </div>
-
-                                            <div v-if="committee.internalNotes">
-                                                <label class="text-sm font-medium text-mun-gray-600 flex items-center">
-                                                    Internal Notes
-                                                    <span
-                                                        class="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Admin
-                                                        Only</span>
-                                                </label>
-                                                <div class="mt-1 p-3 bg-mun-gray-50 rounded-lg">
-                                                    <p class="text-mun-gray-700 whitespace-pre-wrap">{{
-                                                        committee.internalNotes }}</p>
+                                        <!-- Document Deadlines -->
+                                        <div v-if="committee.settings?.documentDeadlines" class="mt-6">
+                                            <h4 class="font-medium text-mun-gray-900 mb-3">Document Deadlines</h4>
+                                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div v-if="committee.settings.documentDeadlines.positionPapers">
+                                                    <label class="text-xs font-medium text-mun-gray-600">Position
+                                                        Papers</label>
+                                                    <p class="text-sm text-mun-gray-900">{{
+                                                        formatDate(committee.settings.documentDeadlines.positionPapers)
+                                                        }}</p>
+                                                </div>
+                                                <div v-if="committee.settings.documentDeadlines.resolutions">
+                                                    <label
+                                                        class="text-xs font-medium text-mun-gray-600">Resolutions</label>
+                                                    <p class="text-sm text-mun-gray-900">{{
+                                                        formatDate(committee.settings.documentDeadlines.resolutions) }}
+                                                    </p>
+                                                </div>
+                                                <div v-if="committee.settings.documentDeadlines.amendments">
+                                                    <label
+                                                        class="text-xs font-medium text-mun-gray-600">Amendments</label>
+                                                    <p class="text-sm text-mun-gray-900">{{
+                                                        formatDate(committee.settings.documentDeadlines.amendments) }}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
@@ -284,43 +286,39 @@
 
                                         <div class="space-y-4">
                                             <div class="flex justify-between items-center">
-                                                <span class="text-sm text-mun-gray-600">Total Delegates</span>
+                                                <span class="text-sm text-mun-gray-600">Total Countries</span>
                                                 <span class="font-semibold text-mun-gray-900">{{
-                                                    committee.stats?.totalDelegates || 0 }}</span>
+                                                    committee.countries?.length || 0 }}</span>
                                             </div>
 
                                             <div class="flex justify-between items-center">
-                                                <span class="text-sm text-mun-gray-600">Active Sessions</span>
-                                                <span class="font-semibold text-green-600">{{
-                                                    committee.stats?.activeSessions || 0 }}</span>
+                                                <span class="text-sm text-mun-gray-600">Registered Participants</span>
+                                                <span class="font-semibold text-green-600">{{ getRegisteredCount()
+                                                    }}</span>
                                             </div>
 
                                             <div class="flex justify-between items-center">
-                                                <span class="text-sm text-mun-gray-600">Documents Submitted</span>
+                                                <span class="text-sm text-mun-gray-600">Total Sessions</span>
                                                 <span class="font-semibold text-blue-600">{{
-                                                    committee.stats?.documentsSubmitted || 0 }}</span>
+                                                    committee.statistics?.totalSessions || 0 }}</span>
+                                            </div>
+
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-sm text-mun-gray-600">Total Votings</span>
+                                                <span class="font-semibold text-purple-600">{{
+                                                    committee.statistics?.totalVotings || 0 }}</span>
                                             </div>
 
                                             <div class="flex justify-between items-center">
                                                 <span class="text-sm text-mun-gray-600">Resolutions Passed</span>
-                                                <span class="font-semibold text-purple-600">{{
-                                                    committee.stats?.resolutionsPassed || 0 }}</span>
+                                                <span class="font-semibold text-green-600">{{
+                                                    committee.statistics?.resolutionsPassed || 0 }}</span>
                                             </div>
 
-                                            <!-- Capacity Progress -->
-                                            <div v-if="committee.maxDelegates" class="pt-2">
-                                                <div class="flex justify-between items-center mb-2">
-                                                    <span class="text-sm text-mun-gray-600">Capacity</span>
-                                                    <span class="text-sm font-medium">
-                                                        {{ committee.stats?.totalDelegates || 0 }}/{{
-                                                            committee.maxDelegates }}
-                                                    </span>
-                                                </div>
-                                                <div class="w-full bg-mun-gray-200 rounded-full h-2">
-                                                    <div class="bg-mun-blue rounded-full h-2 transition-all duration-300"
-                                                        :style="{ width: `${getCapacityPercentage()}%` }">
-                                                    </div>
-                                                </div>
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-sm text-mun-gray-600">Amendments Passed</span>
+                                                <span class="font-semibold text-yellow-600">{{
+                                                    committee.statistics?.amendmentsPassed || 0 }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -336,43 +334,21 @@
                                                 Edit Committee
                                             </AppButton>
 
-                                            <AppButton @click="manageDelegates" variant="outline" size="sm"
+                                            <AppButton @click="manageCountries" variant="outline" size="sm"
                                                 class="w-full">
-                                                <UsersIcon class="w-4 h-4 mr-2" />
-                                                Manage Delegates
+                                                <GlobeAltIcon class="w-4 h-4 mr-2" />
+                                                Manage Countries
+                                            </AppButton>
+
+                                            <AppButton @click="generateQR" variant="outline" size="sm" class="w-full">
+                                                <QrCodeIcon class="w-4 h-4 mr-2" />
+                                                Generate QR Codes
                                             </AppButton>
 
                                             <AppButton @click="viewSessions" variant="outline" size="sm" class="w-full">
                                                 <ClockIcon class="w-4 h-4 mr-2" />
                                                 View Sessions
                                             </AppButton>
-
-                                            <AppButton @click="exportData" variant="outline" size="sm" class="w-full"
-                                                :loading="isExporting">
-                                                <ArrowDownTrayIcon class="w-4 h-4 mr-2" />
-                                                Export Data
-                                            </AppButton>
-                                        </div>
-                                    </div>
-
-                                    <!-- Recent Activity -->
-                                    <div v-if="committee.recentActivity && committee.recentActivity.length"
-                                        class="mun-card p-6">
-                                        <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Recent Activity</h3>
-
-                                        <div class="space-y-3">
-                                            <div v-for="activity in committee.recentActivity.slice(0, 5)"
-                                                :key="activity.id" class="flex items-start space-x-3 text-sm">
-                                                <div :class="[
-                                                    'w-2 h-2 rounded-full mt-2',
-                                                    getActivityColor(activity.type)
-                                                ]"></div>
-                                                <div class="flex-1">
-                                                    <p class="text-mun-gray-900">{{ activity.description }}</p>
-                                                    <p class="text-mun-gray-500 text-xs">{{
-                                                        formatDate(activity.timestamp) }}</p>
-                                                </div>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -400,22 +376,18 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useToast } from '@/plugins/toast'
-import { apiMethods } from '@/utils/api'
 import {
     XMarkIcon,
     BuildingOfficeIcon,
     InformationCircleIcon,
-    DocumentTextIcon,
     UsersIcon,
     CogIcon,
-    AdjustmentsHorizontalIcon,
     ChartBarIcon,
     PencilIcon,
     ClockIcon,
-    ArrowDownTrayIcon,
-    UserIcon
+    UserIcon,
+    GlobeAltIcon,
+    QrCodeIcon
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -429,25 +401,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['update:modelValue', 'edit', 'manage-delegates', 'view-sessions'])
-
-const toast = useToast()
-
-// State
-const isExporting = ref(false)
-
-// Computed
-const hasPresidium = computed(() => {
-    return props.committee?.chairmanInfo ||
-        props.committee?.coChairmanInfo ||
-        (props.committee?.presidiumMembersInfo && props.committee.presidiumMembersInfo.length > 0)
-})
-
-const getCapacityPercentage = () => {
-    if (!props.committee?.maxDelegates) return 0
-    const total = props.committee.stats?.totalDelegates || 0
-    return Math.min(100, (total / props.committee.maxDelegates) * 100)
-}
+const emit = defineEmits(['update:modelValue', 'edit', 'manage-countries', 'generate-qr', 'view-sessions'])
 
 // Methods
 const closeModal = () => {
@@ -456,78 +410,80 @@ const closeModal = () => {
 
 const formatCommitteeType = (type) => {
     const typeMap = {
-        'ga': 'General Assembly',
-        'sc': 'Security Council',
-        'ecosoc': 'Economic and Social Council',
-        'tc': 'Trusteeship Council',
-        'icj': 'International Court of Justice',
-        'specialized': 'Specialized Agency',
-        'regional': 'Regional Organization',
-        'crisis': 'Crisis Committee',
-        'joint': 'Joint Committee',
-        'historical': 'Historical Committee'
+        'GA': 'General Assembly',
+        'SC': 'Security Council',
+        'other': 'Other Committee'
     }
     return typeMap[type] || type
 }
 
 const formatStatus = (status) => {
     const statusMap = {
+        'setup': 'Setup',
         'active': 'Active',
-        'inactive': 'Inactive',
-        'draft': 'Draft'
+        'completed': 'Completed'
     }
     return statusMap[status] || status
 }
 
 const getStatusClasses = (status) => {
     const classMap = {
+        'setup': 'bg-yellow-100 text-yellow-800',
         'active': 'bg-green-100 text-green-800',
-        'inactive': 'bg-red-100 text-red-800',
-        'draft': 'bg-gray-100 text-gray-800'
+        'completed': 'bg-blue-100 text-blue-800'
     }
     return classMap[status] || 'bg-gray-100 text-gray-800'
 }
 
 const getLanguageName = (code) => {
     const languageMap = {
-        'en': 'English',
-        'fr': 'French',
-        'es': 'Spanish',
-        'ar': 'Arabic',
-        'ru': 'Russian',
-        'zh': 'Chinese'
+        'english': 'English',
+        'russian': 'Russian',
+        'uzbek': 'Uzbek'
     }
     return languageMap[code] || code || 'Not set'
 }
 
-const formatRole = (role) => {
+const formatPresidiumRole = (role) => {
     const roleMap = {
+        'chairman': 'Chairman',
+        'co-chairman': 'Co-Chairman',
         'expert': 'Expert',
         'secretary': 'Secretary'
     }
     return roleMap[role] || role
 }
 
+const getPresidiumRoleColor = (role) => {
+    const colorMap = {
+        'chairman': 'bg-blue-600',
+        'co-chairman': 'bg-green-600',
+        'expert': 'bg-purple-600',
+        'secretary': 'bg-orange-600'
+    }
+    return colorMap[role] || 'bg-mun-gray-600'
+}
+
+const formatMajorityType = (type) => {
+    const typeMap = {
+        'simple': 'Simple Majority',
+        'qualified': 'Qualified Majority'
+    }
+    return typeMap[type] || type || 'Simple'
+}
+
 const formatDate = (dateString) => {
     if (!dateString) return 'Not set'
     return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        month: 'short',
+        day: 'numeric'
     })
 }
 
-const getActivityColor = (type) => {
-    const colorMap = {
-        'created': 'bg-blue-500',
-        'updated': 'bg-green-500',
-        'session': 'bg-purple-500',
-        'document': 'bg-yellow-500',
-        'vote': 'bg-red-500'
-    }
-    return colorMap[type] || 'bg-mun-gray-500'
+const getRegisteredCount = () => {
+    if (!props.committee?.countries) return 0
+    return props.committee.countries.filter(country => country.email).length
 }
 
 const editCommittee = () => {
@@ -535,42 +491,23 @@ const editCommittee = () => {
     closeModal()
 }
 
-const manageDelegates = () => {
-    emit('manage-delegates', props.committee)
+const manageCountries = () => {
+    emit('manage-countries', props.committee)
     closeModal()
+}
+
+const generateQR = () => {
+    emit('generate-qr', props.committee)
+    closeModal()
+}
+
+const managePresidium = () => {
+    // Could emit a manage-presidium event or redirect to presidium management
+    console.log('Manage presidium for', props.committee.name)
 }
 
 const viewSessions = () => {
     emit('view-sessions', props.committee)
     closeModal()
 }
-
-const exportData = async () => {
-    try {
-        isExporting.value = true
-
-        const response = await apiMethods.exports.exportCommitteeStats(props.committee.id)
-
-        // Create download link
-        const url = window.URL.createObjectURL(new Blob([response.data]))
-        const link = document.createElement('a')
-        link.href = url
-        link.setAttribute('download', `${props.committee.acronym}-data-export.xlsx`)
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        window.URL.revokeObjectURL(url)
-
-        toast.success('Committee data exported successfully')
-
-    } catch (error) {
-        toast.error('Export failed:', error)
-        toast.error('Failed to export committee data')
-    } finally {
-        isExporting.value = false
-    }
-}
 </script>
-
-<style scoped>
-</style>
