@@ -76,11 +76,13 @@
                             <div class="flex-1 overflow-y-auto p-4">
                                 <div class="space-y-2">
                                     <div v-for="country in filteredAvailableCountries" :key="country.code"
-                                        @click="toggleCountrySelection(country)" :class="[
-                                            'flex items-center p-3 rounded-lg cursor-pointer transition-colors border',
+                                        @click="toggleCountrySelection(country)"
+                                        @mouseenter="hoveredCountry = country.code" @mouseleave="hoveredCountry = null"
+                                        :class="[
+                                            'flex items-center p-3 rounded-lg cursor-pointer transition-all border group',
                                             selectedCountries.includes(country.code)
                                                 ? 'bg-mun-blue-50 border-mun-blue-200'
-                                                : 'hover:bg-mun-gray-50 border-transparent'
+                                                : 'hover:bg-mun-gray-50 border-transparent hover:border-mun-gray-200'
                                         ]">
                                         <!-- Selection Checkbox -->
                                         <input type="checkbox" :checked="selectedCountries.includes(country.code)"
@@ -105,8 +107,14 @@
 
                                         <!-- P5 Indicator -->
                                         <div v-if="isP5Country(country.code)"
-                                            class="bg-mun-red-100 text-mun-red-800 px-2 py-1 rounded text-xs font-medium">
+                                            class="bg-mun-red-100 text-mun-red-800 px-2 py-1 rounded text-xs font-medium mr-2">
                                             P5
+                                        </div>
+
+                                        <!-- Assign Action Icon (shown on hover) -->
+                                        <div class="transition-all duration-200"
+                                            :class="hoveredCountry === country.code ? 'opacity-100' : 'opacity-0'">
+                                            <ChevronDoubleRightIcon class="w-5 h-5 text-mun-blue-600" />
                                         </div>
                                     </div>
                                 </div>
@@ -273,8 +281,8 @@ import { apiMethods } from '@/utils/api'
 
 // Components
 import CountryFlag from '@/components/shared/CountryFlag.vue'
-import AppButton from '@/components/ui/AppButton.vue'
-import SleekSelect from '@/components/ui/SleekSelect.vue'
+import AppButton from '@/components/shared/AppButton.vue'
+import SleekSelect from '@/components/shared/SleekSelect.vue'
 
 // Icons
 import {
@@ -283,7 +291,8 @@ import {
     GlobeAltIcon,
     UserGroupIcon,
     ArrowPathIcon,
-    CheckIcon
+    CheckIcon,
+    ChevronDoubleRightIcon
 } from '@heroicons/vue/24/outline'
 
 // Props
@@ -312,6 +321,7 @@ const isRegeneratingQRs = ref(false)
 const searchQuery = ref('')
 const selectedCountries = ref([])
 const selectedRegions = ref([])
+const hoveredCountry = ref(null)
 
 // Data
 const availableCountries = ref([])
