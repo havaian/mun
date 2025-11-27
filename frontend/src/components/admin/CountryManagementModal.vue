@@ -88,9 +88,9 @@
                                             class="input-field h-4 w-4 mr-3" />
 
                                         <!-- Flag -->
-                                        <div class="w-8 h-6 rounded-sm overflow-hidden mr-3 border border-mun-gray-200">
-                                            <img :src="getFlagUrl(country.code)" :alt="`${country.name} flag`"
-                                                class="w-full h-full object-cover" @error="handleFlagError" />
+                                        <div class="mr-3">
+                                            <CountryFlag :country-name="country.name" :country-code="country.code"
+                                                size="medium" variant="bordered" />
                                         </div>
 
                                         <!-- Country Info -->
@@ -161,9 +161,9 @@
                                     <div v-for="country in assignedCountries" :key="country.code"
                                         class="flex items-center p-3 bg-mun-gray-50 rounded-lg">
                                         <!-- Flag -->
-                                        <div class="w-8 h-6 rounded-sm overflow-hidden mr-3 border border-mun-gray-200">
-                                            <img :src="getFlagUrl(country.code)" :alt="`${country.name} flag`"
-                                                class="w-full h-full object-cover" @error="handleFlagError" />
+                                        <div class="mr-3">
+                                            <CountryFlag :country-name="country.name" :country-code="country.code"
+                                                size="medium" variant="bordered" />
                                         </div>
 
                                         <!-- Country Info -->
@@ -179,7 +179,8 @@
                                                     :options="[
                                                         { label: 'Non-Permanent', value: 'non-permanent' },
                                                         { label: 'Permanent', value: 'permanent' }
-                                                    ]" size="sm" container-class="min-w-[120px]" @change="updateCountryRole(country)" />
+                                                    ]" size="sm" container-class="min-w-[120px]"
+                                                    @change="updateCountryRole(country)" />
 
                                                 <!-- Registration Status -->
                                                 <span v-if="country.email" class="text-mun-green-600">
@@ -267,7 +268,13 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useToast } from '@/plugins/toast'
+import { useFlagsStore } from '@/stores/flags'
 import { apiMethods } from '@/utils/api'
+
+// Components
+import CountryFlag from '@/components/shared/CountryFlag.vue'
+import AppButton from '@/components/shared/AppButton.vue'
+import SleekSelect from '@/components/shared/SleekSelect.vue'
 
 // Icons
 import {
@@ -294,7 +301,9 @@ const props = defineProps({
 // Emits
 const emit = defineEmits(['update:modelValue', 'saved'])
 
+// Stores
 const toast = useToast()
+const flagsStore = useFlagsStore()
 
 // State
 const isLoading = ref(false)
@@ -354,12 +363,24 @@ const getAssignmentProgress = () => {
 // Watch for modal open/close
 watch(() => props.modelValue, (newVal) => {
     if (newVal) {
-        loadCountries()
-        initializeAssignedCountries()
+        initializeModal()
     }
 })
 
 // Methods
+const initializeModal = async () => {
+    // Ensure flags are initialized
+    if (!flagsStore.isInitialized) {
+        await flagsStore.initializeFlags()
+    }
+
+    // Load countries and initialize assigned countries
+    await Promise.all([
+        loadCountries(),
+        initializeAssignedCountries()
+    ])
+}
+
 const loadCountries = async () => {
     try {
         isLoading.value = true
@@ -371,7 +392,7 @@ const loadCountries = async () => {
         }
 
     } catch (error) {
-        toast.error('Load countries error:', error)
+        console.error('Load countries error:', error)
         toast.error('Failed to load countries')
     } finally {
         isLoading.value = false
@@ -527,7 +548,7 @@ const regenerateAllQRs = async () => {
         toast.success('All QR codes regenerated')
 
     } catch (error) {
-        toast.error('Regenerate all QRs error:', error)
+        console.error('Regenerate all QRs error:', error)
         toast.error('Failed to regenerate QR codes')
     } finally {
         isRegeneratingQRs.value = false
@@ -555,7 +576,7 @@ const saveCountries = async () => {
         }
 
     } catch (error) {
-        toast.error('Save countries error:', error)
+        console.error('Save countries error:', error)
         toast.error('Failed to save countries')
     } finally {
         isSaving.value = false
@@ -567,14 +588,6 @@ const close = () => {
 }
 
 // Utility functions
-const getFlagUrl = (countryCode) => {
-    return `/api/countries/flags/${countryCode.toLowerCase()}`
-}
-
-const handleFlagError = (event) => {
-    event.target.src = '/placeholder-flag.png'
-}
-
 const generateQRToken = () => {
     return Math.random().toString(36).substring(2, 15) +
         Math.random().toString(36).substring(2, 15)
@@ -587,8 +600,7 @@ const isP5Country = (countryCode) => {
 // Lifecycle
 onMounted(() => {
     if (props.modelValue) {
-        loadCountries()
-        initializeAssignedCountries()
+        initializeModal()
     }
 })
 </script>

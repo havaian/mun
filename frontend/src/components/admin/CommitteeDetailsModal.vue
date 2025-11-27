@@ -192,14 +192,14 @@
                                         </h3>
 
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
+                                            <div class="grid">
                                                 <label class="text-sm font-medium text-mun-gray-600">Min Coalition
                                                     Size</label>
                                                 <p class="text-mun-gray-900">{{ committee.settings?.minCoalitionSize ||
                                                     3 }}</p>
                                             </div>
 
-                                            <div>
+                                            <div class="grid">
                                                 <label class="text-sm font-medium text-mun-gray-600">Default Speech
                                                     Time</label>
                                                 <p class="text-mun-gray-900">{{
@@ -207,7 +207,7 @@
                                                     seconds</p>
                                             </div>
 
-                                            <div>
+                                            <div class="grid">
                                                 <label class="text-sm font-medium text-mun-gray-600">Default
                                                     Majority</label>
                                                 <p class="text-mun-gray-900">{{
@@ -215,7 +215,7 @@
                                                     }}</p>
                                             </div>
 
-                                            <div>
+                                            <div class="grid">
                                                 <label class="text-sm font-medium text-mun-gray-600">Allow
                                                     Consensus</label>
                                                 <span :class="[
@@ -225,7 +225,7 @@
                                                 </span>
                                             </div>
 
-                                            <div>
+                                            <div class="grid">
                                                 <label class="text-sm font-medium text-mun-gray-600">Speech
                                                     Extensions</label>
                                                 <span :class="[
@@ -236,7 +236,7 @@
                                                 </span>
                                             </div>
 
-                                            <div v-if="committee.settings?.speechSettings?.allowExtensions">
+                                            <div class="grid" v-if="committee.settings?.speechSettings?.allowExtensions">
                                                 <label class="text-sm font-medium text-mun-gray-600">Extension
                                                     Time</label>
                                                 <p class="text-mun-gray-900">{{

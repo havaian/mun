@@ -1,6 +1,7 @@
 <!-- frontend/src/components/shared/CountryFlag.vue -->
 <template>
-    <div class="country-flag-container" :class="containerClasses">
+    <div class="country-flag-container" :class="containerClasses" @click="handleClick" @mouseenter="handleMouseEnter"
+        @mouseleave="handleMouseLeave">
         <!-- Flag Image -->
         <div class="flag-wrapper" :class="flagWrapperClasses">
             <img v-if="flagUrl" :src="flagUrl" :alt="`Flag of ${displayName}`" :class="flagClasses" @load="onFlagLoad"
@@ -64,9 +65,9 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { CheckIcon, ClockIcon, XMarkIcon } from '@heroicons/vue/24/outline'
-import { apiMethods } from '@/utils/api'
+import { useFlagsStore } from '@/stores/flags'
 
 // Props
 const props = defineProps({
@@ -156,6 +157,9 @@ const props = defineProps({
 
 // Emits
 const emit = defineEmits(['click', 'flag-loaded', 'flag-error'])
+
+// Stores
+const flagsStore = useFlagsStore()
 
 // State
 const flagUrl = ref('')
@@ -324,30 +328,34 @@ const hoverCardClasses = computed(() => {
 })
 
 // Methods
-const loadFlag = async () => {
+const loadFlag = () => {
     try {
         isLoading.value = true
         hasError.value = false
 
-        // Try to get flag URL from API
         if (props.countryCode) {
-            const response = await apiMethods.countries.getFlag(props.countryCode.toLowerCase())
-            if (response.data.success && response.data.flagUrl) {
-                flagUrl.value = response.data.flagUrl
+            // Try to get flag from store
+            const url = flagsStore.getFlagUrl(props.countryCode)
+            
+            if (url) {
+                flagUrl.value = url
+                isLoading.value = false
                 return
             }
         }
 
-        // Fallback to constructing URL
-        const code = props.countryCode?.toLowerCase() ||
-            props.countryName?.replace(/\s+/g, '-').toLowerCase()
-
+        // Fallback if no flag in store
+        const code = props.countryCode?.toLowerCase() || 
+                    props.countryName?.replace(/\s+/g, '-').toLowerCase()
+        
         if (code) {
-            flagUrl.value = `/upload/flags/${code}.svg`
+            flagUrl.value = `/api/countries/flags/${code}`
+        } else {
+            hasError.value = true
         }
 
     } catch (error) {
-        toast.warn('Flag loading error:', error)
+        console.warn('Flag loading error:', error)
         hasError.value = true
     } finally {
         isLoading.value = false
@@ -365,11 +373,19 @@ const onFlagLoad = () => {
 
 const onFlagError = () => {
     hasError.value = true
-    flagUrl.value = ''
+    // Don't clear flagUrl immediately to avoid flashing
+    
     emit('flag-error', {
         countryName: props.countryName,
         countryCode: props.countryCode
     })
+    
+    // Try fallback after a short delay
+    setTimeout(() => {
+        if (hasError.value) {
+            flagUrl.value = ''
+        }
+    }, 100)
 }
 
 const handleClick = () => {
@@ -390,6 +406,18 @@ const handleMouseEnter = () => {
 const handleMouseLeave = () => {
     isHovered.value = false
 }
+
+// Watch for country code changes
+watch(() => props.countryCode, () => {
+    loadFlag()
+}, { immediate: false })
+
+// Watch for flag store initialization
+watch(() => flagsStore.isInitialized, (isInit) => {
+    if (isInit && props.countryCode) {
+        loadFlag()
+    }
+})
 
 // Lifecycle
 onMounted(() => {
