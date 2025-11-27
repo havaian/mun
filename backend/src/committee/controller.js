@@ -135,7 +135,7 @@ const updateCommittee = async (req, res) => {
         }
 
         // Apply other updates (exclude sensitive fields)
-        const allowedFields = ['name', 'description', 'language', 'status'];
+        const allowedFields = ['name', 'description', 'language', 'status', 'countries'];
         Object.keys(updates).forEach(key => {
             if (allowedFields.includes(key)) {
                 committee[key] = updates[key];
