@@ -103,7 +103,19 @@
                                         </h3>
 
                                         <div v-if="committee.countries && committee.countries.length > 0"
-                                            class="space-y-3">
+                                            class="space-y-4">
+                                            
+                                            <!-- Countries Header with Manage Button -->
+                                            <div class="flex items-center justify-between">
+                                                <div class="text-sm text-mun-gray-600">
+                                                    {{ committee.countries.length }} countries assigned
+                                                </div>
+                                                <AppButton @click="manageCountries" variant="outline" size="sm">
+                                                    <PencilIcon class="w-4 h-4 mr-1" />
+                                                    Manage Countries
+                                                </AppButton>
+                                            </div>
+                                            
                                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                                 <div v-for="country in committee.countries" :key="country.name"
                                                     class="p-3 bg-mun-gray-50 rounded-lg flex items-center justify-between">
