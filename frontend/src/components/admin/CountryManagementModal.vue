@@ -608,7 +608,7 @@ const saveCountries = async () => {
         const cleanedCountries = assignedCountries.value.map(country => {
             // Remove frontend-only fields and keep only backend schema fields
             const {
-                code, region, role, // Remove frontend-only fields
+                region, role, // Remove frontend-only fields
                 ...backendCountry
             } = country
 

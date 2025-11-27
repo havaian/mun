@@ -9,6 +9,12 @@ const countrySchema = new mongoose.Schema({
         trim: true
     },
 
+    code: {
+        type: String,
+        required: true,
+        trim: true
+    },
+
     flagUrl: {
         type: String,
         default: null
