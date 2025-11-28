@@ -2,6 +2,8 @@ const { Committee } = require('./model');
 const { Event } = require('../event/model');
 const { User } = require('../auth/model');
 const logger = require('../utils/logger');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const QRCode = require('qrcode');
 const path = require('path');
 const fs = require('fs').promises;
@@ -48,6 +50,48 @@ const createCommittee = async (req, res) => {
 
         await committee.save();
 
+        // Automatically create presidium users with credentials
+        const presidiumRoles = ['chairman', 'co-chairman', 'expert', 'secretary'];
+        const presidiumUsers = [];
+        
+        for (const role of presidiumRoles) {
+            try {
+                // Generate credentials
+                const username = `${event.name}_${committee.name.toLowerCase().replace(/\s+/g, '_')}_${role}`;
+                const password = generateSecurePassword();
+                const hashedPassword = await bcrypt.hash(password, 12);
+                
+                // Create presidium user
+                const presidiumUser = new User({
+                    username: username,
+                    password: hashedPassword,
+                    role: 'presidium',
+                    presidiumRole: role,
+                    committeeId: committee._id,
+                    qrToken: crypto.randomBytes(32).toString('hex'),
+                    isQrActive: true,
+                    isActive: true,
+                    isEmailVerified: true // Auto-verified for generated accounts
+                });
+
+                await presidiumUser.save();
+                
+                // Store credentials for response (password will only be shown once)
+                presidiumUsers.push({
+                    role: role,
+                    username: username,
+                    password: password, // Plain text for initial setup
+                    qrToken: presidiumUser.qrToken
+                });
+
+                logger.info(`Created presidium user: ${username} for committee ${committee.name}`);
+                
+            } catch (error) {
+                logger.error(`Failed to create presidium user for role ${role}:`, error);
+                // Continue with other roles even if one fails
+            }
+        }
+
         // Update event statistics
         await event.updateStatistics();
 
@@ -72,6 +116,31 @@ const createCommittee = async (req, res) => {
         res.status(500).json({ error: 'Failed to create committee' });
     }
 };
+
+function generateSecurePassword() {
+    const length = 12;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let password = "";
+    
+    // Ensure at least one character from each type
+    const lowercase = "abcdefghijklmnopqrstuvwxyz";
+    const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const numbers = "0123456789";
+    const symbols = "!@#$%^&*";
+    
+    password += lowercase[Math.floor(Math.random() * lowercase.length)];
+    password += uppercase[Math.floor(Math.random() * uppercase.length)];
+    password += numbers[Math.floor(Math.random() * numbers.length)];
+    password += symbols[Math.floor(Math.random() * symbols.length)];
+    
+    // Fill remaining length
+    for (let i = 4; i < length; i++) {
+        password += charset[Math.floor(Math.random() * charset.length)];
+    }
+    
+    // Shuffle the password
+    return password.split('').sort(() => 0.5 - Math.random()).join('');
+}
 
 // Get committee by ID
 const getCommittee = async (req, res) => {
