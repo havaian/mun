@@ -12,6 +12,10 @@ require('./db');
 const logger = require('./utils/logger');
 const { initializeWebSocket } = require('./websocket/socketManager');
 
+// 🚀 INITIALIZE GLOBAL AUTH EARLY - Before importing routes
+const { setupGlobalAuth } = require('./auth/globalAuth');
+setupGlobalAuth();
+
 // Import route modules
 const adminRoutes = require('./admin/routes');
 const authRoutes = require('./auth/routes');
@@ -31,10 +35,6 @@ const countriesRoutes = require('./countries/routes');
 
 // Import countries cache initialization
 const { initializeFlagCache } = require('./countries/controller');
-
-// 🚀 INITIALIZE GLOBAL AUTH EARLY - Before importing routes
-const { setupGlobalAuth } = require('./auth/globalAuth');
-setupGlobalAuth();
 
 const app = express();
 const server = createServer(app);
