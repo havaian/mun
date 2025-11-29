@@ -346,24 +346,62 @@ const logout = async (req, res) => {
 // Session validation
 const validateSession = async (req, res) => {
     try {
-        // User is already validated by authenticateToken middleware
-        const user = await User.findById(req.user.userId).populate('committeeId');
+        logger.debug(`Session validation for user: ${req.user?.userId || 'unknown'}`);
 
-        if (!user || !user.isActive) {
+        // User is already validated by authenticateToken middleware
+        if (!req.user || !req.user.userId) {
+            logger.warn('No user found in request during session validation');
             return res.status(401).json({
-                error: 'Session invalid'
+                error: 'Session invalid - no user data',
+                code: 'NO_USER_DATA'
             });
         }
+
+        // Get fresh user data with populated relationships
+        const user = await User.findById(req.user.userId)
+            .populate('committeeId', 'name type status')
+            .select('-password');
+
+        if (!user) {
+            logger.warn(`User not found in database: ${req.user.userId}`);
+            return res.status(401).json({
+                error: 'Session invalid - user not found',
+                code: 'USER_NOT_FOUND'
+            });
+        }
+
+        if (!user.isActive) {
+            logger.warn(`User account is inactive: ${req.user.userId}`);
+            return res.status(401).json({
+                error: 'Session invalid - account inactive',
+                code: 'ACCOUNT_INACTIVE'
+            });
+        }
+
+        logger.info(`Session validation successful for: ${user.email || user.username || user.countryName || user.presidiumRole} (${user.role})`);
 
         res.json({
             success: true,
             user: user.toJSON(),
-            valid: true
+            valid: true,
+            sessionInfo: {
+                userId: req.user.userId,
+                role: req.user.role,
+                authenticatedAt: new Date().toISOString()
+            }
         });
 
     } catch (error) {
-        logger.error('Session validation error:', error);
-        res.status(500).json({ error: 'Session validation failed' });
+        logger.error('Session validation error:', {
+            error: error.message,
+            stack: error.stack,
+            userId: req.user?.userId
+        });
+        
+        res.status(500).json({ 
+            error: 'Session validation failed',
+            code: 'VALIDATION_ERROR'
+        });
     }
 };
 
