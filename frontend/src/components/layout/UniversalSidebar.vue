@@ -1,7 +1,10 @@
 <template>
     <aside :class="[
         'fixed inset-y-0 left-0 z-50 bg-white border-r border-mun-gray-200 transform transition-all duration-300 ease-in-out flex flex-col',
-        sidebarCollapsed ? 'w-16 lg:w-16' : 'w-72',
+        // Width: full on mobile, responsive on desktop
+        'w-72',
+        sidebarCollapsed ? 'lg:w-16' : 'lg:w-72',
+        // Position: slide on mobile, always visible on desktop
         sidebarCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'
     ]">
         <!-- Brand Header -->
@@ -44,7 +47,7 @@
                     <router-link v-for="item in primaryNavigation" :key="item.name" :to="item.to"
                         :class="getNavLinkClass(item.name, sidebarCollapsed)"
                         :title="sidebarCollapsed ? item.label : ''">
-                        <component :is="item.icon" :class="sidebarCollapsed ? 'w-6 h-6' : 'w-5 h-5'" />
+                        <component :is="item.icon" :class="sidebarCollapsed ? 'w-6 h-6 lg:w-6 lg:h-6' : 'w-5 h-5'" />
                         <span v-if="!sidebarCollapsed">{{ item.label }}</span>
                         <div v-if="item.badge && !sidebarCollapsed" class="ml-auto">
                             <span :class="[
@@ -54,7 +57,7 @@
                                 {{ item.badge > 99 ? '99+' : item.badge }}
                             </span>
                         </div>
-                        <!-- Collapsed badge indicator -->
+                        <!-- Collapsed badge indicator (desktop only) -->
                         <div v-if="item.badge && sidebarCollapsed" :class="[
                             'absolute -top-1 -right-1 w-3 h-3 rounded-full',
                             getBadgeClass(item.badgeType || 'default')
