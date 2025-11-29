@@ -219,7 +219,7 @@ router.get('/',
 
             // Execute query with population
             const committees = await Committee.find(filter)
-                .select('name description type status language eventId countries createdAt updatedAt')  // REMOVED .length
+                .select('name description type status language eventId countries presidium createdAt updatedAt')  // REMOVED .length
                 .populate('eventId', 'name status')
                 .sort({ createdAt: -1 })
                 .skip(skip)
