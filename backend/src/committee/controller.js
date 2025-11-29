@@ -53,54 +53,57 @@ const createCommittee = async (req, res) => {
         // Automatically create presidium users with credentials
         const presidiumRoles = ['chairman', 'co-chairman', 'expert', 'secretary'];
         const presidiumUsers = [];
-        
+
         for (const role of presidiumRoles) {
             try {
-                // Generate credentials
-                const username = `${event.name}_${committee.name.toLowerCase().replace(/\s+/g, '_')}_${role}`;
-                const password = generateSecurePassword();
-                const hashedPassword = await bcrypt.hash(password, 12);
-                
-                // Create presidium user
+                // Generate unique identifier using committee ID + timestamp + role
+                const uniqueId = `${committee._id.toString().slice(-8)}_${Date.now()}_${role}`;
+
+                // Create presidium user WITHOUT email (will be bound during QR login)
                 const presidiumUser = new User({
-                    username: username,
-                    password: hashedPassword,
                     role: 'presidium',
                     presidiumRole: role,
                     committeeId: committee._id,
                     qrToken: crypto.randomBytes(32).toString('hex'),
                     isQrActive: true,
-                    isActive: true,
-                    isEmailVerified: true // Auto-verified for generated accounts
+                    isActive: true
+                    // No username, password, or email needed
                 });
 
                 await presidiumUser.save();
-                
-                // Store credentials for response (password will only be shown once)
+
+                // CRITICAL: Add presidium user to committee's presidium array
+                committee.addPresidiumMember(presidiumUser._id, role, req.user.userId);
+
+                // Store info for response
                 presidiumUsers.push({
                     role: role,
-                    username: username,
-                    password: password, // Plain text for initial setup
+                    userId: presidiumUser._id,
                     qrToken: presidiumUser.qrToken
                 });
 
-                logger.info(`Created presidium user: ${username} for committee ${committee.name}`);
-                
+                logger.info(`✅ Created and added presidium user: ${role} for committee ${committee.name}`);
+
             } catch (error) {
-                logger.error(`Failed to create presidium user for role ${role}:`, error);
+                logger.error(`❌ Failed to create presidium user for role ${role}:`, error);
                 // Continue with other roles even if one fails
             }
         }
 
+        // Save committee with presidium members added
+        await committee.save();
+
         // Update event statistics
         await event.updateStatistics();
 
-        logger.info(`Committee created: ${name} for event ${event.name} by ${req.user.userId}`);
+        logger.info(`Committee created: ${committee.name} with ${presidiumUsers.length} presidium members`);
 
+        // Include presidium info in response
         res.status(201).json({
             success: true,
             committee,
-            message: 'Committee created successfully'
+            presidiumUsers,  // Include the created presidium users
+            message: `Committee created successfully with ${presidiumUsers.length} presidium QR tokens`
         });
 
     } catch (error) {
@@ -116,31 +119,6 @@ const createCommittee = async (req, res) => {
         res.status(500).json({ error: 'Failed to create committee' });
     }
 };
-
-function generateSecurePassword() {
-    const length = 12;
-    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
-    let password = "";
-    
-    // Ensure at least one character from each type
-    const lowercase = "abcdefghijklmnopqrstuvwxyz";
-    const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const numbers = "0123456789";
-    const symbols = "!@#$%^&*";
-    
-    password += lowercase[Math.floor(Math.random() * lowercase.length)];
-    password += uppercase[Math.floor(Math.random() * uppercase.length)];
-    password += numbers[Math.floor(Math.random() * numbers.length)];
-    password += symbols[Math.floor(Math.random() * symbols.length)];
-    
-    // Fill remaining length
-    for (let i = 4; i < length; i++) {
-        password += charset[Math.floor(Math.random() * charset.length)];
-    }
-    
-    // Shuffle the password
-    return password.split('').sort(() => 0.5 - Math.random()).join('');
-}
 
 // Get committee by ID
 const getCommittee = async (req, res) => {
