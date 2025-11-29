@@ -226,7 +226,7 @@
 
         <!-- Compose Message Modal -->
         <div v-if="showComposeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col">
+            <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 flex flex-col max-h-[95vh] min-h-[400px]">
                 <div class="px-6 py-4 border-b border-mun-gray-200">
                     <div class="flex items-center justify-between">
                         <h2 class="text-xl font-semibold text-mun-gray-900">Compose Message</h2>

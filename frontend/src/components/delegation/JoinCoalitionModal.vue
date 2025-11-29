@@ -10,7 +10,7 @@
                 <div class="flex min-h-full items-center justify-center p-4">
                     <transition name="modal-content">
                         <div v-if="modelValue"
-                            class="join-coalition-modal relative bg-white rounded-2xl shadow-mun-lg max-w-2xl w-full max-h-[90vh] overflow-hidden">
+                            class="join-coalition-modal relative bg-white rounded-2xl shadow-mun-lg max-w-2xl w-full flex flex-col max-h-[95vh] min-h-[400px]">
                             <!-- Header -->
                             <div
                                 class="modal-header flex items-center justify-between p-6 border-b border-mun-gray-200">
@@ -31,7 +31,7 @@
                             </div>
 
                             <!-- Content -->
-                            <div class="modal-content p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                            <div class="modal-content p-6 overflow-y-auto flex flex-col max-h-[95vh] min-h-[400px]">
                                 <div class="space-y-6">
                                     <!-- Coalition Search -->
                                     <div class="search-section">

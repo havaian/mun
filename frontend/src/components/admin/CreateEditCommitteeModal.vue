@@ -4,9 +4,11 @@
             <div v-if="modelValue"
                 class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
 
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
-                    <!-- Modal Header -->
-                    <div class="flex items-center justify-between p-6 border-b border-mun-gray-200">
+                <!-- Main modal container with flexible height -->
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[95vh] min-h-[400px]">
+                    
+                    <!-- Modal Header - Fixed -->
+                    <div class="flex items-center justify-between p-6 border-b border-mun-gray-200 flex-shrink-0">
                         <div>
                             <h2 class="text-xl font-bold text-mun-gray-900">
                                 {{ mode === 'edit' ? 'Edit Committee' : 'Create New Committee' }}
@@ -16,13 +18,13 @@
                             </p>
                         </div>
 
-                        <button @click="close" class="p-2 hover:bg-mun-gray-100 rounded-lg transition-colors">
+                        <button @click="close" class="p-2 hover:bg-mun-gray-100 rounded-lg transition-colors flex-shrink-0">
                             <XMarkIcon class="w-6 h-6 text-mun-gray-500" />
                         </button>
                     </div>
 
-                    <!-- Modal Content -->
-                    <div class="overflow-y-auto max-h-[80vh]">
+                    <!-- Modal Content - Flexible/Scrollable -->
+                    <div class="flex-1 overflow-y-auto min-h-0">
                         <form @submit.prevent="handleFormSubmit" class="p-6 space-y-8" novalidate>
                             <!-- Basic Information -->
                             <div class="space-y-6">
@@ -116,8 +118,8 @@
                         </form>
                     </div>
 
-                    <!-- Modal Footer -->
-                    <div class="flex items-center justify-between p-6 bg-mun-gray-50 border-t border-mun-gray-200">
+                    <!-- Modal Footer - Fixed -->
+                    <div class="flex items-center justify-between p-6 bg-mun-gray-50 border-t border-mun-gray-200 flex-shrink-0">
                         <div class="flex items-center space-x-4">
                             <AppButton variant="ghost" @click="close" :disabled="isSubmitting">
                                 Cancel
