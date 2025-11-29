@@ -3,7 +3,6 @@ const { body, query, param, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
-const { authenticateToken, requireAdmin } = require('../auth/middleware');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -60,15 +59,15 @@ const validateBulkQR = [
 
 // Get comprehensive dashboard statistics
 router.get('/dashboard/stats',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     controller.getDashboardStats
 );
 
 // Get recent system-wide activity with advanced filtering
 router.get('/dashboard/activity',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     validateActivityQuery,
     handleValidationErrors,
     controller.getRecentActivity
@@ -80,15 +79,15 @@ router.get('/dashboard/activity',
 
 // Get system health and performance metrics
 router.get('/system/health',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     controller.getSystemHealth
 );
 
 // Clear all system caches (emergency/maintenance function)
 router.post('/system/clear-cache',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     controller.clearCaches
 );
 
@@ -98,8 +97,8 @@ router.post('/system/clear-cache',
 
 // Bulk QR generation for multiple committees with enhanced error handling
 router.post('/committees/bulk-qr',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     validateBulkQR,
     handleValidationErrors,
     controller.bulkGenerateQR
@@ -111,8 +110,8 @@ router.post('/committees/bulk-qr',
 
 // Get detailed performance metrics
 router.get('/performance/metrics',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     async (req, res) => {
         try {
             const metrics = {
@@ -134,8 +133,8 @@ router.get('/performance/metrics',
 
 // Get API response time statistics
 router.get('/performance/response-times',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     validatePagination,
     handleValidationErrors,
     async (req, res) => {
@@ -173,8 +172,8 @@ router.get('/performance/response-times',
 
 // Export system configuration
 router.get('/export/config',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     async (req, res) => {
         try {
             const config = {
@@ -197,8 +196,8 @@ router.get('/export/config',
 
 // Export audit logs
 router.get('/export/audit-logs',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     [
         query('startDate')
             .optional()
@@ -258,8 +257,8 @@ router.get('/export/audit-logs',
 
 // Database maintenance operations
 router.post('/maintenance/database',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     [
         body('operation')
             .isIn(['optimize', 'reindex', 'cleanup', 'backup'])
@@ -301,8 +300,8 @@ router.post('/maintenance/database',
 
 // System backup operations
 router.post('/maintenance/backup',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     [
         body('includeFiles')
             .optional()
@@ -347,8 +346,8 @@ router.post('/maintenance/backup',
 
 // Get user engagement analytics
 router.get('/analytics/user-engagement',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     [
         query('period')
             .optional()
@@ -387,8 +386,8 @@ router.get('/analytics/user-engagement',
 
 // Get system usage patterns
 router.get('/analytics/usage-patterns',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     validatePagination,
     handleValidationErrors,
     async (req, res) => {

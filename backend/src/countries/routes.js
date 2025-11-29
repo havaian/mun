@@ -2,7 +2,6 @@ const express = require('express');
 const { param, query, validationResult } = require('express-validator');
 
 const controller = require('./controller');
-const { authenticateToken, requireAdmin } = require('../auth/middleware');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -45,7 +44,7 @@ const validateCountryType = [
 
 // Get all countries with optional filtering and language support
 router.get('/',
-    authenticateToken,
+    global.auth.token,
     validateLanguage,
     validateCountryType,
     handleValidationErrors,
@@ -54,7 +53,7 @@ router.get('/',
 
 // Get single country by code
 router.get('/:code',
-    authenticateToken,
+    global.auth.token,
     validateCountryCode,
     validateLanguage,
     handleValidationErrors,
@@ -63,7 +62,7 @@ router.get('/:code',
 
 // Get single flag by country code
 router.get('/flags/:code',
-    authenticateToken,
+    global.auth.token,
     validateCountryCode,
     handleValidationErrors,
     controller.getSingleFlag
@@ -71,13 +70,13 @@ router.get('/flags/:code',
 
 // Get flag metadata (available flags, counts, etc.)
 router.get('/flags/meta/info',
-    authenticateToken,
+    global.auth.token,
     controller.getFlagMetadata
 );
 
 // Health check for countries service
 router.get('/meta/health',
-    authenticateToken,
+    global.auth.token,
     controller.getServiceHealth
 );
 
@@ -85,7 +84,7 @@ router.get('/meta/health',
 
 // Get all flags in batch - requires authentication
 router.get('/flags/all/batch',
-    authenticateToken,
+    global.auth.token,
     controller.getAllFlags
 );
 
@@ -93,8 +92,8 @@ router.get('/flags/all/batch',
 
 // Refresh flag cache (admin only)
 router.post('/admin/refresh-flags',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     controller.refreshFlagCache
 );
 

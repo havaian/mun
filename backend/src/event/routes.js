@@ -3,7 +3,6 @@ const { body, param, query, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
-const { authenticateToken, requireAdmin } = require('../auth/middleware');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -128,8 +127,8 @@ const validatePagination = [
 
 // Get all events
 router.get('/',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     validatePagination,
     handleValidationErrors,
     controller.getAllEvents
@@ -137,8 +136,8 @@ router.get('/',
 
 // Create new event
 router.post('/',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     validateEventCreation,
     handleValidationErrors,
     controller.createEvent
@@ -146,8 +145,8 @@ router.post('/',
 
 // Get single event
 router.get('/:id',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     validateEventId,
     handleValidationErrors,
     controller.getEvent
@@ -155,8 +154,8 @@ router.get('/:id',
 
 // Update event
 router.put('/:id',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     validateEventId,
     validateEventUpdate,
     handleValidationErrors,
@@ -165,8 +164,8 @@ router.put('/:id',
 
 // Update event status
 router.put('/:id/status',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     validateEventId,
     validateStatusUpdate,
     handleValidationErrors,
@@ -175,8 +174,8 @@ router.put('/:id/status',
 
 // Delete event
 router.delete('/:id',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     validateEventId,
     handleValidationErrors,
     controller.deleteEvent
@@ -184,8 +183,8 @@ router.delete('/:id',
 
 // Get event statistics
 router.get('/:id/statistics',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     validateEventId,
     handleValidationErrors,
     controller.getEventStatistics

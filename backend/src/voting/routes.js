@@ -3,13 +3,6 @@ const { body, param, query, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
-const {
-    authenticateToken,
-    requirePresidium,
-    requireDelegate,
-    requireVotingRights,
-    requireSameCommittee
-} = require('../auth/middleware');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -109,18 +102,18 @@ const validatePagination = [
 
 // Create new voting
 router.post('/',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateVotingCreation,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.createVoting
 );
 
 // Start voting
 router.put('/:id/start',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateVotingId,
     handleValidationErrors,
     controller.startVoting
@@ -128,8 +121,8 @@ router.put('/:id/start',
 
 // Complete voting (force complete if needed)
 router.put('/:id/complete',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateVotingId,
     body('forceComplete')
         .optional()
@@ -141,7 +134,7 @@ router.put('/:id/complete',
 
 // Get single voting details
 router.get('/:id',
-    authenticateToken,
+    global.auth.token,
     validateVotingId,
     handleValidationErrors,
     controller.getVoting
@@ -149,11 +142,11 @@ router.get('/:id',
 
 // Get committee votings
 router.get('/committee/:committeeId',
-    authenticateToken,
+    global.auth.token,
     validateCommitteeId,
     validatePagination,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.getCommitteeVotings
 );
 
@@ -161,7 +154,7 @@ router.get('/committee/:committeeId',
 
 // Cast vote
 router.post('/:id/vote',
-    authenticateToken,
+    global.auth.token,
     requireVotingRights,
     validateVotingId,
     validateVoteCast,
@@ -171,7 +164,7 @@ router.post('/:id/vote',
 
 // Skip turn in roll call voting
 router.post('/:id/skip',
-    authenticateToken,
+    global.auth.token,
     requireVotingRights,
     validateVotingId,
     handleValidationErrors,
@@ -180,7 +173,7 @@ router.post('/:id/skip',
 
 // Get voting status (for real-time updates)
 router.get('/:id/status',
-    authenticateToken,
+    global.auth.token,
     validateVotingId,
     handleValidationErrors,
     (req, res) => {
@@ -192,7 +185,7 @@ router.get('/:id/status',
 
 // Get roll call order for roll call voting
 router.get('/:id/roll-call-order',
-    authenticateToken,
+    global.auth.token,
     validateVotingId,
     handleValidationErrors,
     async (req, res) => {
@@ -225,7 +218,7 @@ router.get('/:id/roll-call-order',
 
 // Get eligible voters for voting
 router.get('/:id/eligible-voters',
-    authenticateToken,
+    global.auth.token,
     validateVotingId,
     handleValidationErrors,
     async (req, res) => {
@@ -272,8 +265,8 @@ router.get('/:id/eligible-voters',
 
 // Cancel voting (presidium only)
 router.delete('/:id',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateVotingId,
     body('reason')
         .isLength({ min: 10, max: 500 })

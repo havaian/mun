@@ -32,6 +32,10 @@ const countriesRoutes = require('./countries/routes');
 // Import countries cache initialization
 const { initializeFlagCache } = require('./countries/controller');
 
+// 🚀 INITIALIZE GLOBAL AUTH EARLY - Before importing routes
+const { setupGlobalAuth } = require('./auth/globalAuth');
+setupGlobalAuth();
+
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {

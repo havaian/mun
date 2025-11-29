@@ -4,11 +4,6 @@ const { param, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
-const {
-    authenticateToken,
-    requireAdmin,
-    requirePresidium
-} = require('../auth/middleware');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -31,8 +26,8 @@ const validateCommitteeId = [
 
 // Generate QR codes PDF for committee delegates (admin only)
 router.get('/qr-codes/:committeeId',
-    authenticateToken,
-    requireAdmin, // Only admin can generate QR PDFs
+    global.auth.token,
+    global.auth.admin, // Only admin can generate QR PDFs
     validateCommitteeId,
     handleValidationErrors,
     controller.generateCommitteeQRPDF
@@ -40,8 +35,8 @@ router.get('/qr-codes/:committeeId',
 
 // NEW: Generate presidium-only QR codes PDF (admin only)
 router.get('/presidium-qr-codes/:committeeId',
-    authenticateToken,
-    requireAdmin, // Only admin can generate QR PDFs
+    global.auth.token,
+    global.auth.admin, // Only admin can generate QR PDFs
     validateCommitteeId,
     handleValidationErrors,
     controller.generatePresidiumQRPDF
@@ -49,8 +44,8 @@ router.get('/presidium-qr-codes/:committeeId',
 
 // NEW: Generate complete QR codes PDF (presidium + delegates) (admin only)
 router.get('/complete-qr-codes/:committeeId',
-    authenticateToken,
-    requireAdmin, // Only admin can generate QR PDFs
+    global.auth.token,
+    global.auth.admin, // Only admin can generate QR PDFs
     validateCommitteeId,
     handleValidationErrors,
     controller.generateCompleteQRPDF
@@ -58,8 +53,8 @@ router.get('/complete-qr-codes/:committeeId',
 
 // Export committee statistics (presidium + admin)
 router.get('/statistics/:committeeId',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateCommitteeId,
     handleValidationErrors,
     controller.exportStatistics
@@ -67,8 +62,8 @@ router.get('/statistics/:committeeId',
 
 // Export voting results (presidium + admin)
 router.get('/voting-results/:committeeId',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateCommitteeId,
     handleValidationErrors,
     controller.exportVotingResults
@@ -76,8 +71,8 @@ router.get('/voting-results/:committeeId',
 
 // Export resolutions (presidium + admin)
 router.get('/resolutions/:committeeId',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateCommitteeId,
     handleValidationErrors,
     controller.exportResolutions
@@ -85,8 +80,8 @@ router.get('/resolutions/:committeeId',
 
 // Export complete committee report (admin only)
 router.get('/committee-report/:committeeId',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     validateCommitteeId,
     handleValidationErrors,
     controller.exportCompleteReport

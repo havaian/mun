@@ -3,13 +3,6 @@ const { body, param, query, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
-const {
-    authenticateToken,
-    requirePresidium,
-    requireDelegate,
-    requireAdmin,
-    requireSameCommittee
-} = require('../auth/middleware');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -75,8 +68,8 @@ const validatePagination = [
 
 // Get all documents (admin only) - for document management page
 router.get('/',
-    authenticateToken,
-    requireAdmin, // Only admins can see all documents across committees
+    global.auth.token,
+    global.auth.admin, // Only admins can see all documents across committees
     validatePagination,
     handleValidationErrors,
     async (req, res) => {
@@ -199,8 +192,8 @@ router.get('/',
 
 // Upload position paper (delegates only)
 router.post('/position-papers',
-    authenticateToken,
-    requireDelegate,
+    global.auth.token,
+    global.auth.delegate,
     // Handle file upload with validation
     (req, res, next) => {
         controller.upload.single('document')(req, res, (err) => {
@@ -221,17 +214,17 @@ router.post('/position-papers',
             .withMessage('Valid committee ID is required')
     ],
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.uploadPositionPaper
 );
 
 // Get position papers for committee
 router.get('/position-papers/:committeeId',
-    authenticateToken,
+    global.auth.token,
     validateCommitteeId,
     validatePagination,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     (req, res, next) => {
         req.query.type = 'position_paper';
         next();
@@ -241,8 +234,8 @@ router.get('/position-papers/:committeeId',
 
 // Review position paper (presidium only)
 router.put('/position-papers/:id/review',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateDocumentId,
     validateDocumentReview,
     handleValidationErrors,
@@ -253,8 +246,8 @@ router.put('/position-papers/:id/review',
 
 // Upload public document
 router.post('/public',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     controller.upload.single('document'),
     [
         body('committeeId')
@@ -271,7 +264,7 @@ router.post('/public',
             .trim()
     ],
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     async (req, res) => {
         try {
             if (!req.file) {
@@ -336,11 +329,11 @@ router.post('/public',
 
 // Get public documents for committee
 router.get('/public/:committeeId',
-    authenticateToken,
+    global.auth.token,
     validateCommitteeId,
     validatePagination,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     (req, res, next) => {
         req.query.type = 'public_document';
         next();
@@ -350,8 +343,8 @@ router.get('/public/:committeeId',
 
 // Update public document (presidium only)
 router.put('/public/:id',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateDocumentId,
     [
         body('publicTitle')
@@ -413,8 +406,8 @@ router.put('/public/:id',
 
 // Delete public document (presidium only)
 router.delete('/public/:id',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateDocumentId,
     handleValidationErrors,
     async (req, res) => {
@@ -471,7 +464,7 @@ router.delete('/public/:id',
 
 // Get single document
 router.get('/:id',
-    authenticateToken,
+    global.auth.token,
     validateDocumentId,
     handleValidationErrors,
     controller.getDocument
@@ -479,7 +472,7 @@ router.get('/:id',
 
 // Download document file
 router.get('/:id/download',
-    authenticateToken,
+    global.auth.token,
     validateDocumentId,
     [
         query('version')
@@ -493,7 +486,7 @@ router.get('/:id/download',
 
 // Get document preview (extracted text)
 router.get('/:id/preview',
-    authenticateToken,
+    global.auth.token,
     validateDocumentId,
     [
         query('version')
@@ -507,7 +500,7 @@ router.get('/:id/preview',
 
 // Get document versions
 router.get('/:id/versions',
-    authenticateToken,
+    global.auth.token,
     validateDocumentId,
     handleValidationErrors,
     controller.getDocumentVersions

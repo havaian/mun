@@ -3,7 +3,7 @@ const { body, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
-const { authenticateToken, requireAdmin, authRateLimit } = require('./middleware');
+const { global.auth.token, global.auth.admin, authRateLimit } = require('./middleware');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -93,13 +93,13 @@ router.post('/email-login',
 
 // Logout (requires authentication)
 router.post('/logout',
-    authenticateToken,
+    global.auth.token,
     controller.logout
 );
 
 // Session validation
 router.get('/validate-session',
-    authenticateToken,
+    global.auth.token,
     controller.validateSession
 );
 
@@ -110,8 +110,8 @@ router.get('/qr-status/:token',
 
 // QR token reactivation (admin only)
 router.post('/reactivate-qr',
-    authenticateToken,
-    requireAdmin, // Only admin can reactivate QR codes
+    global.auth.token,
+    global.auth.admin, // Only admin can reactivate QR codes
     [
         body('userId')
             .isMongoId()

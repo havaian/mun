@@ -3,12 +3,6 @@ const { body, param, query, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
-const {
-    authenticateToken,
-    requirePresidium,
-    requireDelegate,
-    requireSameCommittee
-} = require('../auth/middleware');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -141,17 +135,17 @@ const validateTimerQuery = [
 
 // Create new timer
 router.post('/',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateTimerCreation,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.createTimer
 );
 
 // Start timer
 router.put('/:id/start',
-    authenticateToken,
+    global.auth.token,
     validateTimerId,
     handleValidationErrors,
     controller.startTimer
@@ -159,7 +153,7 @@ router.put('/:id/start',
 
 // Pause timer
 router.put('/:id/pause',
-    authenticateToken,
+    global.auth.token,
     validateTimerId,
     handleValidationErrors,
     controller.pauseTimer
@@ -167,7 +161,7 @@ router.put('/:id/pause',
 
 // Resume timer
 router.put('/:id/resume',
-    authenticateToken,
+    global.auth.token,
     validateTimerId,
     handleValidationErrors,
     controller.resumeTimer
@@ -175,8 +169,8 @@ router.put('/:id/resume',
 
 // Extend timer (presidium only)
 router.put('/:id/extend',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateTimerId,
     validateTimerExtension,
     handleValidationErrors,
@@ -185,7 +179,7 @@ router.put('/:id/extend',
 
 // Complete timer
 router.put('/:id/complete',
-    authenticateToken,
+    global.auth.token,
     validateTimerId,
     handleValidationErrors,
     controller.completeTimer
@@ -193,8 +187,8 @@ router.put('/:id/complete',
 
 // Cancel timer (presidium only)
 router.delete('/:id',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateTimerId,
     validateTimerCancellation,
     handleValidationErrors,
@@ -205,7 +199,7 @@ router.delete('/:id',
 
 // Get single timer details
 router.get('/:id',
-    authenticateToken,
+    global.auth.token,
     validateTimerId,
     handleValidationErrors,
     controller.getTimer
@@ -213,17 +207,17 @@ router.get('/:id',
 
 // Get committee timers
 router.get('/committee/:committeeId',
-    authenticateToken,
+    global.auth.token,
     validateCommitteeId,
     validateTimerQuery,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.getCommitteeTimers
 );
 
 // Get active timers for session
 router.get('/session/:sessionId/active',
-    authenticateToken,
+    global.auth.token,
     validateSessionId,
     handleValidationErrors,
     controller.getActiveTimers
@@ -233,8 +227,8 @@ router.get('/session/:sessionId/active',
 
 // Create and start speaker timer
 router.post('/speaker/quick',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     [
         body('committeeId').isMongoId().withMessage('Valid committee ID is required'),
         body('sessionId').isMongoId().withMessage('Valid session ID is required'),
@@ -278,8 +272,8 @@ router.post('/speaker/quick',
 
 // Create and start caucus timer
 router.post('/caucus/quick',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     [
         body('committeeId').isMongoId().withMessage('Valid committee ID is required'),
         body('sessionId').isMongoId().withMessage('Valid session ID is required'),
@@ -320,8 +314,8 @@ router.post('/caucus/quick',
 
 // Stop all active timers
 router.post('/bulk/stop-all',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     [
         body('committeeId').isMongoId().withMessage('Valid committee ID is required'),
         body('reason').optional().isLength({ max: 200 }).withMessage('Reason cannot exceed 200 characters')

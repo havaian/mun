@@ -3,12 +3,6 @@ const { body, param, query, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
-const {
-    authenticateToken,
-    requirePresidium,
-    requireDelegate,
-    requireSameCommittee
-} = require('../auth/middleware');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -104,40 +98,40 @@ const validateAddParticipant = [
 
 // Create bilateral conversation
 router.post('/bilateral',
-    authenticateToken,
-    requireDelegate,
+    global.auth.token,
+    global.auth.delegate,
     validateBilateralConversation,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.createBilateralConversation
 );
 
 // Create group conversation
 router.post('/group',
-    authenticateToken,
-    requireDelegate,
+    global.auth.token,
+    global.auth.delegate,
     validateGroupConversation,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.createGroupConversation
 );
 
 // Get user conversations
 router.get('/committee/:committeeId',
-    authenticateToken,
+    global.auth.token,
     param('committeeId').isMongoId().withMessage('Valid committee ID is required'),
     query('type').optional().isIn(['bilateral', 'group', 'coalition', 'committee_wide', 'all']).withMessage('Invalid conversation type'),
     query('includeArchived').optional().isBoolean().withMessage('Include archived must be boolean'),
     query('page').optional().isInt({ min: 1 }).withMessage('Page must be positive integer'),
     query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50'),
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.getUserConversations
 );
 
 // Get single conversation
 router.get('/:id',
-    authenticateToken,
+    global.auth.token,
     param('id').isMongoId().withMessage('Valid conversation ID is required'),
     query('page').optional().isInt({ min: 1 }).withMessage('Page must be positive integer'),
     query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
@@ -150,7 +144,7 @@ router.get('/:id',
 
 // Send message
 router.post('/:id/messages',
-    authenticateToken,
+    global.auth.token,
     param('id').isMongoId().withMessage('Valid conversation ID is required'),
     validateMessage,
     handleValidationErrors,
@@ -159,7 +153,7 @@ router.post('/:id/messages',
 
 // Edit message
 router.put('/:id/messages/:messageId',
-    authenticateToken,
+    global.auth.token,
     param('id').isMongoId().withMessage('Valid conversation ID is required'),
     param('messageId').isMongoId().withMessage('Valid message ID is required'),
     validateMessageEdit,
@@ -169,7 +163,7 @@ router.put('/:id/messages/:messageId',
 
 // Mark messages as read
 router.post('/:id/read',
-    authenticateToken,
+    global.auth.token,
     param('id').isMongoId().withMessage('Valid conversation ID is required'),
     validateMarkRead,
     handleValidationErrors,
@@ -180,7 +174,7 @@ router.post('/:id/read',
 
 // Add participant to group
 router.post('/:id/participants',
-    authenticateToken,
+    global.auth.token,
     param('id').isMongoId().withMessage('Valid conversation ID is required'),
     validateAddParticipant,
     handleValidationErrors,
@@ -189,7 +183,7 @@ router.post('/:id/participants',
 
 // Leave conversation
 router.delete('/:id/leave',
-    authenticateToken,
+    global.auth.token,
     param('id').isMongoId().withMessage('Valid conversation ID is required'),
     handleValidationErrors,
     controller.leaveConversation
@@ -197,7 +191,7 @@ router.delete('/:id/leave',
 
 // Archive/unarchive conversation
 router.put('/:id/archive',
-    authenticateToken,
+    global.auth.token,
     param('id').isMongoId().withMessage('Valid conversation ID is required'),
     body('archived').isBoolean().withMessage('Archived must be boolean'),
     handleValidationErrors,

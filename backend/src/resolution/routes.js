@@ -3,12 +3,6 @@ const { body, param, query, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
-const {
-    authenticateToken,
-    requirePresidium,
-    requireDelegate,
-    requireSameCommittee
-} = require('../auth/middleware');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -118,27 +112,27 @@ const validatePagination = [
 
 // Create coalition (delegates only)
 router.post('/coalitions',
-    authenticateToken,
-    requireDelegate,
+    global.auth.token,
+    global.auth.delegate,
     validateCoalitionCreation,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.createCoalition
 );
 
 // Get coalitions for committee
 router.get('/coalitions/:committeeId',
-    authenticateToken,
+    global.auth.token,
     validateCommitteeId,
     validatePagination,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.getCoalitions
 );
 
 // Get single coalition
 router.get('/coalitions/detail/:id',
-    authenticateToken,
+    global.auth.token,
     validateId,
     handleValidationErrors,
     controller.getCoalition
@@ -146,8 +140,8 @@ router.get('/coalitions/detail/:id',
 
 // Respond to coalition invitation
 router.put('/coalitions/:id/respond',
-    authenticateToken,
-    requireDelegate,
+    global.auth.token,
+    global.auth.delegate,
     validateId,
     validateInvitationResponse,
     handleValidationErrors,
@@ -156,8 +150,8 @@ router.put('/coalitions/:id/respond',
 
 // Activate coalition (head only)
 router.put('/coalitions/:id/activate',
-    authenticateToken,
-    requireDelegate,
+    global.auth.token,
+    global.auth.delegate,
     validateId,
     handleValidationErrors,
     controller.activateCoalition
@@ -165,8 +159,8 @@ router.put('/coalitions/:id/activate',
 
 // Leave coalition
 router.delete('/coalitions/:id/leave',
-    authenticateToken,
-    requireDelegate,
+    global.auth.token,
+    global.auth.delegate,
     validateId,
     handleValidationErrors,
     controller.leaveCoalition
@@ -176,8 +170,8 @@ router.delete('/coalitions/:id/leave',
 
 // Submit resolution (coalition head only)
 router.post('/',
-    authenticateToken,
-    requireDelegate,
+    global.auth.token,
+    global.auth.delegate,
     validateResolutionSubmission,
     handleValidationErrors,
     controller.submitResolution
@@ -185,17 +179,17 @@ router.post('/',
 
 // Get resolutions for committee
 router.get('/:committeeId',
-    authenticateToken,
+    global.auth.token,
     validateCommitteeId,
     validatePagination,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.getResolutions
 );
 
 // Get single resolution
 router.get('/detail/:id',
-    authenticateToken,
+    global.auth.token,
     validateId,
     handleValidationErrors,
     controller.getResolution
@@ -203,8 +197,8 @@ router.get('/detail/:id',
 
 // Review resolution (presidium only)
 router.put('/:id/review',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateId,
     validateResolutionReview,
     handleValidationErrors,
@@ -213,8 +207,8 @@ router.put('/:id/review',
 
 // Submit new version of resolution (coalition head only)
 router.post('/:id/new-version',
-    authenticateToken,
-    requireDelegate,
+    global.auth.token,
+    global.auth.delegate,
     validateId,
     [
         body('content')
@@ -276,7 +270,7 @@ router.post('/:id/new-version',
 
 // Get resolution versions
 router.get('/:id/versions',
-    authenticateToken,
+    global.auth.token,
     validateId,
     handleValidationErrors,
     async (req, res) => {
@@ -326,8 +320,8 @@ router.get('/:id/versions',
 
 // Submit presidium resolution (presidium only)
 router.post('/presidium-draft',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     [
         body('committeeId')
             .isMongoId()
@@ -349,7 +343,7 @@ router.post('/presidium-draft',
             .withMessage('Country names must be between 2 and 50 characters')
     ],
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     async (req, res) => {
         try {
             const { committeeId, title, content, designatedAuthors = [] } = req.body;

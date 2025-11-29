@@ -3,12 +3,6 @@ const { body, param, query, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
-const {
-    authenticateToken,
-    requirePresidium,
-    requireDelegate,
-    requireSameCommittee
-} = require('../auth/middleware');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -111,7 +105,7 @@ const validateStatsQuery = [
 
 // Get delegate statistics
 router.get('/delegate/:email',
-    authenticateToken,
+    global.auth.token,
     validateEmail,
     validateStatsQuery,
     handleValidationErrors,
@@ -120,7 +114,7 @@ router.get('/delegate/:email',
 
 // Get current user's statistics
 router.get('/my-stats',
-    authenticateToken,
+    global.auth.token,
     query('eventId').optional().isMongoId().withMessage('Event ID must be valid'),
     query('committeeId').optional().isMongoId().withMessage('Committee ID must be valid'),
     handleValidationErrors,
@@ -134,37 +128,37 @@ router.get('/my-stats',
 
 // Get committee statistics
 router.get('/committee/:committeeId',
-    authenticateToken,
+    global.auth.token,
     validateCommitteeId,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.getCommitteeStats
 );
 
 // Get delegate rankings for committee
 router.get('/committee/:committeeId/rankings',
-    authenticateToken,
+    global.auth.token,
     validateCommitteeId,
     validateRankingsQuery,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.getDelegateRankings
 );
 
 // Get activity feed for committee
 router.get('/committee/:committeeId/activity',
-    authenticateToken,
+    global.auth.token,
     validateCommitteeId,
     validateActivityQuery,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.getActivityFeed
 );
 
 // Recalculate committee statistics (presidium only)
 router.post('/committee/:committeeId/recalculate',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateCommitteeId,
     handleValidationErrors,
     async (req, res) => {
@@ -188,8 +182,8 @@ router.post('/committee/:committeeId/recalculate',
 
 // Award achievement to delegate
 router.post('/delegate/:email/achievement',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateEmail,
     validateAchievement,
     handleValidationErrors,
@@ -198,10 +192,10 @@ router.post('/delegate/:email/achievement',
 
 // Get all achievements for committee
 router.get('/committee/:committeeId/achievements',
-    authenticateToken,
+    global.auth.token,
     validateCommitteeId,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     async (req, res) => {
         try {
             const { DelegateStats } = require('./model');
@@ -243,10 +237,10 @@ router.get('/committee/:committeeId/achievements',
 
 // Get participation analytics
 router.get('/committee/:committeeId/analytics/participation',
-    authenticateToken,
+    global.auth.token,
     validateCommitteeId,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     async (req, res) => {
         try {
             const { DelegateStats } = require('./model');
@@ -283,8 +277,8 @@ router.get('/committee/:committeeId/analytics/participation',
 
 // Export committee statistics (CSV format)
 router.get('/committee/:committeeId/export',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateCommitteeId,
     handleValidationErrors,
     async (req, res) => {

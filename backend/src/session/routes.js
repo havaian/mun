@@ -3,12 +3,6 @@ const { body, param, query, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
-const {
-    authenticateToken,
-    requireAdmin,
-    requirePresidium,
-    requireSameCommittee
-} = require('../auth/middleware');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -132,27 +126,27 @@ const validatePagination = [
 
 // Create new session (presidium only)
 router.post('/',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateSessionCreation,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.createSession
 );
 
 // Get sessions for committee
 router.get('/:committeeId',
-    authenticateToken,
+    global.auth.token,
     validateCommitteeId,
     validatePagination,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.getCommitteeSessions
 );
 
 // Get single session
 router.get('/detail/:id',
-    authenticateToken,
+    global.auth.token,
     validateSessionId,
     handleValidationErrors,
     controller.getSession
@@ -160,8 +154,8 @@ router.get('/detail/:id',
 
 // Update session status (presidium only)
 router.put('/:id/status',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateSessionId,
     validateStatusUpdate,
     handleValidationErrors,
@@ -170,8 +164,8 @@ router.put('/:id/status',
 
 // Change debate mode (presidium only)
 router.put('/:id/mode',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateSessionId,
     validateModeChange,
     handleValidationErrors,
@@ -182,8 +176,8 @@ router.put('/:id/mode',
 
 // Update attendance (presidium only)
 router.put('/:id/attendance',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateSessionId,
     validateAttendanceUpdate,
     handleValidationErrors,
@@ -192,7 +186,7 @@ router.put('/:id/attendance',
 
 // Get current attendance
 router.get('/:id/attendance',
-    authenticateToken,
+    global.auth.token,
     validateSessionId,
     handleValidationErrors,
     controller.getCurrentAttendance
@@ -200,7 +194,7 @@ router.get('/:id/attendance',
 
 // Get quorum status
 router.get('/:id/quorum',
-    authenticateToken,
+    global.auth.token,
     validateSessionId,
     handleValidationErrors,
     async (req, res) => {
@@ -233,8 +227,8 @@ router.get('/:id/quorum',
 
 // Update speaker list (presidium only)
 router.put('/:id/speaker-list',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateSessionId,
     validateSpeakerListUpdate,
     handleValidationErrors,
@@ -243,7 +237,7 @@ router.put('/:id/speaker-list',
 
 // Get current speaker list
 router.get('/:id/speaker-list',
-    authenticateToken,
+    global.auth.token,
     validateSessionId,
     handleValidationErrors,
     async (req, res) => {
@@ -272,8 +266,8 @@ router.get('/:id/speaker-list',
 
 // Set current speaker (presidium only)
 router.put('/:id/current-speaker',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateSessionId,
     validateCurrentSpeaker,
     handleValidationErrors,
@@ -282,7 +276,7 @@ router.put('/:id/current-speaker',
 
 // Add delegate to speaker list (delegate can add themselves)
 router.post('/:id/speaker-list/add',
-    authenticateToken,
+    global.auth.token,
     validateSessionId,
     handleValidationErrors,
     async (req, res) => {
@@ -317,7 +311,7 @@ router.post('/:id/speaker-list/add',
 
 // Move delegate to end of speaker list (delegate can move themselves)
 router.put('/:id/speaker-list/move',
-    authenticateToken,
+    global.auth.token,
     validateSessionId,
     handleValidationErrors,
     async (req, res) => {
@@ -352,7 +346,7 @@ router.put('/:id/speaker-list/move',
 
 // Get current mode and settings
 router.get('/:id/current-mode',
-    authenticateToken,
+    global.auth.token,
     validateSessionId,
     handleValidationErrors,
     async (req, res) => {
@@ -382,7 +376,7 @@ router.get('/:id/current-mode',
 
 // Get mode history
 router.get('/:id/mode-history',
-    authenticateToken,
+    global.auth.token,
     validateSessionId,
     handleValidationErrors,
     async (req, res) => {
@@ -411,8 +405,8 @@ router.get('/:id/mode-history',
 
 // Delete session (admin only)
 router.delete('/:id',
-    authenticateToken,
-    requireAdmin,
+    global.auth.token,
+    global.auth.admin,
     validateSessionId,
     handleValidationErrors,
     controller.deleteSession

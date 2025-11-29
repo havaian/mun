@@ -3,12 +3,6 @@ const { body, param, query, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
-const {
-    authenticateToken,
-    requirePresidium,
-    requireDelegate,
-    requireSameCommittee
-} = require('../auth/middleware');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -177,28 +171,28 @@ const validatePagination = [
 
 // Submit procedural motion (delegates)
 router.post('/motions',
-    authenticateToken,
-    requireDelegate,
+    global.auth.token,
+    global.auth.delegate,
     validateMotionSubmission,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.submitMotion
 );
 
 // Submit presidium motion (presidium only)
 router.post('/motions/presidium',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validatePresidiumMotion,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.submitPresidiumMotion
 );
 
 // Support motion (delegates)
 router.post('/motions/:id/support',
-    authenticateToken,
-    requireDelegate,
+    global.auth.token,
+    global.auth.delegate,
     validateIdParam,
     handleValidationErrors,
     controller.supportMotion
@@ -206,8 +200,8 @@ router.post('/motions/:id/support',
 
 // Review motion (presidium only)
 router.put('/motions/:id/review',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     validateIdParam,
     validateMotionReview,
     handleValidationErrors,
@@ -216,7 +210,7 @@ router.put('/motions/:id/review',
 
 // Get motions for session
 router.get('/motions/session/:sessionId',
-    authenticateToken,
+    global.auth.token,
     validateSessionId,
     [
         query('status')
@@ -235,7 +229,7 @@ router.get('/motions/session/:sessionId',
 
 // Get single motion details
 router.get('/motions/:id',
-    authenticateToken,
+    global.auth.token,
     validateIdParam,
     handleValidationErrors,
     async (req, res) => {
@@ -293,17 +287,17 @@ router.get('/motions/:id',
 
 // Submit question (delegates)
 router.post('/questions',
-    authenticateToken,
-    requireDelegate,
+    global.auth.token,
+    global.auth.delegate,
     validateQuestionSubmission,
     handleValidationErrors,
-    requireSameCommittee,
+    global.auth.sameCommittee,
     controller.submitQuestion
 );
 
 // Answer question (presidium or authorized users)
 router.put('/questions/:id/answer',
-    authenticateToken,
+    global.auth.token,
     validateIdParam,
     validateQuestionResponse,
     handleValidationErrors,
@@ -312,7 +306,7 @@ router.put('/questions/:id/answer',
 
 // Get questions for session
 router.get('/questions/session/:sessionId',
-    authenticateToken,
+    global.auth.token,
     validateSessionId,
     [
         query('status')
@@ -334,7 +328,7 @@ router.get('/questions/session/:sessionId',
 
 // Get single question details
 router.get('/questions/:id',
-    authenticateToken,
+    global.auth.token,
     validateIdParam,
     handleValidationErrors,
     async (req, res) => {
@@ -382,8 +376,8 @@ router.get('/questions/:id',
 
 // Mark multiple questions as reviewed
 router.post('/questions/bulk/review',
-    authenticateToken,
-    requirePresidium,
+    global.auth.token,
+    global.auth.presidium,
     [
         body('questionIds')
             .isArray({ min: 1 })
@@ -442,7 +436,7 @@ router.post('/questions/bulk/review',
 
 // Get motion queue (ordered by priority and time)
 router.get('/motions/session/:sessionId/queue',
-    authenticateToken,
+    global.auth.token,
     validateSessionId,
     handleValidationErrors,
     async (req, res) => {
