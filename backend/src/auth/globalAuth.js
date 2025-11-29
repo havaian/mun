@@ -71,9 +71,9 @@ const setupGlobalAuth = () => {
             return roleMap[role] || role;
         },
 
-        authRateLimit: () => middleware.authRateLimit,
-        requireVotingRights: () => middleware.requireVotingRights,
-        optionalAuth: () => middleware.optionalAuth
+        authRateLimit: middleware.authRateLimit,
+        requireVotingRights: middleware.requireVotingRights,
+        optionalAuth: middleware.optionalAuth
     };
 
     logger.info('Global authentication middleware initialized');
