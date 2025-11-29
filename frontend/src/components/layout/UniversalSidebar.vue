@@ -1,11 +1,11 @@
 <template>
     <aside :class="[
-        'fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-mun-gray-200 transform transition-transform duration-200 ease-in-out',
+        'fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-mun-gray-200 transform transition-transform duration-200 ease-in-out flex flex-col',
         sidebarCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'
     ]">
         <!-- Brand Header -->
         <div :class="[
-            'flex items-center justify-between h-16 px-6 border-b border-mun-gray-200',
+            'flex items-center justify-between h-16 px-6 border-b border-mun-gray-200 flex-shrink-0',
             `bg-gradient-to-r ${roleConfig.headerGradient}`
         ]">
             <div class="flex items-center space-x-3">
@@ -26,7 +26,7 @@
         </div>
 
         <!-- Scrollable Content Container -->
-        <div class="flex-1 overflow-y-auto">
+        <div class="flex-1 overflow-y-auto min-h-0">
             <!-- Navigation -->
             <nav class="px-4 py-6 space-y-6">
                 <!-- Primary Navigation -->
