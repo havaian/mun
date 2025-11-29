@@ -329,7 +329,7 @@ const roleConfigs = {
         logoBackground: 'bg-mun-blue',
         logoIcon: 'CogIcon',
         subtitleColor: 'text-blue-100',
-        userIconBackground: 'bg-mun-blue-300'
+        userIconBackground: 'bg-mun-blue'
     },
     presidium: {
         title: 'Presidium',
@@ -338,7 +338,7 @@ const roleConfigs = {
         logoBackground: 'bg-indigo',
         logoIcon: 'UserGroupIcon',
         subtitleColor: 'text-green-100',
-        userIconBackground: 'bg-indigo-300'
+        userIconBackground: 'bg-indigo'
     },
     delegate: {
         title: 'Delegate Portal',
@@ -347,7 +347,7 @@ const roleConfigs = {
         logoBackground: 'bg-violet',
         logoIcon: 'HandRaisedIcon',
         subtitleColor: 'text-red-100',
-        userIconBackground: 'bg-violet-300'
+        userIconBackground: 'bg-violet'
     }
 }
 
