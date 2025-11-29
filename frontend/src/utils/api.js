@@ -196,51 +196,30 @@ export const apiMethods = {
         getSystemConfig: () => api.get('/admin/export/config'),
         getAuditLogs: (params = {}) => api.get('/admin/export/audit-logs', { params }), // NOT USED
 
-        // ✅ IMPLEMENTED - Basic Export Routes
+        // ✅ IMPLEMENTED - QR Code Export Routes
         generateQRPDF: (committeeId) => api.get(`/export/qr-codes/${committeeId}`, { responseType: 'blob' }),
+        
+        // NEW: Presidium QR codes export  
+        generatePresidiumQRPDF: (committeeId) => api.get(`/export/presidium-qr-codes/${committeeId}`, { responseType: 'blob' }),
+        
+        // NEW: Complete QR codes export (presidium + delegates)
+        generateCompleteQRPDF: (committeeId) => api.get(`/export/complete-qr-codes/${committeeId}`, { responseType: 'blob' }),
 
         // ⚠️ MISMATCH - Frontend expects blob but backend returns JSON
         exportCommitteeStats: (committeeId) => api.get(`/export/statistics/${committeeId}`, { responseType: 'blob' }), // MISMATCH: Backend returns JSON, not blob
 
-        // ⚠️ DUPLICATE - Two identical methods for voting results
-        exportVotingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`, { responseType: 'blob' }), // DUPLICATE: Same as getVotingResults below // NOT USED
-        getVotingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`), // DUPLICATE: Remove one of these // NOT USED
-
-        // ⚠️ DUPLICATE - Two identical methods for resolutions
-        exportResolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`, { responseType: 'blob' }), // DUPLICATE: Same as getResolutions below // NOT USED
-        getResolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`), // DUPLICATE: Remove one of these // NOT USED
-
-        // ✅ IMPLEMENTED - Complete Report (placeholder)
+        // ✅ IMPLEMENTED - Existing export routes
+        exportVotingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`, { responseType: 'blob' }),
+        exportResolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`, { responseType: 'blob' }),
         exportCompleteReport: (committeeId) => api.get(`/export/committee-report/${committeeId}`, { responseType: 'blob' }),
 
-        // ✅ IMPLEMENTED - Basic Statistics (without blob)
-        getStatistics: (committeeId) => api.get(`/export/statistics/${committeeId}`), // NOT USED
-
-        // ❌ TODO - Event Export Routes (Missing)
-        exportEventData: (eventId) => api.get(`/export/events/${eventId}`, { responseType: 'blob' }), // TODO: Route not implemented
-        getEventCSV: (eventId) => api.get(`/export/event/${eventId}/csv`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
-        getEventFullReport: (eventId) => api.get(`/export/event/${eventId}/full-report`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
-
-        // ❌ TODO - Committee Detail Export Routes (Missing)
-        getCommitteeCSV: (committeeId) => api.get(`/export/committee/${committeeId}/csv`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
-        getCommitteeStatistics: (committeeId) => api.get(`/export/committee/${committeeId}/statistics`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
-        getResolutionsExport: (committeeId) => api.get(`/export/committee/${committeeId}/resolutions`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
-        getVotingRecords: (committeeId) => api.get(`/export/committee/${committeeId}/voting-records`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
-        getAttendanceExport: (committeeId) => api.get(`/export/committee/${committeeId}/attendance`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
-        getMessagingStats: (committeeId) => api.get(`/export/committee/${committeeId}/messaging-stats`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
-
-        // ❌ TODO - Generic Export Routes (Missing)
-        getPDFExport: (type, id) => api.get(`/export/${type}/${id}/pdf`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
-        getExcelExport: (type, id) => api.get(`/export/${type}/${id}/excel`, { responseType: 'blob' }), // TODO: Route not implemented // NOT USED
-        getJSONExport: (type, id) => api.get(`/export/${type}/${id}/json`), // TODO: Route not implemented // NOT USED
-
         // ❌ TODO - Admin Bulk Export Routes (Missing)
-        exportCommitteesBulk: (ids) => api.get('/admin/committees/export', { // TODO: Route not implemented in admin routes
+        exportCommitteesBulk: (ids) => api.get('/admin/committees/export', { 
             params: { ids },
             responseType: 'blob'
         }),
-        exportEvents: () => api.get('/admin/events/export', { responseType: 'blob' }), // TODO: Route not implemented in admin routes
-        exportUsers: () => api.get('/admin/users/export', { responseType: 'blob' }) // TODO: Route not implemented in admin routes
+        exportEvents: () => api.get('/admin/events/export', { responseType: 'blob' }),
+        exportUsers: () => api.get('/admin/users/export', { responseType: 'blob' })
     },
 
     // ✅ FULLY IMPLEMENTED - Committees (17/17 methods working perfectly)

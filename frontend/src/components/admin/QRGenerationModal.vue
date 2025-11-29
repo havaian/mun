@@ -1,113 +1,201 @@
 <template>
     <Teleport to="body">
         <transition name="modal" appear>
-            <div v-if="showWarning"
-                class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300"
-                    :class="{ 'animate-pulse': timeRemaining <= 30 }">
+            <div v-if="modelValue"
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
 
-                    <!-- Header -->
-                    <div class="flex items-center space-x-3 p-6 border-b border-mun-gray-100">
-                        <div class="w-12 h-12 bg-mun-yellow-100 rounded-full flex items-center justify-center">
-                            <ClockIcon class="w-6 h-6 text-mun-yellow-600" />
-                        </div>
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+                    <!-- Modal Header -->
+                    <div class="flex items-center justify-between p-6 border-b border-mun-gray-200">
                         <div>
-                            <h3 class="text-lg font-semibold text-mun-gray-900">
-                                Session Timeout Warning
-                            </h3>
-                            <p class="text-sm text-mun-gray-600">
-                                Your session will expire soon
+                            <h2 class="text-xl font-bold text-mun-gray-900">
+                                QR Code Generation - {{ committee?.name }}
+                            </h2>
+                            <p class="text-sm text-mun-gray-600 mt-1">
+                                Generate and manage QR codes for committee access
                             </p>
                         </div>
+
+                        <button @click="close" class="p-2 hover:bg-mun-gray-100 rounded-lg transition-colors">
+                            <XMarkIcon class="w-6 h-6 text-mun-gray-500" />
+                        </button>
                     </div>
 
                     <!-- Content -->
-                    <div class="p-6">
-                        <!-- Countdown Display -->
-                        <div class="text-center mb-6">
-                            <div class="relative w-24 h-24 mx-auto mb-4">
-                                <!-- Circular Progress -->
-                                <svg class="w-24 h-24 transform -rotate-90" viewBox="0 0 36 36">
-                                    <!-- Background circle -->
-                                    <path class="stroke-mun-gray-200" stroke-width="3" fill="none"
-                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                    <!-- Progress circle -->
-                                    <path :class="getProgressColorClass()" stroke-width="3" fill="none"
-                                        stroke-linecap="round" :stroke-dasharray="circumference"
-                                        :stroke-dashoffset="strokeDashoffset"
-                                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                        style="transition: stroke-dashoffset 1s ease-in-out" />
-                                </svg>
-
-                                <!-- Time Display -->
-                                <div class="absolute inset-0 flex items-center justify-center">
-                                    <div class="text-center">
-                                        <div :class="[
-                                            'text-2xl font-bold',
-                                            timeRemaining <= 30 ? 'text-mun-red-600' :
-                                                timeRemaining <= 60 ? 'text-mun-yellow-600' : 'text-mun-gray-900'
-                                        ]">
-                                            {{ format.time(timeRemaining) }}
-                                        </div>
-                                        <div class="text-xs text-mun-gray-500 mt-1">
-                                            remaining
-                                        </div>
+                    <div class="overflow-y-auto max-h-[calc(90vh-140px)]">
+                        <div class="p-6 space-y-8">
+                            <!-- Generation Status -->
+                            <div v-if="committee?.qrGenerated"
+                                class="bg-mun-green-50 border border-mun-green-200 rounded-xl p-4">
+                                <div class="flex items-center">
+                                    <CheckCircleIcon class="w-6 h-6 text-mun-green-600 mr-3" />
+                                    <div>
+                                        <h3 class="font-medium text-mun-green-900">QR Codes Generated</h3>
+                                        <p class="text-sm text-mun-green-700 mt-1">
+                                            QR codes have been generated for this committee. You can download or
+                                            regenerate them below.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="space-y-2">
-                                <p class="text-mun-gray-800 font-medium">
-                                    Your session will expire due to inactivity
-                                </p>
-                                <p class="text-sm text-mun-gray-600">
-                                    Click "Stay Logged In" to continue your session, or you'll be automatically logged
-                                    out.
-                                </p>
-                            </div>
-                        </div>
+                            <!-- QR Generation Options -->
+                            <div class="space-y-6">
+                                <h3 class="text-lg font-semibold text-mun-gray-900">
+                                    Generation Options
+                                </h3>
 
-                        <!-- Warning Message -->
-                        <div v-if="timeRemaining <= 30"
-                            class="bg-mun-red-50 border border-mun-red-200 rounded-xl p-4 mb-6">
-                            <div class="flex items-center space-x-2">
-                                <ExclamationTriangleIcon class="w-5 h-5 text-mun-red-600 flex-shrink-0" />
-                                <p class="text-sm text-mun-red-800 font-medium">
-                                    Critical: Session expires in {{ timeRemaining }} seconds!
-                                </p>
-                            </div>
-                        </div>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <!-- Presidium QR Codes -->
+                                    <div class="border border-mun-gray-200 rounded-xl p-6">
+                                        <div class="flex items-center mb-4">
+                                            <div
+                                                class="w-10 h-10 bg-mun-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                                <ShieldCheckIcon class="w-5 h-5 text-mun-purple-600" />
+                                            </div>
+                                            <div>
+                                                <h4 class="font-medium text-mun-gray-900">Presidium QR Codes</h4>
+                                                <p class="text-sm text-mun-gray-600">For committee presidium members</p>
+                                            </div>
+                                        </div>
 
-                        <!-- Activity Info -->
-                        <div class="bg-mun-gray-50 rounded-xl p-4 mb-6">
-                            <div class="flex items-start space-x-3">
-                                <InformationCircleIcon class="w-5 h-5 text-mun-gray-600 flex-shrink-0 mt-0.5" />
-                                <div class="text-sm text-mun-gray-700">
-                                    <p class="font-medium mb-1">Session Information</p>
-                                    <p>Last activity: {{ formatLastActivity() }}</p>
-                                    <p>Session started: {{ formatSessionStart() }}</p>
-                                    <p class="mt-2 text-xs text-mun-gray-600">
-                                        For security, sessions expire after {{ sessionTimeoutMinutes }} minutes of
-                                        inactivity.
-                                    </p>
+                                        <div class="space-y-3 mb-4">
+                                            <div v-for="member in presidiumMembers" :key="member.role"
+                                                class="flex items-center justify-between">
+                                                <div class="flex items-center space-x-3">
+                                                    <div :class="[
+                                                        'w-3 h-3 rounded-full',
+                                                        member.qrGenerated ? 'bg-mun-green-500' : 'bg-mun-gray-300'
+                                                    ]"></div>
+                                                    <span class="text-sm font-medium">{{
+                                                        formatPresidiumRole(member.role) }}</span>
+                                                </div>
+                                                <div class="text-xs text-mun-gray-500">
+                                                    {{ member.qrGenerated ? 'Generated' : 'Pending' }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex space-x-2">
+                                            <AppButton variant="outline" size="sm" @click="generatePresidiumQRs"
+                                                :loading="isGeneratingPresidium" class="flex-1">
+                                                {{ hasPresidiumQRs ? 'Regenerate' : 'Generate' }}
+                                            </AppButton>
+
+                                            <AppButton v-if="hasPresidiumQRs" variant="outline" size="sm"
+                                                @click="downloadPresidiumPDF" :loading="isDownloadingPresidium">
+                                                <DocumentArrowDownIcon class="w-4 h-4" />
+                                            </AppButton>
+                                        </div>
+                                    </div>
+
+                                    <!-- Delegate QR Codes -->
+                                    <div class="border border-mun-gray-200 rounded-xl p-6">
+                                        <div class="flex items-center mb-4">
+                                            <div
+                                                class="w-10 h-10 bg-mun-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                                <UserGroupIcon class="w-5 h-5 text-mun-blue" />
+                                            </div>
+                                            <div>
+                                                <h4 class="font-medium text-mun-gray-900">Delegate QR Codes</h4>
+                                                <p class="text-sm text-mun-gray-600">For country delegates</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <div class="text-center">
+                                                <div class="text-2xl font-bold text-mun-gray-900">
+                                                    {{ committee?.countries?.length || 0 }}
+                                                </div>
+                                                <div class="text-sm text-mun-gray-600">Countries assigned</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex space-x-2">
+                                            <AppButton variant="outline" size="sm" @click="generateDelegateQRs"
+                                                :loading="isGeneratingDelegates"
+                                                :disabled="!committee?.countries?.length" class="flex-1">
+                                                {{ hasDelegateQRs ? 'Regenerate' : 'Generate' }}
+                                            </AppButton>
+
+                                            <AppButton v-if="hasDelegateQRs" variant="outline" size="sm"
+                                                @click="downloadDelegatePDF" :loading="isDownloadingDelegates">
+                                                <DocumentArrowDownIcon class="w-4 h-4" />
+                                            </AppButton>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Bulk Actions -->
+                                <div class="border border-mun-gray-200 rounded-xl p-6 bg-mun-gray-50">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div>
+                                            <h4 class="font-medium text-mun-gray-900">Bulk Actions</h4>
+                                            <p class="text-sm text-mun-gray-600">Generate and download all QR codes at
+                                                once</p>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <AppButton variant="outline" size="sm" @click="refreshStatus"
+                                                :loading="isRefreshing">
+                                                <ArrowPathIcon class="w-4 h-4 mr-2" />
+                                                Refresh
+                                            </AppButton>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex space-x-3">
+                                        <AppButton variant="primary" @click="generateAllQRs" :loading="isGeneratingAll"
+                                            :disabled="!committee?.countries?.length">
+                                            <QrCodeIcon class="w-4 h-4 mr-2" />
+                                            Generate All QR Codes
+                                        </AppButton>
+
+                                        <AppButton v-if="hasAnyQRs" variant="outline" @click="downloadCompletePDF"
+                                            :loading="isDownloadingComplete">
+                                            <DocumentArrowDownIcon class="w-4 h-4 mr-2" />
+                                            Download Complete PDF
+                                        </AppButton>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Generation History -->
+                            <div v-if="generationHistory.length > 0" class="space-y-4">
+                                <h3 class="text-lg font-semibold text-mun-gray-900">
+                                    Recent Activity
+                                </h3>
+
+                                <div class="bg-white border border-mun-gray-200 rounded-xl overflow-hidden">
+                                    <div class="max-h-64 overflow-y-auto">
+                                        <div v-for="item in generationHistory" :key="item.id"
+                                            class="flex items-center justify-between p-4 border-b border-mun-gray-100 last:border-b-0">
+                                            <div class="flex items-center space-x-3">
+                                                <div :class="[
+                                                    'w-2 h-2 rounded-full',
+                                                    item.status === 'success' ? 'bg-mun-green-500' :
+                                                        item.status === 'error' ? 'bg-mun-red-500' : 'bg-mun-yellow-500'
+                                                ]"></div>
+                                                <div>
+                                                    <p class="text-sm font-medium text-mun-gray-900">{{ item.action }}
+                                                    </p>
+                                                    <p class="text-xs text-mun-gray-500">
+                                                        {{ formatDate(item.timestamp) }}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div v-if="item.filename" class="flex items-center space-x-2">
+                                                <span class="text-xs text-mun-gray-500">{{ item.filename }}</span>
+                                                <AppButton v-if="item.downloadUrl" variant="ghost" size="xs"
+                                                    @click="downloadFile(item.downloadUrl, item.filename)">
+                                                    <ArrowDownTrayIcon class="w-3 h-3" />
+                                                </AppButton>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="flex space-x-3 p-6 bg-mun-gray-50 rounded-b-2xl">
-                        <AppButton variant="primary" size="lg" @click="extendSession" :loading="isExtending"
-                            class="flex-1">
-                            <ClockIcon class="w-5 h-5 mr-2" />
-                            Stay Logged In
-                        </AppButton>
-
-                        <AppButton variant="outline" size="lg" @click="logoutNow" :disabled="isExtending"
-                            class="flex-1">
-                            <ArrowRightOnRectangleIcon class="w-5 h-5 mr-2" />
-                            Logout Now
-                        </AppButton>
                     </div>
                 </div>
             </div>
@@ -116,284 +204,345 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useAuthStore } from '@/stores/auth'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useToast } from '@/plugins/toast'
-import {
-    ClockIcon,
-    ExclamationTriangleIcon,
-    InformationCircleIcon,
-    ArrowRightOnRectangleIcon
-} from '@heroicons/vue/24/outline'
-import format from '@/utils/time'
+import { apiMethods } from '@/utils/api'
 
-const authStore = useAuthStore()
+// Icons
+import {
+    XMarkIcon,
+    CheckCircleIcon,
+    ShieldCheckIcon,
+    UserGroupIcon,
+    QrCodeIcon,
+    DocumentArrowDownIcon,
+    ArrowPathIcon,
+    ArrowDownTrayIcon
+} from '@heroicons/vue/24/outline'
+
+// Props
+const props = defineProps({
+    modelValue: {
+        type: Boolean,
+        default: false
+    },
+    committee: {
+        type: Object,
+        default: null
+    }
+})
+
+// Emits
+const emit = defineEmits(['update:modelValue', 'generated'])
+
+// Composables
 const toast = useToast()
 
 // State
-const showWarning = ref(false)
-const timeRemaining = ref(300) // 5 minutes in seconds
-const isExtending = ref(false)
-const countdownInterval = ref(null)
+const isGeneratingPresidium = ref(false)
+const isGeneratingDelegates = ref(false)
+const isGeneratingAll = ref(false)
+const isDownloadingPresidium = ref(false)
+const isDownloadingDelegates = ref(false)
+const isDownloadingComplete = ref(false)
+const isRefreshing = ref(false)
 
-// Configuration
-const sessionTimeoutMinutes = ref(30)
-const warningTimeMinutes = ref(5)
+const presidiumStatus = ref([])
+const generationHistory = ref([])
+
+// Mock presidium members (you can replace with actual data from props)
+const presidiumMembers = ref([
+    { role: 'chairman', qrGenerated: false },
+    { role: 'co-chairman', qrGenerated: false },
+    { role: 'expert', qrGenerated: false },
+    { role: 'secretary', qrGenerated: false }
+])
 
 // Computed
-const circumference = computed(() => 2 * Math.PI * 15.9155)
+const hasPresidiumQRs = computed(() => {
+    return presidiumMembers.value.some(member => member.qrGenerated)
+})
 
-const strokeDashoffset = computed(() => {
-    const progress = timeRemaining.value / (warningTimeMinutes.value * 60)
-    return circumference.value * (1 - progress)
+const hasDelegateQRs = computed(() => {
+    return props.committee?.qrGenerated || false
+})
+
+const hasAnyQRs = computed(() => {
+    return hasPresidiumQRs.value || hasDelegateQRs.value
+})
+
+// Watch for committee changes
+watch(() => props.committee?._id, (newVal) => {
+    if (newVal) {
+        loadPresidiumStatus()
+    }
 })
 
 // Methods
-const startSessionMonitoring = () => {
-    // Check session status every minute
-    const checkInterval = setInterval(() => {
-        if (!authStore.isAuthenticated) {
-            clearInterval(checkInterval)
-            return
-        }
-
-        const timeoutDuration = sessionTimeoutMinutes.value * 60 * 1000 // 30 minutes
-        const warningDuration = warningTimeMinutes.value * 60 * 1000 // 5 minutes
-        const now = Date.now()
-        const timeSinceActivity = now - authStore.lastActivity
-
-        // Show warning if approaching timeout
-        if (timeSinceActivity >= timeoutDuration - warningDuration && !showWarning.value) {
-            showSessionWarning()
-        }
-
-        // Auto logout if session expired
-        if (timeSinceActivity >= timeoutDuration) {
-            handleSessionExpiry()
-        }
-    }, 60000) // Check every minute
-
-    // Return cleanup function
-    return () => clearInterval(checkInterval)
-}
-
-const showSessionWarning = () => {
-    showWarning.value = true
-    authStore.sessionWarningShown = true
-
-    // Calculate initial time remaining
-    const timeoutDuration = sessionTimeoutMinutes.value * 60 * 1000
-    const now = Date.now()
-    const timeSinceActivity = now - authStore.lastActivity
-    const timeUntilExpiry = timeoutDuration - timeSinceActivity
-
-    timeRemaining.value = Math.max(0, Math.floor(timeUntilExpiry / 1000))
-
-    // Start countdown
-    startCountdown()
-
-    // Play warning sound (optional)
-    playWarningSound()
-}
-
-const startCountdown = () => {
-    if (countdownInterval.value) {
-        clearInterval(countdownInterval.value)
-    }
-
-    countdownInterval.value = setInterval(() => {
-        timeRemaining.value--
-
-        if (timeRemaining.value <= 0) {
-            handleSessionExpiry()
-        }
-    }, 1000)
-}
-
-const stopCountdown = () => {
-    if (countdownInterval.value) {
-        clearInterval(countdownInterval.value)
-        countdownInterval.value = null
-    }
-}
-
-const extendSession = async () => {
+const loadPresidiumStatus = async () => {
     try {
-        isExtending.value = true
+        const response = await apiMethods.committees.getPresidiumStatus(props.committee._id)
 
-        // Update last activity time
-        authStore.updateActivity()
+        if (response.data.success) {
+            presidiumStatus.value = response.data.presidium || []
 
-        // Validate session with backend
-        const isValid = await authStore.validateSession()
-
-        if (isValid) {
-            hideWarning()
-            toast.success('Session extended successfully')
-        } else {
-            throw new Error('Session validation failed')
+            // Update presidium members status
+            presidiumMembers.value.forEach(member => {
+                const status = presidiumStatus.value.find(p => p.role === member.role)
+                member.qrGenerated = status?.qrGenerated || false
+            })
         }
 
     } catch (error) {
-        toast.error('Session extension error:', error)
-        toast.error('Failed to extend session')
-        handleSessionExpiry()
+        console.error('Load presidium status error:', error)
+    }
+}
+
+const generatePresidiumQRs = async () => {
+    try {
+        isGeneratingPresidium.value = true
+
+        const response = await apiMethods.committees.generatePresidiumQRs(props.committee._id)
+
+        if (response.data.success) {
+            await loadPresidiumStatus()
+            addToHistory('Presidium QR codes generated', 'success', 'presidium-qr-codes.pdf')
+            toast.success('Presidium QR codes generated successfully')
+        }
+
+    } catch (error) {
+        console.error('Generate presidium QRs error:', error)
+        addToHistory('Presidium QR generation failed', 'error')
+        toast.error('Failed to generate presidium QR codes')
     } finally {
-        isExtending.value = false
+        isGeneratingPresidium.value = false
     }
 }
 
-const logoutNow = () => {
-    hideWarning()
-    authStore.logout(true)
-}
-
-const handleSessionExpiry = () => {
-    hideWarning()
-    authStore.logout(false)
-    toast.error('Session expired due to inactivity')
-}
-
-const hideWarning = () => {
-    showWarning.value = false
-    authStore.sessionWarningShown = false
-    stopCountdown()
-}
-
-const formatLastActivity = () => {
-    const now = Date.now()
-    const diff = now - authStore.lastActivity
-    const minutes = Math.floor(diff / 60000)
-
-    if (minutes < 1) {
-        return 'Less than a minute ago'
-    } else if (minutes === 1) {
-        return '1 minute ago'
-    } else {
-        return `${minutes} minutes ago`
-    }
-}
-
-const formatSessionStart = () => {
-    // This would need to be tracked when user logs in
-    // For now, we'll estimate based on token creation time
-    const sessionStart = new Date(authStore.lastActivity - (20 * 60 * 1000)) // Assume 20 mins ago
-    return sessionStart.toLocaleTimeString()
-}
-
-const getProgressColorClass = () => {
-    if (timeRemaining.value <= 30) {
-        return 'stroke-mun-red-500'
-    } else if (timeRemaining.value <= 60) {
-        return 'stroke-mun-yellow-500'
-    } else {
-        return 'stroke-mun-blue'
-    }
-}
-
-const playWarningSound = () => {
-    // Create a subtle warning sound
+const generateDelegateQRs = async () => {
     try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)()
-        const oscillator = audioContext.createOscillator()
-        const gainNode = audioContext.createGain()
+        isGeneratingDelegates.value = true
 
-        oscillator.connect(gainNode)
-        gainNode.connect(audioContext.destination)
+        const response = await apiMethods.committees.generateQRs(props.committee._id)
 
-        oscillator.frequency.setValueAtTime(800, audioContext.currentTime)
-        oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1)
+        if (response.data.success) {
+            addToHistory('Delegate QR codes generated', 'success', 'delegate-qr-codes.pdf')
+            toast.success('Delegate QR codes generated successfully')
 
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2)
-
-        oscillator.start(audioContext.currentTime)
-        oscillator.stop(audioContext.currentTime + 0.2)
-    } catch (error) {
-        toast.warn('Could not play warning sound:', error)
-    }
-}
-
-// Handle user activity to reset warning
-const handleUserActivity = () => {
-    if (showWarning.value) {
-        // User is active, extend the warning time
-        const timeoutDuration = sessionTimeoutMinutes.value * 60 * 1000
-        const warningDuration = warningTimeMinutes.value * 60 * 1000
-        const now = Date.now()
-
-        authStore.updateActivity()
-
-        // Recalculate time remaining
-        const timeSinceActivity = now - authStore.lastActivity
-        const timeUntilExpiry = timeoutDuration - timeSinceActivity
-        timeRemaining.value = Math.max(0, Math.floor(timeUntilExpiry / 1000))
-
-        // If user activity reset the timeout, hide warning
-        if (timeUntilExpiry > warningDuration) {
-            hideWarning()
+            // Update committee status
+            emit('generated', { ...props.committee, qrGenerated: true })
         }
+
+    } catch (error) {
+        console.error('Generate delegate QRs error:', error)
+        addToHistory('Delegate QR generation failed', 'error')
+        toast.error('Failed to generate delegate QR codes')
+    } finally {
+        isGeneratingDelegates.value = false
     }
 }
 
-// Lifecycle hooks
-onMounted(() => {
-    // Start session monitoring
-    const cleanup = startSessionMonitoring()
+const generateAllQRs = async () => {
+    try {
+        isGeneratingAll.value = true
 
-    // Track user activity
-    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
+        // Generate both presidium and delegate QRs
+        await Promise.all([
+            generatePresidiumQRs(),
+            generateDelegateQRs()
+        ])
 
-    activityEvents.forEach(event => {
-        document.addEventListener(event, handleUserActivity, true)
-    })
+        addToHistory('All QR codes generated', 'success', 'complete-qr-codes.pdf')
+        toast.success('All QR codes generated successfully')
 
-    // Cleanup on unmount
-    onUnmounted(() => {
-        cleanup()
-        stopCountdown()
-
-        activityEvents.forEach(event => {
-            document.removeEventListener(event, handleUserActivity, true)
-        })
-    })
-})
-
-// Watch for auth state changes
-watch(() => authStore.isAuthenticated, (newVal) => {
-    if (!newVal) {
-        hideWarning()
+    } catch (error) {
+        console.error('Generate all QRs error:', error)
+        addToHistory('Complete QR generation failed', 'error')
+        toast.error('Failed to generate all QR codes')
+    } finally {
+        isGeneratingAll.value = false
     }
-})
+}
 
-// Expose for external triggering if needed
-defineExpose({
-    showSessionWarning,
-    hideWarning,
-    extendSession
+const downloadPresidiumPDF = async () => {
+    try {
+        isDownloadingPresidium.value = true
+
+        const response = await fetch(`/api/export/presidium-qr-codes/${props.committee._id}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`
+            }
+        })
+
+        if (response.ok) {
+            const blob = await response.blob()
+            const filename = `${props.committee.name}-presidium-qr-codes.pdf`
+            downloadBlob(blob, filename)
+            addToHistory('Presidium PDF downloaded', 'success', filename)
+            toast.success('Presidium PDF downloaded successfully')
+        } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+    } catch (error) {
+        console.error('Download presidium PDF error:', error)
+        addToHistory('Presidium PDF download failed', 'error')
+        toast.error('Failed to download presidium PDF')
+    } finally {
+        isDownloadingPresidium.value = false
+    }
+}
+
+const downloadDelegatePDF = async () => {
+    try {
+        isDownloadingDelegates.value = true
+
+        const response = await fetch(`/api/export/qr-codes/${props.committee._id}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`
+            }
+        })
+
+        if (response.ok) {
+            const blob = await response.blob()
+            const filename = `${props.committee.name}-delegate-qr-codes.pdf`
+            downloadBlob(blob, filename)
+            addToHistory('Delegate PDF downloaded', 'success', filename)
+            toast.success('Delegate PDF downloaded successfully')
+        } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+    } catch (error) {
+        console.error('Download delegate PDF error:', error)
+        addToHistory('Delegate PDF download failed', 'error')
+        toast.error('Failed to download delegate PDF')
+    } finally {
+        isDownloadingDelegates.value = false
+    }
+}
+
+const downloadCompletePDF = async () => {
+    try {
+        isDownloadingComplete.value = true
+
+        const response = await fetch(`/api/export/complete-qr-codes/${props.committee._id}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('mun_token')}`
+            }
+        })
+
+        if (response.ok) {
+            const blob = await response.blob()
+            const filename = `${props.committee.name}-complete-qr-codes.pdf`
+            downloadBlob(blob, filename)
+            addToHistory('Complete PDF downloaded', 'success', filename)
+            toast.success('Complete PDF downloaded successfully')
+        } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+    } catch (error) {
+        console.error('Download complete PDF error:', error)
+        addToHistory('Complete PDF download failed', 'error')
+        toast.error('Failed to download complete PDF')
+    } finally {
+        isDownloadingComplete.value = false
+    }
+}
+
+const refreshStatus = async () => {
+    try {
+        isRefreshing.value = true
+        await loadPresidiumStatus()
+        toast.success('Status refreshed')
+    } catch (error) {
+        console.error('Refresh status error:', error)
+        toast.error('Failed to refresh status')
+    } finally {
+        isRefreshing.value = false
+    }
+}
+
+const downloadBlob = (blob, filename) => {
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+}
+
+const downloadFile = (url, filename) => {
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+}
+
+const addToHistory = (action, status, filename = null) => {
+    generationHistory.value.unshift({
+        id: Date.now(),
+        action,
+        status,
+        filename,
+        timestamp: new Date(),
+        downloadUrl: filename ? `#${filename}` : null
+    })
+
+    // Keep only last 10 items
+    if (generationHistory.value.length > 10) {
+        generationHistory.value = generationHistory.value.slice(0, 10)
+    }
+}
+
+const formatPresidiumRole = (role) => {
+    const roleMap = {
+        'chairman': 'Chairman',
+        'co-chairman': 'Co-Chairman',
+        'expert': 'Expert',
+        'secretary': 'Secretary'
+    }
+    return roleMap[role] || role.charAt(0).toUpperCase() + role.slice(1)
+}
+
+const formatDate = (date) => {
+    return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(new Date(date))
+}
+
+const close = () => {
+    emit('update:modelValue', false)
+}
+
+// Lifecycle
+onMounted(() => {
+    if (props.committee?._id) {
+        loadPresidiumStatus()
+    }
 })
 </script>
 
 <style scoped>
-/* Pulse animation for critical state */
-@keyframes pulse {
-
-    0%,
-    100% {
-        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-    }
-
-    50% {
-        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-    }
+.modal-enter-active,
+.modal-leave-active {
+    transition: all 0.3s ease;
 }
 
-.animate-pulse {
-    animation: pulse 2s infinite;
-}
-
-/* Progress circle styling */
-.stroke-transition {
-    transition: stroke-dashoffset 1s ease-in-out;
+.modal-enter-from,
+.modal-leave-to {
+    opacity: 0;
+    transform: scale(0.9);
 }
 </style>

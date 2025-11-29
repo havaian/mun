@@ -5,7 +5,7 @@ const PDFGenerator = require('../utils/pdfGenerator');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
 
-// Generate QR codes PDF for committee
+// Generate QR codes PDF for committee (delegates only)
 const generateCommitteeQRPDF = async (req, res) => {
     try {
         const { committeeId } = req.params;
@@ -30,7 +30,59 @@ const generateCommitteeQRPDF = async (req, res) => {
             }
         }
 
-        // Ensure presidium members have QR tokens
+        // Update committee if needed
+        if (needsUpdate) {
+            await Committee.findByIdAndUpdate(committeeId, {
+                $set: { countries: committee.countries }
+            });
+        }
+
+        // Generate delegates-only PDF
+        const pdfGenerator = new PDFGenerator();
+        const baseUrl = process.env.FRONTEND_URL || 'https://mun.uz';
+        const pdfBuffer = await pdfGenerator.generateDelegateQRPDF(committee, baseUrl);
+
+        // Set response headers
+        const filename = `Delegate_QR_Codes_${committee.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+
+        logger.info(`Generated delegate QR codes PDF for committee: ${committee.name} (${pdfBuffer.length} bytes)`);
+
+        // Send PDF
+        res.send(pdfBuffer);
+
+    } catch (error) {
+        logger.error('Delegate PDF generation error:', error);
+        res.status(500).json({
+            error: 'Failed to generate delegate QR codes PDF',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
+// NEW: Generate presidium-only QR codes PDF
+const generatePresidiumQRPDF = async (req, res) => {
+    try {
+        const { committeeId } = req.params;
+
+        // Find committee with all data
+        const committee = await Committee.findById(committeeId)
+            .populate('eventId', 'name')
+            .lean();
+
+        if (!committee) {
+            return res.status(404).json({
+                error: 'Committee not found'
+            });
+        }
+
+        // Ensure presidium members exist and have QR tokens
         const presidiumRoles = ['chairman', 'co-chairman', 'expert', 'secretary'];
 
         // Check existing presidium members in the committee
@@ -57,20 +109,19 @@ const generateCommitteeQRPDF = async (req, res) => {
             logger.info(`Created presidium user: ${role} for committee ${committee.name}`);
         }
 
-        // Update committee if needed
-        if (needsUpdate) {
-            await Committee.findByIdAndUpdate(committeeId, {
-                $set: { countries: committee.countries }
-            });
-        }
+        // Get all presidium members with QR tokens
+        const presidiumMembers = await User.find({
+            committeeId: committeeId,
+            role: 'presidium'
+        }).select('presidiumRole qrToken').lean();
 
-        // Generate PDF
+        // Generate presidium-only PDF
         const pdfGenerator = new PDFGenerator();
         const baseUrl = process.env.FRONTEND_URL || 'https://mun.uz';
-        const pdfBuffer = await pdfGenerator.generateCommitteeQRPDF(committee, baseUrl);
+        const pdfBuffer = await pdfGenerator.generatePresidiumQRPDF(committee, presidiumMembers, baseUrl);
 
         // Set response headers
-        const filename = `QR_Codes_${committee.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+        const filename = `Presidium_QR_Codes_${committee.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -79,15 +130,109 @@ const generateCommitteeQRPDF = async (req, res) => {
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
 
-        logger.info(`Generated QR codes PDF for committee: ${committee.name} (${pdfBuffer.length} bytes)`);
+        logger.info(`Generated presidium QR codes PDF for committee: ${committee.name} (${pdfBuffer.length} bytes)`);
 
         // Send PDF
         res.send(pdfBuffer);
 
     } catch (error) {
-        logger.error('PDF generation error:', error);
+        logger.error('Presidium PDF generation error:', error);
         res.status(500).json({
-            error: 'Failed to generate QR codes PDF',
+            error: 'Failed to generate presidium QR codes PDF',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+
+// NEW: Generate complete QR codes PDF (presidium + delegates)
+const generateCompleteQRPDF = async (req, res) => {
+    try {
+        const { committeeId } = req.params;
+
+        // Find committee with all data
+        const committee = await Committee.findById(committeeId)
+            .populate('eventId', 'name')
+            .lean();
+
+        if (!committee) {
+            return res.status(404).json({
+                error: 'Committee not found'
+            });
+        }
+
+        // Ensure all countries have QR tokens
+        let needsUpdate = false;
+        for (let country of committee.countries) {
+            if (!country.qrToken) {
+                country.qrToken = crypto.randomBytes(32).toString('hex');
+                needsUpdate = true;
+            }
+        }
+
+        // Update committee if needed
+        if (needsUpdate) {
+            await Committee.findByIdAndUpdate(committeeId, {
+                $set: { countries: committee.countries }
+            });
+        }
+
+        // Ensure presidium members exist and have QR tokens
+        const presidiumRoles = ['chairman', 'co-chairman', 'expert', 'secretary'];
+
+        // Check existing presidium members in the committee
+        const existingPresidium = await User.find({
+            committeeId: committeeId,
+            role: 'presidium'
+        }).lean();
+
+        // Create missing presidium users with QR tokens
+        const missingRoles = presidiumRoles.filter(role =>
+            !existingPresidium.find(p => p.presidiumRole === role)
+        );
+
+        for (const role of missingRoles) {
+            const presidiumUser = new User({
+                role: 'presidium',
+                presidiumRole: role,
+                committeeId: committeeId,
+                qrToken: crypto.randomBytes(32).toString('hex'),
+                isQrActive: true,
+                isActive: true
+            });
+            await presidiumUser.save();
+            logger.info(`Created presidium user: ${role} for committee ${committee.name}`);
+        }
+
+        // Get all presidium members with QR tokens
+        const presidiumMembers = await User.find({
+            committeeId: committeeId,
+            role: 'presidium'
+        }).select('presidiumRole qrToken').lean();
+
+        // Generate complete PDF with both presidium and delegates
+        const pdfGenerator = new PDFGenerator();
+        const baseUrl = process.env.FRONTEND_URL || 'https://mun.uz';
+        const pdfBuffer = await pdfGenerator.generateCompleteQRPDF(committee, presidiumMembers, baseUrl);
+
+        // Set response headers
+        const filename = `Complete_QR_Codes_${committee.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+
+        logger.info(`Generated complete QR codes PDF for committee: ${committee.name} (${pdfBuffer.length} bytes)`);
+
+        // Send PDF
+        res.send(pdfBuffer);
+
+    } catch (error) {
+        logger.error('Complete PDF generation error:', error);
+        res.status(500).json({
+            error: 'Failed to generate complete QR codes PDF',
             details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
@@ -210,6 +355,8 @@ const exportCompleteReport = async (req, res) => {
 
 module.exports = {
     generateCommitteeQRPDF,
+    generatePresidiumQRPDF,      // NEW
+    generateCompleteQRPDF,       // NEW
     exportStatistics,
     exportVotingResults,
     exportResolutions,

@@ -29,13 +29,31 @@ const validateCommitteeId = [
         .withMessage('Valid committee ID is required')
 ];
 
-// Generate QR codes PDF for committee (admin only)
+// Generate QR codes PDF for committee delegates (admin only)
 router.get('/qr-codes/:committeeId',
     authenticateToken,
     requireAdmin, // Only admin can generate QR PDFs
     validateCommitteeId,
     handleValidationErrors,
     controller.generateCommitteeQRPDF
+);
+
+// NEW: Generate presidium-only QR codes PDF (admin only)
+router.get('/presidium-qr-codes/:committeeId',
+    authenticateToken,
+    requireAdmin, // Only admin can generate QR PDFs
+    validateCommitteeId,
+    handleValidationErrors,
+    controller.generatePresidiumQRPDF
+);
+
+// NEW: Generate complete QR codes PDF (presidium + delegates) (admin only)
+router.get('/complete-qr-codes/:committeeId',
+    authenticateToken,
+    requireAdmin, // Only admin can generate QR PDFs
+    validateCommitteeId,
+    handleValidationErrors,
+    controller.generateCompleteQRPDF
 );
 
 // Export committee statistics (presidium + admin)
