@@ -278,7 +278,7 @@
 
                             <!-- Footer -->
                             <div
-                                class="modal-footer flex items-center justify-between p-6 border-t border-mun-gray-200 bg-mun-gray-50">
+                                class="modal-footer flex items-center justify-between rounded-b-2xl p-6 border-t border-mun-gray-200 bg-mun-gray-50">
                                 <div class="text-sm text-mun-gray-600">
                                     <InformationCircleIcon class="w-4 h-4 inline mr-1" />
                                     Request will be sent to the coalition head for approval

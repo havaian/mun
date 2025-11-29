@@ -119,7 +119,7 @@
                     </div>
 
                     <!-- Modal Footer - Fixed -->
-                    <div class="flex items-center justify-between p-6 bg-mun-gray-50 border-t border-mun-gray-200 flex-shrink-0">
+                    <div class="flex items-center justify-between rounded-b-2xl p-6 bg-mun-gray-50 border-t border-mun-gray-200 flex-shrink-0">
                         <div class="flex items-center space-x-4">
                             <AppButton variant="ghost" @click="close" :disabled="isSubmitting">
                                 Cancel

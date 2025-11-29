@@ -239,7 +239,7 @@
                     </div>
 
                     <!-- Modal Footer -->
-                    <div class="flex items-center justify-between p-6 bg-mun-gray-50 border-t border-mun-gray-200">
+                    <div class="flex items-center justify-between rounded-b-2xl p-6 bg-mun-gray-50 border-t border-mun-gray-200">
                         <div class="flex items-center space-x-4">
                             <div class="text-sm text-mun-gray-600">
                                 {{ assignedCountries.length }} countries assigned

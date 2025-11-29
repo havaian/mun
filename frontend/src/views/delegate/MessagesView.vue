@@ -282,7 +282,7 @@
                                 placeholder="Type your message here..."></textarea>
                         </div>
 
-                        <div class="flex items-center justify-end space-x-3 pt-4">
+                        <div class="flex items-center justify-end space-x-3 pt-4 rounded-b-2xl">
                             <button type="button" @click="showComposeModal = false" class="btn-un-secondary">
                                 Cancel
                             </button>

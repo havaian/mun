@@ -233,7 +233,7 @@
                     </div>
 
                     <!-- Footer -->
-                    <div class="flex items-center justify-between p-6 border-t border-mun-gray-200 bg-mun-gray-50">
+                    <div class="flex items-center justify-between rounded-b-2xl p-6 border-t border-mun-gray-200 bg-mun-gray-50">
                         <div class="text-sm text-mun-gray-500">
                             Created {{ formatDate(event?.createdAt) }} • Last updated {{ formatDate(event?.updatedAt) }}
                         </div>
