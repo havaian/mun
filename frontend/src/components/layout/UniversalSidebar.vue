@@ -1,9 +1,9 @@
 <template>
     <aside :class="[
-        'fixed inset-y-0 left-0 z-50 bg-white border-r border-mun-gray-200 transform transition-all duration-300 ease-in-out flex flex-col',
+        'fixed inset-y-0 left-0 z-50 bg-white border-r border-mun-gray-200 transform transition-all duration-300 ease-in-out flex flex-col group',
         // Width: full on mobile, responsive on desktop
         'w-72',
-        sidebarCollapsed ? 'lg:w-16' : 'lg:w-72',
+        sidebarCollapsed ? 'lg:w-16 lg:hover:w-24' : 'lg:w-72',
         // Position: slide on mobile, always visible on desktop
         sidebarCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'
     ]">
@@ -11,12 +11,12 @@
         <div :class="[
             'flex items-center h-16 px-6 border-b border-mun-gray-200 flex-shrink-0',
             `bg-gradient-to-r ${roleConfig.headerGradient}`,
-            sidebarCollapsed ? 'lg:px-2 lg:justify-center' : 'justify-between'
+            sidebarCollapsed ? 'lg:px-2 lg:justify-between lg:group-hover:justify-between' : 'justify-between'
         ]">
             <!-- Logo and Title Container -->
             <div :class="[
                 'flex items-center',
-                sidebarCollapsed ? 'lg:justify-center' : 'space-x-3'
+                sidebarCollapsed ? 'lg:justify-center lg:group-hover:justify-start lg:group-hover:space-x-2' : 'space-x-3'
             ]">
                 <div class="flex-shrink-0">
                     <div class="w-10 h-10 bg-mun-blue backdrop-blur-sm rounded-xl flex items-center justify-center">
@@ -42,8 +42,8 @@
 
             <!-- Desktop toggle button -->
             <button @click="$emit('toggle-sidebar')" :class="[
-                'p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors',
-                sidebarCollapsed ? 'hidden lg:block lg:absolute lg:top-4 lg:right-2' : 'hidden lg:block'
+                'p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300',
+                sidebarCollapsed ? 'hidden lg:block lg:opacity-0 lg:group-hover:opacity-100' : 'hidden lg:block'
             ]" :title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
                 <ArrowLeftEndOnRectangleIcon v-if="!sidebarCollapsed" class="w-5 h-5" />
                 <ArrowRightStartOnRectangleIcon v-else class="w-5 h-5" />
