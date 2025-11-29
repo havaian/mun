@@ -9,30 +9,42 @@
     ]">
         <!-- Brand Header -->
         <div :class="[
-            'flex items-center justify-between h-16 px-6 border-b border-mun-gray-200 flex-shrink-0',
-            `bg-gradient-to-r ${roleConfig.headerGradient}`
+            'flex items-center h-16 px-6 border-b border-mun-gray-200 flex-shrink-0',
+            `bg-gradient-to-r ${roleConfig.headerGradient}`,
+            sidebarCollapsed ? 'lg:px-2 lg:justify-center' : 'justify-between'
         ]">
-            <div class="flex items-center space-x-3">
+            <!-- Logo and Title Container -->
+            <div :class="[
+                'flex items-center',
+                sidebarCollapsed ? 'lg:justify-center' : 'space-x-3'
+            ]">
                 <div class="flex-shrink-0">
                     <div class="w-10 h-10 bg-mun-blue backdrop-blur-sm rounded-xl flex items-center justify-center">
                         <img src="/logo.svg" alt="" class="w-8 h-8 text-white">
                     </div>
                 </div>
-                <div class="text-white">
+                <div :class="[
+                    'text-white transition-opacity duration-300',
+                    sidebarCollapsed ? 'lg:hidden' : ''
+                ]">
                     <h1 class="text-lg font-bold tracking-tight">{{ roleConfig.title }}</h1>
                     <p class="text-xs opacity-90" :class="roleConfig.subtitleColor">{{ roleConfig.subtitle }}</p>
                 </div>
             </div>
+
             <!-- Mobile close button -->
-            <button @click="$emit('toggle-sidebar')"
-                class="lg:hidden p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+            <button @click="$emit('toggle-sidebar')" :class="[
+                'p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors',
+                sidebarCollapsed ? 'lg:hidden' : 'lg:hidden'
+            ]">
                 <XMarkIcon class="w-5 h-5" />
             </button>
 
             <!-- Desktop toggle button -->
-            <button @click="$emit('toggle-sidebar')"
-                class="hidden lg:block p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                :title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
+            <button @click="$emit('toggle-sidebar')" :class="[
+                'p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors',
+                sidebarCollapsed ? 'hidden lg:block lg:absolute lg:top-4 lg:right-2' : 'hidden lg:block'
+            ]" :title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
                 <ArrowLeftEndOnRectangleIcon v-if="!sidebarCollapsed" class="w-5 h-5" />
                 <ArrowRightStartOnRectangleIcon v-else class="w-5 h-5" />
             </button>
