@@ -213,7 +213,7 @@
                     <!-- User Info -->
                     <div :class="sidebarCollapsed ? 'flex justify-center' : 'flex items-center space-x-3'">
                         <div :class="[
-                            'rounded-full flex items-center justify-center',
+                            'flex items-center justify-center',
                             roleConfig.userIconBackground,
                             sidebarCollapsed ? 'w-10 h-10' : 'w-8 h-8'
                         ]" :title="sidebarCollapsed ? userDisplayName : ''">
@@ -329,25 +329,25 @@ const roleConfigs = {
         logoBackground: 'bg-mun-blue',
         logoIcon: 'CogIcon',
         subtitleColor: 'text-blue-100',
-        userIconBackground: 'bg-mun-blue-500'
+        userIconBackground: 'bg-mun-blue-300'
     },
     presidium: {
         title: 'Presidium',
         subtitle: 'Committee Control',
         headerGradient: 'from-mun-green-600 to-mun-green-700',
-        logoBackground: 'bg-mun-green',
+        logoBackground: 'bg-indigo',
         logoIcon: 'UserGroupIcon',
         subtitleColor: 'text-green-100',
-        userIconBackground: 'bg-mun-green-500'
+        userIconBackground: 'bg-indigo-300'
     },
     delegate: {
         title: 'Delegate Portal',
         subtitle: 'Committee Participation',
         headerGradient: 'from-mun-red-600 to-mun-red-700',
-        logoBackground: 'bg-mun-red',
+        logoBackground: 'bg-violet',
         logoIcon: 'HandRaisedIcon',
         subtitleColor: 'text-red-100',
-        userIconBackground: 'bg-mun-red-500'
+        userIconBackground: 'bg-violet-300'
     }
 }
 

@@ -7,7 +7,10 @@
             :user-actions="userActions" @toggle-sidebar="toggleSidebar" @logout="handleLogout" />
 
         <!-- Main Content -->
-        <div :class="['transition-all duration-200 ease-in-out', sidebarCollapsed ? 'ml-0' : 'ml-72']">
+        <div :class="[
+            'transition-all duration-200 ease-in-out',
+            sidebarCollapsed ? 'ml-0 lg:ml-16' : 'ml-0 lg:ml-72'
+        ]">
             <main class="min-h-screen bg-mun-gray-50">
                 <router-view />
             </main>
