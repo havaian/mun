@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
         unique: true,
         lowercase: true,
         trim: true,
-        required: function () { return this.role === 'presidium' || this.role === 'delegate'; }
+        required: function () { return this.role === 'delegate'; }
     },
 
     // QR token for initial access (presidium AND delegates)

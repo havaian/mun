@@ -51,7 +51,6 @@
                                             Committee Type *
                                         </label>
                                         <SleekSelect v-model="formData.type" :options="[
-                                            { label: 'Select committee type', value: '' },
                                             { label: 'General Assembly', value: 'GA' },
                                             { label: 'Security Council', value: 'SC' },
                                             { label: 'Other', value: 'other' }
@@ -68,7 +67,6 @@
                                             Event *
                                         </label>
                                         <SleekSelect v-model="formData.eventId" :options="[
-                                            { label: 'Select event', value: '' },
                                             ...availableEvents.map(event => ({
                                                 label: event.name,
                                                 value: event._id

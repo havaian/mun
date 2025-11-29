@@ -190,7 +190,6 @@
                                             Presidium Role *
                                         </label>
                                         <SleekSelect v-model="formData.presidiumRole" :options="[
-                                            { label: 'Select presidium role', value: '' },
                                             { label: 'Chairman', value: 'chairman' },
                                             { label: 'Co-Chairman', value: 'co-chairman' },
                                             { label: 'Expert', value: 'expert' },
@@ -208,7 +207,6 @@
                                             Country/Organization *
                                         </label>
                                         <SleekSelect v-model="formData.country" :options="[
-                                            { label: 'Select country or organization', value: '' },
                                             ...availableCountries.map(country => ({
                                                 label: country.name,
                                                 value: country.code
@@ -226,12 +224,11 @@
                                             Committee Assignment
                                         </label>
                                         <SleekSelect v-model="formData.committeeId" :options="[
-                                            { label: 'No committee assigned', value: '' },
                                             ...availableCommittees.map(committee => ({
                                                 label: `${committee.name} (${committee.acronym})`,
                                                 value: committee.id
                                             }))
-                                        ]" placeholder="No committee assigned" searchable size="md" />
+                                        ]" placeholder="Assign the committee" searchable size="md" />
                                     </div>
 
                                     <!-- Account Status -->
@@ -345,7 +342,6 @@
                                             Experience Level
                                         </label>
                                         <SleekSelect v-model="formData.experienceLevel" :options="[
-                                            { label: 'Select experience level', value: '' },
                                             { label: 'Beginner (0-1 conferences)', value: 'beginner' },
                                             { label: 'Intermediate (2-5 conferences)', value: 'intermediate' },
                                             { label: 'Advanced (5+ conferences)', value: 'advanced' },

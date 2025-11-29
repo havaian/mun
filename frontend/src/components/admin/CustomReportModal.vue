@@ -52,7 +52,6 @@
                                                 Data Source *
                                             </label>
                                             <SleekSelect v-model="reportConfig.dataSource" :options="[
-                                                { label: 'Select data source', value: '' },
                                                 ...dataSources
                                             ]" placeholder="Select data source" @change="onDataSourceChange" required size="md" />
                                         </div>
@@ -234,7 +233,6 @@
 
                                                 <!-- Field Selection -->
                                                 <SleekSelect v-model="filter.field" :options="[
-                                                    { label: 'Select Field', value: '' },
                                                     ...availableFields.map(field => ({
                                                         label: field.label,
                                                         value: field.key

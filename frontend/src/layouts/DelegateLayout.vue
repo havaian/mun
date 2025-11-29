@@ -221,12 +221,11 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Motion Type</label>
                         <SleekSelect v-model="motionForm.type" :options="[
-                            { label: 'Select motion type', value: '' },
                             { label: 'Moderated Caucus', value: 'moderated_caucus' },
                             { label: 'Unmoderated Caucus', value: 'unmoderated_caucus' },
                             { label: 'Previous Question', value: 'previous_question' },
                             { label: 'Extend Debate Time', value: 'extend_debate' }
-                        ]" container-class="w-full" />
+                        ]" placeholder="Select motion type" container-class="w-full" />
                     </div>
 
                     <div>

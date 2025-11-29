@@ -204,7 +204,6 @@
                         <div>
                             <label class="block text-sm font-medium text-mun-gray-700 mb-2">Document Type</label>
                             <SleekSelect v-model="uploadForm.type" :options="[
-                                { label: 'Select document type', value: '' },
                                 { label: 'Position Paper', value: 'position-paper' },
                                 { label: 'Resolution', value: 'resolution' },
                                 { label: 'Amendment', value: 'amendment' },

@@ -242,7 +242,6 @@
                             <div>
                                 <label class="block text-sm font-medium text-mun-gray-700 mb-2">To</label>
                                 <SleekSelect v-model="composeForm.recipient" :options="[
-                                    { label: 'Select recipient', value: '' },
                                     { label: 'Presidium', value: 'presidium' },
                                     { label: 'All Delegates', value: 'all-delegates' },
                                     ...availableCountries.map(country => ({
