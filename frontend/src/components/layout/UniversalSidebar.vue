@@ -10,11 +10,8 @@
         ]">
             <div class="flex items-center space-x-3">
                 <div class="flex-shrink-0">
-                    <div :class="[
-                        'w-10 h-10 backdrop-blur-sm rounded-xl flex items-center justify-center',
-                        roleConfig.logoBackground
-                    ]">
-                        <component :is="roleConfig.logoIcon" class="w-6 h-6 text-white" />
+                    <div class="w-10 h-10 bg-mun-blue backdrop-blur-sm rounded-xl flex items-center justify-center">
+                        <img src="/logo.svg" alt="" class="w-8 h-8 text-white">
                     </div>
                 </div>
                 <div class="text-white">
