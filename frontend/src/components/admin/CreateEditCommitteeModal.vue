@@ -22,7 +22,7 @@
                     </div>
 
                     <!-- Modal Content -->
-                    <div class="overflow-y-auto max-h-[calc(90vh-140px)]">
+                    <div class="overflow-y-auto max-h-[80vh]">
                         <form @submit.prevent="handleFormSubmit" class="p-6 space-y-8" novalidate>
                             <!-- Basic Information -->
                             <div class="space-y-6">

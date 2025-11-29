@@ -36,7 +36,7 @@
                     </div>
 
                     <!-- Content -->
-                    <div class="overflow-y-auto max-h-[calc(90vh-200px)]">
+                    <div class="overflow-y-auto max-h-[80vh]">
                         <div v-if="!committee" class="flex items-center justify-center py-12">
                             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
                         </div>

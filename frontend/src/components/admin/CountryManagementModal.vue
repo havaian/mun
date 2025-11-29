@@ -22,7 +22,7 @@
                     </div>
 
                     <!-- Content -->
-                    <div class="flex h-[calc(90vh-200px)]">
+                    <div class="flex h-[80vh]">
                         <!-- Country Search & Selection -->
                         <div class="w-1/2 border-r border-mun-gray-200 flex flex-col">
                             <div class="p-6 border-b border-mun-gray-200">

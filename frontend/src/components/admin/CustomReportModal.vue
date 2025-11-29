@@ -30,7 +30,7 @@
                     </div>
 
                     <!-- Content -->
-                    <div class="flex h-[calc(90vh-200px)]">
+                    <div class="flex h-[80vh]">
                         <!-- Sidebar - Report Builder -->
                         <div class="w-80 border-r border-mun-gray-200 bg-mun-gray-50 overflow-y-auto">
                             <div class="p-6 space-y-6">

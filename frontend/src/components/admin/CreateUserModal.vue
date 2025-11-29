@@ -30,7 +30,7 @@
                     </div>
 
                     <!-- Content -->
-                    <div class="overflow-y-auto max-h-[calc(90vh-200px)]">
+                    <div class="overflow-y-auto max-h-[80vh]">
                         <form @submit.prevent="handleSubmit" class="p-6 space-y-8">
                             <!-- Basic Information -->
                             <div class="mun-card p-6">

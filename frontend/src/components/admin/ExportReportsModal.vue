@@ -30,7 +30,7 @@
                     </div>
 
                     <!-- Content -->
-                    <div class="overflow-y-auto max-h-[calc(90vh-200px)]">
+                    <div class="overflow-y-auto max-h-[80vh]">
                         <div class="p-6 space-y-6">
                             <!-- Export Type Selection -->
                             <div class="mun-card p-6">

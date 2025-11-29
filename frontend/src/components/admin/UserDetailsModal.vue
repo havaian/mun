@@ -35,7 +35,7 @@
                     </div>
 
                     <!-- Content -->
-                    <div class="overflow-y-auto max-h-[calc(90vh-200px)]">
+                    <div class="overflow-y-auto max-h-[80vh]">
                         <div v-if="!user" class="flex items-center justify-center py-12">
                             <LoadingSpinner size="lg" />
                         </div>
