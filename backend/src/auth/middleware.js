@@ -3,49 +3,94 @@ const jwt = require('jsonwebtoken');
 const { User } = require('./model');
 const logger = require('../utils/logger');
 
-// Existing authenticateToken middleware (keep as is)
+// Existing authenticateToken middleware - FIXED VERSION
 const authenticateToken = async (req, res, next) => {
     try {
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
         if (!token) {
+            logger.warn('No token provided in Authorization header');
             return res.status(401).json({
                 error: 'Access denied. No token provided.'
             });
         }
 
+        // Debug log for JWT verification
+        logger.debug(`Attempting JWT verification with token: ${token.substring(0, 20)}...`);
+
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Debug log for successful JWT decode
+        logger.debug(`JWT decoded successfully. User ID: ${decoded.userId}, Role: ${decoded.role}`);
 
         // Get fresh user data to ensure current permissions
         const user = await User.findById(decoded.userId)
             .select('-password')
             .lean();
 
-        if (!user || !user.isActive) {
+        if (!user) {
+            logger.warn(`User not found for ID: ${decoded.userId}`);
             return res.status(401).json({
-                error: 'Access denied. User not found or inactive.'
+                error: 'Access denied. User not found.'
             });
         }
 
-        req.user = user;
+        if (!user.isActive) {
+            logger.warn(`User is inactive: ${decoded.userId}`);
+            return res.status(401).json({
+                error: 'Access denied. User account is inactive.'
+            });
+        }
+
+        // Set req.user with both decoded token data AND fresh user data
+        req.user = {
+            userId: decoded.userId || user._id,
+            role: decoded.role || user.role,
+            email: decoded.email || user.email,
+            committeeId: decoded.committeeId || user.committeeId,
+            sessionId: decoded.sessionId || user.sessionId,
+            // Add fields that might be in token but not in user
+            countryName: decoded.countryName || user.countryName,
+            presidiumRole: decoded.presidiumRole || user.presidiumRole,
+            specialRole: decoded.specialRole || user.specialRole,
+            // Include fresh user data
+            ...user
+        };
+
+        logger.debug(`Authentication successful for user: ${req.user.email || req.user.userId}`);
         next();
 
     } catch (error) {
-        logger.error('Token authentication error:', error);
+        logger.error('Token authentication error:', {
+            error: error.message,
+            name: error.name,
+            stack: error.stack
+        });
 
         if (error.name === 'TokenExpiredError') {
+            logger.warn('Token expired');
             return res.status(401).json({
-                error: 'Access denied. Token expired.'
+                error: 'Access denied. Token expired.',
+                code: 'TOKEN_EXPIRED'
             });
         } else if (error.name === 'JsonWebTokenError') {
+            logger.warn('Invalid JWT token');
             return res.status(401).json({
-                error: 'Access denied. Invalid token.'
+                error: 'Access denied. Invalid token.',
+                code: 'INVALID_TOKEN'
+            });
+        } else if (error.name === 'NotBeforeError') {
+            logger.warn('Token not active yet');
+            return res.status(401).json({
+                error: 'Access denied. Token not active.',
+                code: 'TOKEN_NOT_ACTIVE'
             });
         }
 
         return res.status(401).json({
-            error: 'Access denied. Token verification failed.'
+            error: 'Access denied. Token verification failed.',
+            code: 'VERIFICATION_FAILED'
         });
     }
 };
@@ -176,7 +221,7 @@ const optionalAuth = async (req, res, next) => {
         }
 
         // Token provided, try to authenticate
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         const user = await User.findById(decoded.userId);
         if (user && user.isActive) {
@@ -231,7 +276,7 @@ module.exports = {
 
     // Development helper
     requireRolesDev,
-    
+
     // Rate limit
     authRateLimit,
 

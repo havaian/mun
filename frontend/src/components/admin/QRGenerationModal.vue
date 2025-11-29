@@ -279,17 +279,18 @@ watch(() => props.committee?._id, (newVal) => {
 })
 
 // Methods
+
 const loadPresidiumStatus = async () => {
     try {
         const response = await apiMethods.committees.getPresidiumStatus(props.committee._id)
 
         if (response.data.success) {
-            presidiumStatus.value = response.data.presidium || []
+            presidiumStatus.value = response.data.presidiumStatus || []
 
             // Update presidium members status
             presidiumMembers.value.forEach(member => {
                 const status = presidiumStatus.value.find(p => p.role === member.role)
-                member.qrGenerated = status?.qrGenerated || false
+                member.qrGenerated = status?.hasQR || false
             })
         }
 
