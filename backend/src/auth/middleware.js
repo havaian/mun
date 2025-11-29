@@ -138,6 +138,20 @@ const requireRolesDev = (...allowedRoles) => {
     return requireRoles(...allowedRoles);
 };
 
+// Rate limiting middleware for auth endpoints
+const authRateLimit = require('express-rate-limit')({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // 5 attempts per 15 minutes
+    message: {
+        error: 'Too many authentication attempts, please try again later',
+        retryAfter: '15 minutes'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    // Only count failed requests
+    skipSuccessfulRequests: true
+});
+
 module.exports = {
     // Core middleware
     authenticateToken,
@@ -153,5 +167,8 @@ module.exports = {
     requireAnyRole,
 
     // Development helper
-    requireRolesDev
+    requireRolesDev,
+    
+    // Rate limit
+    authRateLimit
 };

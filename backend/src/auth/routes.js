@@ -3,7 +3,6 @@ const { body, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
-const { global.auth.token, global.auth.admin, authRateLimit } = require('./middleware');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -61,7 +60,7 @@ const validateEmailLogin = [
 
 // Admin authentication (unchanged)
 router.post('/admin-login',
-    authRateLimit,
+    global.auth.utils.authRateLimit,
     validateAdminLogin,
     handleValidationErrors,
     controller.adminLogin
@@ -69,7 +68,7 @@ router.post('/admin-login',
 
 // QR code authentication (for both delegates AND presidium)
 router.post('/qr-login',
-    authRateLimit,
+    global.auth.utils.authRateLimit,
     validateQrLogin,
     handleValidationErrors,
     controller.qrLogin
@@ -77,7 +76,7 @@ router.post('/qr-login',
 
 // Email binding after QR verification (for both delegates AND presidium)
 router.post('/bind-email',
-    authRateLimit,
+    global.auth.utils.authRateLimit,
     validateEmailBinding,
     handleValidationErrors,
     controller.bindEmail
@@ -85,7 +84,7 @@ router.post('/bind-email',
 
 // Email login for delegates AND presidium (after email binding)
 router.post('/email-login',
-    authRateLimit,
+    global.auth.utils.authRateLimit,
     validateEmailLogin,
     handleValidationErrors,
     controller.emailLogin

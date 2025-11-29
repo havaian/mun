@@ -69,7 +69,9 @@ const setupGlobalAuth = () => {
                 'delegate': 'Delegate'
             };
             return roleMap[role] || role;
-        }
+        },
+
+        authRateLimit: () => middleware.authRateLimit
     };
 
     logger.info('Global authentication middleware initialized');
