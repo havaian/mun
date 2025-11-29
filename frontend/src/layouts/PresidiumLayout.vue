@@ -1,170 +1,15 @@
 <template>
     <div class="min-h-screen bg-gradient-mun">
-        <!-- Presidium Sidebar -->
-        <div :class="[
-            'fixed inset-y-0 left-0 z-50 w-64 bg-white/90 backdrop-blur-sm border-r border-white/20 shadow-mun-lg transition-transform duration-300',
-            { '-translate-x-full': appStore.sidebarCollapsed }
-        ]">
-            <!-- Sidebar Header -->
-            <div class="flex items-center justify-between p-6 border-b border-mun-gray-100">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-mun-green-500 rounded-xl flex items-center justify-center">
-                        <UserGroupIcon class="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                        <h2 class="text-lg font-bold text-mun-gray-900">Presidium</h2>
-                        <p class="text-sm text-mun-gray-500">{{ authStore.user?.presidiumRole || 'Member' }}</p>
-                    </div>
-                </div>
-                <button @click="appStore.toggleSidebar"
-                    class="p-2 rounded-lg hover:bg-mun-gray-100 transition-colors lg:hidden">
-                    <XMarkIcon class="w-5 h-5 text-mun-gray-600" />
-                </button>
-            </div>
+        <!-- Universal Sidebar -->
+        <UniversalSidebar :sidebar-collapsed="appStore.sidebarCollapsed" user-role="presidium" :user="authStore.user"
+            :primary-navigation="primaryNavigation" :navigation-sections="navigationSections"
+            :quick-actions="quickActions" :current-status="currentStatus" :user-actions="userActions"
+            @toggle-sidebar="appStore.toggleSidebar" @quick-action="handleQuickAction" @logout="handleLogout" />
 
-            <!-- Navigation Menu -->
-            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-                <!-- Main Navigation -->
-                <div class="space-y-1">
-                    <RouterLink v-for="item in navigationItems" :key="item.name" :to="item.to" class="nav-link group"
-                        :class="{ 'active': $route.name === item.name }">
-                        <component :is="item.icon" class="w-5 h-5 mr-3 flex-shrink-0" />
-                        <span>{{ item.label }}</span>
-                        <span v-if="item.badge"
-                            class="ml-auto px-2 py-1 text-xs font-medium bg-mun-red-500 text-white rounded-full">
-                            {{ item.badge }}
-                        </span>
-                    </RouterLink>
-                </div>
-
-                <!-- Committee Quick Actions -->
-                <div class="pt-4 border-t border-mun-gray-100">
-                    <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wider mb-3">
-                        Session Controls
-                    </h4>
-
-                    <!-- Session Actions -->
-                    <div class="space-y-2">
-                        <button v-if="!currentSession || currentSession.status !== 'active'" @click="startSession"
-                            :disabled="isLoading"
-                            class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50">
-                            <PlayIcon class="w-4 h-4 mr-2" />
-                            Start Session
-                        </button>
-
-                        <button v-else @click="pauseSession" :disabled="isLoading"
-                            class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors disabled:opacity-50">
-                            <PauseIcon class="w-4 h-4 mr-2" />
-                            Pause Session
-                        </button>
-
-                        <button @click="takeAttendance" :disabled="isLoading"
-                            class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-mun-blue-700 bg-mun-blue-100 hover:bg-mun-blue-200 rounded-lg transition-colors disabled:opacity-50">
-                            <ClipboardDocumentListIcon class="w-4 h-4 mr-2" />
-                            Take Attendance
-                        </button>
-                    </div>
-                </div>
-            </nav>
-
-            <!-- Session Status -->
-            <div class="border-t border-mun-gray-100 p-4">
-                <div class="space-y-3">
-                    <!-- Current Session Status -->
-                    <div class="text-sm">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-mun-gray-600">Current Session</span>
-                            <div class="flex items-center space-x-2">
-                                <div
-                                    :class="['w-2 h-2 rounded-full', currentSession?.status === 'active' ? 'bg-green-500' : 'bg-gray-400']">
-                                </div>
-                                <span class="text-xs font-medium">{{ currentSession?.status === 'active' ? 'Active' :
-                                    'Inactive' }}</span>
-                            </div>
-                        </div>
-
-                        <div v-if="currentSession" class="text-xs text-mun-gray-500">
-                            <div>Mode: {{ formatSessionMode(currentSession.currentMode) }}</div>
-                            <div v-if="sessionTimer">Timer: {{ sessionTimer }}</div>
-                        </div>
-                    </div>
-
-                    <!-- Committee Stats -->
-                    <div class="text-xs text-mun-gray-500">
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <div class="font-semibold text-mun-gray-900">{{ attendanceCount || 0 }}</div>
-                                <div>Present</div>
-                            </div>
-                            <div>
-                                <div class="font-semibold text-mun-gray-900">{{ pendingDocuments || 0 }}</div>
-                                <div>Pending Docs</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Committee Info -->
-            <div class="border-t border-mun-gray-100 p-4">
-                <div class="text-sm text-mun-gray-600 mb-2">
-                    Committee: {{ committeeInfo?.name || 'Loading...' }}
-                </div>
-                <div class="text-xs text-mun-gray-500">
-                    {{ committeeInfo?.countries?.length || 0 }} countries registered
-                </div>
-            </div>
-
-            <!-- User Profile -->
-            <div class="border-t border-mun-gray-200 p-4">
-                <div class="space-y-3">
-                    <!-- User Info -->
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-mun-green-500 rounded-full flex items-center justify-center">
-                            <UserIcon class="w-5 h-5 text-white" />
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-mun-gray-900 truncate">
-                                {{ authStore.user?.fullName || 'Presidium Member' }}
-                            </p>
-                            <p class="text-xs text-mun-gray-500 truncate">
-                                {{ authStore.user?.presidiumRole || 'Member' }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- User Actions -->
-                    <div class="space-y-1">
-                        <router-link to="/shared/profile"
-                            class="flex items-center px-3 py-2 text-sm text-mun-gray-700 hover:bg-mun-gray-100 rounded-lg transition-colors">
-                            <UserIcon class="w-4 h-4 mr-3" />
-                            Profile Settings
-                        </router-link>
-
-                        <router-link to="/presidium/committee-settings"
-                            class="flex items-center px-3 py-2 text-sm text-mun-gray-700 hover:bg-mun-gray-100 rounded-lg transition-colors">
-                            <CogIcon class="w-4 h-4 mr-3" />
-                            Committee Settings
-                        </router-link>
-
-                        <button @click="handleLogout"
-                            class="w-full flex items-center px-3 py-2 text-sm text-red-700 hover:bg-red-50 rounded-lg transition-colors">
-                            <ArrowRightOnRectangleIcon class="w-4 h-4 mr-3" />
-                            Sign Out
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Content Area -->
-        <div :class="[
-            'transition-all duration-300',
-            appStore.sidebarCollapsed ? 'lg:ml-0' : 'lg:ml-64'
-        ]">
-            <!-- Page Content -->
-            <main class="min-h-screen">
-                <RouterView />
+        <!-- Main Content -->
+        <div :class="['transition-all duration-200 ease-in-out', appStore.sidebarCollapsed ? 'ml-0' : 'ml-72']">
+            <main class="min-h-screen bg-mun-gray-50">
+                <router-view />
             </main>
         </div>
 
@@ -176,21 +21,28 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
 import { useToast } from '@/plugins/toast'
+import UniversalSidebar from '@/components/layout/UniversalSidebar.vue'
 
 // Icons
 import {
-    UserGroupIcon, XMarkIcon, ChartBarIcon, CalendarDaysIcon, DocumentTextIcon,
-    HandRaisedIcon, ClockIcon, PlayIcon, PauseIcon, UserIcon, ClipboardDocumentListIcon,
-    ArrowRightOnRectangleIcon, CogIcon
+    ChartBarIcon,
+    CalendarDaysIcon,
+    DocumentTextIcon,
+    HandRaisedIcon,
+    ClockIcon,
+    PlayIcon,
+    PauseIcon,
+    ClipboardDocumentListIcon,
+    UserIcon,
+    CogIcon
 } from '@heroicons/vue/24/outline'
 
 // Stores
 const router = useRouter()
-const route = useRoute()
 const authStore = useAuthStore()
 const appStore = useAppStore()
 const toast = useToast()
@@ -203,40 +55,144 @@ const sessionTimer = ref('')
 const attendanceCount = ref(0)
 const pendingDocuments = ref(0)
 
-// Navigation items for presidium
-const navigationItems = computed(() => [
+// Navigation Configuration
+const primaryNavigation = computed(() => [
     {
         name: 'PresidiumDashboard',
         label: 'Dashboard',
         to: '/presidium',
         icon: ChartBarIcon
+    }
+])
+
+const navigationSections = computed(() => [
+    {
+        title: 'Committee Management',
+        items: [
+            {
+                name: 'PresidiumSessions',
+                label: 'Session Management',
+                to: '/presidium/sessions',
+                icon: CalendarDaysIcon,
+                badge: currentSession.value?.status === 'active' ? 'LIVE' : null,
+                badgeType: 'live'
+            },
+            {
+                name: 'PresidiumDocuments',
+                label: 'Document Review',
+                to: '/presidium/documents',
+                icon: DocumentTextIcon,
+                badge: pendingDocuments.value > 0 ? pendingDocuments.value : null,
+                badgeType: 'warning'
+            },
+            {
+                name: 'PresidiumVoting',
+                label: 'Voting Management',
+                to: '/presidium/voting',
+                icon: HandRaisedIcon
+            },
+            {
+                name: 'PresidiumAttendance',
+                label: 'Attendance',
+                to: '/presidium/attendance',
+                icon: ClockIcon,
+                badge: attendanceCount.value > 0 ? attendanceCount.value : null,
+                badgeType: 'info'
+            }
+        ]
+    }
+])
+
+const quickActions = computed(() => {
+    const actions = []
+
+    // Session control actions
+    if (!currentSession.value || currentSession.value.status !== 'active') {
+        actions.push({
+            name: 'start-session',
+            label: 'Start Session',
+            icon: PlayIcon,
+            type: 'success',
+            disabled: isLoading.value
+        })
+    } else {
+        actions.push({
+            name: 'pause-session',
+            label: 'Pause Session',
+            icon: PauseIcon,
+            type: 'warning',
+            disabled: isLoading.value
+        })
+    }
+
+    // Attendance action
+    actions.push({
+        name: 'take-attendance',
+        label: 'Take Attendance',
+        icon: ClipboardDocumentListIcon,
+        type: 'primary',
+        disabled: isLoading.value
+    })
+
+    return actions
+})
+
+const currentStatus = computed(() => ({
+    title: 'Session Status',
+    items: [
+        {
+            label: 'Current Session',
+            value: currentSession.value?.status === 'active' ? 'Active' : 'Inactive',
+            indicator: currentSession.value?.status === 'active' ? 'active' : 'inactive'
+        }
+    ],
+    details: currentSession.value ? [
+        {
+            key: 'mode',
+            label: 'Mode',
+            value: formatSessionMode(currentSession.value.currentMode)
+        },
+        {
+            key: 'timer',
+            label: 'Timer',
+            value: sessionTimer.value || 'N/A'
+        },
+        {
+            key: 'present',
+            label: 'Present',
+            value: attendanceCount.value || 0
+        },
+        {
+            key: 'pending',
+            label: 'Pending Docs',
+            value: pendingDocuments.value || 0
+        }
+    ] : [
+        {
+            key: 'committee',
+            label: 'Committee',
+            value: committeeInfo.value?.name || 'Loading...'
+        },
+        {
+            key: 'countries',
+            label: 'Countries',
+            value: committeeInfo.value?.countries?.length || 0
+        }
+    ]
+}))
+
+const userActions = computed(() => [
+    {
+        name: 'profile',
+        label: 'Profile Settings',
+        to: '/shared/profile',
+        icon: UserIcon
     },
     {
-        name: 'PresidiumSessions',
-        label: 'Session Management',
-        to: '/presidium/sessions',
-        icon: CalendarDaysIcon,
-        badge: currentSession.value?.status === 'active' ? 'LIVE' : null
-    },
-    {
-        name: 'PresidiumDocuments',
-        label: 'Document Review',
-        to: '/presidium/documents',
-        icon: DocumentTextIcon,
-        badge: pendingDocuments.value > 0 ? pendingDocuments.value : null
-    },
-    {
-        name: 'PresidiumVoting',
-        label: 'Voting Management',
-        to: '/presidium/voting',
-        icon: HandRaisedIcon
-    },
-    {
-        name: 'PresidiumAttendance',
-        label: 'Attendance',
-        to: '/presidium/attendance',
-        icon: ClockIcon,
-        badge: attendanceCount.value > 0 ? attendanceCount.value : null
+        name: 'committee-settings',
+        label: 'Committee Settings',
+        to: '/presidium/committee-settings',
+        icon: CogIcon
     }
 ])
 
@@ -250,6 +206,22 @@ const formatSessionMode = (mode) => {
         'closed': 'Closed Session'
     }
     return modeMap[mode] || mode || 'Unknown'
+}
+
+const handleQuickAction = async (actionName) => {
+    switch (actionName) {
+        case 'start-session':
+            await startSession()
+            break
+        case 'pause-session':
+            await pauseSession()
+            break
+        case 'take-attendance':
+            router.push('/presidium/attendance')
+            break
+        default:
+            console.warn('Unknown quick action:', actionName)
+    }
 }
 
 const startSession = async () => {
@@ -270,7 +242,7 @@ const startSession = async () => {
 
         toast.success('Session started successfully')
     } catch (error) {
-        toast.error('Failed to start session:', error)
+        console.error('Failed to start session:', error)
         toast.error('Failed to start session')
     } finally {
         isLoading.value = false
@@ -292,23 +264,8 @@ const pauseSession = async () => {
 
         toast.success('Session paused')
     } catch (error) {
-        toast.error('Failed to pause session:', error)
+        console.error('Failed to pause session:', error)
         toast.error('Failed to pause session')
-    } finally {
-        isLoading.value = false
-    }
-}
-
-const takeAttendance = async () => {
-    if (isLoading.value) return
-
-    isLoading.value = true
-    try {
-        // Navigate to attendance page or open modal
-        router.push('/presidium/attendance')
-    } catch (error) {
-        toast.error('Failed to take attendance:', error)
-        toast.error('Failed to access attendance')
     } finally {
         isLoading.value = false
     }
@@ -320,7 +277,7 @@ const handleLogout = async () => {
         toast.success('Logged out successfully')
         router.push('/auth/login')
     } catch (error) {
-        toast.error('Logout error:', error)
+        console.error('Logout error:', error)
         toast.error('Failed to logout')
     }
 }
@@ -345,7 +302,8 @@ const loadPresidiumData = async () => {
         }
 
     } catch (error) {
-        toast.error('Failed to load presidium data:', error)
+        console.error('Failed to load presidium data:', error)
+        toast.error('Failed to load presidium data')
     }
 }
 
@@ -364,46 +322,3 @@ onMounted(async () => {
     })
 })
 </script>
-
-<style scoped>
-/* Navigation styles */
-.nav-link {
-    @apply flex items-center px-4 py-3 text-mun-gray-700 rounded-xl;
-    @apply transition-all duration-200 hover:bg-white/60 hover:text-mun-blue-600;
-    @apply relative;
-}
-
-.nav-link.active {
-    @apply bg-mun-blue-600 text-white shadow-lg;
-}
-
-/* Scrollbar styling */
-.overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
-}
-
-/* Transition optimizations */
-.transition-colors {
-    transition-property: color, background-color, border-color;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
-}
-
-.transition-all {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 300ms;
-}
-</style>

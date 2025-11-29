@@ -1,210 +1,15 @@
 <template>
     <div class="min-h-screen bg-gradient-mun">
-        <!-- Delegate Sidebar -->
-        <div :class="[
-            'fixed inset-y-0 left-0 z-50 w-64 bg-white/90 backdrop-blur-sm border-r border-white/20 shadow-mun-lg transition-transform duration-300',
-            { '-translate-x-full': appStore.sidebarCollapsed }
-        ]">
-            <!-- Sidebar Header -->
-            <div class="flex items-center justify-between p-6 border-b border-mun-gray-100">
-                <div class="flex items-center space-x-3">
-                    <!-- Country Flag -->
-                    <div
-                        class="w-10 h-8 bg-mun-red-500 rounded-lg flex items-center justify-center border border-mun-gray-300">
-                        <span class="text-white text-xs font-bold">
-                            {{ getCountryCode() }}
-                        </span>
-                    </div>
-                    <div>
-                        <h2 class="text-lg font-bold text-mun-gray-900">{{ userCountry?.name || 'Delegate' }}</h2>
-                        <p class="text-sm text-mun-gray-500">{{ committeeInfo?.name || 'Committee' }}</p>
-                    </div>
-                </div>
+        <!-- Universal Sidebar -->
+        <UniversalSidebar :sidebar-collapsed="appStore.sidebarCollapsed" user-role="delegate" :user="authStore.user"
+            :primary-navigation="primaryNavigation" :navigation-sections="navigationSections"
+            :quick-actions="quickActions" :current-status="currentStatus" :user-actions="userActions"
+            @toggle-sidebar="appStore.toggleSidebar" @quick-action="handleQuickAction" @logout="handleLogout" />
 
-                <button @click="appStore.toggleSidebar"
-                    class="p-2 rounded-lg hover:bg-mun-gray-100 transition-colors lg:hidden">
-                    <XMarkIcon class="w-5 h-5 text-mun-gray-600" />
-                </button>
-            </div>
-
-            <!-- Navigation Menu -->
-            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-                <!-- Main Navigation -->
-                <div class="space-y-1">
-                    <RouterLink v-for="item in navigationItems" :key="item.name" :to="item.to" class="nav-link group"
-                        :class="{ 'active': $route.name === item.name }">
-                        <component :is="item.icon" class="w-5 h-5 mr-3 flex-shrink-0" />
-                        <span>{{ item.label }}</span>
-                        <span v-if="item.badge"
-                            class="ml-auto px-2 py-1 text-xs font-medium bg-mun-red-500 text-white rounded-full">
-                            {{ item.badge }}
-                        </span>
-                    </RouterLink>
-                </div>
-
-                <!-- Delegate Quick Actions -->
-                <div class="pt-4 border-t border-mun-gray-100">
-                    <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wider mb-3">
-                        Quick Actions
-                    </h4>
-
-                    <!-- Join Speakers List -->
-                    <button @click="joinSpeakersList" :disabled="isInSpeakersList || !canJoinSpeakers"
-                        class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-                        :class="isInSpeakersList ? 'text-green-700 bg-green-100' : 'text-mun-blue-700 bg-mun-blue-100 hover:bg-mun-blue-200'">
-                        <HandRaisedIcon class="w-4 h-4 mr-2" />
-                        {{ isInSpeakersList ? 'In Speakers List' : 'Join Speakers' }}
-                    </button>
-
-                    <!-- Submit Motion -->
-                    <button @click="openMotionModal" :disabled="!canSubmitMotion"
-                        class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-mun-purple-700 bg-mun-purple-100 hover:bg-mun-purple-200 rounded-lg transition-colors disabled:opacity-50 mt-2">
-                        <DocumentPlusIcon class="w-4 h-4 mr-2" />
-                        Submit Motion
-                    </button>
-
-                    <!-- Quick Vote -->
-                    <button v-if="activeVoting" @click="$router.push('/delegate/voting')"
-                        class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors animate-pulse mt-2">
-                        <ExclamationTriangleIcon class="w-4 h-4 mr-2" />
-                        Vote Now!
-                    </button>
-
-                    <!-- Create/Join Coalition -->
-                    <button @click="manageCoalition" :disabled="!canManageCoalition"
-                        class="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-mun-green-700 bg-mun-green-100 hover:bg-mun-green-200 rounded-lg transition-colors disabled:opacity-50 mt-2">
-                        <UserGroupIcon class="w-4 h-4 mr-2" />
-                        {{ userCoalition ? 'Manage Coalition' : 'Join Coalition' }}
-                    </button>
-                </div>
-            </nav>
-
-            <!-- Current Status -->
-            <div class="border-t border-mun-gray-100 p-4">
-                <div class="space-y-3">
-                    <!-- Session Status -->
-                    <div class="text-sm">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-mun-gray-600">Session Status</span>
-                            <div class="flex items-center space-x-2">
-                                <div
-                                    :class="['w-2 h-2 rounded-full', isSessionActive ? 'bg-green-500' : 'bg-gray-400']">
-                                </div>
-                                <span class="text-xs font-medium">
-                                    {{ isSessionActive ? 'Active' : 'Inactive' }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div v-if="currentSession" class="text-xs text-mun-gray-500">
-                            <div>Mode: {{ formatSessionMode(currentSession.currentMode) }}</div>
-                            <div v-if="currentSpeaker">Speaker: {{ currentSpeaker }}</div>
-                        </div>
-                    </div>
-
-                    <!-- Voting Status -->
-                    <div v-if="activeVoting" class="text-sm">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-mun-gray-600">Active Voting</span>
-                            <div class="flex items-center space-x-2">
-                                <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                                <span class="text-xs font-medium text-red-600">LIVE</span>
-                            </div>
-                        </div>
-
-                        <div class="text-xs text-mun-gray-500">
-                            {{ activeVoting.title }}
-                        </div>
-                    </div>
-
-                    <!-- Coalition Status -->
-                    <div v-if="userCoalition" class="text-sm">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-mun-gray-600">Coalition</span>
-                            <span class="text-xs font-medium text-mun-green-600">
-                                {{ userCoalition.status }}
-                            </span>
-                        </div>
-
-                        <div class="text-xs text-mun-gray-500">
-                            <div>{{ userCoalition.name }}</div>
-                            <div>{{ userCoalition.memberCount }} members</div>
-                        </div>
-                    </div>
-
-                    <!-- Personal Stats -->
-                    <div class="text-xs text-mun-gray-500">
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <div class="font-semibold text-mun-gray-900">{{ delegateStats.speechesGiven || 0 }}
-                                </div>
-                                <div>Speeches</div>
-                            </div>
-                            <div>
-                                <div class="font-semibold text-mun-gray-900">{{ delegateStats.votesCast || 0 }}</div>
-                                <div>Votes Cast</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Committee Info -->
-            <div class="border-t border-mun-gray-100 p-4">
-                <div class="text-sm text-mun-gray-600 mb-2">
-                    Committee: {{ committeeInfo?.name || 'Loading...' }}
-                </div>
-                <div class="text-xs text-mun-gray-500">
-                    Topic: {{ committeeInfo?.topic || 'No topic set' }}
-                </div>
-                <div class="text-xs text-mun-gray-500 mt-1">
-                    {{ committeeInfo?.countries?.length || 0 }} delegates present
-                </div>
-            </div>
-
-            <!-- User Profile -->
-            <div class="border-t border-mun-gray-200 p-4">
-                <div class="space-y-3">
-                    <!-- User Info -->
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-mun-red-500 rounded-full flex items-center justify-center">
-                            <UserIcon class="w-5 h-5 text-white" />
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-mun-gray-900 truncate">
-                                {{ authStore.user?.fullName || 'Delegate' }}
-                            </p>
-                            <p class="text-xs text-mun-gray-500 truncate">
-                                {{ userCountry?.name || 'Country' }}
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- User Actions -->
-                    <div class="space-y-1">
-                        <router-link to="/shared/profile"
-                            class="flex items-center px-3 py-2 text-sm text-mun-gray-700 hover:bg-mun-gray-100 rounded-lg transition-colors">
-                            <UserIcon class="w-4 h-4 mr-3" />
-                            Profile Settings
-                        </router-link>
-
-                        <button @click="handleLogout"
-                            class="w-full flex items-center px-3 py-2 text-sm text-red-700 hover:bg-red-50 rounded-lg transition-colors">
-                            <ArrowRightOnRectangleIcon class="w-4 h-4 mr-3" />
-                            Sign Out
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Content Area -->
-        <div :class="[
-            'transition-all duration-300',
-            appStore.sidebarCollapsed ? 'lg:ml-0' : 'lg:ml-64'
-        ]">
-            <main class="min-h-screen">
-                <RouterView />
+        <!-- Main Content -->
+        <div :class="['transition-all duration-200 ease-in-out', appStore.sidebarCollapsed ? 'ml-0' : 'ml-72']">
+            <main class="min-h-screen bg-mun-gray-50">
+                <router-view />
             </main>
         </div>
 
@@ -253,21 +58,26 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
 import { useToast } from '@/plugins/toast'
+import UniversalSidebar from '@/components/layout/UniversalSidebar.vue'
 
 // Icons
 import {
-    XMarkIcon, ChartBarIcon, DocumentTextIcon, HandRaisedIcon, UserIcon,
-    DocumentPlusIcon, ExclamationTriangleIcon, ChatBubbleLeftRightIcon,
-    UserGroupIcon, ArrowRightOnRectangleIcon
+    ChartBarIcon,
+    DocumentTextIcon,
+    HandRaisedIcon,
+    ChatBubbleLeftRightIcon,
+    UserGroupIcon,
+    DocumentPlusIcon,
+    ExclamationTriangleIcon,
+    UserIcon
 } from '@heroicons/vue/24/outline'
 
-// Stores and composables
+// Stores
 const router = useRouter()
-const route = useRoute()
 const authStore = useAuthStore()
 const appStore = useAppStore()
 const toast = useToast()
@@ -293,41 +103,166 @@ const motionForm = ref({
     justification: ''
 })
 
-// Navigation items for delegates
-const navigationItems = computed(() => [
+// Navigation Configuration
+const primaryNavigation = computed(() => [
     {
         name: 'DelegateDashboard',
         label: 'Dashboard',
         to: '/delegate',
         icon: ChartBarIcon
-    },
+    }
+])
+
+const navigationSections = computed(() => [
     {
-        name: 'DelegateDocuments',
-        label: 'Documents',
-        to: '/delegate/documents',
-        icon: DocumentTextIcon,
-        badge: pendingDocuments.value > 0 ? pendingDocuments.value : null
-    },
-    {
-        name: 'DelegateVoting',
-        label: 'Voting',
-        to: '/delegate/voting',
+        title: 'Committee Participation',
+        items: [
+            {
+                name: 'DelegateDocuments',
+                label: 'Documents',
+                to: '/delegate/documents',
+                icon: DocumentTextIcon,
+                badge: pendingDocuments.value > 0 ? pendingDocuments.value : null,
+                badgeType: 'warning'
+            },
+            {
+                name: 'DelegateVoting',
+                label: 'Voting',
+                to: '/delegate/voting',
+                icon: HandRaisedIcon,
+                badge: activeVoting.value ? 'LIVE' : null,
+                badgeType: 'danger'
+            },
+            {
+                name: 'DelegateMessaging',
+                label: 'Messages',
+                to: '/delegate/messaging',
+                icon: ChatBubbleLeftRightIcon,
+                badge: unreadMessages.value > 0 ? unreadMessages.value : null,
+                badgeType: 'info'
+            },
+            {
+                name: 'DelegateCoalitions',
+                label: 'Coalitions',
+                to: '/delegate/coalitions',
+                icon: UserGroupIcon,
+                badge: userCoalition.value ? 'ACTIVE' : null,
+                badgeType: 'success'
+            }
+        ]
+    }
+])
+
+const quickActions = computed(() => {
+    const actions = []
+
+    // Join Speakers List
+    actions.push({
+        name: 'join-speakers',
+        label: isInSpeakersList.value ? 'In Speakers List' : 'Join Speakers',
         icon: HandRaisedIcon,
-        badge: activeVoting.value ? 'LIVE' : null
-    },
-    {
-        name: 'DelegateMessaging',
-        label: 'Messages',
-        to: '/delegate/messaging',
-        icon: ChatBubbleLeftRightIcon,
-        badge: unreadMessages.value > 0 ? unreadMessages.value : null
-    },
-    {
-        name: 'DelegateCoalitions',
-        label: 'Coalitions',
-        to: '/delegate/coalitions',
+        type: isInSpeakersList.value ? 'success' : 'primary',
+        disabled: isInSpeakersList.value || !canJoinSpeakers.value
+    })
+
+    // Submit Motion
+    actions.push({
+        name: 'submit-motion',
+        label: 'Submit Motion',
+        icon: DocumentPlusIcon,
+        type: 'secondary',
+        disabled: !canSubmitMotion.value
+    })
+
+    // Active Voting Alert
+    if (activeVoting.value) {
+        actions.push({
+            name: 'vote-now',
+            label: 'Vote Now!',
+            icon: ExclamationTriangleIcon,
+            type: 'danger',
+            badge: 'LIVE'
+        })
+    }
+
+    // Coalition Management
+    actions.push({
+        name: 'manage-coalition',
+        label: userCoalition.value ? 'Manage Coalition' : 'Join Coalition',
         icon: UserGroupIcon,
-        badge: userCoalition.value ? 'ACTIVE' : null
+        type: 'info',
+        disabled: !canManageCoalition.value
+    })
+
+    return actions
+})
+
+const currentStatus = computed(() => ({
+    title: 'Current Status',
+    items: [
+        {
+            label: 'Session Status',
+            value: isSessionActive.value ? 'Active' : 'Inactive',
+            indicator: isSessionActive.value ? 'active' : 'inactive'
+        },
+        ...(activeVoting.value ? [{
+            label: 'Active Voting',
+            value: 'LIVE',
+            indicator: 'active'
+        }] : []),
+        ...(userCoalition.value ? [{
+            label: 'Coalition',
+            value: userCoalition.value.status,
+            indicator: 'active'
+        }] : [])
+    ],
+    details: [
+        ...(currentSession.value ? [{
+            key: 'mode',
+            label: 'Mode',
+            value: formatSessionMode(currentSession.value.currentMode)
+        }] : []),
+        ...(currentSpeaker.value ? [{
+            key: 'speaker',
+            label: 'Speaker',
+            value: currentSpeaker.value
+        }] : []),
+        ...(activeVoting.value ? [{
+            key: 'voting',
+            label: 'Voting',
+            value: activeVoting.value.title
+        }] : []),
+        ...(userCoalition.value ? [
+            {
+                key: 'coalition-name',
+                label: 'Coalition',
+                value: userCoalition.value.name
+            },
+            {
+                key: 'coalition-members',
+                label: 'Members',
+                value: userCoalition.value.memberCount
+            }
+        ] : []),
+        {
+            key: 'speeches',
+            label: 'Speeches',
+            value: delegateStats.value.speechesGiven || 0
+        },
+        {
+            key: 'votes',
+            label: 'Votes Cast',
+            value: delegateStats.value.votesCast || 0
+        }
+    ]
+}))
+
+const userActions = computed(() => [
+    {
+        name: 'profile',
+        label: 'Profile Settings',
+        to: '/shared/profile',
+        icon: UserIcon
     }
 ])
 
@@ -357,10 +292,6 @@ const canManageCoalition = computed(() => {
 })
 
 // Methods
-const getCountryCode = () => {
-    return userCountry.value?.code || authStore.user?.countryCode || 'XX'
-}
-
 const formatSessionMode = (mode) => {
     const modeMap = {
         'formal': 'Formal Debate',
@@ -372,6 +303,25 @@ const formatSessionMode = (mode) => {
     return modeMap[mode] || mode || 'Unknown'
 }
 
+const handleQuickAction = async (actionName) => {
+    switch (actionName) {
+        case 'join-speakers':
+            await joinSpeakersList()
+            break
+        case 'submit-motion':
+            openMotionModal()
+            break
+        case 'vote-now':
+            router.push('/delegate/voting')
+            break
+        case 'manage-coalition':
+            router.push('/delegate/coalitions')
+            break
+        default:
+            console.warn('Unknown quick action:', actionName)
+    }
+}
+
 const joinSpeakersList = async () => {
     if (!canJoinSpeakers.value) return
 
@@ -380,7 +330,7 @@ const joinSpeakersList = async () => {
         isInSpeakersList.value = true
         toast.success('Added to speakers list')
     } catch (error) {
-        toast.error('Failed to join speakers list:', error)
+        console.error('Failed to join speakers list:', error)
         toast.error('Failed to join speakers list')
     }
 }
@@ -399,13 +349,9 @@ const submitMotion = async () => {
         showMotionModal.value = false
         motionForm.value = { type: '', justification: '' }
     } catch (error) {
-        toast.error('Failed to submit motion:', error)
+        console.error('Failed to submit motion:', error)
         toast.error('Failed to submit motion')
     }
-}
-
-const manageCoalition = () => {
-    router.push('/delegate/coalitions')
 }
 
 const handleLogout = async () => {
@@ -414,7 +360,7 @@ const handleLogout = async () => {
         toast.success('Logged out successfully')
         router.push('/auth/login')
     } catch (error) {
-        toast.error('Logout error:', error)
+        console.error('Logout error:', error)
         toast.error('Failed to logout')
     }
 }
@@ -457,7 +403,8 @@ const loadDelegateData = async () => {
         currentSpeaker.value = currentSession.value.currentSpeaker
 
     } catch (error) {
-        toast.error('Failed to load delegate data:', error)
+        console.error('Failed to load delegate data:', error)
+        toast.error('Failed to load delegate data')
     }
 }
 
@@ -476,63 +423,3 @@ onMounted(async () => {
     })
 })
 </script>
-
-<style scoped>
-/* Navigation styles */
-.nav-link {
-    @apply flex items-center px-4 py-3 text-mun-gray-700 rounded-xl;
-    @apply transition-all duration-200 hover:bg-white/60 hover:text-mun-blue-600;
-    @apply relative;
-}
-
-.nav-link.active {
-    @apply bg-mun-blue-600 text-white shadow-lg;
-}
-
-/* Scrollbar styling */
-.overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
-}
-
-/* Transition optimizations */
-.transition-colors {
-    transition-property: color, background-color, border-color;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
-}
-
-.transition-all {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 300ms;
-}
-
-/* Animation for active voting */
-@keyframes pulse {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.5;
-    }
-}
-
-.animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-</style>
