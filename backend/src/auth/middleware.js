@@ -138,6 +138,69 @@ const requireRolesDev = (...allowedRoles) => {
     return requireRoles(...allowedRoles);
 };
 
+// Check if user can vote (excludes observers and special roles)
+const requireVotingRights = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // Admin and presidium always have access for testing/management
+    if (req.user.role === 'admin' || req.user.role === 'presidium') {
+        return next();
+    }
+
+    // Delegates must be regular countries (not observers or special roles)
+    if (req.user.role === 'delegate' &&
+        req.user.specialRole !== 'observer' &&
+        req.user.specialRole !== 'special') {
+        return next();
+    }
+
+    logger.warn(`Voting access denied for user: ${req.user.countryName || req.user.userId} (${req.user.role}/${req.user.specialRole})`);
+    return res.status(403).json({
+        error: 'No voting rights',
+        reason: 'Only regular country delegates can vote'
+    });
+};
+
+// Optional authentication (allows both authenticated and non-authenticated access)
+const optionalAuth = async (req, res, next) => {
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(" ")[1];
+
+        if (!token) {
+            // No token provided, continue without authentication
+            req.user = null;
+            return next();
+        }
+
+        // Token provided, try to authenticate
+        const decoded = jwt.verify(token, JWT_SECRET);
+
+        const user = await User.findById(decoded.userId);
+        if (user && user.isActive) {
+            req.user = {
+                userId: decoded.userId,
+                role: decoded.role,
+                email: decoded.email,
+                countryName: decoded.countryName,
+                committeeId: decoded.committeeId,
+                presidiumRole: decoded.presidiumRole,
+                specialRole: decoded.specialRole,
+                sessionId: decoded.sessionId
+            };
+        }
+
+        next();
+
+    } catch (error) {
+        // Token invalid or expired, continue without authentication
+        req.user = null;
+        next();
+    }
+};
+
 // Rate limiting middleware for auth endpoints
 const authRateLimit = require('express-rate-limit')({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -170,5 +233,11 @@ module.exports = {
     requireRolesDev,
     
     // Rate limit
-    authRateLimit
+    authRateLimit,
+
+    // Require voting rights
+    requireVotingRights,
+
+    // Optional auth
+    optionalAuth
 };

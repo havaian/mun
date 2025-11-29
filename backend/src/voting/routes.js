@@ -155,7 +155,7 @@ router.get('/committee/:committeeId',
 // Cast vote
 router.post('/:id/vote',
     global.auth.token,
-    requireVotingRights,
+    global.auth.utils.requireVotingRights,
     validateVotingId,
     validateVoteCast,
     handleValidationErrors,
@@ -165,7 +165,7 @@ router.post('/:id/vote',
 // Skip turn in roll call voting
 router.post('/:id/skip',
     global.auth.token,
-    requireVotingRights,
+    global.auth.utils.requireVotingRights,
     validateVotingId,
     handleValidationErrors,
     controller.skipVote
