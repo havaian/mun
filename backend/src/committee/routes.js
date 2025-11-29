@@ -116,6 +116,12 @@ const validateCommitteeId = [
         .withMessage('Invalid committee ID')
 ];
 
+const validateCommitteeIdParam = [
+    param('committeeId')
+        .isMongoId()
+        .withMessage('Invalid committee ID')
+];
+
 const validateCountryName = [
     param('countryName')
         .isLength({ min: 2, max: 50 })
@@ -578,7 +584,7 @@ router.post('/:id/qr-codes/:countryName/regenerate',
 router.post('/:committeeId/presidium/generate-qrs',
     global.auth.token,
     global.auth.admin,
-    validateCommitteeId,
+    validateCommitteeIdParam,
     handleValidationErrors,
     controller.generatePresidiumQRs
 );
@@ -587,7 +593,7 @@ router.post('/:committeeId/presidium/generate-qrs',
 router.get('/:committeeId/presidium/status',
     global.auth.token,
     global.auth.adminOrPresidium, // Presidium can view their own status
-    validateCommitteeId,
+    validateCommitteeIdParam,
     handleValidationErrors,
     controller.getPresidiumStatus
 );
@@ -596,7 +602,7 @@ router.get('/:committeeId/presidium/status',
 router.post('/:committeeId/presidium/:role/reset-qr',
     global.auth.token,
     global.auth.admin,
-    validateCommitteeId,
+    validateCommitteeIdParam,
     validatePresidiumRole,
     handleValidationErrors,
     controller.resetPresidiumQR
@@ -606,7 +612,7 @@ router.post('/:committeeId/presidium/:role/reset-qr',
 router.get('/:committeeId/qr-tokens',
     global.auth.token,
     global.auth.admin,
-    validateCommitteeId,
+    validateCommitteeIdParam,
     handleValidationErrors,
     controller.getCommitteeQRTokens
 );
