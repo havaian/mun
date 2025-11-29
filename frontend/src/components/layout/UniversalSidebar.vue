@@ -1,6 +1,7 @@
 <template>
     <aside :class="[
-        'fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-mun-gray-200 transform transition-transform duration-200 ease-in-out flex flex-col',
+        'fixed inset-y-0 left-0 z-50 bg-white border-r border-mun-gray-200 transform transition-all duration-300 ease-in-out flex flex-col',
+        sidebarCollapsed ? 'w-16 lg:w-16' : 'w-72',
         sidebarCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'
     ]">
         <!-- Brand Header -->
@@ -19,23 +20,33 @@
                     <p class="text-xs opacity-90" :class="roleConfig.subtitleColor">{{ roleConfig.subtitle }}</p>
                 </div>
             </div>
+            <!-- Mobile close button -->
             <button @click="$emit('toggle-sidebar')"
                 class="lg:hidden p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
                 <XMarkIcon class="w-5 h-5" />
+            </button>
+
+            <!-- Desktop toggle button -->
+            <button @click="$emit('toggle-sidebar')"
+                class="hidden lg:block p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                :title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
+                <ArrowLeftEndOnRectangleIcon v-if="!sidebarCollapsed" class="w-5 h-5" />
+                <ArrowRightStartOnRectangleIcon v-else class="w-5 h-5" />
             </button>
         </div>
 
         <!-- Scrollable Content Container -->
         <div class="flex-1 overflow-y-auto min-h-0">
             <!-- Navigation -->
-            <nav class="px-4 py-6 space-y-6">
+            <nav :class="sidebarCollapsed ? 'px-2 py-4' : 'px-4 py-6'" class="space-y-6">
                 <!-- Primary Navigation -->
                 <div class="space-y-2">
                     <router-link v-for="item in primaryNavigation" :key="item.name" :to="item.to"
-                        :class="getNavLinkClass(item.name)">
-                        <component :is="item.icon" class="w-5 h-5" />
-                        <span>{{ item.label }}</span>
-                        <div v-if="item.badge" class="ml-auto">
+                        :class="getNavLinkClass(item.name, sidebarCollapsed)"
+                        :title="sidebarCollapsed ? item.label : ''">
+                        <component :is="item.icon" :class="sidebarCollapsed ? 'w-6 h-6' : 'w-5 h-5'" />
+                        <span v-if="!sidebarCollapsed">{{ item.label }}</span>
+                        <div v-if="item.badge && !sidebarCollapsed" class="ml-auto">
                             <span :class="[
                                 'inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white rounded-full',
                                 getBadgeClass(item.badgeType || 'default')
@@ -43,11 +54,17 @@
                                 {{ item.badge > 99 ? '99+' : item.badge }}
                             </span>
                         </div>
+                        <!-- Collapsed badge indicator -->
+                        <div v-if="item.badge && sidebarCollapsed" :class="[
+                            'absolute -top-1 -right-1 w-3 h-3 rounded-full',
+                            getBadgeClass(item.badgeType || 'default')
+                        ]"></div>
                     </router-link>
                 </div>
 
                 <!-- Navigation Sections -->
-                <div v-for="section in navigationSections" :key="section.title" class="space-y-2">
+                <div v-if="!sidebarCollapsed" v-for="section in navigationSections" :key="section.title"
+                    class="space-y-2">
                     <h3 class="px-3 text-xs font-semibold text-mun-gray-500 uppercase tracking-wider">
                         {{ section.title }}
                     </h3>
@@ -67,8 +84,23 @@
                     </router-link>
                 </div>
 
+                <!-- Collapsed Navigation Sections (Icons only) -->
+                <div v-if="sidebarCollapsed" class="space-y-2">
+                    <template v-for="section in navigationSections" :key="section.title">
+                        <router-link v-for="item in section.items" :key="item.name" :to="item.to"
+                            :class="getNavLinkClass(item.name, sidebarCollapsed)" :title="item.label">
+                            <component :is="item.icon" class="w-6 h-6" />
+                            <div v-if="item.badge" :class="[
+                                'absolute -top-1 -right-1 w-3 h-3 rounded-full',
+                                getBadgeClass(item.badgeType || 'info')
+                            ]"></div>
+                        </router-link>
+                    </template>
+                </div>
+
                 <!-- Quick Actions (Role-specific) -->
-                <div v-if="quickActions && quickActions.length > 0" class="pt-4 border-t border-mun-gray-100">
+                <div v-if="quickActions && quickActions.length > 0 && !sidebarCollapsed"
+                    class="pt-4 border-t border-mun-gray-100">
                     <h4 class="px-3 text-xs font-semibold text-mun-gray-500 uppercase tracking-wider mb-3">
                         Quick Actions
                     </h4>
@@ -92,7 +124,7 @@
             </nav>
 
             <!-- System Status (Admin only) -->
-            <div v-if="showSystemStatus" class="border-t border-mun-gray-200 p-4">
+            <div v-if="showSystemStatus && !sidebarCollapsed" class="border-t border-mun-gray-200 p-4">
                 <div class="space-y-3">
                     <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wider">
                         System Status
@@ -127,7 +159,7 @@
             </div>
 
             <!-- Current Status (Role-specific info) -->
-            <div v-if="currentStatus" class="border-t border-mun-gray-100 p-4">
+            <div v-if="currentStatus && !sidebarCollapsed" class="border-t border-mun-gray-100 p-4">
                 <div class="space-y-3">
                     <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wider">
                         {{ currentStatus.title }}
@@ -164,14 +196,15 @@
             <div class="border-t border-mun-gray-200 p-4">
                 <div class="space-y-3">
                     <!-- User Info -->
-                    <div class="flex items-center space-x-3">
+                    <div :class="sidebarCollapsed ? 'flex justify-center' : 'flex items-center space-x-3'">
                         <div :class="[
-                            'w-8 h-8 rounded-full flex items-center justify-center',
-                            roleConfig.userIconBackground
-                        ]">
-                            <UserIcon class="w-5 h-5 text-white" />
+                            'rounded-full flex items-center justify-center',
+                            roleConfig.userIconBackground,
+                            sidebarCollapsed ? 'w-10 h-10' : 'w-8 h-8'
+                        ]" :title="sidebarCollapsed ? userDisplayName : ''">
+                            <UserIcon :class="sidebarCollapsed ? 'w-6 h-6 text-white' : 'w-5 h-5 text-white'" />
                         </div>
-                        <div class="flex-1 min-w-0">
+                        <div v-if="!sidebarCollapsed" class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-mun-gray-900 truncate">
                                 {{ userDisplayName }}
                             </p>
@@ -182,7 +215,7 @@
                     </div>
 
                     <!-- User Actions -->
-                    <div class="space-y-1">
+                    <div v-if="!sidebarCollapsed" class="space-y-1">
                         <router-link v-for="action in userActions" :key="action.name" :to="action.to"
                             class="flex items-center px-3 py-2 text-sm text-mun-gray-700 hover:bg-mun-gray-100 rounded-lg transition-colors">
                             <component :is="action.icon" class="w-4 h-4 mr-3" />
@@ -193,6 +226,14 @@
                             class="w-full flex items-center px-3 py-2 text-sm text-red-700 hover:bg-red-50 rounded-lg transition-colors">
                             <ArrowRightOnRectangleIcon class="w-4 h-4 mr-3" />
                             Sign Out
+                        </button>
+                    </div>
+
+                    <!-- Collapsed User Actions -->
+                    <div v-if="sidebarCollapsed" class="flex justify-center">
+                        <button @click="$emit('logout')"
+                            class="p-2 text-red-700 hover:bg-red-50 rounded-lg transition-colors" title="Sign Out">
+                            <ArrowRightOnRectangleIcon class="w-5 h-5" />
                         </button>
                     </div>
                 </div>
@@ -209,7 +250,9 @@ import { useRoute } from 'vue-router'
 import {
     XMarkIcon,
     UserIcon,
-    ArrowRightOnRectangleIcon
+    ArrowRightOnRectangleIcon,
+    ArrowRightStartOnRectangleIcon,
+    ArrowLeftEndOnRectangleIcon
 } from '@heroicons/vue/24/outline'
 
 // Props
@@ -316,7 +359,14 @@ const userSubtitle = computed(() => {
 })
 
 // Methods
-const getNavLinkClass = (routeName) => {
+const getNavLinkClass = (routeName, collapsed = false) => {
+    if (collapsed) {
+        const baseClasses = 'relative group flex items-center justify-center p-3 text-sm font-medium rounded-xl transition-colors'
+        return route.name === routeName
+            ? `${baseClasses} bg-mun-blue-600 text-white shadow-lg`
+            : `${baseClasses} text-mun-gray-700 hover:bg-mun-gray-100 hover:text-mun-blue-600`
+    }
+
     const baseClasses = 'group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors space-x-3'
     return route.name === routeName
         ? `${baseClasses} bg-mun-blue-600 text-white shadow-lg`
