@@ -833,18 +833,39 @@ const confirmDelete = async () => {
     try {
         const response = await apiMethods.committees.delete(selectedCommittee.value._id)
 
-        if (response?.success) {
+        // FIXED: Check the correct response structure
+        if (response?.data?.success) {
+            // Remove from local state
             committees.value = committees.value.filter(c => c._id !== selectedCommittee.value._id)
-            totalCommittees.value--
+            totalCommittees.value = Math.max(0, totalCommittees.value - 1)
+            
+            // Also remove from selected committees if it was selected
+            selectedCommittees.value = selectedCommittees.value.filter(id => id !== selectedCommittee.value._id)
+            
             toast.success('Committee deleted successfully')
+        } else {
+            // Handle case where deletion wasn't successful
+            toast.error(response?.data?.error || 'Failed to delete committee')
         }
 
         showDeleteConfirm.value = false
         selectedCommittee.value = null
 
     } catch (error) {
-        toast.error('Delete committee error:', error)
-        toast.error('Failed to delete committee')
+        console.error('Delete committee error:', error)
+        
+        // Better error handling
+        if (error.response?.data?.error) {
+            toast.error(error.response.data.error)
+        } else if (error.message) {
+            toast.error(error.message)
+        } else {
+            toast.error('Failed to delete committee')
+        }
+        
+        // Still close the modal even on error
+        showDeleteConfirm.value = false
+        selectedCommittee.value = null
     }
 }
 
