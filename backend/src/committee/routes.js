@@ -586,7 +586,7 @@ router.post('/:committeeId/presidium/generate-qrs',
 // Get presidium status for committee
 router.get('/:committeeId/presidium/status',
     global.auth.token,
-    global.auth.presidium, // Presidium can view their own status
+    global.auth.adminOrPresidium, // Presidium can view their own status
     validateCommitteeId,
     handleValidationErrors,
     controller.getPresidiumStatus
