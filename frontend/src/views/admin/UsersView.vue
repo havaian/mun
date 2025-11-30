@@ -26,21 +26,21 @@
         <!-- User Stats -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="mun-card p-6">
-                <div class="flex items-center">
+                <div class="flex h-full items-center">
                     <div class="p-3 rounded-lg bg-mun-blue/10">
                         <UsersIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-mun-gray-600">Total Users</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.total || 0 }}</p>
+                        <p class="text-sm font-medium bg-mun-blue/10">Total Users</p>
+                        <p class="text-2xl font-bold text-mun-blue">{{ stats.total || 0 }}</p>
                     </div>
                 </div>
             </div>
 
             <div class="mun-card p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-green-500/10">
-                        <CheckCircleIcon class="w-6 h-6 text-mun-green-500" />
+                <div class="flex h-full items-center">
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <CheckCircleIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Active</p>
@@ -50,9 +50,9 @@
             </div>
 
             <div class="mun-card p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-yellow-500/10">
-                        <ClockIcon class="w-6 h-6 text-mun-yellow-500" />
+                <div class="flex h-full items-center">
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <ClockIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Pending</p>
@@ -62,9 +62,9 @@
             </div>
 
             <div class="mun-card p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-red-500/10">
-                        <XCircleIcon class="w-6 h-6 text-mun-red-500" />
+                <div class="flex h-full items-center">
+                    <div class="p-3 rounded-lg bg-mun-blue/10">
+                        <XCircleIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-mun-gray-600">Inactive</p>

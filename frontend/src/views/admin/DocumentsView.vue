@@ -18,7 +18,7 @@
         <!-- Document Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="mun-card p-6">
-                <div class="flex items-center">
+                <div class="flex h-full items-center">
                     <div class="p-3 rounded-lg bg-mun-blue/10">
                         <DocumentTextIcon class="w-6 h-6 text-mun-blue" />
                     </div>
@@ -30,7 +30,7 @@
             </div>
 
             <div class="mun-card p-6">
-                <div class="flex items-center">
+                <div class="flex h-full items-center">
                     <div class="p-3 rounded-lg bg-mun-blue/10">
                         <ClockIcon class="w-6 h-6 text-mun-blue" />
                     </div>
@@ -42,7 +42,7 @@
             </div>
 
             <div class="mun-card p-6">
-                <div class="flex items-center">
+                <div class="flex h-full items-center">
                     <div class="p-3 rounded-lg bg-mun-blue/10">
                         <CheckCircleIcon class="w-6 h-6 text-mun-blue" />
                     </div>
@@ -54,7 +54,7 @@
             </div>
 
             <div class="mun-card p-6">
-                <div class="flex items-center">
+                <div class="flex h-full items-center">
                     <div class="p-3 rounded-lg bg-mun-blue/10">
                         <XCircleIcon class="w-6 h-6 text-mun-blue" />
                     </div>
@@ -152,7 +152,7 @@
         </div>
 
         <!-- Documents Table -->
-        <div class="bg-white overflow-hidden">
+        <div class="bg-white">
             <div v-if="isLoading" class="flex items-center justify-center py-12">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue-600"></div>
             </div>

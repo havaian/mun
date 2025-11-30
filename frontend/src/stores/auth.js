@@ -252,8 +252,8 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Check for session timeout
     const checkSessionTimeout = () => {
-        const timeout = 30 * 60 * 1000 // 30 minutes
-        const warningTime = 5 * 60 * 1000 // 5 minutes before timeout
+        const timeout = 24 * 60 * 60 * 1000 // 24 hours
+        const warningTime = 24 * 60 * 60 * 1000 // 24 hours before timeout
         const now = Date.now()
         const timeSinceActivity = now - lastActivity.value
 

@@ -23,7 +23,7 @@
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div v-for="stat in committeeStats" :key="stat.title" class="mun-card p-6">
-                <div class="flex items-center">
+                <div class="flex h-full items-center">
                     <div :class="[
                         'p-3 rounded-lg bg-mun-blue/10'
                     ]">
