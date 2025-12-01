@@ -16,6 +16,14 @@ export const useAuthStore = defineStore('auth', () => {
     const sessionWarningShown = ref(false)
     const _isValidating = ref(false)
 
+    // Validation caching
+    const _validationPromise = ref(null)
+    const _validationCache = ref(null)
+    const _cacheExpiry = ref(0)
+
+    // Cache duration (60 minutes)
+    const CACHE_DURATION = 60 * 60 * 1000
+
     // Computed
     const isAuthenticated = computed(() => !!token.value && !!user.value)
 
@@ -55,6 +63,19 @@ export const useAuthStore = defineStore('auth', () => {
         return roleMap[role] || role
     }
 
+    // Helper function to clear validation cache
+    const _clearValidationCache = () => {
+        _validationPromise.value = null
+        _validationCache.value = null
+        _cacheExpiry.value = 0
+        _isValidating.value = false
+    }
+
+    // Helper function to check if cache is valid
+    const _isCacheValid = () => {
+        return _validationCache.value !== null && Date.now() < _cacheExpiry.value
+    }
+
     // Actions
 
     // Admin login
@@ -69,6 +90,9 @@ export const useAuthStore = defineStore('auth', () => {
                 user.value = response.data.user
 
                 localStorage.setItem('mun_token', token.value)
+
+                // Clear validation cache since we have new auth data
+                _clearValidationCache()
 
                 toast.success('Welcome back, Administrator!')
 
@@ -130,6 +154,9 @@ export const useAuthStore = defineStore('auth', () => {
 
                 localStorage.setItem('mun_token', token.value)
 
+                // Clear validation cache since we have new auth data
+                _clearValidationCache()
+
                 const userType = user.value.role === 'delegate' ? user.value.countryName : formatPresidiumRole(user.value.presidiumRole)
                 toast.success(`Welcome, ${userType}! Registration completed.`)
 
@@ -160,6 +187,9 @@ export const useAuthStore = defineStore('auth', () => {
 
                 localStorage.setItem('mun_token', token.value)
 
+                // Clear validation cache since we have new auth data
+                _clearValidationCache()
+
                 const userType = user.value.role === 'delegate' ? user.value.countryName : formatPresidiumRole(user.value.presidiumRole)
                 toast.success(`Welcome back, ${userType}!`)
 
@@ -177,25 +207,70 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    // Validate existing session
-    const validateSession = async () => {
-        if (!token.value) return false
-
-        try {
-            const response = await apiMethods.auth.validateSession()
-
-            if (response.data.success && response.data.user) {
-                user.value = response.data.user
-                return true
-            }
-
-            return false
-
-        } catch (error) {
-            console.error('Session validation failed:', error)
-            logout()
+    // Validate existing session with caching
+    const validateSession = async (forceRefresh = false) => {
+        // If no token, return false immediately
+        if (!token.value) {
+            _clearValidationCache()
             return false
         }
+
+        // Check cache first (unless forced refresh)
+        if (!forceRefresh && _isCacheValid()) {
+            console.log('🚀 Using cached session validation result')
+            return _validationCache.value
+        }
+
+        // If validation is already in progress, return the existing promise
+        if (_validationPromise.value) {
+            console.log('⏳ Session validation already in progress, waiting for result...')
+            return _validationPromise.value
+        }
+
+        // Start new validation
+        console.log('🔍 Starting fresh session validation...')
+        _isValidating.value = true
+
+        _validationPromise.value = (async () => {
+            try {
+                const response = await apiMethods.auth.validateSession()
+
+                if (response.data.success && response.data.user) {
+                    user.value = response.data.user
+
+                    // Cache successful validation
+                    _validationCache.value = true
+                    _cacheExpiry.value = Date.now() + CACHE_DURATION
+
+                    console.log('✅ Session validation successful')
+                    return true
+                } else {
+                    // Invalid session
+                    _validationCache.value = false
+                    _cacheExpiry.value = Date.now() + (30 * 1000) // Cache failure for 30 seconds
+
+                    console.log('❌ Session validation failed - invalid response')
+                    return false
+                }
+
+            } catch (error) {
+                console.error('💥 Session validation error:', error)
+
+                // Cache failure result briefly to avoid immediate retry
+                _validationCache.value = false
+                _cacheExpiry.value = Date.now() + (10 * 1000) // Cache failure for 10 seconds
+
+                // Clear auth state on error
+                logout(false)
+                return false
+            } finally {
+                // Reset validation state
+                _isValidating.value = false
+                _validationPromise.value = null
+            }
+        })()
+
+        return _validationPromise.value
     }
 
     // Check QR token status
@@ -233,6 +308,9 @@ export const useAuthStore = defineStore('auth', () => {
             token.value = null
             user.value = null
             sessionWarningShown.value = false
+
+            // Clear validation cache
+            _clearValidationCache()
 
             localStorage.removeItem('mun_token')
 
@@ -337,6 +415,14 @@ export const useAuthStore = defineStore('auth', () => {
         })
     }
 
+    // Force refresh session data (bypass cache)
+    const refreshSession = async () => {
+        return await validateSession(true)
+    }
+
+    // Check if session validation is in progress
+    const isValidatingSession = computed(() => _isValidating.value)
+
     return {
         // State
         user,
@@ -351,6 +437,7 @@ export const useAuthStore = defineStore('auth', () => {
         userRole,
         userDisplayName,
         committeeInfo,
+        isValidatingSession,
 
         // Actions
         adminLogin,
@@ -358,6 +445,7 @@ export const useAuthStore = defineStore('auth', () => {
         bindEmail,
         emailLogin,
         validateSession,
+        refreshSession,
         checkQrStatus,
         reactivateQr,
         logout,
