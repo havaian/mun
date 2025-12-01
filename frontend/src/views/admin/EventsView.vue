@@ -34,8 +34,8 @@
                 </div>
             </div>
 
-            <div class="mun-card h-full p-6">
-                <div class="flex items-center">
+            <div class="mun-card p-6">
+                <div class="flex h-full items-center">
                     <div class="p-3 rounded-lg bg-mun-blue/10">
                         <PlayIcon class="w-6 h-6 text-mun-blue" />
                     </div>
@@ -46,8 +46,8 @@
                 </div>
             </div>
 
-            <div class="mun-card h-full p-6">
-                <div class="flex items-center">
+            <div class="mun-card p-6">
+                <div class="flex h-full items-center">
                     <div class="p-3 rounded-lg bg-mun-blue/10">
                         <ClockIcon class="w-6 h-6 text-mun-blue" />
                     </div>

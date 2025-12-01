@@ -23,7 +23,7 @@
         <!-- Quick Stats Overview -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="mun-card p-6">
-                <div class="flex items-center">
+                <div class="flex h-full items-center">
                     <div class="p-3 rounded-lg bg-mun-blue/10">
                         <ChartBarIcon class="w-6 h-6 text-mun-blue" />
                     </div>
@@ -35,7 +35,7 @@
             </div>
 
             <div class="mun-card p-6">
-                <div class="flex items-center">
+                <div class="flex h-full items-center">
                     <div class="p-3 rounded-lg bg-mun-blue/10">
                         <DocumentArrowDownIcon class="w-6 h-6 text-mun-blue" />
                     </div>
@@ -47,7 +47,7 @@
             </div>
 
             <div class="mun-card p-6">
-                <div class="flex items-center">
+                <div class="flex h-full items-center">
                     <div class="p-3 rounded-lg bg-mun-blue/10">
                         <ClockIcon class="w-6 h-6 text-mun-blue" />
                     </div>
@@ -59,7 +59,7 @@
             </div>
 
             <div class="mun-card p-6">
-                <div class="flex items-center">
+                <div class="flex h-full items-center">
                     <div class="p-3 rounded-lg bg-mun-blue/10">
                         <CalendarDaysIcon class="w-6 h-6 text-mun-blue" />
                     </div>

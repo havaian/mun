@@ -31,8 +31,8 @@
                         <UsersIcon class="w-6 h-6 text-mun-blue" />
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium bg-mun-blue/10">Total Users</p>
-                        <p class="text-2xl font-bold text-mun-blue">{{ stats.total || 0 }}</p>
+                        <p class="text-sm font-medium text-mun-gray-600">Total Users</p>
+                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.total || 0 }}</p>
                     </div>
                 </div>
             </div>
