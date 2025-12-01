@@ -233,46 +233,46 @@ const heightClasses = computed(() => {
 })
 
 const titleClass = computed(() => {
-    const variant = props.variant
-    if (variant === 'primary') return 'text-xl text-white'
-    if (variant === 'success') return 'text-xl text-white'
-    if (variant === 'warning') return 'text-xl text-white'
-    if (variant === 'danger') return 'text-xl text-white'
+    // const variant = props.variant
+    // if (variant === 'primary') return 'text-xl text-white'
+    // if (variant === 'success') return 'text-xl text-white'
+    // if (variant === 'warning') return 'text-xl text-white'
+    // if (variant === 'danger') return 'text-xl text-white'
     return 'text-xl text-mun-gray-900'
 })
 
 const subtitleClass = computed(() => {
-    const variant = props.variant
-    if (variant === 'primary') return 'text-white/80'
-    if (variant === 'success') return 'text-white/80'
-    if (variant === 'warning') return 'text-white/80'
-    if (variant === 'danger') return 'text-white/80'
+    // const variant = props.variant
+    // if (variant === 'primary') return 'text-white/80'
+    // if (variant === 'success') return 'text-white/80'
+    // if (variant === 'warning') return 'text-white/80'
+    // if (variant === 'danger') return 'text-white/80'
     return 'text-mun-gray-600'
 })
 
 const iconBackgroundClass = computed(() => {
-    const variant = props.variant
-    if (variant === 'primary') return 'bg-white/20'
-    if (variant === 'success') return 'bg-white/20'
-    if (variant === 'warning') return 'bg-white/20'
-    if (variant === 'danger') return 'bg-white/20'
+    // const variant = props.variant
+    // if (variant === 'primary') return 'bg-white/20'
+    // if (variant === 'success') return 'bg-white/20'
+    // if (variant === 'warning') return 'bg-white/20'
+    // if (variant === 'danger') return 'bg-white/20'
     return 'bg-mun-blue-100'
 })
 
 const iconColorClass = computed(() => {
-    const variant = props.variant
-    if (variant === 'primary') return 'text-white'
-    if (variant === 'success') return 'text-white'
-    if (variant === 'warning') return 'text-white'
-    if (variant === 'danger') return 'text-white'
+    // const variant = props.variant
+    // if (variant === 'primary') return 'text-white'
+    // if (variant === 'success') return 'text-white'
+    // if (variant === 'warning') return 'text-white'
+    // if (variant === 'danger') return 'text-white'
     return 'text-mun-blue-600'
 })
 
 const closeButtonClass = computed(() => {
-    const variant = props.variant
-    if (['primary', 'success', 'warning', 'danger'].includes(variant)) {
-        return 'text-white/80 hover:text-white hover:bg-white/10'
-    }
+    // const variant = props.variant
+    // if (['primary', 'success', 'warning', 'danger'].includes(variant)) {
+    //     return 'text-white/80 hover:text-white hover:bg-white/10'
+    // }
     return ''
 })
 

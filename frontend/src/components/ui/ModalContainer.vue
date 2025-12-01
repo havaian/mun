@@ -291,7 +291,7 @@ const onLeave = (el) => {
 /* Shake animation for static modals */
 @keyframes shake {
 
-    0%,
+    0%, 
     100% {
         transform: translateX(0);
     }
