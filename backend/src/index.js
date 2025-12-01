@@ -19,7 +19,7 @@ setupGlobalAuth();
 // Import event automation service
 const { eventAutomationService } = require('./event/automationService');
 
-// Import NEW global event protection middleware
+// Import global event protection middleware
 const { middleware: eventProtectionMiddleware, clearCache: clearEventCache, getCacheStats } = require('./auth/globalEventProtection');
 
 // Import route modules
