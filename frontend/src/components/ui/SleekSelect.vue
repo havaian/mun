@@ -53,7 +53,7 @@
         <!-- Dropdown -->
         <Transition name="dropdown" appear>
             <div v-if="isOpen" ref="dropdown" :class="[
-                'sleek-select__dropdown absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg',
+                'sleek-select__dropdown absolute z-[9999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg',
                 dropdownClass
             ]">
                 <!-- Search Input -->
@@ -448,12 +448,14 @@ watch(() => props.modelValue, () => {
 }
 
 .sleek-select__dropdown {
-    /* Use z-[9999] to ensure maximum z-index */
+    /* Ensure maximum z-index */
     z-index: 9999 !important;
     /* Ensure solid white background with no transparency */
-    background-color: rgba(255, 255, 255, 1) !important;
+    background-color: #ffffff !important;
     /* Add backdrop to prevent see-through issues */
     backdrop-filter: none;
+    /* Ensure proper positioning context */
+    position: absolute !important;
 }
 
 /* Custom scrollbar for dropdown */

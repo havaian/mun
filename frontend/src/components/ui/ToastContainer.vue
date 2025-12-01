@@ -1,6 +1,6 @@
 <template>
     <teleport to="body">
-        <div class="toast-container fixed top-4 right-4 z-50 space-y-4 pointer-events-none">
+        <div class="toast-container fixed top-4 right-4 z-[9999] space-y-4 pointer-events-none">
             <transition-group name="toast" tag="div" class="space-y-4">
                 <div v-for="toast in toasts" :key="toast.id"
                     class="toast-item pointer-events-auto relative max-w-sm w-full bg-white shadow-lg rounded-lg border overflow-hidden"
