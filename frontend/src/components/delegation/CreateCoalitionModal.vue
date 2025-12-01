@@ -33,7 +33,7 @@
 
                             <!-- Content -->
                             <div class="modal-content p-6 flex flex-col max-h-[95vh] min-h-[400px]">
-                                <div class="space-y-6">
+                                <div class="mt-2 space-y-2">
                                     <!-- Basic Information -->
                                     <div class="basic-info-section">
                                         <h3 class="text-lg font-medium text-mun-gray-900 mb-4">Basic Information</h3>

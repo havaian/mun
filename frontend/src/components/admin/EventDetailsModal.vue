@@ -4,7 +4,7 @@
         :footer-text="formatFooterText()" @close="closeModal">
         <!-- Content slot -->
         <template #content>
-            <div class="space-y-6">
+            <div class="mt-2 space-y-2">
                 <!-- Event Overview -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Left Column: Basic Details -->
@@ -69,7 +69,7 @@
                     </div>
 
                     <!-- Right Column: Statistics -->
-                    <div class="space-y-6">
+                    <div class="mt-2 space-y-2">
                         <!-- Committee Statistics -->
                         <div class="mun-card p-6">
                             <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Statistics</h3>

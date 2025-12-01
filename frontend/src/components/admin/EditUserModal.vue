@@ -148,7 +148,7 @@
                                     Role & Permissions
                                 </h3>
 
-                                <div class="space-y-6">
+                                <div class="mt-2 space-y-2">
                                     <!-- Role Selection -->
                                     <div>
                                         <label class="block text-sm font-medium text-mun-gray-700 mb-3">

@@ -248,7 +248,7 @@
                     </div>
 
                     <!-- Statistics & Actions Sidebar -->
-                    <div class="space-y-6">
+                    <div class="mt-2 space-y-2">
                         <!-- Quick Stats -->
                         <div class="mun-card p-6">
                             <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">

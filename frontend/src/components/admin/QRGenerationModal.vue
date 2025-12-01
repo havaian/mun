@@ -40,7 +40,7 @@
                             </div>
 
                             <!-- QR Generation Options -->
-                            <div class="space-y-6">
+                            <div class="mt-2 space-y-2">
                                 <h3 class="text-lg font-semibold text-mun-gray-900">
                                     Generation Options
                                 </h3>

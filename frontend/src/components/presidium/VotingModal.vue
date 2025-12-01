@@ -79,7 +79,7 @@
                                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
                                         <!-- Left: Basic Settings -->
-                                        <div class="space-y-6">
+                                        <div class="mt-2 space-y-2">
                                             <div>
                                                 <h4 class="text-lg font-semibold text-mun-gray-900 mb-4">Basic
                                                     Information</h4>
@@ -140,7 +140,7 @@
                                         </div>
 
                                         <!-- Right: Options & Participants -->
-                                        <div class="space-y-6">
+                                        <div class="mt-2 space-y-2">
                                             <div>
                                                 <h4 class="text-lg font-semibold text-mun-gray-900 mb-4">Settings &
                                                     Participants</h4>

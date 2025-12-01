@@ -34,7 +34,7 @@
 
                         <!-- Content -->
                         <div class="px-6 py-4 max-h-96 overflow-y-auto">
-                            <div class="space-y-6">
+                            <div class="mt-2 space-y-2">
                                 <!-- General Session Settings -->
                                 <div class="session-general">
                                     <h4 class="text-md font-medium text-mun-gray-900 mb-4">General Settings</h4>
