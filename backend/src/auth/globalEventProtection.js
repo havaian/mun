@@ -41,14 +41,12 @@ class GlobalEventProtection {
         // Routes that should be explicitly exempt from protection
         this.exemptPathPatterns = [
             /^\/api\/auth\/(?!qr-login$)/, // Authentication routes except QR login
-            /^\/api\/admin\/(?!.*\/events\/)/, // Admin routes except event management
             /^\/api\/countries\//, // Country data routes
             /^\/api\/export\/.*\/statistics$/, // Export statistics (reports)
             /^\/api\/export\/.*\/download$/, // Export downloads (reports)
             /^\/api\/committees\/[^\/]+\/qr-tokens$/, // Reading QR tokens (archival)
             /^\/api\/presentation\/.*\/display$/, // Presentation display routes (read-only)
             /^\/api\/health$/, // Health check
-            /^\/api\/events\/[^\/]+$/, // Reading event details (GET only)
         ];
 
         // QR-specific routes that should be completely blocked on completed events (including GET)
@@ -61,9 +59,9 @@ class GlobalEventProtection {
             /^\/api\/committees\/[^\/]+\/qr-refresh$/, // QR refresh operations
         ];
 
-        // Admin event management routes that should also be protected
-        this.adminEventPatterns = [
-            /^\/api\/admin\/events\/[^\/]+/, // Admin event management operations
+        // FIXED: Event management routes (correct path)
+        this.eventManagementPatterns = [
+            /^\/api\/events\/[^\/]+/, // Event CRUD operations - FIXED PATH
         ];
     }
 
@@ -76,8 +74,8 @@ class GlobalEventProtection {
             return true;
         }
 
-        // Admin event management should be protected
-        if (this.adminEventPatterns.some(pattern => pattern.test(path))) {
+        // FIXED: Event management should be protected for non-GET operations
+        if (this.eventManagementPatterns.some(pattern => pattern.test(path))) {
             return method !== 'GET';
         }
 
@@ -103,23 +101,39 @@ class GlobalEventProtection {
     }
 
     /**
-     * Check if a path is admin event management
+     * Check if a path is event management
      */
-    isAdminEventOperation(path) {
-        return this.adminEventPatterns.some(pattern => pattern.test(path));
+    isEventManagement(path) {
+        return this.eventManagementPatterns.some(pattern => pattern.test(path));
     }
 
     /**
      * Extract identifiers from request to determine associated event
      */
     async extractEventContext(req) {
-        let eventId = null;
-        let eventInfo = null;
-
         try {
-            // Method 1: Direct event ID in params or body
-            eventId = req.params.eventId || req.params.id || req.body.eventId;
+            // FIXED: Handle direct event operations first
+            if (this.isEventManagement(req.path)) {
+                const eventId = req.params.id || req.params.eventId; // FIXED: Check both id and eventId
 
+                if (eventId) {
+                    console.log(`🔍 Looking up event ${eventId} for direct event operation`);
+
+                    const event = await Event.findById(eventId);
+                    if (event) {
+                        return {
+                            eventId: event._id,
+                            eventStatus: event.status,
+                            eventName: event.name,
+                            startDate: event.startDate,
+                            endDate: event.endDate
+                        };
+                    }
+                }
+            }
+
+            // Method 1: Direct event ID in params or body
+            const eventId = req.params.eventId || req.body.eventId;
             if (eventId) {
                 const event = await Event.findById(eventId);
                 if (event) {
@@ -152,18 +166,6 @@ class GlobalEventProtection {
                 }
             }
 
-            // Method 3: Session/Document/etc. ID - trace back to committee then event
-            const resourceId = req.params.sessionId || req.params.documentId ||
-                req.params.votingId || req.params.amendmentId ||
-                req.params.resolutionId || req.params.messageId ||
-                req.params.participantId || req.params.speakerId;
-
-            if (resourceId) {
-                // Try to find the committee through various resource models
-                // This would require implementing lookups for each resource type
-                // For now, we'll rely on the direct committee/event ID methods above
-            }
-
             return null;
 
         } catch (error) {
@@ -185,22 +187,25 @@ class GlobalEventProtection {
                 return next();
             }
 
+            console.log(`🛡️  Event protection checking: ${method} ${path}`);
+
             // Extract event context
             const eventContext = await this.extractEventContext(req);
 
             if (!eventContext) {
-                // No event context found, allow request to proceed
+                console.log(`ℹ️  No event context found for ${path}, allowing request`);
                 return next();
             }
 
             const { eventStatus, eventName } = eventContext;
 
+            console.log(`📋 Event found: "${eventName}" with status: ${eventStatus}`);
+
             // Check if event is completed and operation should be blocked
             if (eventStatus === 'completed') {
-
                 // QR operations are completely blocked on completed events (even for admins, even GET)
                 if (this.isQROperation(path)) {
-                    logger.warn(`Blocked QR operation on completed event: ${eventName} - Path: ${path} - User: ${userRole}`);
+                    logger.warn(`🚫 Blocked QR operation on completed event: ${eventName} - Path: ${path} - User: ${userRole}`);
 
                     return res.status(403).json({
                         success: false,
@@ -211,40 +216,28 @@ class GlobalEventProtection {
                     });
                 }
 
-                // Admin event management operations also blocked
-                if (this.isAdminEventOperation(path)) {
-                    logger.warn(`Blocked admin event operation on completed event: ${eventName} - Path: ${path} - User: ${userRole}`);
-
-                    return res.status(403).json({
-                        success: false,
-                        error: `Event management operations are not allowed. The event "${eventName}" has ended.`,
-                        code: 'EVENT_COMPLETED_ADMIN_BLOCKED',
-                        eventStatus: eventStatus,
-                        eventName: eventName
-                    });
-                }
-
-                // All other non-GET operations blocked (no admin exemption)
-                logger.warn(`Blocked ${method} operation on completed event: ${eventName} by user: ${userRole} - Path: ${path}`);
+                // FIXED: Block ALL operations on completed events (including event management)
+                logger.warn(`🚫 Blocked ${method} operation on completed event: ${eventName} by user: ${userRole} - Path: ${path}`);
 
                 return res.status(405).json({
                     success: false,
-                    error: `This operation is not allowed. The event "${eventName}" has ended.`,
+                    error: `This operation is not allowed. The event "${eventName}" has ended and cannot be modified.`,
                     code: 'EVENT_COMPLETED',
                     eventStatus: eventStatus,
                     eventName: eventName,
                     method: method,
-                    hint: 'Only read operations are permitted on completed events.'
+                    hint: 'Completed events are read-only and cannot be modified or deleted.'
                 });
             }
 
             // Add event context to request for use in controllers
             req.eventContext = eventContext;
 
+            console.log(`✅ Event protection passed for ${method} ${path}`);
             next();
 
         } catch (error) {
-            logger.error('Error in global event protection middleware:', error);
+            logger.error('💥 Error in global event protection middleware:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to verify event access permissions'
