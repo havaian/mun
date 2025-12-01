@@ -295,23 +295,40 @@ watch(() => props.modelValue, (newVal) => {
 })
 
 const validateDates = () => {
+    // Clear previous errors
+    delete errors.value.endDate
+    delete errors.value.registrationDeadline
+    delete errors.value.startDate
+
+    // Validate start and end dates
     if (formData.startDate && formData.endDate) {
         const start = new Date(formData.startDate)
         const end = new Date(formData.endDate)
 
+        console.log('🗓️ Date validation:')
+        console.log('Start Date:', formData.startDate, '→', start)
+        console.log('End Date:', formData.endDate, '→', end)
+
         if (start >= end) {
             errors.value.endDate = 'End date must be after start date'
-        } else {
-            delete errors.value.endDate
         }
     }
 
+    // Validate registration deadline
     if (formData.registrationDeadline && formData.startDate) {
-        const regOpen = new Date(formData.registrationDeadline)
-        const start = new Date(formData.startDate)
+        const regDeadline = new Date(formData.registrationDeadline)
+        const eventStart = new Date(formData.startDate)
 
-        if (regOpen >= start) {
-            errors.value.registrationDeadline = 'Registration must end before event starts'
+        console.log('📝 Registration validation:')
+        console.log('Registration Deadline:', formData.registrationDeadline, '→', regDeadline)
+        console.log('Event Start:', formData.startDate, '→', eventStart)
+        console.log('Deadline >= Start?', regDeadline >= eventStart)
+
+        // Registration deadline should be BEFORE event start
+        if (regDeadline >= eventStart) {
+            errors.value.registrationDeadline = 'Registration deadline must be before event starts'
+        } else {
+            console.log('✅ Registration deadline is correctly before event start')
         }
     }
 }
