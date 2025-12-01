@@ -70,7 +70,7 @@
                         <div class="flex space-x-3">
                             <slot name="footer-buttons">
                                 <!-- Cancel/Close button -->
-                                <AppButton @click="handleCancel" variant="outline" :disabled="isLoading">
+                                <AppButton @click="handleClose" variant="outline" :disabled="isLoading">
                                     {{ cancelText }}
                                 </AppButton>
 
