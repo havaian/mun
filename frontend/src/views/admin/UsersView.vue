@@ -352,9 +352,14 @@
         <UserDetailsModal v-model="showDetailsModal" :user="selectedUser" @edit="editUserFromDetails"
             @delete="deleteUser" />
 
-        <ConfirmDeleteModal v-model="showDeleteConfirm"
+        <ConfirmationDialog 
+            v-model="showDeleteConfirm"
             :title="`Delete User: ${selectedUser?.displayName || selectedUser?.countryName || selectedUser?.username}`"
-            :message="deleteConfirmMessage" @confirmed="confirmDelete" />
+            :message="deleteConfirmMessage"
+            confirm-text="Delete User"
+            confirm-variant="danger"
+            @confirm="confirmDelete"
+        />
     </div>
 </template>
 
@@ -388,7 +393,6 @@ import {
 import CreateUserModal from '@/components/admin/CreateUserModal.vue'
 import EditUserModal from '@/components/admin/EditUserModal.vue'
 import UserDetailsModal from '@/components/admin/UserDetailsModal.vue'
-import ConfirmDeleteModal from '@/components/admin/ConfirmDeleteModal.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 
 const router = useRouter()

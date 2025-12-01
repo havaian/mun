@@ -387,8 +387,14 @@
         <EventDetailsModal v-model="showDetailsModal" :event="selectedEvent" @edit="editEventFromDetails"
             @delete="deleteEvent" />
 
-        <ConfirmDeleteModal v-model="showDeleteConfirm" :title="`Delete Event: ${selectedEvent?.name}`"
-            :message="deleteConfirmMessage" @confirmed="confirmDelete" />
+        <ConfirmationDialog 
+            v-model="showDeleteConfirm"
+            :title="`Delete Event: ${selectedEvent?.name}`"
+            :message="deleteConfirmMessage"
+            confirm-text="Delete Event"
+            confirm-variant="danger"
+            @confirm="confirmDelete"
+        />
     </div>
 </template>
 
@@ -422,7 +428,6 @@ import {
 // Components
 import CreateEditEventModal from '@/components/admin/CreateEditEventModal.vue'
 import EventDetailsModal from '@/components/admin/EventDetailsModal.vue'
-import ConfirmDeleteModal from '@/components/admin/ConfirmDeleteModal.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 
 const router = useRouter()

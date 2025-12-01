@@ -442,8 +442,14 @@
 
         <QRGenerationModal v-model="showQRGeneration" :committee="selectedCommittee" @generated="handleQRGenerated" />
 
-        <ConfirmDeleteModal v-model="showDeleteConfirm" :title="`Delete Committee: ${selectedCommittee?.name}`"
-            :message="deleteConfirmMessage" @confirmed="confirmDelete" />
+        <ConfirmationDialog 
+            v-model="showDeleteConfirm"
+            :title="`Delete Committee: ${selectedCommittee?.name}`"
+            :message="deleteConfirmMessage"
+            confirm-text="Delete Committee"
+            confirm-variant="danger"
+            @confirm="confirmDelete"
+        />
     </div>
 </template>
 
@@ -482,7 +488,6 @@ import CreateEditCommitteeModal from '@/components/admin/CreateEditCommitteeModa
 import CommitteeDetailsModal from '@/components/admin/CommitteeDetailsModal.vue'
 import CountryManagementModal from '@/components/admin/CountryManagementModal.vue'
 import QRGenerationModal from '@/components/admin/QRGenerationModal.vue'
-import ConfirmDeleteModal from '@/components/admin/ConfirmDeleteModal.vue'
 
 const router = useRouter()
 const route = useRoute()
