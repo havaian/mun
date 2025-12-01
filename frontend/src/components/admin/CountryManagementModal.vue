@@ -1,45 +1,28 @@
 <template>
-    <Teleport to="body">
-        <transition name="modal" appear>
-            <div v-if="modelValue"
-                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <ModalWrapper v-model="modelValue" :title="`Manage Countries - ${committee?.name}`"
+        subtitle="Assign countries to this committee" :icon="GlobeAltIcon" size="full" height="full" variant="default"
+        :has-unsaved-changes="hasChanges" :is-loading="isSaving" cancel-text="Cancel" primary-text="Save Countries"
+        :is-primary-disabled="!hasChanges" :show-default-footer="false" @close="close" @primary-action="saveCountries">
+        <template #content>
+            <!-- REMOVE outer padding div, move your flex content here -->
+            <div class="flex h-full">
+                <!-- Country Search & Selection -->
+                <div class="w-1/2 border-r border-mun-gray-200 flex flex-col">
+                    <div class="p-6 border-b border-mun-gray-200">
+                        <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">
+                            Available Countries
+                        </h3>
 
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl flex flex-col max-h-[95vh] min-h-[400px]">
-                    <!-- Modal Header -->
-                    <div class="flex items-center justify-between p-6 border-b border-mun-gray-200">
-                        <div>
-                            <h2 class="text-xl font-bold text-mun-gray-900">
-                                Manage Countries - {{ committee?.name }}
-                            </h2>
-                            <p class="text-sm text-mun-gray-600 mt-1">
-                                Assign countries to this committee
-                            </p>
+                        <!-- Search -->
+                        <div class="relative mb-4">
+                            <input v-model="searchQuery" type="text" placeholder="Search countries..."
+                                class="input-field pl-10" />
+                            <MagnifyingGlassIcon
+                                class="w-5 h-5 text-mun-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                         </div>
 
-                        <button @click="close" class="p-2 hover:bg-mun-gray-100 rounded-lg transition-colors">
-                            <XMarkIcon class="w-6 h-6 text-mun-gray-500" />
-                        </button>
-                    </div>
-
-                    <!-- Content -->
-                    <div class="flex h-[80vh]">
-                        <!-- Country Search & Selection -->
-                        <div class="w-1/2 border-r border-mun-gray-200 flex flex-col">
-                            <div class="p-6 border-b border-mun-gray-200">
-                                <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">
-                                    Available Countries
-                                </h3>
-
-                                <!-- Search -->
-                                <div class="relative mb-4">
-                                    <input v-model="searchQuery" type="text" placeholder="Search countries..."
-                                        class="input-field pl-10" />
-                                    <MagnifyingGlassIcon
-                                        class="w-5 h-5 text-mun-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                                </div>
-
-                                <!-- Quick Filters -->
-                                <!-- <div class="flex flex-wrap gap-2 mb-4">
+                        <!-- Quick Filters -->
+                        <!-- <div class="flex flex-wrap gap-2 mb-4">
                                     <button v-for="region in regions" :key="region.code"
                                         @click="toggleRegionFilter(region.code)" :class="[
                                             'px-3 py-1 rounded-full text-sm font-medium transition-colors',
@@ -51,223 +34,214 @@
                                     </button>
                                 </div> -->
 
-                                <!-- Quick Actions -->
-                                <div class="flex items-center space-x-2 mb-4">
-                                    <AppButton variant="outline" size="sm" @click="selectAllVisible">
-                                        Select All
-                                    </AppButton>
-                                    <AppButton v-if="committee?.type === 'SC'" variant="outline" size="sm"
-                                        @click="addP5Countries">
-                                        Add P5
-                                    </AppButton>
-                                </div>
-
-                                <!-- Selected count -->
-                                <div class="text-sm text-mun-gray-600">
-                                    {{ selectedCountries.length }} selected • {{ filteredAvailableCountries.length }}
-                                    available
-                                </div>
-                            </div>
-
-                            <!-- Country List -->
-                            <div class="flex-1 overflow-y-auto p-4">
-                                <div class="space-y-2">
-                                    <div v-for="country in filteredAvailableCountries" :key="country.code"
-                                        @click="toggleCountrySelection(country)"
-                                        @mouseenter="hoveredCountry = country.code" @mouseleave="hoveredCountry = null"
-                                        :class="[
-                                            'flex items-center p-3 rounded-lg cursor-pointer transition-all border group',
-                                            selectedCountries.includes(country.code)
-                                                ? 'bg-mun-blue-50 border-mun-blue-200'
-                                                : 'hover:bg-mun-gray-50 border-transparent hover:border-mun-gray-200'
-                                        ]">
-                                        <!-- Selection Checkbox -->
-                                        <input type="checkbox" :checked="selectedCountries.includes(country.code)"
-                                            @click.stop="toggleCountrySelection(country)"
-                                            class="input-field h-4 w-4 mr-3" />
-
-                                        <!-- Flag -->
-                                        <div class="mr-3">
-                                            <CountryFlag :country-name="country.name" :country-code="country.code"
-                                                size="medium" variant="bordered" />
-                                        </div>
-
-                                        <!-- Country Info -->
-                                        <div class="flex-1">
-                                            <div class="font-medium text-mun-gray-900">
-                                                {{ country.name }}
-                                            </div>
-                                            <div class="text-sm text-mun-gray-500">
-                                                {{ country.code }} • {{ country.region }}
-                                            </div>
-                                        </div>
-
-                                        <!-- P5 Indicator -->
-                                        <div v-if="isP5Country(country.code)"
-                                            class="bg-mun-red-100 text-mun-red-800 px-2 py-1 rounded text-xs font-medium mr-2">
-                                            P5
-                                        </div>
-
-                                        <!-- Assign Action Icon (shown on hover) -->
-                                        <div class="transition-all duration-200"
-                                            :class="hoveredCountry === country.code ? 'opacity-100' : 'opacity-0'">
-                                            <ChevronDoubleRightIcon class="w-5 h-5 text-mun-blue-600" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- No results -->
-                                <div v-if="filteredAvailableCountries.length === 0" class="text-center py-8">
-                                    <GlobeAltIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
-                                    <p class="text-mun-gray-500">No countries found</p>
-                                </div>
-                            </div>
+                        <!-- Quick Actions -->
+                        <div class="flex items-center space-x-2 mb-4">
+                            <AppButton variant="outline" size="sm" @click="selectAllVisible">
+                                Select All
+                            </AppButton>
+                            <AppButton v-if="committee?.type === 'SC'" variant="outline" size="sm"
+                                @click="addP5Countries">
+                                Add P5
+                            </AppButton>
                         </div>
 
-                        <!-- Assigned Countries -->
-                        <div class="w-1/2 flex flex-col">
-                            <div class="p-6 border-b border-mun-gray-200">
-                                <div class="flex items-center justify-between mb-4">
-                                    <h3 class="text-lg font-semibold text-mun-gray-900">
-                                        Assigned Countries
-                                    </h3>
-                                    <div class="text-sm text-mun-gray-600">
-                                        {{ assignedCountries.length }} / {{ committee?.maxCountries || '∞' }} countries
-                                    </div>
-                                </div>
-
-                                <!-- Progress Bar -->
-                                <div v-if="committee?.maxCountries" class="mb-4">
-                                    <div class="w-full bg-mun-gray-200 rounded-full h-2">
-                                        <div class="bg-mun-blue h-2 rounded-full transition-all duration-300"
-                                            :style="{ width: `${getAssignmentProgress()}%` }"></div>
-                                    </div>
-                                    <p class="text-xs text-mun-gray-500 mt-1">
-                                        {{ getAssignmentProgress() }}% capacity
-                                    </p>
-                                </div>
-
-                                <!-- Bulk Actions for Assigned -->
-                                <div class="flex items-center space-x-2">
-                                    <AppButton variant="outline" size="sm" @click="removeAllCountries"
-                                        :disabled="assignedCountries.length === 0">
-                                        Remove All
-                                    </AppButton>
-                                    <AppButton variant="outline" size="sm" @click="regenerateAllQRs"
-                                        :disabled="assignedCountries.length === 0" :loading="isRegeneratingQRs">
-                                        Regenerate All QRs
-                                    </AppButton>
-                                </div>
-                            </div>
-
-                            <!-- Assigned Countries List -->
-                            <div class="flex-1 overflow-y-auto p-4">
-                                <div class="space-y-3">
-                                    <div v-for="country in assignedCountries" :key="country.code"
-                                        class="flex items-center p-3 bg-mun-gray-50 rounded-lg">
-                                        <!-- Flag -->
-                                        <div class="mr-3">
-                                            <CountryFlag :country-name="country.name" :country-code="country.code"
-                                                size="medium" variant="bordered" />
-                                        </div>
-
-                                        <!-- Country Info -->
-                                        <div class="flex-1">
-                                            <div class="font-medium text-mun-gray-900">
-                                                {{ country.name }}
-                                            </div>
-                                            <div class="flex items-center space-x-2 text-sm text-mun-gray-500">
-                                                <span>{{ country.code }}</span>
-
-                                                <!-- Role Selector for SC -->
-                                                <SleekSelect v-if="committee?.type === 'SC'" v-model="country.role"
-                                                    :options="[
-                                                        { label: 'Non-Permanent', value: 'non-permanent' },
-                                                        { label: 'Permanent', value: 'permanent' }
-                                                    ]" size="sm" container-class="min-w-[120px]"
-                                                    @change="updateCountryRole(country)" />
-
-                                                <!-- Registration Status -->
-                                                <span v-if="country.email" class="text-mun-green-600">
-                                                    ✓ Registered
-                                                </span>
-                                                <span v-else class="text-mun-gray-400">
-                                                    Not registered
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <!-- Actions -->
-                                        <div class="flex items-center space-x-2">
-                                            <!-- QR Status -->
-                                            <div v-if="country.qrToken" class="text-xs">
-                                                <span v-if="country.isQrActive" class="text-mun-green-600">
-                                                    QR Active
-                                                </span>
-                                                <span v-else class="text-mun-gray-500">
-                                                    QR Used
-                                                </span>
-                                            </div>
-
-                                            <!-- Regenerate QR -->
-                                            <button @click="regenerateQR(country)"
-                                                class="p-1 text-mun-gray-400 hover:text-mun-blue transition-colors"
-                                                title="Regenerate QR Code">
-                                                <ArrowPathIcon class="w-4 h-4" />
-                                            </button>
-
-                                            <!-- Remove Country -->
-                                            <button @click="removeCountry(country)"
-                                                class="p-1 text-mun-gray-400 hover:text-mun-red-600 transition-colors"
-                                                title="Remove Country">
-                                                <XMarkIcon class="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- No assigned countries -->
-                                <div v-if="assignedCountries.length === 0" class="text-center py-8">
-                                    <UserGroupIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
-                                    <p class="text-mun-gray-500 mb-2">No countries assigned</p>
-                                    <p class="text-sm text-mun-gray-400">
-                                        Select countries from the left panel to assign them
-                                    </p>
-                                </div>
-                            </div>
+                        <!-- Selected count -->
+                        <div class="text-sm text-mun-gray-600">
+                            {{ selectedCountries.length }} selected • {{ filteredAvailableCountries.length }}
+                            available
                         </div>
                     </div>
 
-                    <!-- Modal Footer -->
-                    <div class="flex items-center justify-between rounded-b-2xl p-6 bg-mun-gray-50 border-t border-mun-gray-200">
-                        <div class="flex items-center space-x-4">
-                            <div class="text-sm text-mun-gray-600">
-                                {{ assignedCountries.length }} countries assigned
-                                <span v-if="committee?.maxCountries">
-                                    of {{ committee.maxCountries }} maximum
-                                </span>
+                    <!-- Country List -->
+                    <div class="flex-1 overflow-y-auto p-4">
+                        <div class="space-y-2">
+                            <div v-for="country in filteredAvailableCountries" :key="country.code"
+                                @click="toggleCountrySelection(country)" @mouseenter="hoveredCountry = country.code"
+                                @mouseleave="hoveredCountry = null" :class="[
+                                    'flex items-center p-3 rounded-lg cursor-pointer transition-all border group',
+                                    selectedCountries.includes(country.code)
+                                        ? 'bg-mun-blue-50 border-mun-blue-200'
+                                        : 'hover:bg-mun-gray-50 border-transparent hover:border-mun-gray-200'
+                                ]">
+                                <!-- Selection Checkbox -->
+                                <input type="checkbox" :checked="selectedCountries.includes(country.code)"
+                                    @click.stop="toggleCountrySelection(country)" class="input-field h-4 w-4 mr-3" />
+
+                                <!-- Flag -->
+                                <div class="mr-3">
+                                    <CountryFlag :country-name="country.name" :country-code="country.code" size="medium"
+                                        variant="bordered" />
+                                </div>
+
+                                <!-- Country Info -->
+                                <div class="flex-1">
+                                    <div class="font-medium text-mun-gray-900">
+                                        {{ country.name }}
+                                    </div>
+                                    <div class="text-sm text-mun-gray-500">
+                                        {{ country.code }} • {{ country.region }}
+                                    </div>
+                                </div>
+
+                                <!-- P5 Indicator -->
+                                <div v-if="isP5Country(country.code)"
+                                    class="bg-mun-red-100 text-mun-red-800 px-2 py-1 rounded text-xs font-medium mr-2">
+                                    P5
+                                </div>
+
+                                <!-- Assign Action Icon (shown on hover) -->
+                                <div class="transition-all duration-200"
+                                    :class="hoveredCountry === country.code ? 'opacity-100' : 'opacity-0'">
+                                    <ChevronDoubleRightIcon class="w-5 h-5 text-mun-blue-600" />
+                                </div>
                             </div>
                         </div>
 
-                        <div class="flex items-center space-x-3">
-                            <AppButton variant="ghost" @click="close" :disabled="isSaving">
-                                Cancel
-                            </AppButton>
+                        <!-- No results -->
+                        <div v-if="filteredAvailableCountries.length === 0" class="text-center py-8">
+                            <GlobeAltIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
+                            <p class="text-mun-gray-500">No countries found</p>
+                        </div>
+                    </div>
+                </div>
 
-                            <AppButton variant="outline" @click="clearSelection" :disabled="isSaving">
-                                Reset
-                            </AppButton>
+                <!-- Assigned Countries -->
+                <div class="w-1/2 flex flex-col">
+                    <div class="p-6 border-b border-mun-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-mun-gray-900">
+                                Assigned Countries
+                            </h3>
+                            <div class="text-sm text-mun-gray-600">
+                                {{ assignedCountries.length }} / {{ committee?.maxCountries || '∞' }} countries
+                            </div>
+                        </div>
 
-                            <AppButton variant="primary" @click="saveCountries" :loading="isSaving">
-                                <CheckIcon class="w-4 h-4 mr-2" />
-                                Save Countries
+                        <!-- Progress Bar -->
+                        <div v-if="committee?.maxCountries" class="mb-4">
+                            <div class="w-full bg-mun-gray-200 rounded-full h-2">
+                                <div class="bg-mun-blue h-2 rounded-full transition-all duration-300"
+                                    :style="{ width: `${getAssignmentProgress()}%` }"></div>
+                            </div>
+                            <p class="text-xs text-mun-gray-500 mt-1">
+                                {{ getAssignmentProgress() }}% capacity
+                            </p>
+                        </div>
+
+                        <!-- Bulk Actions for Assigned -->
+                        <div class="flex items-center space-x-2">
+                            <AppButton variant="outline" size="sm" @click="removeAllCountries"
+                                :disabled="assignedCountries.length === 0">
+                                Remove All
                             </AppButton>
+                            <AppButton variant="outline" size="sm" @click="regenerateAllQRs"
+                                :disabled="assignedCountries.length === 0" :loading="isRegeneratingQRs">
+                                Regenerate All QRs
+                            </AppButton>
+                        </div>
+                    </div>
+
+                    <!-- Assigned Countries List -->
+                    <div class="flex-1 overflow-y-auto p-4">
+                        <div class="space-y-3">
+                            <div v-for="country in assignedCountries" :key="country.code"
+                                class="flex items-center p-3 bg-mun-gray-50 rounded-lg">
+                                <!-- Flag -->
+                                <div class="mr-3">
+                                    <CountryFlag :country-name="country.name" :country-code="country.code" size="medium"
+                                        variant="bordered" />
+                                </div>
+
+                                <!-- Country Info -->
+                                <div class="flex-1">
+                                    <div class="font-medium text-mun-gray-900">
+                                        {{ country.name }}
+                                    </div>
+                                    <div class="flex items-center space-x-2 text-sm text-mun-gray-500">
+                                        <span>{{ country.code }}</span>
+
+                                        <!-- Role Selector for SC -->
+                                        <SleekSelect v-if="committee?.type === 'SC'" v-model="country.role" :options="[
+                                            { label: 'Non-Permanent', value: 'non-permanent' },
+                                            { label: 'Permanent', value: 'permanent' }
+                                        ]" size="sm" container-class="min-w-[120px]"
+                                            @change="updateCountryRole(country)" />
+
+                                        <!-- Registration Status -->
+                                        <span v-if="country.email" class="text-mun-green-600">
+                                            ✓ Registered
+                                        </span>
+                                        <span v-else class="text-mun-gray-400">
+                                            Not registered
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="flex items-center space-x-2">
+                                    <!-- QR Status -->
+                                    <div v-if="country.qrToken" class="text-xs">
+                                        <span v-if="country.isQrActive" class="text-mun-green-600">
+                                            QR Active
+                                        </span>
+                                        <span v-else class="text-mun-gray-500">
+                                            QR Used
+                                        </span>
+                                    </div>
+
+                                    <!-- Regenerate QR -->
+                                    <button @click="regenerateQR(country)"
+                                        class="p-1 text-mun-gray-400 hover:text-mun-blue transition-colors"
+                                        title="Regenerate QR Code">
+                                        <ArrowPathIcon class="w-4 h-4" />
+                                    </button>
+
+                                    <!-- Remove Country -->
+                                    <button @click="removeCountry(country)"
+                                        class="p-1 text-mun-gray-400 hover:text-mun-red-600 transition-colors"
+                                        title="Remove Country">
+                                        <XMarkIcon class="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- No assigned countries -->
+                        <div v-if="assignedCountries.length === 0" class="text-center py-8">
+                            <UserGroupIcon class="w-12 h-12 text-mun-gray-400 mx-auto mb-4" />
+                            <p class="text-mun-gray-500 mb-2">No countries assigned</p>
+                            <p class="text-sm text-mun-gray-400">
+                                Select countries from the left panel to assign them
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
-        </transition>
-    </Teleport>
+        </template>
+
+        <!-- CUSTOM FOOTER -->
+        <template #footer-left>
+            <div class="text-sm text-mun-gray-600">
+                {{ assignedCountries.length }} countries assigned
+                <span v-if="committee?.maxCountries">of {{ committee.maxCountries }} maximum</span>
+            </div>
+        </template>
+
+        <template #footer-buttons>
+            <AppButton variant="ghost" @click="close" :disabled="isSaving">
+                Cancel
+            </AppButton>
+
+            <AppButton variant="outline" @click="clearSelection" :disabled="isSaving">
+                Reset
+            </AppButton>
+
+            <AppButton variant="primary" @click="saveCountries" :loading="isSaving" :disabled="!hasChanges">
+                <CheckIcon class="w-4 h-4 mr-2" />
+                Save Countries
+            </AppButton>
+        </template>
+    </ModalWrapper>
 </template>
 
 <script setup>
@@ -633,7 +607,21 @@ const saveCountries = async () => {
     }
 }
 
+const hasChanges = computed(() => {
+    if (!originalAssigned.value.length && !assignedCountries.value.length) return false
+    
+    if (originalAssigned.value.length !== assignedCountries.value.length) return true
+    
+    return !originalAssigned.value.every(original => 
+        assignedCountries.value.some(current => 
+            current.code === original.code && 
+            current.role === original.role
+        )
+    )
+})
+
 const close = () => {
+    // ModalWrapper handles unsaved changes confirmation automatically
     emit('update:modelValue', false)
 }
 

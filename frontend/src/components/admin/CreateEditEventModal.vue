@@ -1,212 +1,171 @@
 <template>
-    <Teleport to="body">
-        <transition name="modal" appear>
-            <div v-if="modelValue"
-                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <ModalWrapper v-model="modelValue" :title="mode === 'edit' ? 'Edit Event' : 'Create New Event'"
+        :subtitle="mode === 'edit' ? 'Update event details and settings' : 'Set up a new MUN event'"
+        :icon="CalendarDaysIcon" size="xl" variant="default" :has-unsaved-changes="hasUnsavedChanges"
+        :is-loading="isSubmitting" cancel-text="Cancel" primary-text="Save Event" :is-primary-disabled="!isValid"
+        @close="close" @primary-action="handleCreateEvent">
+        <template #content>
+            <!-- Basic Information -->
+            <div class="space-y-6">
+                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
+                    <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
+                    Basic Information
+                </h3>
 
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden flex flex-col">
-                    <!-- Modal Header -->
-                    <div class="flex items-center justify-between p-6 border-b border-mun-gray-200">
-                        <div>
-                            <h2 class="text-xl font-bold text-mun-gray-900">
-                                {{ mode === 'edit' ? 'Edit Event' : 'Create New Event' }}
-                            </h2>
-                            <p class="text-sm text-mun-gray-600 mt-1">
-                                {{ mode === 'edit' ? 'Update event details and settings' : 'Set up a new MUN event' }}
-                            </p>
-                        </div>
-
-                        <button @click="close" class="p-2 hover:bg-mun-gray-100 rounded-lg transition-colors">
-                            <XMarkIcon class="w-6 h-6 text-mun-gray-500" />
-                        </button>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Event Name -->
+                    <div class="lg:col-span-2">
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Event Name *
+                        </label>
+                        <input v-model="formData.name" type="text" class="input-field"
+                            placeholder="e.g., MUNUZ 2024 Conference" :class="{ 'border-mun-red-300': errors.name }" />
+                        <p v-if="errors.name" class="mt-1 text-sm text-mun-red-600">
+                            {{ errors.name }}
+                        </p>
                     </div>
 
-                    <!-- Modal Content -->
-                    <div class="flex-1 overflow-y-auto">
-                        <form @submit.prevent="handleFormSubmit" class="p-6 space-y-8" novalidate>
-                            <!-- Basic Information -->
-                            <div class="space-y-6">
-                                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
-                                    <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
-                                    Basic Information
-                                </h3>
-
-                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <!-- Event Name -->
-                                    <div class="lg:col-span-2">
-                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                            Event Name *
-                                        </label>
-                                        <input v-model="formData.name" type="text" class="input-field"
-                                            placeholder="e.g., MUNUZ 2024 Conference"
-                                            :class="{ 'border-mun-red-300': errors.name }" />
-                                        <p v-if="errors.name" class="mt-1 text-sm text-mun-red-600">
-                                            {{ errors.name }}
-                                        </p>
-                                    </div>
-
-                                    <!-- Status -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                            Status
-                                        </label>
-                                        <SleekSelect v-model="formData.status" :options="[
-                                            { label: 'Draft', value: 'draft' },
-                                            { label: 'Active', value: 'active' },
-                                            { label: 'Completed', value: 'completed' }
-                                        ]" size="md" />
-                                    </div>
-
-                                    <!-- Description -->
-                                    <div class="lg:col-span-2">
-                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                            Description
-                                        </label>
-                                        <textarea v-model="formData.description" rows="4"
-                                            class="input-field resize-none"
-                                            placeholder="Describe the event, its goals, and what participants can expect..."></textarea>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Event Details -->
-                            <div class="space-y-6">
-                                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
-                                    <CalendarDaysIcon class="w-5 h-5 mr-2 text-mun-blue" />
-                                    Event Schedule
-                                </h3>
-
-                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <!-- Start Date -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                            Start Date *
-                                        </label>
-                                        <input v-model="formData.startDate" type="datetime-local"
-                                            class="input-field" :class="{ 'border-mun-red-300': errors.startDate }" />
-                                        <p v-if="errors.startDate" class="mt-1 text-sm text-mun-red-600">
-                                            {{ errors.startDate }}
-                                        </p>
-                                    </div>
-
-                                    <!-- End Date -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                            End Date *
-                                        </label>
-                                        <input v-model="formData.endDate" type="datetime-local"
-                                            class="input-field" :class="{ 'border-mun-red-300': errors.endDate }" />
-                                        <p v-if="errors.endDate" class="mt-1 text-sm text-mun-red-600">
-                                            {{ errors.endDate }}
-                                        </p>
-                                    </div>
-
-                                    <!-- Registration Deadline -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                            Registration Deadline *
-                                        </label>
-                                        <input v-model="formData.registrationDeadline" type="datetime-local"
-                                            class="input-field" :class="{ 'border-mun-red-300': errors.registrationDeadline }" />
-                                        <p v-if="errors.registrationDeadline" class="mt-1 text-sm text-mun-red-600">
-                                            {{ errors.registrationDeadline }}
-                                        </p>
-                                    </div>
-
-                                    <!-- Timezone -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                            Timezone
-                                        </label>
-                                        <SleekSelect v-model="formData.timezone" :options="[
-                                            { label: 'Asia/Tashkent (UTC+5)', value: 'Asia/Tashkent' },
-                                            { label: 'UTC (UTC+0)', value: 'UTC' },
-                                            { label: 'Europe/Moscow (UTC+3)', value: 'Europe/Moscow' },
-                                            { label: 'Europe/London (UTC+0)', value: 'Europe/London' },
-                                            { label: 'America/New_York (UTC-5)', value: 'America/New_York' }
-                                        ]" size="md" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Event Settings -->
-                            <div class="space-y-6">
-                                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
-                                    <CogIcon class="w-5 h-5 mr-2 text-mun-blue" />
-                                    Event Settings
-                                </h3>
-
-                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <!-- Max Committees -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                            Maximum Committees
-                                        </label>
-                                        <input v-model.number="formData.maxCommittees" type="number" min="1" max="50"
-                                            class="input-field" placeholder="10" />
-                                        <p class="mt-1 text-xs text-mun-gray-500">
-                                            Maximum number of committees for this event (1-50)
-                                        </p>
-                                    </div>
-
-                                    <!-- QR Expiration Period -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                            QR Code Expiration (hours)
-                                        </label>
-                                        <input v-model.number="formData.qrExpirationPeriod" type="number" min="1" max="720"
-                                            class="input-field" placeholder="168" />
-                                        <p class="mt-1 text-xs text-mun-gray-500">
-                                            How long QR codes remain valid (1-720 hours)
-                                        </p>
-                                    </div>
-
-                                    <!-- Allow Late Registration -->
-                                    <div class="lg:col-span-2">
-                                        <div class="flex items-center">
-                                            <input id="allowLateRegistration" v-model="formData.allowLateRegistration" type="checkbox"
-                                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
-                                            <label for="allowLateRegistration" class="ml-2 text-sm text-mun-gray-700">
-                                                Allow late registration after deadline
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
+                    <!-- Status -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Status
+                        </label>
+                        <SleekSelect v-model="formData.status" :options="[
+                            { label: 'Draft', value: 'draft' },
+                            { label: 'Active', value: 'active' },
+                            { label: 'Completed', value: 'completed' }
+                        ]" size="md" />
                     </div>
 
-                    <!-- Modal Footer -->
-                    <div class="flex items-center justify-between p-6 bg-mun-gray-50 border-t border-mun-gray-200">
-                        <div class="flex items-center space-x-4">
-                            <AppButton variant="ghost" @click="close" :disabled="isSubmitting">
-                                Cancel
-                            </AppButton>
+                    <!-- Description -->
+                    <div class="lg:col-span-2">
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Description
+                        </label>
+                        <textarea v-model="formData.description" rows="4" class="input-field resize-none"
+                            placeholder="Describe the event, its goals, and what participants can expect..."></textarea>
+                    </div>
+                </div>
+            </div>
 
-                            <AppButton v-if="mode === 'edit'" variant="outline" @click="resetForm"
-                                :disabled="isSubmitting">
-                                <ArrowPathIcon class="w-4 h-4 mr-2" />
-                                Reset
-                            </AppButton>
-                        </div>
+            <!-- Event Details -->
+            <div class="space-y-6">
+                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
+                    <CalendarDaysIcon class="w-5 h-5 mr-2 text-mun-blue" />
+                    Event Schedule
+                </h3>
 
-                        <div class="flex items-center space-x-3">
-                            <AppButton v-if="mode === 'create'" variant="outline" @click.stop="handleSaveDraft"
-                                :loading="isDraftSaving" :disabled="isSubmitting">
-                                <DocumentIcon class="w-4 h-4 mr-2" />
-                                Save as Draft
-                            </AppButton>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Start Date -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Start Date *
+                        </label>
+                        <input v-model="formData.startDate" type="datetime-local" class="input-field"
+                            :class="{ 'border-mun-red-300': errors.startDate }" />
+                        <p v-if="errors.startDate" class="mt-1 text-sm text-mun-red-600">
+                            {{ errors.startDate }}
+                        </p>
+                    </div>
 
-                            <AppButton variant="primary" @click.stop="handleCreateEvent" :loading="isSubmitting" type="button">
-                                <CheckIcon class="w-4 h-4 mr-2" />
-                                {{ mode === 'edit' ? 'Update Event' : 'Create Event' }}
-                            </AppButton>
+                    <!-- End Date -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            End Date *
+                        </label>
+                        <input v-model="formData.endDate" type="datetime-local" class="input-field"
+                            :class="{ 'border-mun-red-300': errors.endDate }" />
+                        <p v-if="errors.endDate" class="mt-1 text-sm text-mun-red-600">
+                            {{ errors.endDate }}
+                        </p>
+                    </div>
+
+                    <!-- Registration Deadline -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Registration Deadline *
+                        </label>
+                        <input v-model="formData.registrationDeadline" type="datetime-local" class="input-field"
+                            :class="{ 'border-mun-red-300': errors.registrationDeadline }" />
+                        <p v-if="errors.registrationDeadline" class="mt-1 text-sm text-mun-red-600">
+                            {{ errors.registrationDeadline }}
+                        </p>
+                    </div>
+
+                    <!-- Timezone -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Timezone
+                        </label>
+                        <SleekSelect v-model="formData.timezone" :options="[
+                            { label: 'Asia/Tashkent (UTC+5)', value: 'Asia/Tashkent' },
+                            { label: 'UTC (UTC+0)', value: 'UTC' },
+                            { label: 'Europe/Moscow (UTC+3)', value: 'Europe/Moscow' },
+                            { label: 'Europe/London (UTC+0)', value: 'Europe/London' },
+                            { label: 'America/New_York (UTC-5)', value: 'America/New_York' }
+                        ]" size="md" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Settings -->
+            <div class="space-y-6">
+                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
+                    <CogIcon class="w-5 h-5 mr-2 text-mun-blue" />
+                    Event Settings
+                </h3>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Max Committees -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Maximum Committees
+                        </label>
+                        <input v-model.number="formData.maxCommittees" type="number" min="1" max="50"
+                            class="input-field" placeholder="10" />
+                        <p class="mt-1 text-xs text-mun-gray-500">
+                            Maximum number of committees for this event (1-50)
+                        </p>
+                    </div>
+
+                    <!-- QR Expiration Period -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            QR Code Expiration (hours)
+                        </label>
+                        <input v-model.number="formData.qrExpirationPeriod" type="number" min="1" max="720"
+                            class="input-field" placeholder="168" />
+                        <p class="mt-1 text-xs text-mun-gray-500">
+                            How long QR codes remain valid (1-720 hours)
+                        </p>
+                    </div>
+
+                    <!-- Allow Late Registration -->
+                    <div class="lg:col-span-2">
+                        <div class="flex items-center">
+                            <input id="allowLateRegistration" v-model="formData.allowLateRegistration" type="checkbox"
+                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
+                            <label for="allowLateRegistration" class="ml-2 text-sm text-mun-gray-700">
+                                Allow late registration after deadline
+                            </label>
                         </div>
                     </div>
                 </div>
             </div>
-        </transition>
-    </Teleport>
+        </template>
+
+        <!-- SAME FOOTER PATTERN AS COMMITTEE -->
+        <template #footer-buttons>
+            <AppButton @click="close" variant="outline" :disabled="isSubmitting">Cancel</AppButton>
+            <AppButton v-if="mode === 'edit'" variant="outline" @click="resetForm" :disabled="isSubmitting">Reset
+            </AppButton>
+            <AppButton v-if="mode === 'create'" variant="outline" @click="handleSaveDraft" :loading="isDraftSaving"
+                :disabled="isSubmitting">Save as Draft</AppButton>
+            <AppButton variant="primary" @click="handleCreateEvent" :loading="isSubmitting" :disabled="!isValid">
+                {{ mode === 'edit' ? 'Update Event' : 'Create Event' }}
+            </AppButton>
+        </template>
+    </ModalWrapper>
 </template>
 
 <script setup>
@@ -375,16 +334,16 @@ const initializeForm = () => {
         formData.name = props.event.name || ''
         formData.description = props.event.description || ''
         formData.status = props.event.status || 'draft'
-        
+
         // Handle dates - convert UTC from backend to local time for display
-        formData.startDate = props.event.startDate ? 
+        formData.startDate = props.event.startDate ?
             convertUTCToLocal(props.event.startDate) : ''
-        formData.endDate = props.event.endDate ? 
+        formData.endDate = props.event.endDate ?
             convertUTCToLocal(props.event.endDate) : ''
-        
+
         // Handle nested settings
         if (props.event.settings) {
-            formData.registrationDeadline = props.event.settings.registrationDeadline ? 
+            formData.registrationDeadline = props.event.settings.registrationDeadline ?
                 convertUTCToLocal(props.event.settings.registrationDeadline) : ''
             formData.timezone = props.event.settings.timezone || 'UTC'
             formData.maxCommittees = props.event.settings.maxCommittees || 10
@@ -509,7 +468,7 @@ async function submitForm() {
 
         if (response?.data) {
             const eventData = response.data.event || response.data
-            
+
             if (props.mode === 'edit') {
                 emit('updated', eventData)
                 toast.success('Event updated successfully')
@@ -559,10 +518,10 @@ const saveDraft = async () => {
 
         if (response?.data) {
             toast.success('Draft saved successfully')
-            
+
             const eventData = response.data.event || response.data
             emit('saved', eventData)
-            
+
             if (props.mode === 'create') {
                 close()
             }
@@ -592,6 +551,22 @@ const handleSaveDraft = async () => {
 
 const close = () => {
     emit('update:modelValue', false)
+}
+
+const getCommitteeSubtitle = () => {
+    const parts = []
+    if (props.committee?.type) {
+        parts.push(formatCommitteeType(props.committee.type))
+    }
+    if (props.committee?.eventId?.name) {
+        parts.push(props.committee.eventId.name)
+    }
+    return parts.join(' • ')
+}
+
+const getFooterText = () => {
+    if (!props.committee?.createdAt) return ''
+    return `Created ${formatDate(props.committee.createdAt)} • Last updated ${formatDate(props.committee.updatedAt)}`
 }
 
 // Lifecycle

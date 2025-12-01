@@ -1,269 +1,280 @@
 <template>
-    <Teleport to="body">
-        <transition name="modal">
-            <div v-if="modelValue"
-                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-                @click="closeModal">
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[95vh] min-h-[400px]" @click.stop>
+    <ModalWrapper v-model="modelValue" :title="event?.name || 'Event Details'" :subtitle="formatEventDate()"
+        :icon="CalendarDaysIcon" size="xl" variant="primary" is-view-only content-scrollable cancel-text="Close"
+        :footer-text="formatFooterText()" @close="closeModal">
+        <!-- Content slot -->
+        <template #content>
+            <div class="space-y-6">
+                <!-- Event Overview -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left Column: Basic Details -->
+                    <div class="mun-card p-6">
+                        <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Event Information</h3>
 
-                    <!-- Header -->
-                    <div
-                        class="flex items-center justify-between p-6 border-b border-mun-gray-200 bg-gradient-to-r from-mun-blue to-mun-blue-600">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                                <CalendarDaysIcon class="w-6 h-6 text-white" />
+                        <div class="space-y-4">
+                            <div class="flex items-start space-x-3">
+                                <CalendarDaysIcon class="w-5 h-5 text-mun-gray-400 mt-0.5 flex-shrink-0" />
+                                <div class="flex-1">
+                                    <p class="text-sm text-mun-gray-600">Start Date</p>
+                                    <p class="font-medium text-mun-gray-900">{{ formatDate(event?.startDate) }}</p>
+                                </div>
                             </div>
-                            <div>
-                                <h2 class="text-xl font-bold text-white">
-                                    {{ event?.name || 'Event Details' }}
-                                </h2>
-                                <p class="text-white/80 text-sm">
-                                    {{ getEventStatusText() }}
-                                </p>
+
+                            <div class="flex items-start space-x-3">
+                                <CalendarDaysIcon class="w-5 h-5 text-mun-gray-400 mt-0.5 flex-shrink-0" />
+                                <div class="flex-1">
+                                    <p class="text-sm text-mun-gray-600">End Date</p>
+                                    <p class="font-medium text-mun-gray-900">{{ formatDate(event?.endDate) }}</p>
+                                </div>
                             </div>
-                        </div>
 
-                        <button @click="closeModal"
-                            class="text-white/80 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/10">
-                            <XMarkIcon class="w-6 h-6" />
-                        </button>
-                    </div>
+                            <div class="flex items-start space-x-3">
+                                <MapPinIcon class="w-5 h-5 text-mun-gray-400 mt-0.5 flex-shrink-0" />
+                                <div class="flex-1">
+                                    <p class="text-sm text-mun-gray-600">Location</p>
+                                    <p class="font-medium text-mun-gray-900">{{ event?.location || 'Not specified' }}
+                                    </p>
+                                </div>
+                            </div>
 
-                    <!-- Content -->
-                    <div class="flex flex-col max-h-[95vh] min-h-[400px]">
-                        <div v-if="!event" class="flex items-center justify-center py-12">
-                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue"></div>
-                        </div>
-
-                        <div v-else class="p-6 space-y-8">
-                            <!-- Event Overview -->
-                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <!-- Basic Information -->
-                                <div class="lg:col-span-2 space-y-6">
-                                    <!-- Event Details Card -->
-                                    <div class="mun-card p-6">
-                                        <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
-                                            Event Information
-                                        </h3>
-
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label class="text-sm font-medium text-mun-gray-600">Status</label>
-                                                <span :class="[
-                                                    'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                                                    getStatusClasses(event.status)
-                                                ]">
-                                                    {{ formatStatus(event.status) }}
-                                                </span>
-                                            </div>
-
-                                            <div>
-                                                <label class="text-sm font-medium text-mun-gray-600">Start Date</label>
-                                                <p class="text-mun-gray-900">{{ formatDate(event.startDate) }}</p>
-                                            </div>
-
-                                            <div>
-                                                <label class="text-sm font-medium text-mun-gray-600">End Date</label>
-                                                <p class="text-mun-gray-900">{{ formatDate(event.endDate) }}</p>
-                                            </div>
-
-                                            <div>
-                                                <label class="text-sm font-medium text-mun-gray-600">Duration</label>
-                                                <p class="text-mun-gray-900">{{ getEventDuration() }} days</p>
-                                            </div>
-                                        </div>
-
-                                        <div v-if="event.description" class="mt-4">
-                                            <label class="text-sm font-medium text-mun-gray-600">Description</label>
-                                            <p class="text-mun-gray-900 mt-1">{{ event.description }}</p>
-                                        </div>
-                                    </div>
-
-                                    <!-- Registration Settings -->
-                                    <div class="mun-card p-6">
-                                        <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <UserPlusIcon class="w-5 h-5 mr-2 text-mun-blue" />
-                                            Registration & Settings
-                                        </h3>
-
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label class="text-sm font-medium text-mun-gray-600">Registration
-                                                    Deadline</label>
-                                                <p class="text-mun-gray-900">{{
-                                                    formatDate(event.settings?.registrationDeadline) }}</p>
-                                            </div>
-
-                                            <div>
-                                                <label class="text-sm font-medium text-mun-gray-600">Max
-                                                    Committees</label>
-                                                <p class="text-mun-gray-900">{{ event.settings?.maxCommittees || 10 }}
-                                                </p>
-                                            </div>
-
-                                            <div>
-                                                <label class="text-sm font-medium text-mun-gray-600">QR
-                                                    Expiration</label>
-                                                <p class="text-mun-gray-900">{{ event.settings?.qrExpirationPeriod ||
-                                                    168 }} hours</p>
-                                            </div>
-
-                                            <div>
-                                                <label class="text-sm font-medium text-mun-gray-600">Timezone</label>
-                                                <p class="text-mun-gray-900">{{ event.settings?.timezone || 'UTC' }}</p>
-                                            </div>
-                                        </div>
-
-                                        <!-- Registration Settings -->
-                                        <div class="mt-4 flex flex-wrap gap-4">
-                                            <span v-if="event.settings?.allowLateRegistration"
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                <ClockIcon class="w-3 h-3 mr-1" />
-                                                Late Registration Allowed
-                                            </span>
-                                            <span v-else
-                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                <ClockIcon class="w-3 h-3 mr-1" />
-                                                Strict Deadline
-                                            </span>
-                                        </div>
+                            <div class="flex items-start space-x-3">
+                                <UserIcon class="w-5 h-5 text-mun-gray-400 mt-0.5 flex-shrink-0" />
+                                <div class="flex-1">
+                                    <p class="text-sm text-mun-gray-600">Status</p>
+                                    <div class="flex items-center space-x-2">
+                                        <span :class="[
+                                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                                            event?.status === 'active'
+                                                ? 'bg-green-100 text-green-800'
+                                                : event?.status === 'draft'
+                                                    ? 'bg-yellow-100 text-yellow-800'
+                                                    : 'bg-gray-100 text-gray-800'
+                                        ]">
+                                            {{ event?.status?.charAt(0).toUpperCase() + event?.status?.slice(1) ||
+                                            'Unknown' }}
+                                        </span>
+                                        <span class="text-sm text-mun-gray-600">{{ getEventTimelineStatus() }}</span>
                                     </div>
                                 </div>
+                            </div>
 
-                                <!-- Statistics & Actions Sidebar -->
-                                <div class="space-y-6">
-                                    <!-- Quick Stats -->
-                                    <div class="mun-card p-6">
-                                        <h3 class="text-lg font-semibold text-mun-gray-900 mb-4 flex items-center">
-                                            <ChartBarIcon class="w-5 h-5 mr-2 text-mun-blue" />
-                                            Statistics
-                                        </h3>
-
-                                        <div class="space-y-4">
-                                            <div class="flex justify-between items-center">
-                                                <span class="text-sm text-mun-gray-600">Total Committees</span>
-                                                <span class="font-semibold text-mun-gray-900">{{
-                                                    event.statistics?.totalCommittees || 0 }}</span>
-                                            </div>
-
-                                            <div class="flex justify-between items-center">
-                                                <span class="text-sm text-mun-gray-600">Total Participants</span>
-                                                <span class="font-semibold text-mun-gray-900">{{
-                                                    event.statistics?.totalParticipants || 0 }}</span>
-                                            </div>
-
-                                            <div class="flex justify-between items-center">
-                                                <span class="text-sm text-mun-gray-600">Total Countries</span>
-                                                <span class="font-semibold text-mun-gray-900">{{
-                                                    event.statistics?.totalCountries || 0 }}</span>
-                                            </div>
-
-                                            <div class="flex justify-between items-center pt-2 border-t">
-                                                <span class="text-sm text-mun-gray-600">Registration Open</span>
-                                                <span :class="[
-                                                    'font-semibold',
-                                                    isRegistrationOpen() ? 'text-green-600' : 'text-red-600'
-                                                ]">
-                                                    {{ isRegistrationOpen() ? 'Yes' : 'No' }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Quick Actions -->
-                                    <div class="mun-card p-6">
-                                        <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Quick Actions</h3>
-
-                                        <div class="space-y-3">
-                                            <AppButton @click="editEvent" variant="primary" size="sm" class="w-full">
-                                                <PencilIcon class="w-4 h-4 mr-2" />
-                                                Edit Event
-                                            </AppButton>
-
-                                            <AppButton @click="viewCommittees" variant="outline" size="sm"
-                                                class="w-full">
-                                                <BuildingLibraryIcon class="w-4 h-4 mr-2" />
-                                                View Committees
-                                            </AppButton>
-
-                                            <AppButton @click="duplicateEvent" variant="outline" size="sm"
-                                                class="w-full">
-                                                <DocumentDuplicateIcon class="w-4 h-4 mr-2" />
-                                                Duplicate Event
-                                            </AppButton>
-                                        </div>
-                                    </div>
-
-                                    <!-- Event Timeline -->
-                                    <div class="mun-card p-6">
-                                        <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Timeline</h3>
-
-                                        <div class="space-y-3">
-                                            <div class="flex items-center text-sm">
-                                                <div :class="[
-                                                    'w-3 h-3 rounded-full mr-3 flex-shrink-0',
-                                                    isRegistrationOpen() ? 'bg-green-500' : 'bg-red-500'
-                                                ]"></div>
-                                                <div class="flex-1">
-                                                    <span class="text-mun-gray-600">Registration:</span>
-                                                    <span class="text-mun-gray-900 font-medium ml-1">
-                                                        {{ getRegistrationStatus() }}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            <div class="flex items-center text-sm">
-                                                <div :class="[
-                                                    'w-3 h-3 rounded-full mr-3 flex-shrink-0',
-                                                    getEventTimelineColor()
-                                                ]"></div>
-                                                <div class="flex-1">
-                                                    <span class="text-mun-gray-600">Event:</span>
-                                                    <span class="text-mun-gray-900 font-medium ml-1">
-                                                        {{ getEventTimelineStatus() }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                            <div v-if="event?.description" class="flex items-start space-x-3">
+                                <InformationCircleIcon class="w-5 h-5 text-mun-gray-400 mt-0.5 flex-shrink-0" />
+                                <div class="flex-1">
+                                    <p class="text-sm text-mun-gray-600">Description</p>
+                                    <p class="font-medium text-mun-gray-900">{{ event.description }}</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Footer -->
-                    <div class="flex items-center justify-between rounded-b-2xl p-6 border-t border-mun-gray-200 bg-mun-gray-50">
-                        <div class="text-sm text-mun-gray-500">
-                            Created {{ formatDate(event?.createdAt) }} • Last updated {{ formatDate(event?.updatedAt) }}
+                    <!-- Right Column: Statistics -->
+                    <div class="space-y-6">
+                        <!-- Committee Statistics -->
+                        <div class="mun-card p-6">
+                            <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Statistics</h3>
+
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <div
+                                            class="w-10 h-10 bg-mun-blue-100 rounded-lg flex items-center justify-center">
+                                            <BuildingLibraryIcon class="w-5 h-5 text-mun-blue-600" />
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-mun-gray-600">Total Committees</p>
+                                            <p class="text-2xl font-bold text-mun-gray-900">{{
+                                                event?.statistics?.totalCommittees || 0 }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                            <UsersIcon class="w-5 h-5 text-green-600" />
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-mun-gray-600">Total Participants</p>
+                                            <p class="text-2xl font-bold text-mun-gray-900">{{
+                                                event?.statistics?.totalParticipants || 0 }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <div
+                                            class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                            <GlobeAltIcon class="w-5 h-5 text-purple-600" />
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-mun-gray-600">Countries Represented</p>
+                                            <p class="text-2xl font-bold text-mun-gray-900">{{
+                                                event?.statistics?.totalCountries || 0 }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="flex space-x-3">
-                            <AppButton @click="closeModal" variant="outline">
-                                Close
-                            </AppButton>
+                        <!-- Registration Status -->
+                        <div class="mun-card p-6">
+                            <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Registration</h3>
+
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-mun-gray-600">Status</span>
+                                    <span :class="[
+                                        'text-sm font-medium',
+                                        isRegistrationOpen() ? 'text-green-600' : 'text-red-600'
+                                    ]">
+                                        {{ getRegistrationStatus() }}
+                                    </span>
+                                </div>
+
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-mun-gray-600">Deadline</span>
+                                    <span class="text-sm font-medium text-mun-gray-900">
+                                        {{ formatDate(event?.settings?.registrationDeadline) || 'Not set' }}
+                                    </span>
+                                </div>
+
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-mun-gray-600">Late Registration</span>
+                                    <span :class="[
+                                        'text-sm font-medium',
+                                        event?.settings?.allowLateRegistration ? 'text-green-600' : 'text-red-600'
+                                    ]">
+                                        {{ event?.settings?.allowLateRegistration ? 'Allowed' : 'Not allowed' }}
+                                    </span>
+                                </div>
+
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-mun-gray-600">Maximum Participants</span>
+                                    <span class="text-sm font-medium text-mun-gray-900">{{
+                                        event?.settings?.maxParticipants || 'Unlimited' }}</span>
+                                </div>
+
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-mun-gray-600">Open Registration</span>
+                                    <span :class="[
+                                        'text-sm font-medium',
+                                        isRegistrationOpen() ?
+                                            'text-green-600' : 'text-red-600'
+                                    ]">
+                                        {{ isRegistrationOpen() ? 'Yes' : 'No' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="mun-card p-6">
+                            <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Quick Actions</h3>
+
+                            <div class="space-y-3">
+                                <AppButton @click="editEvent" variant="primary" size="sm" class="w-full">
+                                    <PencilIcon class="w-4 h-4 mr-2" />
+                                    Edit Event
+                                </AppButton>
+
+                                <AppButton @click="viewCommittees" variant="outline" size="sm" class="w-full">
+                                    <BuildingLibraryIcon class="w-4 h-4 mr-2" />
+                                    View Committees
+                                </AppButton>
+                            </div>
+                        </div>
+
+                        <!-- Event Timeline -->
+                        <div class="mun-card p-6">
+                            <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Timeline</h3>
+
+                            <div class="space-y-3">
+                                <div class="flex items-center text-sm">
+                                    <div :class="[
+                                        'w-3 h-3 rounded-full mr-3 flex-shrink-0',
+                                        isRegistrationOpen() ?
+                                            'bg-green-500' : 'bg-gray-400'
+                                    ]"></div>
+                                    <span class="text-mun-gray-600">Registration:</span>
+                                    <span class="ml-2 font-medium">{{ getRegistrationStatus() }}</span>
+                                </div>
+
+                                <div class="flex items-center text-sm">
+                                    <div :class="[
+                                        'w-3 h-3 rounded-full mr-3 flex-shrink-0',
+                                        getEventTimelineColor()
+                                    ]"></div>
+                                    <span class="text-mun-gray-600">Event:</span>
+                                    <span class="ml-2 font-medium">{{ getEventTimelineStatus() }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Information -->
+                <div v-if="event?.settings" class="mun-card p-6">
+                    <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Event Settings</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-mun-gray-600">Public Event</span>
+                                <span class="text-sm font-medium text-mun-gray-900">
+                                    {{ event.settings.isPublic ? 'Yes' : 'No' }}
+                                </span>
+                            </div>
+
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-mun-gray-600">Featured Event</span>
+                                <span class="text-sm font-medium text-mun-gray-900">
+                                    {{ event.settings.isFeatured ? 'Yes' : 'No' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-mun-gray-600">Time Zone</span>
+                                <span class="text-sm font-medium text-mun-gray-900">
+                                    {{ event.settings.timezone || 'UTC' }}
+                                </span>
+                            </div>
+
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-mun-gray-600">Language</span>
+                                <span class="text-sm font-medium text-mun-gray-900">
+                                    {{ event.settings.language || 'English' }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </transition>
-    </Teleport>
+        </template>
+    </ModalWrapper>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router'
 import {
-    XMarkIcon,
     CalendarDaysIcon,
-    InformationCircleIcon,
-    UserPlusIcon,
-    ChartBarIcon,
-    PencilIcon,
-    DocumentDuplicateIcon,
+    MapPinIcon,
+    UserIcon,
+    UsersIcon,
     BuildingLibraryIcon,
-    ClockIcon
+    GlobeAltIcon,
+    InformationCircleIcon,
+    PencilIcon
 } from '@heroicons/vue/24/outline'
+import ModalWrapper from '@/components/ui/ModalWrapper.vue'
+import AppButton from '@/components/ui/AppButton.vue'
 
+const router = useRouter()
+
+// Props
 const props = defineProps({
     modelValue: {
         type: Boolean,
@@ -275,8 +286,8 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['update:modelValue', 'edit', 'duplicate'])
-const router = useRouter()
+// Emits
+const emit = defineEmits(['update:modelValue', 'edit'])
 
 // Methods
 const closeModal = () => {
@@ -284,62 +295,35 @@ const closeModal = () => {
 }
 
 const formatDate = (dateString) => {
-    if (!dateString) return 'Not set'
+    if (!dateString) return 'Not specified'
     return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        day: 'numeric'
     })
 }
 
-const formatStatus = (status) => {
-    const statusMap = {
-        'draft': 'Draft',
-        'active': 'Active',
-        'completed': 'Completed'
-    }
-    return statusMap[status] || status
-}
+const formatEventDate = () => {
+    if (!props.event?.startDate) return 'Date not specified'
 
-const getStatusClasses = (status) => {
-    const classMap = {
-        'draft': 'bg-yellow-100 text-yellow-800',
-        'active': 'bg-green-100 text-green-800',
-        'completed': 'bg-blue-100 text-blue-800'
-    }
-    return classMap[status] || 'bg-gray-100 text-gray-800'
-}
-
-const getEventStatusText = () => {
-    if (!props.event) return ''
-    const status = props.event.status
-    const now = new Date()
     const startDate = new Date(props.event.startDate)
-    const endDate = new Date(props.event.endDate)
+    const endDate = props.event.endDate ? new Date(props.event.endDate) : null
 
-    if (status === 'draft') return 'Draft Event'
-    if (now < startDate) return 'Upcoming Event'
-    if (now >= startDate && now <= endDate) return 'Event in Progress'
-    if (now > endDate) return 'Event Completed'
-
-    return formatStatus(status)
+    if (endDate) {
+        return `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`
+    } else {
+        return startDate.toLocaleDateString()
+    }
 }
 
-const getEventDuration = () => {
-    if (!props.event?.startDate || !props.event?.endDate) return 0
-    const start = new Date(props.event.startDate)
-    const end = new Date(props.event.endDate)
-    const diffTime = Math.abs(end - start)
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+const formatFooterText = () => {
+    if (!props.event?.createdAt) return ''
+    return `Created ${formatDate(props.event.createdAt)}`
 }
 
 const isRegistrationOpen = () => {
     if (!props.event?.settings?.registrationDeadline) return false
-    const now = new Date()
-    const deadline = new Date(props.event.settings.registrationDeadline)
-    return now <= deadline || props.event.settings.allowLateRegistration
+    return new Date() <= new Date(props.event.settings.registrationDeadline)
 }
 
 const getRegistrationStatus = () => {
@@ -393,15 +377,11 @@ const editEvent = () => {
 }
 
 const viewCommittees = () => {
+    // Fixed routing - ensure proper navigation to committees view
     router.push({
         name: 'admin-committees',
-        query: { event: props.event._id || props.event.id }
+        query: { eventId: props.event._id || props.event.id }
     })
-    closeModal()
-}
-
-const duplicateEvent = () => {
-    emit('duplicate', props.event)
     closeModal()
 }
 </script>

@@ -1,46 +1,44 @@
-<!-- Enhanced SleekSelect Component -->
 <template>
-    <div class="sleek-select relative" :class="containerClass">
-        <button ref="trigger" @click="toggleDropdown" @blur="handleBlur" @keydown="handleKeydown" :class="[
-            'sleek-select__trigger w-full flex items-center justify-between px-4 py-2.5 text-left border rounded-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 min-w-0',
-            disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-mun-blue-400',
-            isOpen ? 'border-mun-blue-500 ring-2 ring-mun-blue-200 shadow-md' : 'border-gray-300',
-            triggerClass,
-            sizeClasses
-        ]" :disabled="disabled" :aria-expanded="isOpen" :aria-haspopup="true" role="combobox">
+    <div :class="['relative', containerClass]" ref="selectContainer">
+        <!-- Hidden Input for form submission -->
+        <input v-if="inputName" :name="inputName" :value="inputValue" type="hidden" />
 
-            <!-- Multiple Selection Display -->
-            <div v-if="multiple" class="flex items-center flex-wrap gap-1 min-h-[1.5rem]">
-                <!-- Selected Tags -->
-                <div v-if="selectedOptions.length > 0" class="flex flex-wrap gap-1">
-                    <span v-for="option in displayedSelections" :key="option.value"
-                        class="inline-flex items-center px-2 py-1 bg-mun-blue-100 text-mun-blue-800 text-xs rounded-md">
-                        <component v-if="option.icon" :is="option.icon" class="w-3 h-3 mr-1" />
-                        {{ option.label }}
-                        <button @click.stop="removeSelection(option.value)"
-                            class="ml-1 hover:text-mun-blue-900 focus:outline-none">
-                            <XMarkIcon class="w-3 h-3" />
-                        </button>
-                    </span>
+        <!-- Select Trigger -->
+        <button ref="trigger" type="button" @click="toggleDropdown" @blur="handleBlur" @keydown="handleKeyDown" :class="[
+            'sleek-select__trigger relative w-full px-4 py-3 text-left border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-mun-blue-200 focus:border-mun-blue-400 transition-all duration-200 ease-in-out',
+            size === 'sm' ? 'py-2 text-sm' : size === 'lg' ? 'py-4 text-lg' : 'py-3',
+            disabled ? 'bg-gray-50 cursor-not-allowed' : 'cursor-pointer hover:border-gray-300',
+            error ? 'border-red-300 focus:border-red-400 focus:ring-red-200' : '',
+            variant === 'outlined' ? 'border-gray-300' : '',
+            triggerClass
+        ]" :disabled="disabled">
 
-                    <!-- More indicator -->
-                    <span v-if="selectedOptions.length > maxDisplayTags"
-                        class="px-2 py-1 bg-mun-gray-100 text-mun-gray-600 text-xs rounded-md">
-                        +{{ selectedOptions.length - maxDisplayTags }} more
-                    </span>
-                </div>
-
-                <!-- Placeholder for empty state -->
-                <span v-else class="text-gray-500 whitespace-nowrap">{{ placeholder }}</span>
-            </div>
-
-            <!-- Single Selection Display -->
-            <span v-else :class="[
-                'flex items-center transition-colors duration-150 whitespace-nowrap',
-                selectedOption ? 'text-gray-900' : 'text-gray-500'
+            <!-- Selected Value Display -->
+            <span :class="[
+                'block truncate flex items-center',
+                selectedOption || (multiple && selectedOptions.length > 0) ? 'text-gray-900' : 'text-gray-500'
             ]">
-                <component v-if="selectedOption?.icon" :is="selectedOption.icon" class="w-4 h-4 mr-2 flex-shrink-0" />
-                {{ selectedOption ? selectedOption.label : placeholder }}
+                <!-- Multiple Selection Tags -->
+                <template v-if="multiple && selectedOptions.length > 0">
+                    <div class="flex flex-wrap gap-1 mr-2">
+                        <span v-for="option in selectedOptions.slice(0, maxVisibleTags)" :key="option.value"
+                            class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-mun-blue-100 text-mun-blue-800">
+                            <component v-if="option.icon" :is="option.icon" class="w-3 h-3 mr-1 flex-shrink-0" />
+                            {{ option.label }}
+                        </span>
+                        <span v-if="selectedOptions.length > maxVisibleTags"
+                            class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
+                            +{{ selectedOptions.length - maxVisibleTags }} more
+                        </span>
+                    </div>
+                </template>
+
+                <!-- Single Selection Display -->
+                <template v-else>
+                    <component v-if="selectedOption?.icon" :is="selectedOption.icon"
+                        class="w-4 h-4 mr-2 flex-shrink-0" />
+                    {{ selectedOption ? selectedOption.label : placeholder }}
+                </template>
             </span>
 
             <!-- Dropdown chevron with rotation animation -->
@@ -53,20 +51,20 @@
         <!-- Dropdown -->
         <Transition name="dropdown" appear>
             <div v-if="isOpen" ref="dropdown" :class="[
-                'sleek-select__dropdown absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg',
+                'sleek-select__dropdown absolute z-[9999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl',
                 dropdownClass
             ]">
                 <!-- Search Input -->
-                <div v-if="searchable" class="p-3 border-b border-gray-100">
+                <div v-if="searchable" class="p-3 border-b border-gray-100 bg-white">
                     <input ref="searchInput" v-model="searchQuery" type="text" placeholder="Search options..."
                         class="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-mun-blue-200 focus:border-mun-blue-400" />
                 </div>
 
                 <!-- Options List -->
-                <div class="max-h-60 overflow-y-auto">
+                <div class="max-h-60 overflow-y-auto bg-white">
                     <!-- Select All Option (for multiple) -->
                     <div v-if="multiple && showSelectAll && filteredOptions.length > 1" @click="toggleSelectAll"
-                        class="sleek-select__option flex items-center px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 border-b border-gray-100">
+                        class="sleek-select__option flex items-center px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 border-b border-gray-100 bg-white">
                         <input type="checkbox" :checked="isAllSelected" :indeterminate="isPartiallySelected"
                             class="input-field mr-3 w-4 h-4" readonly />
                         <span class="font-medium">{{ isAllSelected ? 'Deselect All' : 'Select All' }}</span>
@@ -75,12 +73,13 @@
                     <!-- Option Items -->
                     <div v-for="(option, index) in filteredOptions" :key="option.value" @click="selectOption(option)"
                         :class="[
-                            'sleek-select__option flex items-center px-4 py-3 text-sm cursor-pointer transition-colors duration-150',
+                            'sleek-select__option flex items-center px-4 py-3 text-sm cursor-pointer transition-colors duration-150 bg-white',
                             multiple ?
                                 (isSelected(option) ? 'bg-mun-blue-50 text-mun-blue-700' : 'hover:bg-gray-50') :
                                 (isSelected(option) ? 'bg-mun-blue-50 text-mun-blue-700 font-medium' :
-                                    highlightedIndex === index ? 'bg-gray-50 text-gray-900' : 'text-gray-700 hover:bg-gray-50')
-                        ]" role="option" :aria-selected="isSelected(option)">
+                                    highlightedIndex === index ?
+                                        'bg-gray-100' : 'hover:bg-gray-50')
+                        ]">
 
                         <!-- Checkbox for multiple selection -->
                         <input v-if="multiple" type="checkbox" :checked="isSelected(option)"
@@ -89,54 +88,71 @@
                         <!-- Option Icon -->
                         <component v-if="option.icon" :is="option.icon" class="w-4 h-4 mr-3 flex-shrink-0" />
 
-                        <!-- Option Label -->
-                        <span class="flex-1">{{ getOptionLabel(option) }}</span>
+                        <!-- Option Content -->
+                        <div class="flex-1 min-w-0">
+                            <!-- Main Label -->
+                            <div :class="[
+                                'flex items-center',
+                                option.description ? 'font-medium' : ''
+                            ]">
+                                <span class="truncate">{{ option.label }}</span>
 
-                        <!-- Selected Checkmark (for single selection) -->
-                        <CheckIcon v-if="!multiple && isSelected(option)"
-                            class="w-4 h-4 text-mun-blue-600 flex-shrink-0 ml-2" />
+                                <!-- Badge if provided -->
+                                <span v-if="option.badge" :class="[
+                                    'ml-2 px-2 py-1 text-xs rounded-full',
+                                    option.badgeClass || 'bg-gray-100 text-gray-700'
+                                ]">
+                                    {{ option.badge }}
+                                </span>
+                            </div>
+
+                            <!-- Optional Description -->
+                            <div v-if="option.description" class="text-xs text-gray-500 mt-1">
+                                {{ option.description }}
+                            </div>
+                        </div>
+
+                        <!-- Check icon for single selection -->
+                        <CheckIcon v-if="!multiple && isSelected(option)" class="w-4 h-4 text-mun-blue-600 ml-2" />
                     </div>
 
-                    <!-- No options found state -->
-                    <div v-if="filteredOptions.length === 0" class="px-4 py-6 text-center text-gray-500 text-sm">
-                        {{ searchQuery ? 'No options found' : 'No options available' }}
+                    <!-- No options message -->
+                    <div v-if="filteredOptions.length === 0" class="px-4 py-3 text-sm text-gray-500 bg-white">
+                        {{ searchQuery ? 'No options match your search' : 'No options available' }}
                     </div>
-                </div>
-
-                <!-- Custom footer slot -->
-                <div v-if="$slots.footer" class="border-t border-gray-100 p-2">
-                    <slot name="footer"></slot>
                 </div>
             </div>
         </Transition>
+
+        <!-- Error Message -->
+        <p v-if="error" class="mt-1 text-sm text-red-600">{{ error }}</p>
+
+        <!-- Help Text -->
+        <p v-if="helpText" class="mt-1 text-sm text-gray-500">{{ helpText }}</p>
     </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
-import { ChevronDownIcon, CheckIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon, CheckIcon } from '@heroicons/vue/24/outline'
 
 // Props
 const props = defineProps({
     modelValue: {
-        type: [String, Number, Object, Array],
+        type: [String, Number, Array, Object],
         default: null
     },
     options: {
         type: Array,
-        default: () => []
+        required: true
     },
     placeholder: {
         type: String,
         default: 'Select an option'
     },
-    labelKey: {
-        type: String,
-        default: 'label'
-    },
-    valueKey: {
-        type: String,
-        default: 'value'
+    multiple: {
+        type: Boolean,
+        default: false
     },
     searchable: {
         type: Boolean,
@@ -146,22 +162,27 @@ const props = defineProps({
         type: Boolean,
         default: false
     },
-    multiple: {
+    clearable: {
         type: Boolean,
         default: false
     },
-    maxDisplayTags: {
+    size: {
+        type: String,
+        default: 'md', // sm, md, lg
+        validator: (value) => ['sm', 'md', 'lg'].includes(value)
+    },
+    variant: {
+        type: String,
+        default: 'default', // default, outlined
+        validator: (value) => ['default', 'outlined'].includes(value)
+    },
+    maxVisibleTags: {
         type: Number,
         default: 3
     },
     showSelectAll: {
         type: Boolean,
         default: true
-    },
-    size: {
-        type: String,
-        default: 'md',
-        validator: (value) => ['sm', 'md', 'lg'].includes(value)
     },
     containerClass: {
         type: String,
@@ -174,13 +195,26 @@ const props = defineProps({
     dropdownClass: {
         type: String,
         default: ''
+    },
+    inputName: {
+        type: String,
+        default: ''
+    },
+    error: {
+        type: String,
+        default: ''
+    },
+    helpText: {
+        type: String,
+        default: ''
     }
 })
 
 // Emits
-const emit = defineEmits(['update:modelValue', 'change', 'open', 'close'])
+const emit = defineEmits(['update:modelValue', 'change', 'search', 'open', 'close'])
 
 // Refs
+const selectContainer = ref(null)
 const trigger = ref(null)
 const dropdown = ref(null)
 const searchInput = ref(null)
@@ -191,149 +225,114 @@ const searchQuery = ref('')
 const highlightedIndex = ref(-1)
 
 // Computed
-const sizeClasses = computed(() => {
-    const sizes = {
-        sm: 'text-sm py-2 px-3',
-        md: 'text-sm py-2.5 px-4',
-        lg: 'text-base py-3 px-4'
-    }
-    return sizes[props.size]
-})
+const selectedOptions = computed(() => {
+    if (!props.multiple) return []
 
-const normalizedOptions = computed(() => {
-    return props.options.map(option => {
-        if (typeof option === 'string' || typeof option === 'number') {
-            return { label: option, value: option }
-        }
-        return {
-            label: option[props.labelKey] || option.label,
-            value: option[props.valueKey] || option.value,
-            icon: option.icon,
-            ...option
-        }
-    })
-})
-
-const filteredOptions = computed(() => {
-    if (!searchQuery.value) return normalizedOptions.value
-
-    const query = searchQuery.value.toLowerCase()
-    return normalizedOptions.value.filter(option =>
-        option.label.toLowerCase().includes(query)
-    )
+    const values = Array.isArray(props.modelValue) ? props.modelValue : []
+    return props.options.filter(option => values.includes(option.value))
 })
 
 const selectedOption = computed(() => {
-    if (props.multiple || !props.modelValue) return null
-
-    return normalizedOptions.value.find(option => {
-        if (typeof props.modelValue === 'object') {
-            return option.value === props.modelValue[props.valueKey]
-        }
-        return option.value === props.modelValue
-    })
+    if (props.multiple) return null
+    return props.options.find(option => option.value === props.modelValue) || null
 })
 
-const selectedOptions = computed(() => {
-    if (!props.multiple || !props.modelValue) return []
+const filteredOptions = computed(() => {
+    if (!props.searchable || !searchQuery.value) return props.options
 
-    const values = Array.isArray(props.modelValue) ? props.modelValue : [props.modelValue]
-    return normalizedOptions.value.filter(option =>
-        values.includes(option.value)
+    const query = searchQuery.value.toLowerCase()
+    return props.options.filter(option =>
+        option.label.toLowerCase().includes(query) ||
+        (option.description && option.description.toLowerCase().includes(query))
     )
 })
 
-const displayedSelections = computed(() => {
-    return selectedOptions.value.slice(0, props.maxDisplayTags)
+const inputValue = computed(() => {
+    if (props.multiple) {
+        return Array.isArray(props.modelValue) ? props.modelValue.join(',') : ''
+    }
+    return props.modelValue || ''
 })
 
 const isAllSelected = computed(() => {
-    return props.multiple && filteredOptions.value.length > 0 &&
-        filteredOptions.value.every(option => selectedOptions.value.some(sel => sel.value === option.value))
+    if (!props.multiple || filteredOptions.value.length === 0) return false
+
+    const values = Array.isArray(props.modelValue) ? props.modelValue : []
+    return filteredOptions.value.every(option => values.includes(option.value))
 })
 
 const isPartiallySelected = computed(() => {
-    return props.multiple && selectedOptions.value.length > 0 && !isAllSelected.value
+    if (!props.multiple || filteredOptions.value.length === 0) return false
+
+    const values = Array.isArray(props.modelValue) ? props.modelValue : []
+    const selectedCount = filteredOptions.value.filter(option => values.includes(option.value)).length
+
+    return selectedCount > 0 && selectedCount < filteredOptions.value.length
 })
 
 // Methods
 const toggleDropdown = () => {
     if (props.disabled) return
 
+    isOpen.value = !isOpen.value
+
     if (isOpen.value) {
-        closeDropdown()
+        emit('open')
+        nextTick(() => {
+            if (props.searchable && searchInput.value) {
+                searchInput.value.focus()
+            }
+        })
     } else {
-        openDropdown()
+        emit('close')
+        searchQuery.value = ''
+        highlightedIndex.value = -1
     }
-}
-
-const openDropdown = async () => {
-    isOpen.value = true
-    highlightedIndex.value = -1
-    searchQuery.value = ''
-
-    await nextTick()
-
-    if (props.searchable && searchInput.value) {
-        searchInput.value.focus()
-    }
-
-    emit('open')
 }
 
 const closeDropdown = () => {
     isOpen.value = false
-    highlightedIndex.value = -1
     emit('close')
+    searchQuery.value = ''
+    highlightedIndex.value = -1
 }
 
 const selectOption = (option) => {
     if (props.multiple) {
-        const currentValues = Array.isArray(props.modelValue) ? [...props.modelValue] : []
-        const index = currentValues.indexOf(option.value)
+        const values = Array.isArray(props.modelValue) ? [...props.modelValue] : []
+        const index = values.indexOf(option.value)
 
         if (index > -1) {
-            currentValues.splice(index, 1)
+            values.splice(index, 1)
         } else {
-            currentValues.push(option.value)
+            values.push(option.value)
         }
 
-        emit('update:modelValue', currentValues)
-        emit('change', currentValues)
+        emit('update:modelValue', values)
+        emit('change', values)
     } else {
-        const value = typeof props.modelValue === 'object' ? option : option.value
-        emit('update:modelValue', value)
-        emit('change', value)
+        emit('update:modelValue', option.value)
+        emit('change', option.value)
         closeDropdown()
-        trigger.value?.focus()
-    }
-}
-
-const removeSelection = (value) => {
-    if (!props.multiple) return
-
-    const currentValues = Array.isArray(props.modelValue) ? [...props.modelValue] : []
-    const index = currentValues.indexOf(value)
-
-    if (index > -1) {
-        currentValues.splice(index, 1)
-        emit('update:modelValue', currentValues)
-        emit('change', currentValues)
     }
 }
 
 const toggleSelectAll = () => {
     if (!props.multiple) return
 
+    const values = Array.isArray(props.modelValue) ? props.modelValue : []
+    const filteredValues = filteredOptions.value.map(option => option.value)
+
     if (isAllSelected.value) {
-        // Deselect all
-        emit('update:modelValue', [])
-        emit('change', [])
+        // Deselect all filtered options
+        const newValues = values.filter(value => !filteredValues.includes(value))
+        emit('update:modelValue', newValues)
+        emit('change', newValues)
     } else {
         // Select all filtered options
-        const allValues = filteredOptions.value.map(option => option.value)
-        emit('update:modelValue', allValues)
-        emit('change', allValues)
+        const newValues = [...new Set([...values, ...filteredValues])]
+        emit('update:modelValue', newValues)
+        emit('change', newValues)
     }
 }
 
@@ -342,79 +341,63 @@ const isSelected = (option) => {
         const values = Array.isArray(props.modelValue) ? props.modelValue : []
         return values.includes(option.value)
     }
-
-    if (!props.modelValue) return false
-
-    if (typeof props.modelValue === 'object') {
-        return option.value === props.modelValue[props.valueKey]
-    }
-
-    return option.value === props.modelValue
+    return props.modelValue === option.value
 }
 
-const getOptionLabel = (option) => {
-    return option.label || option[props.labelKey] || option.value
-}
+const handleKeyDown = (event) => {
+    if (props.disabled) return
 
-const handleBlur = (event) => {
-    if (dropdown.value?.contains(event.relatedTarget)) {
-        return
-    }
-
-    setTimeout(() => {
-        closeDropdown()
-    }, 150)
-}
-
-const handleKeydown = (event) => {
     switch (event.key) {
-        case 'ArrowDown':
-            event.preventDefault()
-            if (!isOpen.value) {
-                openDropdown()
-            } else {
-                highlightedIndex.value = Math.min(
-                    highlightedIndex.value + 1,
-                    filteredOptions.value.length - 1
-                )
-            }
-            break
-
-        case 'ArrowUp':
-            event.preventDefault()
-            if (isOpen.value) {
-                highlightedIndex.value = Math.max(highlightedIndex.value - 1, 0)
-            }
-            break
-
         case 'Enter':
         case ' ':
             event.preventDefault()
             if (!isOpen.value) {
-                openDropdown()
+                toggleDropdown()
             } else if (highlightedIndex.value >= 0) {
                 selectOption(filteredOptions.value[highlightedIndex.value])
             }
             break
-
         case 'Escape':
-            event.preventDefault()
             closeDropdown()
+            trigger.value?.focus()
+            break
+        case 'ArrowDown':
+            event.preventDefault()
+            if (!isOpen.value) {
+                toggleDropdown()
+            } else {
+                highlightedIndex.value = Math.min(highlightedIndex.value + 1, filteredOptions.value.length - 1)
+            }
+            break
+        case 'ArrowUp':
+            event.preventDefault()
+            if (isOpen.value) {
+                highlightedIndex.value = Math.max(highlightedIndex.value - 1, -1)
+            }
             break
     }
 }
 
-// Click outside to close
+const handleBlur = (event) => {
+    // Only close if the blur isn't to an element within the select component
+    nextTick(() => {
+        if (selectContainer.value && !selectContainer.value.contains(document.activeElement)) {
+            closeDropdown()
+        }
+    })
+}
+
 const handleClickOutside = (event) => {
-    if (
-        trigger.value &&
-        !trigger.value.contains(event.target) &&
-        dropdown.value &&
-        !dropdown.value.contains(event.target)
-    ) {
+    if (selectContainer.value && !selectContainer.value.contains(event.target)) {
         closeDropdown()
     }
 }
+
+// Watchers
+watch(searchQuery, (newQuery) => {
+    emit('search', newQuery)
+    highlightedIndex.value = -1
+})
 
 // Lifecycle
 onMounted(() => {
@@ -424,17 +407,10 @@ onMounted(() => {
 onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside)
 })
-
-// Watch for external value changes
-watch(() => props.modelValue, () => {
-    if (isOpen.value) {
-        highlightedIndex.value = -1
-    }
-})
 </script>
 
 <style scoped>
-/* Dropdown animations */
+/* Dropdown animation */
 .dropdown-enter-active,
 .dropdown-leave-active {
     transition: all 0.2s ease;
@@ -492,5 +468,34 @@ watch(() => props.modelValue, () => {
 /* Checkbox styling */
 input[type="checkbox"] {
     pointer-events: none;
+}
+
+/* CRITICAL: Ensure dropdown is always on top with maximum z-index */
+.sleek-select__dropdown {
+    /* Use z-[9999] to ensure maximum z-index */
+    z-index: 9999 !important;
+    /* Ensure solid white background with no transparency */
+    background-color: rgba(255, 255, 255, 1) !important;
+    /* Add backdrop to prevent see-through issues */
+    backdrop-filter: none;
+}
+
+/* Ensure all dropdown children have solid backgrounds */
+.sleek-select__dropdown>* {
+    background-color: rgba(255, 255, 255, 1) !important;
+}
+
+/* Override any transparency issues in options */
+.sleek-select__option {
+    background-color: rgba(255, 255, 255, 1) !important;
+}
+
+.sleek-select__option:hover {
+    background-color: rgba(249, 250, 251, 1) !important;
+}
+
+/* Ensure search input area has solid background */
+.sleek-select__dropdown .border-b {
+    background-color: rgba(255, 255, 255, 1) !important;
 }
 </style>

@@ -1,154 +1,123 @@
 <template>
-    <Teleport to="body">
-        <transition name="modal" appear>
-            <div v-if="modelValue"
-                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <ModalWrapper v-model="modelValue" :title="mode === 'edit' ? 'Edit Committee' : 'Create New Committee'"
+        :subtitle="mode === 'edit' ? 'Update committee details and settings' : 'Set up a new MUN committee'"
+        :icon="BuildingOfficeIcon" size="lg" variant="default" :is-view-only="false"
+        :has-unsaved-changes="hasUnsavedChanges" content-scrollable :is-loading="isSubmitting" cancel-text="Cancel"
+        primary-text="Save Committee" primary-button-variant="primary" :is-primary-disabled="!isValid"
+        @close="handleClose" @primary-action="handleCreateCommittee">
+        <template #content>
+            <div class="space-y-6">
+                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
+                    <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
+                    Basic Information
+                </h3>
 
-                <!-- Main modal container with flexible height -->
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[95vh] min-h-[400px]">
-                    
-                    <!-- Modal Header - Fixed -->
-                    <div class="flex items-center justify-between p-6 border-b border-mun-gray-200 flex-shrink-0">
-                        <div>
-                            <h2 class="text-xl font-bold text-mun-gray-900">
-                                {{ mode === 'edit' ? 'Edit Committee' : 'Create New Committee' }}
-                            </h2>
-                            <p class="text-sm text-mun-gray-600 mt-1">
-                                {{ mode === 'edit' ? 'Update committee details and settings' : 'Set up a new MUN committee' }}
-                            </p>
-                        </div>
-
-                        <button @click="close" class="p-2 hover:bg-mun-gray-100 rounded-lg transition-colors flex-shrink-0">
-                            <XMarkIcon class="w-6 h-6 text-mun-gray-500" />
-                        </button>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Committee Name -->
+                    <div class="lg:col-span-2">
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Committee Name *
+                        </label>
+                        <input v-model="formData.name" type="text" required class="input-field"
+                            placeholder="e.g., United Nations General Assembly"
+                            :class="{ 'border-mun-red-300': errors.name }" />
+                        <p v-if="errors.name" class="mt-1 text-sm text-mun-red-600">
+                            {{ errors.name }}
+                        </p>
                     </div>
 
-                    <!-- Modal Content - Flexible/Scrollable -->
-                    <div class="flex-1 overflow-y-auto min-h-0">
-                        <form @submit.prevent="handleFormSubmit" class="p-6 space-y-8" novalidate>
-                            <!-- Basic Information -->
-                            <div class="space-y-6">
-                                <h3 class="text-lg font-semibold text-mun-gray-900 flex items-center">
-                                    <InformationCircleIcon class="w-5 h-5 mr-2 text-mun-blue" />
-                                    Basic Information
-                                </h3>
-
-                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <!-- Committee Name -->
-                                    <div class="lg:col-span-2">
-                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                            Committee Name *
-                                        </label>
-                                        <input v-model="formData.name" type="text" required class="input-field"
-                                            placeholder="e.g., United Nations General Assembly"
-                                            :class="{ 'border-mun-red-300': errors.name }" />
-                                        <p v-if="errors.name" class="mt-1 text-sm text-mun-red-600">
-                                            {{ errors.name }}
-                                        </p>
-                                    </div>
-
-                                    <!-- Committee Type -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                            Committee Type *
-                                        </label>
-                                        <SleekSelect v-model="formData.type" :options="[
-                                            { label: 'General Assembly', value: 'GA' },
-                                            { label: 'Security Council', value: 'SC' },
-                                            { label: 'Other', value: 'other' }
-                                        ]" placeholder="Select committee type" :trigger-class="errors.type ? 'border-mun-red-300' : ''"
-                                            required size="md" />
-                                        <p v-if="errors.type" class="mt-1 text-sm text-mun-red-600">
-                                            {{ errors.type }}
-                                        </p>
-                                    </div>
-
-                                    <!-- Event -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                            Event *
-                                        </label>
-                                        <SleekSelect v-model="formData.eventId" :options="[
-                                            ...availableEvents.map(event => ({
-                                                label: event.name,
-                                                value: event._id
-                                            }))
-                                        ]" placeholder="Select event" :trigger-class="errors.eventId ? 'border-mun-red-300' : ''" 
-                                            searchable required size="md" />
-                                        <p v-if="errors.eventId" class="mt-1 text-sm text-mun-red-600">
-                                            {{ errors.eventId }}
-                                        </p>
-                                    </div>
-
-                                    <!-- Language -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                            Working Language
-                                        </label>
-                                        <SleekSelect v-model="formData.language" :options="[
-                                            { label: 'English', value: 'english' },
-                                            { label: 'Russian', value: 'russian' },
-                                            { label: 'Uzbek', value: 'uzbek' }
-                                        ]" size="md" />
-                                    </div>
-
-                                    <!-- Status -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                            Status
-                                        </label>
-                                        <SleekSelect v-model="formData.status" :options="[
-                                            { label: 'Setup', value: 'setup' },
-                                            { label: 'Active', value: 'active' },
-                                            { label: 'Completed', value: 'completed' }
-                                        ]" size="md" />
-                                    </div>
-
-                                    <!-- Description -->
-                                    <div class="lg:col-span-2">
-                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                                            Description
-                                        </label>
-                                        <textarea v-model="formData.description" rows="3"
-                                            class="input-field resize-none"
-                                            placeholder="Describe the committee's purpose and scope..."></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
+                    <!-- Committee Type -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Committee Type *
+                        </label>
+                        <SleekSelect v-model="formData.type" :options="[
+                            { label: 'General Assembly', value: 'GA' },
+                            { label: 'Security Council', value: 'SC' },
+                            { label: 'Other', value: 'other' }
+                        ]" placeholder="Select committee type"
+                            :trigger-class="errors.type ? 'border-mun-red-300' : ''" required size="md" />
+                        <p v-if="errors.type" class="mt-1 text-sm text-mun-red-600">
+                            {{ errors.type }}
+                        </p>
                     </div>
 
-                    <!-- Modal Footer - Fixed -->
-                    <div class="flex items-center justify-between rounded-b-2xl p-6 bg-mun-gray-50 border-t border-mun-gray-200 flex-shrink-0">
-                        <div class="flex items-center space-x-4">
-                            <AppButton variant="ghost" @click="close" :disabled="isSubmitting">
-                                Cancel
-                            </AppButton>
+                    <!-- Event -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Event *
+                        </label>
+                        <SleekSelect v-model="formData.eventId" :options="[
+                            ...availableEvents.map(event => ({
+                                label: event.name,
+                                value: event._id
+                            }))
+                        ]" placeholder="Select event"
+                            :trigger-class="errors.eventId ? 'border-mun-red-300' : ''" searchable required size="md" />
+                        <p v-if="errors.eventId" class="mt-1 text-sm text-mun-red-600">
+                            {{ errors.eventId }}
+                        </p>
+                    </div>
 
-                            <AppButton v-if="mode === 'edit'" variant="outline" @click="resetForm"
-                                :disabled="isSubmitting">
-                                <ArrowPathIcon class="w-4 h-4 mr-2" />
-                                Reset
-                            </AppButton>
-                        </div>
+                    <!-- Language -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Working Language
+                        </label>
+                        <SleekSelect v-model="formData.language" :options="[
+                            { label: 'English', value: 'english' },
+                            { label: 'Russian', value: 'russian' },
+                            { label: 'Uzbek', value: 'uzbek' }
+                        ]" size="md" />
+                    </div>
 
-                        <div class="flex items-center space-x-3">
-                            <AppButton v-if="mode === 'create'" variant="outline" @click="saveDraft"
-                                :loading="isDraftSaving" :disabled="isSubmitting">
-                                <DocumentIcon class="w-4 h-4 mr-2" />
-                                Save as Draft
-                            </AppButton>
+                    <!-- Status -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Status
+                        </label>
+                        <SleekSelect v-model="formData.status" :options="[
+                            { label: 'Setup', value: 'setup' },
+                            { label: 'Active', value: 'active' },
+                            { label: 'Completed', value: 'completed' }
+                        ]" size="md" />
+                    </div>
 
-                            <AppButton variant="primary" @click.stop="handleCreateCommittee" :loading="isSubmitting" type="button">
-                                <CheckIcon class="w-4 h-4 mr-2" />
-                                {{ mode === 'edit' ? 'Update Committee' : 'Create Committee' }}
-                            </AppButton>
-                        </div>
+                    <!-- Description -->
+                    <div class="lg:col-span-2">
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Description
+                        </label>
+                        <textarea v-model="formData.description" rows="3" class="input-field resize-none"
+                            placeholder="Describe the committee's purpose and scope..."></textarea>
                     </div>
                 </div>
             </div>
-        </transition>
-    </Teleport>
+        </template>
+
+        <!-- CUSTOM FOOTER BUTTONS (if you need the draft functionality) -->
+        <template #footer-buttons>
+            <AppButton @click="handleClose" variant="outline" :disabled="isSubmitting">
+                Cancel
+            </AppButton>
+
+            <AppButton v-if="mode === 'edit'" variant="outline" @click="resetForm" :disabled="isSubmitting">
+                <ArrowPathIcon class="w-4 h-4 mr-2" />
+                Reset
+            </AppButton>
+
+            <AppButton v-if="mode === 'create'" variant="outline" @click="saveDraft" :loading="isDraftSaving"
+                :disabled="isSubmitting">
+                <DocumentIcon class="w-4 h-4 mr-2" />
+                Save as Draft
+            </AppButton>
+
+            <AppButton variant="primary" @click="handleCreateCommittee" :loading="isSubmitting" :disabled="!isValid">
+                <CheckIcon class="w-4 h-4 mr-2" />
+                {{ mode === 'edit' ? 'Update Committee' : 'Create Committee' }}
+            </AppButton>
+        </template>
+    </ModalWrapper>
 </template>
 
 <script setup>
@@ -201,6 +170,8 @@ const isSubmitting = ref(false)
 const isDraftSaving = ref(false)
 const errors = ref({})
 const availableEvents = ref([])
+const hasUnsavedChanges = ref(false)
+const originalFormData = ref(null)
 
 // Form data
 const formData = reactive({
@@ -225,7 +196,7 @@ const isValid = computed(() => {
 watch(() => props.modelValue, (newVal) => {
     if (newVal) {
         initializeForm()
-        
+
         // Only load events if not provided by parent
         if (props.events.length === 0) {
             loadEvents()
@@ -241,6 +212,15 @@ watch(() => props.events, (newEvents) => {
         availableEvents.value = newEvents
     }
 }, { immediate: true })
+
+watch(() => formData, (newVal) => {
+    if (!originalFormData.value) return
+    
+    const hasChanges = Object.keys(formData).some(key => 
+        formData[key] !== originalFormData.value[key]
+    )
+    hasUnsavedChanges.value = hasChanges
+}, { deep: true })
 
 // Methods
 const loadEvents = async () => {
@@ -286,6 +266,10 @@ const initializeForm = () => {
     } else {
         resetForm()
     }
+    
+    // Store original data for unsaved changes detection
+    originalFormData.value = { ...formData }
+    hasUnsavedChanges.value = false
 }
 
 const resetForm = () => {
@@ -488,7 +472,8 @@ const handleSaveDraft = async () => {
     await saveDraft()
 }
 
-const close = () => {
+const handleClose = () => {
+    // ModalWrapper will handle unsaved changes confirmation automatically
     emit('update:modelValue', false)
 }
 
@@ -501,5 +486,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

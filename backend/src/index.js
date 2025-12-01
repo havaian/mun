@@ -16,6 +16,12 @@ const { initializeWebSocket } = require('./websocket/socketManager');
 const { setupGlobalAuth } = require('./auth/globalAuth');
 setupGlobalAuth();
 
+// Import event automation service
+const { eventAutomationService } = require('./event/automationService');
+
+// Import global event protection
+const { eventProtectionMiddleware } = require('./auth/globalEventProtection');
+
 // Import route modules
 const adminRoutes = require('./admin/routes');
 const authRoutes = require('./auth/routes');
@@ -47,7 +53,8 @@ const io = new Server(server, {
   transports: ['websocket', 'polling']
 });
 
-// Make io available in routes
+// Make io available globally for event automation service
+global.io = io;
 app.locals.io = io;
 
 // Security middleware
@@ -87,6 +94,11 @@ app.use('/upload', express.static('upload', {
 // API Routes
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
+
+// Apply global event protection middleware to all API routes
+// This automatically protects routes involving completed events
+app.use('/api/*', eventProtectionMiddleware);
+
 app.use('/api/events', eventRoutes);
 app.use('/api/committees', committeeRoutes);
 app.use('/api/sessions', sessionRoutes);
@@ -101,10 +113,94 @@ app.use('/api/procedure', procedureRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/countries', countriesRoutes);
 
+// Event Automation Control Routes (Admin only)
+app.get('/api/admin/automation/status',
+  global.auth.token,
+  global.auth.admin,
+  (req, res) => {
+    try {
+      const status = eventAutomationService.getStatus();
+      res.json({
+        success: true,
+        automation: status
+      });
+    } catch (error) {
+      logger.error('Failed to get automation status:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get automation status'
+      });
+    }
+  }
+);
+
+app.post('/api/admin/automation/manual-check',
+  global.auth.token,
+  global.auth.admin,
+  async (req, res) => {
+    try {
+      const result = await eventAutomationService.forceCheckAllEvents();
+      res.json({
+        success: true,
+        result,
+        message: 'Manual event status check completed'
+      });
+    } catch (error) {
+      logger.error('Failed to run manual automation check:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to run manual check'
+      });
+    }
+  }
+);
+
+app.post('/api/admin/automation/start',
+  global.auth.token,
+  global.auth.admin,
+  (req, res) => {
+    try {
+      eventAutomationService.start();
+      res.json({
+        success: true,
+        message: 'Event automation service started'
+      });
+    } catch (error) {
+      logger.error('Failed to start automation service:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to start automation service'
+      });
+    }
+  }
+);
+
+app.post('/api/admin/automation/stop',
+  global.auth.token,
+  global.auth.admin,
+  (req, res) => {
+    try {
+      eventAutomationService.stop();
+      res.json({
+        success: true,
+        message: 'Event automation service stopped'
+      });
+    } catch (error) {
+      logger.error('Failed to stop automation service:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to stop automation service'
+      });
+    }
+  }
+);
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
+  const automationStatus = eventAutomationService.getStatus();
+
+  res.json({
+    status: 'healthy',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     version: process.env.npm_package_version || '1.0.0',
@@ -123,12 +219,14 @@ app.get('/api/health', (req, res) => {
       procedures: 'active',
       export: 'active',
       countries: 'active',
-      websocket: 'active'
+      websocket: 'active',
+      automation: automationStatus.isRunning ? 'active' : 'inactive'
     },
     services: {
       database: 'connected',
       countries: 'available',
-      flags: 'cached'
+      flags: 'cached',
+      eventAutomation: automationStatus.isRunning ? 'running' : 'stopped'
     }
   });
 });
@@ -136,103 +234,111 @@ app.get('/api/health', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   logger.error('Unhandled error:', err);
-  
+
   if (err.name === 'ValidationError') {
     return res.status(400).json({
       error: 'Validation error',
       details: err.message
     });
   }
-  
+
   if (err.name === 'JsonWebTokenError') {
     return res.status(401).json({
       error: 'Invalid token'
     });
   }
-  
+
   if (err.name === 'MulterError') {
     return res.status(400).json({
       error: 'File upload error',
       details: err.message
     });
   }
-  
+
   res.status(err.status || 500).json({
-    error: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : (err.message || 'Internal server error')
+    error: process.env.NODE_ENV === 'production' ?
+      'Internal server error' : err.message
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
+// Handle 404 for API routes
+app.use('/api/*', (req, res) => {
   res.status(404).json({
-    error: 'Not Found',
-    message: `Route ${req.originalUrl} not found`
+    error: 'API endpoint not found'
   });
 });
 
-// Initialize database and WebSocket
-async function startServer() {
-  try {
-    // Initialize flag cache on startup
-    await initializeFlagCache();
-    logger.info('Flag cache initialized');
-    
-    // Initialize WebSocket handlers
-    initializeWebSocket(io);
-    logger.info('WebSocket initialized');
-    
-    // Initialize active timers
-    try {
-      const { initializeActiveTimers } = require('./timer/controller');
-      await initializeActiveTimers();
-      logger.info('Active timers initialized');
-    } catch (error) {
-      logger.warn('Timer initialization failed:', error.message);
+// Graceful shutdown handler
+const gracefulShutdown = (signal) => {
+  logger.info(`Received ${signal}. Starting graceful shutdown...`);
+
+  // Stop event automation service
+  eventAutomationService.stop();
+
+  server.close((err) => {
+    if (err) {
+      logger.error('Error during server shutdown:', err);
+      process.exit(1);
     }
-    
-    // Start server
-    const PORT = process.env.BACKEND_PORT || process.env.PORT || 5000;
+
+    logger.info('Server closed successfully');
+    process.exit(0);
+  });
+
+  // Force shutdown after 10 seconds
+  setTimeout(() => {
+    logger.error('Forced shutdown due to timeout');
+    process.exit(1);
+  }, 10000);
+};
+
+// Listen for termination signals
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+// Start server
+const PORT = process.env.PORT || 5000;
+
+const startServer = async () => {
+  try {
+    // Initialize flag cache
+    await initializeFlagCache();
+
+    // Initialize WebSocket
+    initializeWebSocket(io);
+
+    // Start event automation service
+    eventAutomationService.start();
+
     server.listen(PORT, () => {
-      logger.info(`Server running on port ${PORT}`);
-      logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      logger.info(`🚀 Server running on port ${PORT}`);
+      logger.info(`📊 Admin panel: http://localhost:${PORT}/admin`);
+      logger.info(`🔗 API: http://localhost:${PORT}/api`);
+      logger.info(`⚡ Event automation: ${eventAutomationService.getStatus().isRunning ? 'ACTIVE' : 'INACTIVE'}`);
+
+      if (process.env.NODE_ENV === 'development') {
+        logger.info(`🔧 Development mode enabled`);
+      }
     });
-    
+
   } catch (error) {
     logger.error('Failed to start server:', error);
     process.exit(1);
   }
-}
+};
 
-// Graceful shutdown
-process.on('SIGINT', () => {
-  logger.info('Received SIGINT, shutting down gracefully...');
-  server.close(() => {
-    logger.info('Server closed');
-    process.exit(0);
-  });
-});
-
-process.on('SIGTERM', () => {
-  logger.info('Received SIGTERM, shutting down gracefully...');
-  server.close(() => {
-    logger.info('Server closed');
-    process.exit(0);
-  });
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-  logger.error('Uncaught Exception:', error);
-  process.exit(1);
+// Handle uncaught exceptions and rejections
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught Exception:', err);
+  gracefulShutdown('uncaughtException');
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
+  gracefulShutdown('unhandledRejection');
 });
 
-require('./seed');
-
+// Start the server
 startServer();
 
 module.exports = app;

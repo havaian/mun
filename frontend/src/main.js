@@ -14,6 +14,8 @@ import LoadingSpinner from './components/ui/LoadingSpinner.vue'
 import AppButton from './components/ui/AppButton.vue'
 import AppCard from './components/ui/AppCard.vue'
 import SleekSelect from './components/ui/SleekSelect.vue'
+import ModalWrapper from './components/ui/ModalWrapper.vue'
+import ConfirmationDialog from './components/ui/ConfirmationDialog.vue'
 
 // Initialize Vue app
 const app = createApp(App)
@@ -34,12 +36,13 @@ flagsStore.initializeFlags().then(() => {
     console.error('❌ Failed to initialize flags:', error)
 })
 
-
 // Register global components
 app.component('LoadingSpinner', LoadingSpinner)
 app.component('AppButton', AppButton)
 app.component('AppCard', AppCard)
 app.component('SleekSelect', SleekSelect)
+app.component('ModalWrapper', ModalWrapper)
+app.component('ConfirmationDialog', ConfirmationDialog)
 
 // Make toast globally available on window object for easy access
 window.toast = {
