@@ -1,5 +1,5 @@
 <template>
-    <ModalWrapper v-model="modelValue" :title="committee?.name || 'Committee Details'"
+    <ModalWrapper :model-value="modelValue" :title="committee?.name || 'Committee Details'"
         :subtitle="getCommitteeSubtitle()" :icon="BuildingOfficeIcon" size="xl" variant="primary" is-view-only
         content-scrollable cancel-text="Close" :footer-text="getFooterText()" @close="closeModal">
         <template #content>

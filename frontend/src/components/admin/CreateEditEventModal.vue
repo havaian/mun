@@ -1,5 +1,5 @@
 <template>
-    <ModalWrapper v-model="modelValue" :title="mode === 'edit' ? 'Edit Event' : 'Create New Event'"
+    <ModalWrapper :model-value="modelValue" :title="mode === 'edit' ? 'Edit Event' : 'Create New Event'"
         :subtitle="mode === 'edit' ? 'Update event details and settings' : 'Set up a new MUN event'"
         :icon="CalendarDaysIcon" size="xl" variant="default" :has-unsaved-changes="hasUnsavedChanges"
         :is-loading="isSubmitting" cancel-text="Cancel" primary-text="Save Event" :is-primary-disabled="!isValid"

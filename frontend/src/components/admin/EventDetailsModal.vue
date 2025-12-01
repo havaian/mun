@@ -1,5 +1,5 @@
 <template>
-    <ModalWrapper v-model="modelValue" :title="event?.name || 'Event Details'" :subtitle="formatEventDate()"
+    <ModalWrapper :model-value="modelValue" :title="event?.name || 'Event Details'" :subtitle="formatEventDate()"
         :icon="CalendarDaysIcon" size="xl" variant="primary" is-view-only content-scrollable cancel-text="Close"
         :footer-text="formatFooterText()" @close="closeModal">
         <!-- Content slot -->

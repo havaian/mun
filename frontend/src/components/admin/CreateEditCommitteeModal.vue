@@ -1,5 +1,5 @@
 <template>
-    <ModalWrapper v-model="modelValue" :title="mode === 'edit' ? 'Edit Committee' : 'Create New Committee'"
+    <ModalWrapper :model-value="modelValue" :title="mode === 'edit' ? 'Edit Committee' : 'Create New Committee'"
         :subtitle="mode === 'edit' ? 'Update committee details and settings' : 'Set up a new MUN committee'"
         :icon="BuildingOfficeIcon" size="lg" variant="default" :is-view-only="false"
         :has-unsaved-changes="hasUnsavedChanges" content-scrollable :is-loading="isSubmitting" cancel-text="Cancel"
