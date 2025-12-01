@@ -305,10 +305,6 @@ const validateDates = () => {
         const start = new Date(formData.startDate)
         const end = new Date(formData.endDate)
 
-        console.log('🗓️ Date validation:')
-        console.log('Start Date:', formData.startDate, '→', start)
-        console.log('End Date:', formData.endDate, '→', end)
-
         if (start >= end) {
             errors.value.endDate = 'End date must be after start date'
         }
@@ -319,16 +315,9 @@ const validateDates = () => {
         const regDeadline = new Date(formData.registrationDeadline)
         const eventStart = new Date(formData.startDate)
 
-        console.log('📝 Registration validation:')
-        console.log('Registration Deadline:', formData.registrationDeadline, '→', regDeadline)
-        console.log('Event Start:', formData.startDate, '→', eventStart)
-        console.log('Deadline >= Start?', regDeadline >= eventStart)
-
         // Registration deadline should be BEFORE event start
         if (regDeadline >= eventStart) {
             errors.value.registrationDeadline = 'Registration deadline must be before event starts'
-        } else {
-            console.log('✅ Registration deadline is correctly before event start')
         }
     }
 }
