@@ -19,8 +19,8 @@ setupGlobalAuth();
 // Import event automation service
 const { eventAutomationService } = require('./event/automationService');
 
-// Import global event protection
-const { eventProtectionMiddleware } = require('./auth/globalEventProtection');
+// Import NEW global event protection middleware
+const { middleware: eventProtectionMiddleware, clearCache: clearEventCache, getCacheStats } = require('./auth/eventProtectionMiddleware');
 
 // Import route modules
 const adminRoutes = require('./admin/routes');
@@ -91,13 +91,13 @@ app.use('/upload', express.static('upload', {
   etag: true
 }));
 
-// API Routes
+// API Routes - Apply event protection middleware BEFORE protected routes
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
 
-// Apply global event protection middleware to all API routes
-// This automatically protects routes involving completed events
-app.use('/api/*', eventProtectionMiddleware);
+// Apply event protection middleware to all API routes EXCEPT exempt routes
+// The new middleware automatically handles exempt routes internally
+app.use('/api', eventProtectionMiddleware);
 
 app.use('/api/events', eventRoutes);
 app.use('/api/committees', committeeRoutes);
@@ -195,9 +195,52 @@ app.post('/api/admin/automation/stop',
   }
 );
 
+// NEW: Event Protection Management Routes (Admin only)
+app.get('/api/admin/event-protection/cache',
+  global.auth.token,
+  global.auth.admin,
+  (req, res) => {
+    try {
+      const stats = getCacheStats();
+      res.json({
+        success: true,
+        cache: stats,
+        message: 'Event protection cache statistics'
+      });
+    } catch (error) {
+      logger.error('Failed to get cache stats:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get cache statistics'
+      });
+    }
+  }
+);
+
+app.post('/api/admin/event-protection/clear-cache',
+  global.auth.token,
+  global.auth.admin,
+  (req, res) => {
+    try {
+      clearEventCache();
+      res.json({
+        success: true,
+        message: 'Event protection cache cleared successfully'
+      });
+    } catch (error) {
+      logger.error('Failed to clear cache:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to clear cache'
+      });
+    }
+  }
+);
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   const automationStatus = eventAutomationService.getStatus();
+  const cacheStats = getCacheStats();
 
   res.json({
     status: 'healthy',
@@ -220,13 +263,18 @@ app.get('/api/health', (req, res) => {
       export: 'active',
       countries: 'active',
       websocket: 'active',
-      automation: automationStatus.isRunning ? 'active' : 'inactive'
+      automation: automationStatus.isRunning ? 'active' : 'inactive',
+      eventProtection: 'active'
     },
     services: {
       database: 'connected',
       countries: 'available',
       flags: 'cached',
       eventAutomation: automationStatus.isRunning ? 'running' : 'stopped'
+    },
+    eventProtection: {
+      cacheSize: cacheStats.size,
+      cacheTimeout: cacheStats.timeout + 'ms'
     }
   });
 });
@@ -275,6 +323,9 @@ const gracefulShutdown = (signal) => {
   // Stop event automation service
   eventAutomationService.stop();
 
+  // Clear event protection cache
+  clearEventCache();
+
   server.close((err) => {
     if (err) {
       logger.error('Error during server shutdown:', err);
@@ -315,6 +366,7 @@ const startServer = async () => {
       logger.info(`📊 Admin panel: http://localhost:${PORT}/admin`);
       logger.info(`🔗 API: http://localhost:${PORT}/api`);
       logger.info(`⚡ Event automation: ${eventAutomationService.getStatus().isRunning ? 'ACTIVE' : 'INACTIVE'}`);
+      logger.info(`🛡️  Event protection: ACTIVE`);
 
       if (process.env.NODE_ENV === 'development') {
         logger.info(`🔧 Development mode enabled`);
