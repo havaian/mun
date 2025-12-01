@@ -20,48 +20,35 @@ class GlobalEventProtection {
     setupPathMatchers() {
         // Routes that should be automatically protected (pattern matching)
         this.protectedPathPatterns = [
-            /^\/api\/committees\/[^\/]+\/(?!qr-tokens$)/, // Committee operations except reading QR tokens
+            /^\/api\/events\/[^\/]+/, // All event operations
+            /^\/api\/committees\/[^\/]+/, // Committee operations except reading QR tokens
             /^\/api\/sessions\//, // All session operations
             /^\/api\/voting\//, // All voting operations  
             /^\/api\/documents\/(?!.*\/download$)/, // Document operations except downloads
             /^\/api\/resolutions\//, // All resolution operations
-            /^\/api\/amendments\//, // All amendment operations
             /^\/api\/messages\//, // All messaging operations
             /^\/api\/procedure\//, // All procedure operations
             /^\/api\/timers\//, // All timer operations
-            /^\/api\/coalitions\//, // All coalition operations
-            /^\/api\/participants\//, // Participant/delegate operations
-            /^\/api\/roll-call\//, // Roll call operations
-            /^\/api\/speakers\//, // Speaker list operations
-            /^\/api\/motions\//, // Motion operations
-            /^\/api\/caucus\//, // Caucus operations
-            /^\/api\/conciliation\//, // Conciliation commission operations
         ];
 
         // Routes that should be explicitly exempt from protection
         this.exemptPathPatterns = [
-            /^\/api\/auth\/(?!qr-login$)/, // Authentication routes except QR login
+            /^\/api\/auth\//, // Authentication routes
+            /^\/api\/admin\//, // Admin routes (handled separately)
             /^\/api\/countries\//, // Country data routes
             /^\/api\/export\/.*\/statistics$/, // Export statistics (reports)
-            /^\/api\/export\/.*\/download$/, // Export downloads (reports)
             /^\/api\/committees\/[^\/]+\/qr-tokens$/, // Reading QR tokens (archival)
-            /^\/api\/presentation\/.*\/display$/, // Presentation display routes (read-only)
+            /^\/api\/presentation\//, // Presentation display routes
             /^\/api\/health$/, // Health check
         ];
 
-        // QR-specific routes that should be completely blocked on completed events (including GET)
+        // QR-specific routes that should be completely blocked on completed events
         this.qrBlockedPatterns = [
             /^\/api\/committees\/[^\/]+\/generate-qrs$/,
             /^\/api\/committees\/[^\/]+\/presidium\/generate-qrs$/,
             /^\/api\/committees\/[^\/]+\/.*\/reset-qr$/,
             /^\/api\/committees\/[^\/]+\/.*\/regenerate-qr$/,
             /^\/api\/auth\/qr-login$/, // QR login for completed events
-            /^\/api\/committees\/[^\/]+\/qr-refresh$/, // QR refresh operations
-        ];
-
-        // FIXED: Event management routes (correct path)
-        this.eventManagementPatterns = [
-            /^\/api\/events\/[^\/]+/, // Event CRUD operations - FIXED PATH
         ];
     }
 
@@ -69,19 +56,10 @@ class GlobalEventProtection {
      * Check if a path should be protected
      */
     shouldProtectPath(path, method) {
-        // QR operations are always blocked (even GET) on completed events
-        if (this.qrBlockedPatterns.some(pattern => pattern.test(path))) {
-            return true;
-        }
-
-        // FIXED: Event management should be protected for non-GET operations
-        if (this.eventManagementPatterns.some(pattern => pattern.test(path))) {
-            return method !== 'GET';
-        }
-
-        // Allow GET requests for reading data (except QR operations handled above)
+        // Always allow GET requests for reading data
         if (method === 'GET') {
-            return false;
+            // Exception: Block QR operations even on GET
+            return this.qrBlockedPatterns.some(pattern => pattern.test(path));
         }
 
         // Check if path is explicitly exempt
@@ -101,39 +79,16 @@ class GlobalEventProtection {
     }
 
     /**
-     * Check if a path is event management
-     */
-    isEventManagement(path) {
-        return this.eventManagementPatterns.some(pattern => pattern.test(path));
-    }
-
-    /**
      * Extract identifiers from request to determine associated event
      */
     async extractEventContext(req) {
+        let eventId = null;
+        let eventInfo = null;
+
         try {
-            // FIXED: Handle direct event operations first
-            if (this.isEventManagement(req.path)) {
-                const eventId = req.params.id || req.params.eventId; // FIXED: Check both id and eventId
-
-                if (eventId) {
-                    console.log(`🔍 Looking up event ${eventId} for direct event operation`);
-
-                    const event = await Event.findById(eventId);
-                    if (event) {
-                        return {
-                            eventId: event._id,
-                            eventStatus: event.status,
-                            eventName: event.name,
-                            startDate: event.startDate,
-                            endDate: event.endDate
-                        };
-                    }
-                }
-            }
-
             // Method 1: Direct event ID in params or body
-            const eventId = req.params.eventId || req.body.eventId;
+            eventId = req.params.eventId || req.params.id || req.body.eventId;
+
             if (eventId) {
                 const event = await Event.findById(eventId);
                 if (event) {
@@ -166,6 +121,13 @@ class GlobalEventProtection {
                 }
             }
 
+            // Method 3: Session/Document/etc. ID - trace back to committee then event
+            const resourceId = req.params.sessionId || req.params.documentId || req.params.votingId;
+            if (resourceId) {
+                // This would require more complex lookups depending on the resource type
+                // For now, we'll implement the basic cases above
+            }
+
             return null;
 
         } catch (error) {
@@ -187,57 +149,53 @@ class GlobalEventProtection {
                 return next();
             }
 
-            console.log(`🛡️  Event protection checking: ${method} ${path}`);
-
             // Extract event context
             const eventContext = await this.extractEventContext(req);
 
             if (!eventContext) {
-                console.log(`ℹ️  No event context found for ${path}, allowing request`);
+                // No event context found, allow request to proceed
                 return next();
             }
 
             const { eventStatus, eventName } = eventContext;
 
-            console.log(`📋 Event found: "${eventName}" with status: ${eventStatus}`);
-
             // Check if event is completed and operation should be blocked
             if (eventStatus === 'completed') {
-                // QR operations are completely blocked on completed events (even for admins, even GET)
+
+                // QR operations are always blocked on completed events (even for admins)
                 if (this.isQROperation(path)) {
-                    logger.warn(`🚫 Blocked QR operation on completed event: ${eventName} - Path: ${path} - User: ${userRole}`);
+                    logger.warn(`Blocked QR operation on completed event: ${eventName} - Path: ${path}`);
 
                     return res.status(403).json({
                         success: false,
                         error: `QR code operations are not allowed. The event "${eventName}" has ended.`,
                         code: 'EVENT_COMPLETED_QR_BLOCKED',
-                        eventStatus: eventStatus,
-                        eventName: eventName
+                        eventStatus: eventStatus
                     });
                 }
 
-                // FIXED: Block ALL operations on completed events (including event management)
-                logger.warn(`🚫 Blocked ${method} operation on completed event: ${eventName} by user: ${userRole} - Path: ${path}`);
+                // // Other operations blocked for non-admin users
+                // if (userRole !== 'admin') {
+                    logger.warn(`Blocked ${method} operation on completed event: ${eventName} by user role: ${userRole} - Path: ${path}`);
 
-                return res.status(405).json({
-                    success: false,
-                    error: `This operation is not allowed. The event "${eventName}" has ended and cannot be modified.`,
-                    code: 'EVENT_COMPLETED',
-                    eventStatus: eventStatus,
-                    eventName: eventName,
-                    method: method,
-                    hint: 'Completed events are read-only and cannot be modified or deleted.'
-                });
+                    return res.status(405).json({
+                        success: false,
+                        error: `This operation is not allowed. The event "${eventName}" has ended.`,
+                        code: 'EVENT_COMPLETED',
+                        eventStatus: eventStatus,
+                        eventName: eventName,
+                        hint: 'Only administrators can perform operations on completed events.'
+                    });
+                // }
             }
 
             // Add event context to request for use in controllers
             req.eventContext = eventContext;
 
-            console.log(`✅ Event protection passed for ${method} ${path}`);
             next();
 
         } catch (error) {
-            logger.error('💥 Error in global event protection middleware:', error);
+            logger.error('Error in global event protection middleware:', error);
             res.status(500).json({
                 success: false,
                 error: 'Failed to verify event access permissions'
