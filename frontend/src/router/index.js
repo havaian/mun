@@ -98,36 +98,36 @@ const routes = [
         component: AdminCommittees,
         meta: { title: 'Committee Management' }
       },
-      {
-        path: 'users',
-        name: 'AdminUsers',
-        component: AdminUsers,
-        meta: { title: 'User Management' }
-      },
+      // {
+      //   path: 'users',
+      //   name: 'AdminUsers',
+      //   component: AdminUsers,
+      //   meta: { title: 'User Management' }
+      // },
       {
         path: 'reports',
         name: 'AdminReports',
         component: AdminReports,
         meta: { title: 'Reports & Analytics' }
       },
-      {
-        path: 'logs',
-        name: 'AdminLogs',
-        component: AdminLogs,
-        meta: { title: 'System Logs' }
-      },
-      {
-        path: 'settings',
-        name: 'AdminSettings',
-        component: AdminSettings,
-        meta: { title: 'System Settings' }
-      },
-      {
-        path: 'documents',
-        name: 'AdminDocuments',
-        component: AdminDocuments,
-        meta: { title: 'Documents Management' }
-      }
+      // {
+      //   path: 'logs',
+      //   name: 'AdminLogs',
+      //   component: AdminLogs,
+      //   meta: { title: 'System Logs' }
+      // },
+      // {
+      //   path: 'settings',
+      //   name: 'AdminSettings',
+      //   component: AdminSettings,
+      //   meta: { title: 'System Settings' }
+      // },
+      // {
+      //   path: 'documents',
+      //   name: 'AdminDocuments',
+      //   component: AdminDocuments,
+      //   meta: { title: 'Documents Management' }
+      // }
     ]
   },
 

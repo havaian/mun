@@ -104,9 +104,7 @@ const createEvent = async (req, res) => {
             settings: {
                 registrationDeadline: settings.registrationDeadline ?
                     new Date(settings.registrationDeadline) : defaultRegistrationDeadline,
-                qrExpirationPeriod: settings.qrExpirationPeriod || 168,
                 allowLateRegistration: settings.allowLateRegistration || false,
-                maxCommittees: settings.maxCommittees || 10,
                 timezone: settings.timezone || 'UTC'
             },
             createdBy: req.user.userId

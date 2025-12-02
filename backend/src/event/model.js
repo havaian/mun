@@ -45,10 +45,7 @@ const eventSchema = new mongoose.Schema({
         },
 
         qrExpirationPeriod: {
-            type: Number, // hours
-            default: 168, // 7 days
-            min: 1,
-            max: 720 // 30 days
+            type: Date,
         },
 
         allowLateRegistration: {
@@ -58,9 +55,8 @@ const eventSchema = new mongoose.Schema({
 
         maxCommittees: {
             type: Number,
-            default: 10,
-            min: 1,
-            max: 50
+            default: 20,
+            required: false
         },
 
         timezone: {
@@ -143,6 +139,22 @@ eventSchema.methods.updateStatistics = async function () {
 
     await this.save();
 };
+
+// New Pre-save middleware to set qrExpirationPeriod default
+eventSchema.pre('save', function (next) {
+    // Check if the qrExpirationPeriod has NOT been set by the user (is new or modified)
+    if (this.isNew || this.isModified('settings.qrExpirationPeriod')) {
+        // Skip if a value has been explicitly provided
+        return next();
+    }
+
+    // Set qrExpirationPeriod equal to endDate if it hasn't been set
+    if (!this.settings.qrExpirationPeriod) {
+        this.settings.qrExpirationPeriod = this.endDate;
+    }
+    
+    next();
+});
 
 // Pre-save middleware to validate dates
 eventSchema.pre('save', function (next) {

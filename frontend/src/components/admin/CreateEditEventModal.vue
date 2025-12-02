@@ -116,30 +116,6 @@
                 </h3>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Max Committees -->
-                    <div>
-                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                            Maximum Committees
-                        </label>
-                        <input v-model.number="formData.maxCommittees" type="number" min="1" max="50"
-                            class="input-field" placeholder="10" />
-                        <p class="mt-1 text-xs text-mun-gray-500">
-                            Maximum number of committees for this event (1-50)
-                        </p>
-                    </div>
-
-                    <!-- QR Expiration Period -->
-                    <div>
-                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                            QR Code Expiration (hours)
-                        </label>
-                        <input v-model.number="formData.qrExpirationPeriod" type="number" min="1" max="720"
-                            class="input-field" placeholder="168" />
-                        <p class="mt-1 text-xs text-mun-gray-500">
-                            How long QR codes remain valid (1-720 hours)
-                        </p>
-                    </div>
-
                     <!-- Allow Late Registration -->
                     <div class="lg:col-span-2">
                         <div class="flex items-center">
@@ -230,8 +206,6 @@ const formData = reactive({
     timezone: 'UTC',
 
     // Settings
-    maxCommittees: 10,
-    qrExpirationPeriod: 168,
     allowLateRegistration: false
 })
 
@@ -352,8 +326,6 @@ const initializeForm = () => {
             formData.registrationDeadline = props.event.settings.registrationDeadline ?
                 convertUTCToLocal(props.event.settings.registrationDeadline) : ''
             formData.timezone = props.event.settings.timezone || 'UTC'
-            formData.maxCommittees = props.event.settings.maxCommittees || 10
-            formData.qrExpirationPeriod = props.event.settings.qrExpirationPeriod || 168
             formData.allowLateRegistration = props.event.settings.allowLateRegistration || false
         }
     } else {
@@ -457,9 +429,7 @@ async function submitForm() {
             endDate: convertLocalToUTC(formData.endDate),
             settings: {
                 registrationDeadline: convertLocalToUTC(formData.registrationDeadline),
-                qrExpirationPeriod: formData.qrExpirationPeriod,
                 allowLateRegistration: formData.allowLateRegistration,
-                maxCommittees: formData.maxCommittees,
                 timezone: formData.timezone
             }
         }
@@ -507,9 +477,7 @@ const saveDraft = async () => {
             endDate: convertLocalToUTC(formData.endDate),
             settings: {
                 registrationDeadline: convertLocalToUTC(formData.registrationDeadline),
-                qrExpirationPeriod: formData.qrExpirationPeriod,
                 allowLateRegistration: formData.allowLateRegistration,
-                maxCommittees: formData.maxCommittees,
                 timezone: formData.timezone
             }
         }

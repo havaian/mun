@@ -101,12 +101,19 @@ const qrLogin = async (req, res) => {
             });
         }
 
-        // Find user by QR token (delegate OR presidium)
+        // 1. Find user and populate Event's absolute QR Expiration Date
         const user = await User.findOne({
             qrToken: token,
             isQrActive: true,
-            role: { $in: ['delegate', 'presidium'] } // CHANGED: Now includes presidium
-        }).populate('committeeId');
+            role: { $in: ['delegate', 'presidium'] }
+        })
+        .populate('committeeId')
+        .populate({
+            // NEW: We now rely directly on the Event's defined settings.qrExpirationPeriod (which is a Date)
+            path: 'eventId',
+            select: 'settings.qrExpirationPeriod' 
+        });
+
 
         if (!user) {
             logger.warn(`Invalid or expired QR token attempt: ${token.substring(0, 10)}...`);
@@ -114,6 +121,29 @@ const qrLogin = async (req, res) => {
                 error: 'Invalid or expired QR code'
             });
         }
+
+        // --- 🔒 FIXED QR Token Expiration Check Logic ---
+        const eventQrExpirationDate = user.eventId?.settings?.qrExpirationPeriod;
+        const now = new Date();
+
+        // Check 1: Event-level QR Expiration (Date)
+        if (eventQrExpirationDate && now > eventQrExpirationDate) {
+             // Optionally, deactivate the QR code upon expiration check failure
+            user.isQrActive = false;
+            await user.save();
+            
+            logger.warn(`Expired QR token attempt for user: ${user._id}. Event Expiration: ${eventQrExpirationDate.toISOString()}`);
+            return res.status(401).json({
+                error: 'QR code has expired due to event deadline'
+            });
+        }
+        
+        // Note: The logic for checking `user.qrGenerationTime` (token age) is removed 
+        // because your Event model is now defining a hard end date for all QR usage.
+        // If you need *both* (Event deadline AND max 7 days token validity), we'd need to re-add it.
+        // For now, we align with the Event model's absolute date.
+        // --- 🔓 END FIXED QR Token Expiration Check Logic ---
+
 
         // Different response based on role
         if (user.role === 'delegate') {

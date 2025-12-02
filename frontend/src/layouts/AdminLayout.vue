@@ -80,18 +80,18 @@ const navigationSections = computed(() => [
                 to: '/admin/committees',
                 icon: UserGroupIcon
             },
-            {
-                name: 'AdminUsers',
-                label: 'User Management',
-                to: '/admin/users',
-                icon: UsersIcon
-            },
-            {
-                name: 'AdminDocuments',
-                label: 'Document Management',
-                to: '/admin/documents',
-                icon: DocumentTextIcon
-            }
+            // {
+            //     name: 'AdminUsers',
+            //     label: 'User Management',
+            //     to: '/admin/users',
+            //     icon: UsersIcon
+            // },
+            // {
+            //     name: 'AdminDocuments',
+            //     label: 'Document Management',
+            //     to: '/admin/documents',
+            //     icon: DocumentTextIcon
+            // }
         ]
     },
     {
@@ -113,17 +113,17 @@ const navigationSections = computed(() => [
             }
         ]
     },
-    {
-        title: 'Configuration',
-        items: [
-            {
-                name: 'AdminSettings',
-                label: 'System Settings',
-                to: '/admin/settings',
-                icon: CogIcon
-            }
-        ]
-    }
+    // {
+    //     title: 'Configuration',
+    //     items: [
+    //         {
+    //             name: 'AdminSettings',
+    //             label: 'System Settings',
+    //             to: '/admin/settings',
+    //             icon: CogIcon
+    //         }
+    //     ]
+    // }
 ])
 
 const userActions = computed(() => [
