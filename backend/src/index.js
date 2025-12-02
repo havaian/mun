@@ -95,9 +95,9 @@ app.use('/upload', express.static('upload', {
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
 
-// Apply event protection middleware to all API routes EXCEPT exempt routes
-// The new middleware automatically handles exempt routes internally
-app.use('/api', eventProtectionMiddleware);
+// // Apply event protection middleware to all API routes EXCEPT exempt routes
+// // The new middleware automatically handles exempt routes internally
+// app.use('/api', eventProtectionMiddleware);
 
 app.use('/api/events', eventRoutes);
 app.use('/api/committees', committeeRoutes);
