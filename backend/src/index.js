@@ -113,134 +113,134 @@ app.use('/api/procedure', procedureRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/countries', countriesRoutes);
 
-// Event Automation Control Routes (Admin only)
-app.get('/api/admin/automation/status',
-  global.auth.token,
-  global.auth.admin,
-  (req, res) => {
-    try {
-      const status = eventAutomationService.getStatus();
-      res.json({
-        success: true,
-        automation: status
-      });
-    } catch (error) {
-      logger.error('Failed to get automation status:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to get automation status'
-      });
-    }
-  }
-);
+// // Event Automation Control Routes (Admin only)
+// app.get('/api/admin/automation/status',
+//   global.auth.token,
+//   global.auth.admin,
+//   (req, res) => {
+//     try {
+//       const status = eventAutomationService.getStatus();
+//       res.json({
+//         success: true,
+//         automation: status
+//       });
+//     } catch (error) {
+//       logger.error('Failed to get automation status:', error);
+//       res.status(500).json({
+//         success: false,
+//         error: 'Failed to get automation status'
+//       });
+//     }
+//   }
+// );
 
-app.post('/api/admin/automation/manual-check',
-  global.auth.token,
-  global.auth.admin,
-  async (req, res) => {
-    try {
-      const result = await eventAutomationService.forceCheckAllEvents();
-      res.json({
-        success: true,
-        result,
-        message: 'Manual event status check completed'
-      });
-    } catch (error) {
-      logger.error('Failed to run manual automation check:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to run manual check'
-      });
-    }
-  }
-);
+// app.post('/api/admin/automation/manual-check',
+//   global.auth.token,
+//   global.auth.admin,
+//   async (req, res) => {
+//     try {
+//       const result = await eventAutomationService.forceCheckAllEvents();
+//       res.json({
+//         success: true,
+//         result,
+//         message: 'Manual event status check completed'
+//       });
+//     } catch (error) {
+//       logger.error('Failed to run manual automation check:', error);
+//       res.status(500).json({
+//         success: false,
+//         error: 'Failed to run manual check'
+//       });
+//     }
+//   }
+// );
 
-app.post('/api/admin/automation/start',
-  global.auth.token,
-  global.auth.admin,
-  (req, res) => {
-    try {
-      eventAutomationService.start();
-      res.json({
-        success: true,
-        message: 'Event automation service started'
-      });
-    } catch (error) {
-      logger.error('Failed to start automation service:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to start automation service'
-      });
-    }
-  }
-);
+// app.post('/api/admin/automation/start',
+//   global.auth.token,
+//   global.auth.admin,
+//   (req, res) => {
+//     try {
+//       eventAutomationService.start();
+//       res.json({
+//         success: true,
+//         message: 'Event automation service started'
+//       });
+//     } catch (error) {
+//       logger.error('Failed to start automation service:', error);
+//       res.status(500).json({
+//         success: false,
+//         error: 'Failed to start automation service'
+//       });
+//     }
+//   }
+// );
 
-app.post('/api/admin/automation/stop',
-  global.auth.token,
-  global.auth.admin,
-  (req, res) => {
-    try {
-      eventAutomationService.stop();
-      res.json({
-        success: true,
-        message: 'Event automation service stopped'
-      });
-    } catch (error) {
-      logger.error('Failed to stop automation service:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to stop automation service'
-      });
-    }
-  }
-);
+// app.post('/api/admin/automation/stop',
+//   global.auth.token,
+//   global.auth.admin,
+//   (req, res) => {
+//     try {
+//       eventAutomationService.stop();
+//       res.json({
+//         success: true,
+//         message: 'Event automation service stopped'
+//       });
+//     } catch (error) {
+//       logger.error('Failed to stop automation service:', error);
+//       res.status(500).json({
+//         success: false,
+//         error: 'Failed to stop automation service'
+//       });
+//     }
+//   }
+// );
 
-// NEW: Event Protection Management Routes (Admin only)
-app.get('/api/admin/event-protection/cache',
-  global.auth.token,
-  global.auth.admin,
-  (req, res) => {
-    try {
-      const stats = getCacheStats();
-      res.json({
-        success: true,
-        cache: stats,
-        message: 'Event protection cache statistics'
-      });
-    } catch (error) {
-      logger.error('Failed to get cache stats:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to get cache statistics'
-      });
-    }
-  }
-);
+// // NEW: Event Protection Management Routes (Admin only)
+// app.get('/api/admin/event-protection/cache',
+//   global.auth.token,
+//   global.auth.admin,
+//   (req, res) => {
+//     try {
+//       const stats = getCacheStats();
+//       res.json({
+//         success: true,
+//         cache: stats,
+//         message: 'Event protection cache statistics'
+//       });
+//     } catch (error) {
+//       logger.error('Failed to get cache stats:', error);
+//       res.status(500).json({
+//         success: false,
+//         error: 'Failed to get cache statistics'
+//       });
+//     }
+//   }
+// );
 
-app.post('/api/admin/event-protection/clear-cache',
-  global.auth.token,
-  global.auth.admin,
-  (req, res) => {
-    try {
-      clearEventCache();
-      res.json({
-        success: true,
-        message: 'Event protection cache cleared successfully'
-      });
-    } catch (error) {
-      logger.error('Failed to clear cache:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Failed to clear cache'
-      });
-    }
-  }
-);
+// app.post('/api/admin/event-protection/clear-cache',
+//   global.auth.token,
+//   global.auth.admin,
+//   (req, res) => {
+//     try {
+//       clearEventCache();
+//       res.json({
+//         success: true,
+//         message: 'Event protection cache cleared successfully'
+//       });
+//     } catch (error) {
+//       logger.error('Failed to clear cache:', error);
+//       res.status(500).json({
+//         success: false,
+//         error: 'Failed to clear cache'
+//       });
+//     }
+//   }
+// );
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  const automationStatus = eventAutomationService.getStatus();
-  const cacheStats = getCacheStats();
+  // const automationStatus = eventAutomationService.getStatus();
+  // const cacheStats = getCacheStats();
 
   res.json({
     status: 'healthy',
@@ -272,10 +272,10 @@ app.get('/api/health', (req, res) => {
       flags: 'cached',
       eventAutomation: automationStatus.isRunning ? 'running' : 'stopped'
     },
-    eventProtection: {
-      cacheSize: cacheStats.size,
-      cacheTimeout: cacheStats.timeout + 'ms'
-    }
+    // eventProtection: {
+    //   cacheSize: cacheStats.size,
+    //   cacheTimeout: cacheStats.timeout + 'ms'
+    // }
   });
 });
 
