@@ -110,11 +110,12 @@
                         ]" @change="applyFilters" container-class="w-full" />
                     </div>
 
+                    <!-- CHANGED: Login Links filter instead of QR filter -->
                     <div>
                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                            Has QR Codes
+                            Has Login Links
                         </label>
-                        <SleekSelect v-model="filters.hasQR" :options="[
+                        <SleekSelect v-model="filters.hasLinks" :options="[
                             { label: 'All', value: '' },
                             { label: 'Generated', value: 'yes' },
                             { label: 'Not Generated', value: 'no' }
@@ -174,9 +175,10 @@
                         {{ selectedCommittees.length }} selected
                     </span>
 
-                    <button @click="bulkGenerateQR" :disabled="isBulkGenerating" class="btn-un-secondary px-3 py-2">
-                        <QrCodeIcon class="w-4 h-4 mr-2" />
-                        Generate QR
+                    <!-- CHANGED: Generate Links instead of Generate QR -->
+                    <button @click="bulkGenerateLinks" :disabled="isBulkGenerating" class="btn-un-secondary px-3 py-2">
+                        <LinkIcon class="w-4 h-4 mr-2" />
+                        Generate Links
                     </button>
 
                     <button @click="bulkExport" class="btn-un-secondary px-3 py-2">
@@ -295,10 +297,6 @@
                                 class="p-2 text-mun-gray-400 hover:text-mun-blue hover:bg-mun-blue-50 rounded-lg transition-colors">
                                 <PencilIcon class="w-4 h-4" />
                             </button>
-                            <!-- <button @click.stop="duplicateCommittee(committee)"
-                                class="p-2 text-mun-gray-400 hover:text-mun-green-500 hover:bg-mun-green-50 rounded-lg transition-colors">
-                                <DocumentDuplicateIcon class="w-4 h-4" />
-                            </button> -->
                             <button @click.stop="deleteCommittee(committee)"
                                 class="p-2 text-mun-gray-400 hover:text-mun-red-500 hover:bg-mun-red-50 rounded-lg transition-colors">
                                 <TrashIcon class="w-4 h-4" />
@@ -397,10 +395,6 @@
                                             class="p-2 text-mun-gray-400 hover:text-mun-blue hover:bg-mun-blue-50 rounded-lg transition-colors">
                                             <PencilIcon class="w-4 h-4" />
                                         </button>
-                                        <!-- <button @click.stop="duplicateCommittee(committee)"
-                                            class="p-2 text-mun-gray-400 hover:text-mun-green-500 hover:bg-mun-green-50 rounded-lg transition-colors">
-                                            <DocumentDuplicateIcon class="w-4 h-4" />
-                                        </button> -->
                                         <button @click.stop="deleteCommittee(committee)"
                                             class="p-2 text-mun-gray-400 hover:text-mun-red-500 hover:bg-mun-red-50 rounded-lg transition-colors">
                                             <TrashIcon class="w-4 h-4" />
@@ -435,12 +429,14 @@
             @updated="handleCommitteeUpdated" />
 
         <CommitteeDetailsModal v-model="showCommitteeDetails" :committee="selectedCommittee"
-            @edit="editCommitteeFromDetails" @delete="deleteCommittee" @manage-countries="manageCountries" />
+            @edit="editCommitteeFromDetails" @delete="deleteCommittee" @manage-countries="manageCountries"
+            @generate-login-links="generateLoginLinks" />
 
         <CountryManagementModal v-model="showCountryManagement" :committee="selectedCommittee"
             @saved="handleCountriesUpdated" />
 
-        <QRGenerationModal v-model="showQRGeneration" :committee="selectedCommittee" @generated="handleQRGenerated" />
+        <!-- CHANGED: LoginLinksModal instead of QRGenerationModal -->
+        <LoginLinksModal v-model="showLoginLinksGeneration" :committee="selectedCommittee" @generated="handleLinksGenerated" />
 
         <ConfirmationDialog 
             v-model="showDeleteConfirm"
@@ -472,7 +468,7 @@ import {
     Squares2X2Icon,
     ListBulletIcon,
     UserGroupIcon,
-    QrCodeIcon,
+    LinkIcon, // CHANGED: LinkIcon instead of QrCodeIcon
     DocumentArrowDownIcon,
     PencilIcon,
     DocumentDuplicateIcon,
@@ -487,7 +483,7 @@ import Pagination from '@/components/ui/Pagination.vue'
 import CreateEditCommitteeModal from '@/components/admin/CreateEditCommitteeModal.vue'
 import CommitteeDetailsModal from '@/components/admin/CommitteeDetailsModal.vue'
 import CountryManagementModal from '@/components/admin/CountryManagementModal.vue'
-import QRGenerationModal from '@/components/admin/QRGenerationModal.vue'
+import LoginLinksModal from '@/components/admin/LoginLinksModal.vue' // CHANGED: LoginLinksModal instead of QRGenerationModal
 
 const router = useRouter()
 const route = useRoute()
@@ -515,7 +511,7 @@ const showCreateCommittee = ref(false)
 const showEditCommittee = ref(false)
 const showCommitteeDetails = ref(false)
 const showCountryManagement = ref(false)
-const showQRGeneration = ref(false)
+const showLoginLinksGeneration = ref(false) // CHANGED: loginLinks instead of QR
 const showDeleteConfirm = ref(false)
 
 // Filters
@@ -524,7 +520,7 @@ const filters = ref({
     type: '',
     status: '',
     countryRange: '',
-    hasQR: ''
+    hasLinks: '' // CHANGED: hasLinks instead of hasQR
 })
 
 // Pagination
@@ -555,9 +551,10 @@ const committeeStats = computed(() => [
         color: 'purple'
     },
     {
-        title: 'QR Generated',
-        value: committees.value.filter(c => c.qrGenerated).length,
-        icon: QrCodeIcon,
+        // CHANGED: Links Generated instead of QR Generated
+        title: 'Links Generated',
+        value: committees.value.filter(c => c.linksGenerated).length,
+        icon: LinkIcon,
         color: 'orange'
     }
 ])
@@ -612,10 +609,11 @@ const filteredCommittees = computed(() => {
         })
     }
 
-    if (filters.value.hasQR) {
+    // CHANGED: Filter by links instead of QR
+    if (filters.value.hasLinks) {
         filtered = filtered.filter(committee => {
-            if (filters.value.hasQR === 'yes') return committee.qrGenerated
-            if (filters.value.hasQR === 'no') return !committee.qrGenerated
+            if (filters.value.hasLinks === 'yes') return committee.linksGenerated
+            if (filters.value.hasLinks === 'no') return !committee.linksGenerated
             return true
         })
     }
@@ -734,7 +732,6 @@ const loadCommittees = async () => {
 const loadEvents = async () => {
     try {
         const response = await apiMethods.events.getAll({
-            // status: 'active,published',
             limit: 100
         })
 
@@ -838,7 +835,6 @@ const confirmDelete = async () => {
     try {
         const response = await apiMethods.committees.delete(selectedCommittee.value._id)
 
-        // FIXED: Check the correct response structure
         if (response?.data?.success) {
             // Remove from local state
             committees.value = committees.value.filter(c => c._id !== selectedCommittee.value._id)
@@ -849,7 +845,6 @@ const confirmDelete = async () => {
             
             toast.success('Committee deleted successfully')
         } else {
-            // Handle case where deletion wasn't successful
             toast.error(response?.data?.error || 'Failed to delete committee')
         }
 
@@ -859,7 +854,6 @@ const confirmDelete = async () => {
     } catch (error) {
         console.error('Delete committee error:', error)
         
-        // Better error handling
         if (error.response?.data?.error) {
             toast.error(error.response.data.error)
         } else if (error.message) {
@@ -868,61 +862,8 @@ const confirmDelete = async () => {
             toast.error('Failed to delete committee')
         }
         
-        // Still close the modal even on error
         showDeleteConfirm.value = false
         selectedCommittee.value = null
-    }
-}
-
-const duplicateCommittee = async (committee) => {
-    try {
-        const duplicatedData = {
-            ...committee,
-            name: `${committee.name} (Copy)`,
-            status: 'draft',
-            qrGenerated: false,
-            countries: []
-        }
-
-        delete duplicatedData._id
-        delete duplicatedData.createdAt
-        delete duplicatedData.updatedAt
-        delete duplicatedData.documents
-
-        const response = await apiMethods.committees.create(duplicatedData)
-
-        if (response?.data) {
-            committees.value.unshift(response.data.committee || response.data)
-            totalCommittees.value++
-            toast.success('Committee duplicated successfully')
-        }
-
-    } catch (error) {
-        toast.error('Duplicate committee error:', error)
-        toast.error('Failed to duplicate committee')
-    }
-}
-
-const toggleCommitteeStatus = async (committee) => {
-    try {
-        const newStatus = committee.status === 'active' ? 'setup' : 'active'
-
-        const response = await apiMethods.committees.update(committee._id, {
-            status: newStatus
-        })
-
-        if (response?.data) {
-            const index = committees.value.findIndex(c => c._id === committee._id)
-            if (index !== -1) {
-                committees.value[index] = { ...committees.value[index], ...response.data.committee }
-            }
-
-            toast.success(`Committee ${newStatus === 'active' ? 'activated' : 'deactivated'}`)
-        }
-
-    } catch (error) {
-        toast.error('Toggle committee status error:', error)
-        toast.error('Failed to update committee status')
     }
 }
 
@@ -931,36 +872,54 @@ const manageCountries = (committee) => {
     showCountryManagement.value = true
 }
 
-const generateQR = (committee) => {
+// CHANGED: generateLoginLinks instead of generateQR
+const generateLoginLinks = (committee) => {
     selectedCommittee.value = committee
-    showQRGeneration.value = true
+    showLoginLinksGeneration.value = true
 }
 
 // Bulk actions
-const bulkGenerateQR = async () => {
+// CHANGED: bulkGenerateLinks instead of bulkGenerateQR
+const bulkGenerateLinks = async () => {
     try {
         isBulkGenerating.value = true
 
-        const response = await apiMethods.admin.bulkGenerateQR({
-            committeeIds: selectedCommittees.value
+        // Generate login links for selected committees
+        const promises = selectedCommittees.value.map(async (committeeId) => {
+            try {
+                await apiMethods.committees.generateLoginLinks(committeeId)
+                return { success: true, id: committeeId }
+            } catch (error) {
+                console.error(`Failed to generate links for committee ${committeeId}:`, error)
+                return { success: false, id: committeeId, error }
+            }
         })
 
-        if (response?.success) {
-            // Update committees with QR generated status
-            selectedCommittees.value.forEach(id => {
-                const index = committees.value.findIndex(c => c._id === id)
+        const results = await Promise.all(promises)
+        const successful = results.filter(r => r.success)
+        const failed = results.filter(r => !r.success)
+
+        if (successful.length > 0) {
+            // Update committees with links generated status
+            successful.forEach(result => {
+                const index = committees.value.findIndex(c => c._id === result.id)
                 if (index !== -1) {
-                    committees.value[index].qrGenerated = true
+                    committees.value[index].linksGenerated = true
                 }
             })
 
-            toast.success(`QR codes generated for ${selectedCommittees.value.length} committees`)
-            clearSelection()
+            toast.success(`Login links generated for ${successful.length} committees`)
         }
 
+        if (failed.length > 0) {
+            toast.error(`Failed to generate links for ${failed.length} committees`)
+        }
+
+        clearSelection()
+
     } catch (error) {
-        toast.error('Bulk generate QR error:', error)
-        toast.error('Failed to generate QR codes')
+        toast.error('Bulk generate links error:', error)
+        toast.error('Failed to generate login links')
     } finally {
         isBulkGenerating.value = false
     }
@@ -1016,13 +975,14 @@ const handleCountriesUpdated = (updatedCommittee) => {
     toast.success('Countries updated successfully')
 }
 
-const handleQRGenerated = (updatedCommittee) => {
+// CHANGED: handleLinksGenerated instead of handleQRGenerated
+const handleLinksGenerated = (updatedCommittee) => {
     const index = committees.value.findIndex(c => c._id === updatedCommittee._id)
     if (index !== -1) {
         committees.value[index] = updatedCommittee
     }
-    showQRGeneration.value = false
-    toast.success('QR codes generated successfully')
+    showLoginLinksGeneration.value = false
+    toast.success('Login links generated successfully')
 }
 
 // Utility functions
