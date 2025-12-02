@@ -49,13 +49,15 @@ const countrySchema = new mongoose.Schema({
         lowercase: true
     },
 
-    qrToken: {
+    // CHANGED: Login token for authentication - replaces qrToken
+    loginToken: {
         type: String,
         unique: true,
         sparse: true
     },
 
-    isQrActive: {
+    // CHANGED: Track if login token is active - replaces isQrActive
+    isLoginActive: {
         type: Boolean,
         default: true
     },
@@ -97,7 +99,7 @@ const presidiumSchema = new mongoose.Schema({
     }
 }, { _id: false });
 
-// Committee schema
+// Committee main schema
 const committeeSchema = new mongoose.Schema({
     eventId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -114,7 +116,7 @@ const committeeSchema = new mongoose.Schema({
 
     type: {
         type: String,
-        enum: ['GA', 'SC', 'other'],
+        enum: ['GA', 'SC', 'ECOSOC', 'HRC', 'other'],
         required: true
     },
 
@@ -126,53 +128,58 @@ const committeeSchema = new mongoose.Schema({
 
     language: {
         type: String,
-        enum: ['english', 'russian', 'uzbek'],
-        default: 'english'
+        enum: ['en', 'ru', 'uz'],
+        default: 'en'
     },
 
     status: {
         type: String,
-        enum: ['setup', 'active', 'completed'],
+        enum: ['setup', 'active', 'suspended', 'completed'],
         default: 'setup'
     },
 
-    // Countries participating in this committee
+    // Committee participants
     countries: [countrySchema],
 
-    // Presidium members
+    // Presidium composition
     presidium: [presidiumSchema],
 
-    // Committee working settings
+    // Session settings
     settings: {
-        minCoalitionSize: {
-            type: Number,
-            default: 3,
-            min: 2,
-            max: 10
-        },
+        votingSettings: {
+            requireMajority: {
+                type: Boolean,
+                default: true
+            },
 
-        documentDeadlines: {
-            positionPapers: {
-                type: Date,
-                default: null
+            allowAbstentions: {
+                type: Boolean,
+                default: true
             },
-            resolutions: {
-                type: Date,
-                default: null
+
+            vetoEnabled: {
+                type: Boolean,
+                default: false // Only for SC
             },
-            amendments: {
-                type: Date,
-                default: null
+
+            secretBallot: {
+                type: Boolean,
+                default: false
             }
         },
 
-        votingRules: {
-            defaultMajority: {
-                type: String,
-                enum: ['simple', 'qualified'],
-                default: 'simple'
+        debateSettings: {
+            speakersList: {
+                type: Boolean,
+                default: true
             },
-            allowConsensus: {
+
+            pointsOfOrder: {
+                type: Boolean,
+                default: true
+            },
+
+            rightOfReply: {
                 type: Boolean,
                 default: true
             }
@@ -226,7 +233,7 @@ const committeeSchema = new mongoose.Schema({
 committeeSchema.index({ eventId: 1, status: 1 });
 committeeSchema.index({ type: 1 });
 committeeSchema.index({ 'countries.name': 1 });
-committeeSchema.index({ 'countries.qrToken': 1 }, { sparse: true });
+committeeSchema.index({ 'countries.loginToken': 1 }, { sparse: true }); // CHANGED: was qrToken
 committeeSchema.index({ 'presidium.userId': 1 });
 
 // Ensure unique country names within committee
@@ -247,12 +254,12 @@ committeeSchema.virtual('registeredParticipants').get(function () {
     return this.countries.filter(country => country.email).length;
 });
 
-// Method to generate QR tokens for all countries
-committeeSchema.methods.generateQRTokens = function () {
+// CHANGED: Method to generate login tokens for all countries - replaces generateQRTokens
+committeeSchema.methods.generateLoginTokens = function () {
     this.countries.forEach(country => {
-        if (!country.qrToken) {
-            country.qrToken = crypto.randomBytes(32).toString('hex');
-            country.isQrActive = true;
+        if (!country.loginToken) {
+            country.loginToken = crypto.randomBytes(32).toString('hex');
+            country.isLoginActive = true;
         }
     });
 };
@@ -265,7 +272,7 @@ committeeSchema.methods.isCountryNameUnique = function (countryName, excludeId =
     );
 };
 
-// Method to add country
+// CHANGED: Method to add country - updated to use loginToken
 committeeSchema.methods.addCountry = function (countryData) {
     if (!this.isCountryNameUnique(countryData.name)) {
         throw new Error(`Country "${countryData.name}" already exists in this committee`);
@@ -273,8 +280,8 @@ committeeSchema.methods.addCountry = function (countryData) {
 
     const country = {
         ...countryData,
-        qrToken: crypto.randomBytes(32).toString('hex'),
-        isQrActive: true
+        loginToken: crypto.randomBytes(32).toString('hex'),
+        isLoginActive: true
     };
 
     this.countries.push(country);
@@ -292,10 +299,10 @@ committeeSchema.methods.removeCountry = function (countryName) {
     }
 
     // Check if country has any active participations
-    // TODO: Add checks for active coalitions, resolutions, etc. when those modules are ready
+    // TODO: Add checks for active coalitions, resolutions, etc.
 
     this.countries.splice(countryIndex, 1);
-    return true;
+    return this.countries;
 };
 
 // Method to get country by name
@@ -305,76 +312,65 @@ committeeSchema.methods.getCountry = function (countryName) {
     );
 };
 
-// Method to update country information
-committeeSchema.methods.updateCountry = function (countryName, updates) {
+// Method to update country
+committeeSchema.methods.updateCountry = function (countryName, updateData) {
     const country = this.getCountry(countryName);
     if (!country) {
-        throw new Error(`Country "${countryName}" not found`);
+        throw new Error(`Country "${countryName}" not found in this committee`);
     }
 
-    Object.keys(updates).forEach(key => {
-        if (key !== '_id' && key !== 'qrToken') {
-            country[key] = updates[key];
-        }
-    });
+    Object.assign(country, updateData);
+    return country;
+};
+
+// CHANGED: Method to regenerate login token for country - replaces regenerateQRToken
+committeeSchema.methods.regenerateLoginToken = function (countryName) {
+    const country = this.getCountry(countryName);
+    if (!country) {
+        throw new Error(`Country "${countryName}" not found in this committee`);
+    }
+
+    country.loginToken = crypto.randomBytes(32).toString('hex');
+    country.isLoginActive = true;
+    country.email = null; // Reset email binding
+    country.registeredAt = null;
 
     return country;
 };
 
-// Method to check presidium completeness
-committeeSchema.methods.hasCompletePresidium = function () {
-    const requiredRoles = ['chairman', 'co-chairman', 'expert', 'secretary'];
-    const assignedRoles = this.presidium.map(p => p.role);
-    return requiredRoles.every(role => assignedRoles.includes(role));
-};
-
 // Method to add presidium member
-committeeSchema.methods.addPresidiumMember = function (userId, role, appointedBy) {
-    // Check if role is already taken
-    const existingMember = this.presidium.find(p => p.role === role);
+committeeSchema.methods.addPresidiumMember = function (memberData) {
+    // Check if role is already assigned
+    const existingMember = this.presidium.find(
+        member => member.role === memberData.role
+    );
+
     if (existingMember) {
-        throw new Error(`Role "${role}" is already assigned`);
+        throw new Error(`Presidium role "${memberData.role}" is already assigned`);
     }
 
-    // Check if user is already in presidium
-    const existingUser = this.presidium.find(p => p.userId.toString() === userId.toString());
-    if (existingUser) {
-        throw new Error('User is already assigned to this committee presidium');
-    }
-
-    this.presidium.push({
-        userId,
-        role,
-        appointedBy
-    });
-
-    return this.presidium[this.presidium.length - 1];
+    this.presidium.push(memberData);
+    return memberData;
 };
 
 // Method to remove presidium member
-committeeSchema.methods.removePresidiumMember = function (userId) {
-    const memberIndex = this.presidium.findIndex(p => p.userId.toString() === userId.toString());
+committeeSchema.methods.removePresidiumMember = function (role) {
+    const memberIndex = this.presidium.findIndex(
+        member => member.role === role
+    );
+
     if (memberIndex === -1) {
-        throw new Error('Presidium member not found');
+        throw new Error(`Presidium member with role "${role}" not found`);
     }
 
     this.presidium.splice(memberIndex, 1);
-    return true;
+    return this.presidium;
 };
 
-// Pre-save middleware to ensure data integrity
-committeeSchema.pre('save', function (next) {
-    // Ensure Security Council permanent members have veto rights
-    if (this.type === 'SC') {
-        this.countries.forEach(country => {
-            if (country.isPermanentMember) {
-                country.hasVetoRight = true;
-            }
-        });
-    }
-
-    next();
-});
+// Method to get presidium member by role
+committeeSchema.methods.getPresidiumMember = function (role) {
+    return this.presidium.find(member => member.role === role);
+};
 
 const Committee = mongoose.model('Committee', committeeSchema);
 

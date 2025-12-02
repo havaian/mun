@@ -104,8 +104,7 @@
                                                 <div :class="[
                                                     'w-3 h-3 rounded-full',
                                                     country.email ? 'bg-green-500' : 'bg-transparent'
-                                                ]"
-                                                    :title="country.email ? 'Registered' : 'Not registered'">
+                                                ]" :title="country.email ? 'Registered' : 'Not registered'">
                                                 </div>
                                             </div>
                                         </div>
@@ -186,7 +185,7 @@
                                         Majority</label>
                                     <p class="text-mun-gray-900">{{
                                         formatMajorityType(committee.settings?.votingRules?.defaultMajority)
-                                    }}</p>
+                                        }}</p>
                                 </div>
 
                                 <div class="grid">
@@ -228,7 +227,7 @@
                                             Papers</label>
                                         <p class="text-sm text-mun-gray-900">{{
                                             formatDate(committee.settings.documentDeadlines.positionPapers)
-                                        }}</p>
+                                            }}</p>
                                     </div>
                                     <div v-if="committee.settings.documentDeadlines.resolutions">
                                         <label class="text-xs font-medium text-mun-gray-600">Resolutions</label>
@@ -266,7 +265,7 @@
                                 <div class="flex justify-between items-center">
                                     <span class="text-sm text-mun-gray-600">Registered Participants</span>
                                     <span class="font-semibold text-mun-gray-900">{{ getRegisteredCount()
-                                    }}</span>
+                                        }}</span>
                                 </div>
 
                                 <div class="flex justify-between items-center">
@@ -310,9 +309,10 @@
                                     Manage Countries
                                 </AppButton>
 
-                                <AppButton @click="generateQR" variant="outline" size="sm" class="w-full">
-                                    <QrCodeIcon class="w-4 h-4 mr-2" />
-                                    Generate QR Codes
+                                <!-- CHANGED: Generate Login Links button (was Generate QR Codes) -->
+                                <AppButton @click="generateLoginLinks" variant="outline" size="sm" class="w-full">
+                                    <LinkIcon class="w-4 h-4 mr-2" />
+                                    Generate Login Links
                                 </AppButton>
 
                                 <AppButton @click="viewSessions" variant="outline" size="sm" class="w-full">
@@ -351,7 +351,7 @@ import {
     ClockIcon,
     UserIcon,
     GlobeAltIcon,
-    QrCodeIcon
+    LinkIcon // CHANGED: LinkIcon replaces QrCodeIcon
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -365,7 +365,8 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['update:modelValue', 'edit', 'manage-countries', 'generate-qr', 'view-sessions'])
+// CHANGED: Updated emit events to use login links instead of QR
+const emit = defineEmits(['update:modelValue', 'edit', 'manage-countries', 'generate-login-links', 'view-sessions'])
 
 // Methods
 const formatCommitteeType = (type) => {
@@ -446,6 +447,10 @@ const getRegisteredCount = () => {
     return props.committee.countries.filter(country => country.email).length
 }
 
+const closeModal = () => {
+    emit('update:modelValue', false)
+}
+
 const editCommittee = () => {
     emit('edit', props.committee)
     closeModal()
@@ -456,8 +461,9 @@ const manageCountries = () => {
     closeModal()
 }
 
-const generateQR = () => {
-    emit('generate-qr', props.committee)
+// CHANGED: Generate login links instead of QR codes
+const generateLoginLinks = () => {
+    emit('generate-login-links', props.committee)
     closeModal()
 }
 

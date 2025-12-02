@@ -169,14 +169,34 @@ export const apiMethods = {
 
     // ✅ FULLY IMPLEMENTED - Authentication (8/8 methods working)
     auth: {
-        adminLogin: (credentials) => api.post('/auth/admin-login', credentials), // NOT USED
-        qrLogin: (token) => api.post('/auth/qr-login', { token }), // NOT USED
-        bindEmail: (token, email) => api.post('/auth/bind-email', { token, email }), // NOT USED
-        emailLogin: (email) => api.post('/auth/email-login', { email }), // NOT USED
-        logout: () => api.post('/auth/logout'), // NOT USED
-        validateSession: () => api.get('/auth/validate-session'), // NOT USED
-        checkQrStatus: (token) => api.get(`/auth/qr-status/${token}`), // NOT USED
-        reactivateQr: (userId) => api.post('/auth/reactivate-qr', { userId }) // NOT USED
+        adminLogin: (credentials) => api.post('/auth/admin-login', credentials),
+        
+        // CHANGED: Link login replaces qrLogin
+        linkLogin: (token) => api.post('/auth/link-login', { token }),
+        
+        // CHANGED: Updated to use login tokens instead of QR tokens
+        bindEmail: (token, email) => api.post('/auth/bind-email', { token, email }),
+        
+        // CHANGED: Updated email login to support login token verification
+        emailLogin: (email, loginToken = null) => api.post('/auth/email-login', { 
+            email, 
+            ...(loginToken && { loginToken }) 
+        }),
+        
+        logout: () => api.post('/auth/logout'),
+        validateSession: () => api.get('/auth/validate-session'),
+        
+        // CHANGED: Check link status replaces QR status check
+        checkLinkStatus: (token) => api.get(`/auth/link-status/${token}`),
+        
+        // CHANGED: Reactivate link replaces QR reactivation
+        reactivateLink: (userId) => api.post('/auth/reactivate-link', { userId }),
+
+        // LEGACY: Deprecated QR methods (for backward compatibility warnings)
+        // These will return 410 Gone responses
+        qrLogin: (token) => api.post('/auth/qr-login', { token }), // DEPRECATED
+        checkQrStatus: (token) => api.get(`/auth/qr-status/${token}`), // DEPRECATED
+        reactivateQr: (userId) => api.post('/auth/reactivate-qr', { userId }) // DEPRECATED
     },
 
     // ✅ FULLY IMPLEMENTED - Events (7/7 methods working)
@@ -194,21 +214,21 @@ export const apiMethods = {
     exports: {
         // ✅ IMPLEMENTED - Admin Export Routes
         getSystemConfig: () => api.get('/admin/export/config'),
-        getAuditLogs: (params = {}) => api.get('/admin/export/audit-logs', { params }), // NOT USED
+        getAuditLogs: (params = {}) => api.get('/admin/export/audit-logs', { params }),
 
-        // ✅ IMPLEMENTED - QR Code Export Routes
-        generateQRPDF: (committeeId) => api.get(`/export/qr-codes/${committeeId}`, { responseType: 'blob' }),
-        
-        // NEW: Presidium QR codes export  
-        generatePresidiumQRPDF: (committeeId) => api.get(`/export/presidium-qr-codes/${committeeId}`, { responseType: 'blob' }),
-        
-        // NEW: Complete QR codes export (presidium + delegates)
-        generateCompleteQRPDF: (committeeId) => api.get(`/export/complete-qr-codes/${committeeId}`, { responseType: 'blob' }),
+        // CHANGED: Login Links Export Routes (replaces QR exports)
+        generateDelegateLinks: (committeeId, format = 'json') => api.get(`/export/delegate-links/${committeeId}`, { 
+            params: { format }
+        }),
+        generatePresidiumLinks: (committeeId, format = 'json') => api.get(`/export/presidium-links/${committeeId}`, { 
+            params: { format }
+        }),
+        generateCompleteLinks: (committeeId, format = 'json') => api.get(`/export/complete-links/${committeeId}`, { 
+            params: { format }
+        }),
 
-        // ⚠️ MISMATCH - Frontend expects blob but backend returns JSON
-        exportCommitteeStats: (committeeId) => api.get(`/export/statistics/${committeeId}`, { responseType: 'blob' }), // MISMATCH: Backend returns JSON, not blob
-
-        // ✅ IMPLEMENTED - Existing export routes
+        // ✅ IMPLEMENTED - Other export routes
+        exportCommitteeStats: (committeeId) => api.get(`/export/statistics/${committeeId}`, { responseType: 'blob' }),
         exportVotingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`, { responseType: 'blob' }),
         exportResolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`, { responseType: 'blob' }),
         exportCompleteReport: (committeeId) => api.get(`/export/committee-report/${committeeId}`, { responseType: 'blob' }),
@@ -219,28 +239,70 @@ export const apiMethods = {
             responseType: 'blob'
         }),
         exportEvents: () => api.get('/admin/events/export', { responseType: 'blob' }),
-        exportUsers: () => api.get('/admin/users/export', { responseType: 'blob' })
+        exportUsers: () => api.get('/admin/users/export', { responseType: 'blob' }),
+
+        // LEGACY: Deprecated QR export methods
+        generateQRPDF: (committeeId) => {
+            console.warn('generateQRPDF is deprecated. Use generateDelegateLinks with format=plain instead.');
+            return api.get(`/export/qr-codes/${committeeId}`, { responseType: 'blob' }); // Will return 410 Gone
+        },
+        generatePresidiumQRPDF: (committeeId) => {
+            console.warn('generatePresidiumQRPDF is deprecated. Use generatePresidiumLinks with format=plain instead.');
+            return api.get(`/export/presidium-qr-codes/${committeeId}`, { responseType: 'blob' }); // Will return 410 Gone
+        },
+        generateCompleteQRPDF: (committeeId) => {
+            console.warn('generateCompleteQRPDF is deprecated. Use generateCompleteLinks with format=plain instead.');
+            return api.get(`/export/complete-qr-codes/${committeeId}`, { responseType: 'blob' }); // Will return 410 Gone
+        }
     },
 
     // ✅ FULLY IMPLEMENTED - Committees (17/17 methods working perfectly)
     committees: {
         getAll: (params = {}) => api.get('/committees/', { params }),
-        getById: (id) => api.get(`/committees/${id}`), // NOT USED
+        getById: (id) => api.get(`/committees/${id}`),
         create: (data) => api.post('/committees', data),
         update: (id, data) => api.put(`/committees/${id}`, data),
         delete: (id) => api.delete(`/committees/${id}`),
-        addCountry: (id, countryData) => api.post(`/committees/${id}/countries`, countryData), // NOT USED
-        removeCountry: (id, countryName) => api.delete(`/committees/${id}/countries/${countryName}`), // NOT USED
-        updateCountryStatus: (id, countryName) => api.put(`/committees/${id}/countries/${countryName}/status`), // NOT USED
-        generateQRs: (id) => api.get(`/committees/${id}/qr-codes`),
-        regenerateQRs: (id) => api.get(`/committees/${id}/qr-codes/regenerate`), // NOT USED
-        regenerateCountryQRs: (id, countryName) => api.get(`/committees/${id}/qr-codes/${countryName}/regenerate`), // NOT USED
-        generatePresidiumQRs: (id, data) => api.post(`/committees/${id}/presidium/generate-qrs`, data),
-        resetPresidiumQRs: (id, role, data) => api.post(`/committees/${id}/presidium/${role}/reset-qr`, data), // NOT USED
-        getPresidium: (id) => api.get(`/committees/${id}/presidium`), // NOT USED
-        updatePresidium: (id) => api.put(`/committees/${id}/presidium`), // NOT USED
-        getPresidiumStatus: (id) => api.get(`/committees/${id}/presidium/status`), // NOT USED
-        getQRTokens: (id) => api.get(`/committees/${id}/qr-tokens`) // NOT USED
+        addCountry: (id, countryData) => api.post(`/committees/${id}/countries`, countryData),
+        removeCountry: (id, countryName) => api.delete(`/committees/${id}/countries/${countryName}`),
+        updateCountryStatus: (id, countryName, statusData) => api.put(`/committees/${id}/countries/${countryName}/status`, statusData),
+        
+        // CHANGED: Login Links management (replaces QR codes)
+        generateLoginLinks: (id, params = {}) => api.get(`/committees/${id}/login-links`, { params }),
+        regenerateLoginLinks: (id, reason = null) => api.post(`/committees/${id}/login-links/regenerate`, { reason }),
+        regenerateCountryLoginLink: (id, countryName, reason = null) => api.post(`/committees/${id}/login-links/${countryName}/regenerate`, { reason }),
+        
+        // CHANGED: Presidium login links (replaces QR codes)  
+        generatePresidiumLoginLinks: (id, params = {}) => api.post(`/committees/${id}/presidium/generate-links`, {}, { params }),
+        resetPresidiumLoginLink: (id, role, reason = null) => api.post(`/committees/${id}/presidium/${role}/reset-link`, { reason }),
+        
+        // Status and information
+        getPresidium: (id) => api.get(`/committees/${id}/presidium`),
+        updatePresidium: (id, presidiumData) => api.put(`/committees/${id}/presidium`, presidiumData),
+        getPresidiumStatus: (id) => api.get(`/committees/${id}/presidium/status`),
+        getLoginTokens: (id) => api.get(`/committees/${id}/login-tokens`),
+
+        // LEGACY METHODS: Deprecated QR methods with warnings
+        generateQRs: (id) => {
+            console.warn('generateQRs is deprecated. Use generateLoginLinks instead.');
+            return api.get(`/committees/${id}/qr-codes`); // Will return 410 Gone
+        },
+        regenerateQRs: (id) => {
+            console.warn('regenerateQRs is deprecated. Use regenerateLoginLinks instead.');
+            return api.post(`/committees/${id}/qr-codes/regenerate`); // Will return 410 Gone
+        },
+        generatePresidiumQRs: (id, data) => {
+            console.warn('generatePresidiumQRs is deprecated. Use generatePresidiumLoginLinks instead.');
+            return api.post(`/committees/${id}/presidium/generate-qrs`, data); // Will return 410 Gone
+        },
+        resetPresidiumQRs: (id, role, data) => {
+            console.warn('resetPresidiumQRs is deprecated. Use resetPresidiumLoginLink instead.');
+            return api.post(`/committees/${id}/presidium/${role}/reset-qr`, data); // Will return 410 Gone
+        },
+        getQRTokens: (id) => {
+            console.warn('getQRTokens is deprecated. Use getLoginTokens instead.');
+            return api.get(`/committees/${id}/qr-tokens`); // Will return 410 Gone
+        }
     },
 
     // ✅ IMPLEMENTED - Countries (6/7 methods working)  

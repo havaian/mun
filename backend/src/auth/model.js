@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema({
         required: true
     },
 
-    // For admin ONLY - traditional login (presidium now uses QR)
+    // For admin ONLY - traditional login
     username: {
         type: String,
         sparse: true, // Allows multiple null values
@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
         required: function () { return this.role === 'admin'; }
     },
 
-    // For presidium AND delegates - email binding after QR scan
+    // For presidium AND delegates - email binding after link access
     email: {
         type: String,
         sparse: true, // Allows multiple null values but ensures uniqueness when set
@@ -33,15 +33,16 @@ const userSchema = new mongoose.Schema({
         required: function () { return this.role === 'delegate'; }
     },
 
-    // QR token for initial access (presidium AND delegates)
-    qrToken: {
+    // CHANGED: Login token for initial access (presidium AND delegates) - replaces qrToken
+    loginToken: {
         type: String,
         sparse: true,
         unique: true,
         required: function () { return this.role === 'presidium' || this.role === 'delegate'; }
     },
 
-    isQrActive: {
+    // CHANGED: Track if login token is active - replaces isQrActive
+    isLoginActive: {
         type: Boolean,
         default: true
     },
@@ -102,7 +103,7 @@ const userSchema = new mongoose.Schema({
 
 // Indexes for performance
 userSchema.index({ role: 1, committeeId: 1 });
-userSchema.index({ qrToken: 1 }, { sparse: true });
+userSchema.index({ loginToken: 1 }, { sparse: true }); // CHANGED: was qrToken
 userSchema.index({ email: 1 }, { sparse: true });
 userSchema.index({ sessionId: 1 }, { sparse: true });
 userSchema.index({ presidiumRole: 1, committeeId: 1 });
@@ -157,7 +158,7 @@ userSchema.virtual('displayName').get(function () {
 userSchema.methods.toJSON = function () {
     const user = this.toObject();
     delete user.password;
-    delete user.qrToken;
+    delete user.loginToken; // CHANGED: was qrToken
     delete user.__v;
     return user;
 };

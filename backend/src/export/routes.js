@@ -1,6 +1,6 @@
-// backend/src/export/routes.js - Updated with PDF generation
+// backend/src/export/routes.js - Updated with link-based export
 const express = require('express');
-const { param, validationResult } = require('express-validator');
+const { param, query, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
@@ -24,33 +24,92 @@ const validateCommitteeId = [
         .withMessage('Valid committee ID is required')
 ];
 
-// Generate QR codes PDF for committee delegates (admin only)
+// Format validation for export
+const validateFormat = [
+    query('format')
+        .optional()
+        .isIn(['json', 'plain', 'pdf'])
+        .withMessage('Format must be json, plain, or pdf')
+];
+
+// CHANGED: Generate login links for committee delegates (admin only) - replaces QR codes
+router.get('/delegate-links/:committeeId',
+    global.auth.token,
+    global.auth.admin, // Only admin can generate links
+    validateCommitteeId,
+    validateFormat,
+    handleValidationErrors,
+    controller.generateCommitteeLinks
+);
+
+// CHANGED: Generate presidium-only login links (admin only) - replaces QR codes
+router.get('/presidium-links/:committeeId',
+    global.auth.token,
+    global.auth.admin, // Only admin can generate links
+    validateCommitteeId,
+    validateFormat,
+    handleValidationErrors,
+    controller.generatePresidiumLinks
+);
+
+// CHANGED: Generate complete login links (presidium + delegates) (admin only) - replaces QR codes
+router.get('/complete-links/:committeeId',
+    global.auth.token,
+    global.auth.admin, // Only admin can generate links
+    validateCommitteeId,
+    validateFormat,
+    handleValidationErrors,
+    controller.generateCompleteLinks
+);
+
+// LEGACY ROUTES: Keep QR routes for backward compatibility during transition
+// These will return deprecation notices
+
 router.get('/qr-codes/:committeeId',
     global.auth.token,
-    global.auth.admin, // Only admin can generate QR PDFs
+    global.auth.admin,
     validateCommitteeId,
     handleValidationErrors,
-    controller.generateCommitteeQRPDF
+    (req, res) => {
+        res.status(410).json({
+            error: 'QR code export is deprecated. Please use link-based authentication.',
+            newEndpoint: `/export/delegate-links/${req.params.committeeId}?format=plain`,
+            migration: {
+                'QR codes': 'Login links',
+                'PDF export': 'Plain text or JSON export',
+                'Scanning': 'Direct link access'
+            }
+        });
+    }
 );
 
-// NEW: Generate presidium-only QR codes PDF (admin only)
 router.get('/presidium-qr-codes/:committeeId',
     global.auth.token,
-    global.auth.admin, // Only admin can generate QR PDFs
+    global.auth.admin,
     validateCommitteeId,
     handleValidationErrors,
-    controller.generatePresidiumQRPDF
+    (req, res) => {
+        res.status(410).json({
+            error: 'Presidium QR code export is deprecated. Please use link-based authentication.',
+            newEndpoint: `/export/presidium-links/${req.params.committeeId}?format=plain`
+        });
+    }
 );
 
-// NEW: Generate complete QR codes PDF (presidium + delegates) (admin only)
 router.get('/complete-qr-codes/:committeeId',
     global.auth.token,
-    global.auth.admin, // Only admin can generate QR PDFs
+    global.auth.admin,
     validateCommitteeId,
     handleValidationErrors,
-    controller.generateCompleteQRPDF
+    (req, res) => {
+        res.status(410).json({
+            error: 'Complete QR code export is deprecated. Please use link-based authentication.',
+            newEndpoint: `/export/complete-links/${req.params.committeeId}?format=plain`
+        });
+    }
 );
 
+// UNCHANGED: Other export routes remain the same
 // Export committee statistics (presidium + admin)
 router.get('/statistics/:committeeId',
     global.auth.token,

@@ -28,20 +28,20 @@ const validateAdminLogin = [
         .withMessage('Password must be at least 6 characters')
 ];
 
-// QR login validation
-const validateQrLogin = [
+// CHANGED: Link login validation (replaces QR validation)
+const validateLinkLogin = [
     body('token')
         .notEmpty()
-        .withMessage('QR token is required')
+        .withMessage('Login token is required')
         .isLength({ min: 10 })
-        .withMessage('Invalid QR token format')
+        .withMessage('Invalid login token format')
 ];
 
 // Email binding validation
 const validateEmailBinding = [
     body('token')
         .notEmpty()
-        .withMessage('QR token is required'),
+        .withMessage('Login token is required'),
     body('email')
         .isEmail()
         .withMessage('Valid email address is required')
@@ -53,7 +53,11 @@ const validateEmailLogin = [
     body('email')
         .isEmail()
         .withMessage('Valid email address is required')
-        .normalizeEmail()
+        .normalizeEmail(),
+    body('loginToken')
+        .optional()
+        .isLength({ min: 10 })
+        .withMessage('Invalid login token format')
 ];
 
 // Routes
@@ -66,15 +70,15 @@ router.post('/admin-login',
     controller.adminLogin
 );
 
-// QR code authentication (for both delegates AND presidium)
-router.post('/qr-login',
+// CHANGED: Link authentication (for both delegates AND presidium) - replaces qr-login
+router.post('/link-login',
     global.auth.utils.authRateLimit,
-    validateQrLogin,
+    validateLinkLogin,
     handleValidationErrors,
-    controller.qrLogin
+    controller.linkLogin
 );
 
-// Email binding after QR verification (for both delegates AND presidium)
+// Email binding after link verification (for both delegates AND presidium)
 router.post('/bind-email',
     global.auth.utils.authRateLimit,
     validateEmailBinding,
@@ -102,22 +106,47 @@ router.get('/validate-session',
     controller.validateSession
 );
 
-// Check QR token status
-router.get('/qr-status/:token',
-    controller.checkQrStatus
+// CHANGED: Check login link status - replaces qr-status
+router.get('/link-status/:token',
+    controller.checkLinkStatus
 );
 
-// QR token reactivation (admin only)
-router.post('/reactivate-qr',
+// CHANGED: Login link reactivation (admin only) - replaces reactivate-qr
+router.post('/reactivate-link',
     global.auth.token,
-    global.auth.admin, // Only admin can reactivate QR codes
+    global.auth.admin, // Only admin can reactivate login links
     [
         body('userId')
             .isMongoId()
             .withMessage('Valid user ID is required')
     ],
     handleValidationErrors,
-    controller.reactivateQr
+    controller.reactivateLink
 );
+
+// LEGACY ROUTES: Keep these for backward compatibility during transition
+// TODO: Remove these after frontend is updated
+
+// Redirect old QR routes to new link routes
+router.post('/qr-login', (req, res) => {
+    res.status(410).json({
+        error: 'QR login is deprecated. Please use link-based authentication.',
+        newEndpoint: '/auth/link-login'
+    });
+});
+
+router.get('/qr-status/:token', (req, res) => {
+    res.status(410).json({
+        error: 'QR status check is deprecated. Please use link-based authentication.',
+        newEndpoint: '/auth/link-status/:token'
+    });
+});
+
+router.post('/reactivate-qr', (req, res) => {
+    res.status(410).json({
+        error: 'QR reactivation is deprecated. Please use link-based authentication.',
+        newEndpoint: '/auth/reactivate-link'
+    });
+});
 
 module.exports = router;

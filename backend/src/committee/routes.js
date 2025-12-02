@@ -219,7 +219,7 @@ router.get('/',
 
             // Execute query with population
             const committees = await Committee.find(filter)
-                .select('name description type status language eventId countries presidium createdAt updatedAt')  // REMOVED .length
+                .select('name description type status language eventId countries presidium createdAt updatedAt')
                 .populate('eventId', 'name status')
                 .sort({ createdAt: -1 })
                 .skip(skip)
@@ -232,7 +232,9 @@ router.get('/',
                 const committeeObj = committee.toObject();
                 return {
                     ...committeeObj,
-                    countriesCount: committeeObj.countries?.length || 0
+                    countriesCount: committeeObj.countries?.length || 0,
+                    // CHANGED: Check for login tokens instead of QR tokens
+                    linksGenerated: committeeObj.countries?.some(country => country.loginToken) || false
                 };
             });
 
@@ -370,6 +372,7 @@ router.put('/:id/countries/:countryName/status',
             });
 
         } catch (error) {
+            const logger = require('../utils/logger');
             logger.error('Update country status error:', error);
             res.status(500).json({ error: 'Failed to update country status' });
         }
@@ -414,26 +417,93 @@ router.get('/:id/presidium',
             });
 
         } catch (error) {
+            const logger = require('../utils/logger');
             logger.error('Get presidium error:', error);
             res.status(500).json({ error: 'Failed to fetch presidium' });
         }
     }
 );
 
-// QR Code management
+// CHANGED: Login Links management (replaces QR Code management)
 
-// Generate QR codes PDF (presidium only)
-router.get('/:id/qr-codes',
+// Generate login links for delegates (presidium only)
+router.get('/:id/login-links',
     global.auth.token,
     global.auth.presidium,
     validateCommitteeId,
     handleValidationErrors,
     global.auth.sameCommittee,
-    controller.generateQRCodes
+    async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { format = 'json' } = req.query;
+
+            const { Committee } = require('./model');
+            const crypto = require('crypto');
+            const logger = require('../utils/logger');
+
+            const committee = await Committee.findById(id);
+
+            if (!committee) {
+                return res.status(404).json({ error: 'Committee not found' });
+            }
+
+            // Generate login tokens for countries that don't have them
+            let needsUpdate = false;
+            committee.countries.forEach(country => {
+                if (!country.loginToken) {
+                    country.loginToken = crypto.randomBytes(32).toString('hex');
+                    country.isLoginActive = true;
+                    needsUpdate = true;
+                }
+            });
+
+            if (needsUpdate) {
+                await committee.save();
+            }
+
+            const baseUrl = process.env.FRONTEND_URL || 'https://mun.uz';
+
+            // Generate delegate links
+            const delegateLinks = committee.countries.map(country => ({
+                country: country.name,
+                link: `${baseUrl}/login/${country.loginToken}`,
+                loginToken: country.loginToken,
+                isObserver: country.isObserver,
+                specialRole: country.specialRole,
+                isActive: country.isLoginActive
+            }));
+
+            logger.info(`Generated ${delegateLinks.length} delegate login links for committee: ${committee.name}`);
+
+            if (format === 'plain') {
+                const plainText = delegateLinks
+                    .map(link => `${link.country}: ${link.link}`)
+                    .join('\n');
+
+                res.setHeader('Content-Type', 'text/plain');
+                res.setHeader('Content-Disposition', `attachment; filename="delegate_links_${committee.name.replace(/\s+/g, '_')}.txt"`);
+                res.send(plainText);
+            } else {
+                res.json({
+                    success: true,
+                    message: `Generated login links for ${delegateLinks.length} countries`,
+                    delegateLinks,
+                    totalCount: delegateLinks.length,
+                    activeCount: delegateLinks.filter(link => link.isActive).length
+                });
+            }
+
+        } catch (error) {
+            const logger = require('../utils/logger');
+            logger.error('Generate delegate login links error:', error);
+            res.status(500).json({ error: 'Failed to generate delegate login links' });
+        }
+    }
 );
 
-// Regenerate all QR codes (presidium only)
-router.post('/:id/qr-codes/regenerate',
+// Regenerate all login links (presidium only)
+router.post('/:id/login-links/regenerate',
     global.auth.token,
     global.auth.presidium,
     validateCommitteeId,
@@ -455,10 +525,10 @@ router.post('/:id/qr-codes/regenerate',
                 return res.status(404).json({ error: 'Committee not found' });
             }
 
-            // Generate new QR tokens for all countries
+            // Generate new login tokens for all countries
             committee.countries.forEach(country => {
-                country.qrToken = crypto.randomBytes(32).toString('hex');
-                country.isQrActive = true;
+                country.loginToken = crypto.randomBytes(32).toString('hex');
+                country.isLoginActive = true;
                 country.email = null; // Reset email binding
             });
 
@@ -469,8 +539,8 @@ router.post('/:id/qr-codes/regenerate',
                 await User.findOneAndUpdate(
                     { countryName: country.name, committeeId: id },
                     {
-                        qrToken: country.qrToken,
-                        isQrActive: true,
+                        loginToken: country.loginToken,
+                        isLoginActive: true,
                         email: null,
                         sessionId: null
                     }
@@ -487,23 +557,23 @@ router.post('/:id/qr-codes/regenerate',
                 { isActive: false }
             );
 
-            logger.info(`All QR codes regenerated for committee ${committee.name}. Reason: ${reason}`);
+            logger.info(`All login links regenerated for committee ${committee.name}. Reason: ${reason}`);
 
             res.json({
                 success: true,
-                message: `All QR codes regenerated for ${committee.countries.length} countries`,
+                message: `All login links regenerated for ${committee.countries.length} countries`,
                 regeneratedCount: committee.countries.length
             });
 
         } catch (error) {
-            logger.error('Regenerate QR codes error:', error);
-            res.status(500).json({ error: 'Failed to regenerate QR codes' });
+            logger.error('Regenerate login links error:', error);
+            res.status(500).json({ error: 'Failed to regenerate login links' });
         }
     }
 );
 
-// Regenerate QR code for specific country (presidium only)
-router.post('/:id/qr-codes/:countryName/regenerate',
+// Regenerate login link for specific country (presidium only)
+router.post('/:id/login-links/:countryName/regenerate',
     global.auth.token,
     global.auth.presidium,
     validateCommitteeId,
@@ -539,9 +609,9 @@ router.post('/:id/qr-codes/:countryName/regenerate',
                 });
             }
 
-            // Generate new QR token
-            country.qrToken = crypto.randomBytes(32).toString('hex');
-            country.isQrActive = true;
+            // Generate new login token
+            country.loginToken = crypto.randomBytes(32).toString('hex');
+            country.isLoginActive = true;
             country.email = null; // Reset email binding
 
             await committee.save();
@@ -550,8 +620,8 @@ router.post('/:id/qr-codes/:countryName/regenerate',
             const user = await User.findOneAndUpdate(
                 { countryName, committeeId: id },
                 {
-                    qrToken: country.qrToken,
-                    isQrActive: true,
+                    loginToken: country.loginToken,
+                    isLoginActive: true,
                     email: null,
                     sessionId: null
                 }
@@ -565,56 +635,277 @@ router.post('/:id/qr-codes/:countryName/regenerate',
                 );
             }
 
-            logger.info(`QR code regenerated for ${countryName} in committee ${committee.name}. Reason: ${reason}`);
+            logger.info(`Login link regenerated for ${countryName} in committee ${committee.name}. Reason: ${reason}`);
 
             res.json({
                 success: true,
-                message: `QR code regenerated for ${countryName}`,
-                qrToken: country.qrToken
+                message: `Login link regenerated for ${countryName}`,
+                loginToken: country.loginToken
             });
 
         } catch (error) {
-            logger.error('Regenerate country QR code error:', error);
-            res.status(500).json({ error: 'Failed to regenerate QR code' });
+            logger.error('Regenerate country login link error:', error);
+            res.status(500).json({ error: 'Failed to regenerate login link' });
         }
     }
 );
 
-// Generate presidium QR tokens for committee (admin only)
-router.post('/:committeeId/presidium/generate-qrs',
+// Generate presidium login links for committee (admin only)
+router.post('/:committeeId/presidium/generate-links',
     global.auth.token,
     global.auth.admin,
     validateCommitteeIdParam,
     handleValidationErrors,
-    controller.generatePresidiumQRs
+    async (req, res) => {
+        try {
+            const { committeeId } = req.params;
+            const { format = 'json' } = req.query;
+
+            const { User } = require('../auth/model');
+            const crypto = require('crypto');
+            const logger = require('../utils/logger');
+
+            // Find presidium members for this committee
+            const presidiumMembers = await User.find({
+                committeeId: committeeId,
+                role: 'presidium'
+            });
+
+            if (presidiumMembers.length === 0) {
+                return res.status(404).json({
+                    error: 'No presidium members found for this committee'
+                });
+            }
+
+            // Generate login tokens for presidium members who don't have them
+            let updatedCount = 0;
+            for (const member of presidiumMembers) {
+                if (!member.loginToken) {
+                    member.loginToken = crypto.randomBytes(32).toString('hex');
+                    member.isLoginActive = true;
+                    await member.save();
+                    updatedCount++;
+                }
+            }
+
+            const baseUrl = process.env.FRONTEND_URL || 'https://mun.uz';
+
+            const presidiumLinks = presidiumMembers.map(member => ({
+                role: member.presidiumRole,
+                link: `${baseUrl}/login/${member.loginToken}`,
+                loginToken: member.loginToken,
+                isActive: member.isLoginActive
+            }));
+
+            logger.info(`Generated login links for ${presidiumMembers.length} presidium members in committee ${committeeId}`);
+
+            if (format === 'plain') {
+                const plainText = presidiumLinks
+                    .map(link => `${link.role}: ${link.link}`)
+                    .join('\n');
+
+                res.setHeader('Content-Type', 'text/plain');
+                res.setHeader('Content-Disposition', `attachment; filename="presidium_links_${committeeId}.txt"`);
+                res.send(plainText);
+            } else {
+                res.json({
+                    success: true,
+                    message: `Login links generated for ${presidiumMembers.length} presidium members (${updatedCount} new)`,
+                    presidiumLinks,
+                    totalCount: presidiumLinks.length,
+                    activeCount: presidiumLinks.filter(link => link.isActive).length
+                });
+            }
+
+        } catch (error) {
+            const logger = require('../utils/logger');
+            logger.error('Generate presidium login links error:', error);
+            res.status(500).json({ error: 'Failed to generate presidium login links' });
+        }
+    }
 );
 
 // Get presidium status for committee
 router.get('/:committeeId/presidium/status',
     global.auth.token,
-    global.auth.adminOrPresidium, // Presidium can view their own status
+    global.auth.adminOrPresidium,
     validateCommitteeIdParam,
     handleValidationErrors,
-    controller.getPresidiumStatus
+    async (req, res) => {
+        try {
+            const { committeeId } = req.params;
+
+            const { User } = require('../auth/model');
+
+            const presidiumMembers = await User.find({
+                committeeId: committeeId,
+                role: 'presidium'
+            }).select('presidiumRole loginToken isLoginActive email');
+
+            const presidiumStatus = presidiumMembers.map(member => ({
+                role: member.presidiumRole,
+                hasLoginLink: !!member.loginToken,
+                isActive: member.isLoginActive,
+                hasEmail: !!member.email
+            }));
+
+            res.json({
+                success: true,
+                presidiumStatus
+            });
+
+        } catch (error) {
+            const logger = require('../utils/logger');
+            logger.error('Get presidium status error:', error);
+            res.status(500).json({ error: 'Failed to get presidium status' });
+        }
+    }
 );
 
-// Reset specific presidium QR token (admin only)
-router.post('/:committeeId/presidium/:role/reset-qr',
+// Reset specific presidium login link (admin only)
+router.post('/:committeeId/presidium/:role/reset-link',
     global.auth.token,
     global.auth.admin,
     validateCommitteeIdParam,
     validatePresidiumRole,
     handleValidationErrors,
-    controller.resetPresidiumQR
+    async (req, res) => {
+        try {
+            const { committeeId, role } = req.params;
+
+            const { User } = require('../auth/model');
+            const crypto = require('crypto');
+            const logger = require('../utils/logger');
+
+            const presidiumUser = await User.findOne({
+                committeeId: committeeId,
+                role: 'presidium',
+                presidiumRole: role
+            });
+
+            if (!presidiumUser) {
+                return res.status(404).json({
+                    error: `Presidium member with role '${role}' not found in this committee`
+                });
+            }
+
+            // Generate new login token
+            presidiumUser.loginToken = crypto.randomBytes(32).toString('hex');
+            presidiumUser.isLoginActive = true;
+            presidiumUser.email = null; // Reset email binding
+            presidiumUser.sessionId = null;
+
+            await presidiumUser.save();
+
+            // Deactivate any active sessions for this user
+            const { ActiveSession } = require('../auth/model');
+            await ActiveSession.updateMany(
+                { userId: presidiumUser._id },
+                { isActive: false }
+            );
+
+            logger.info(`Login link reset for presidium role '${role}' in committee ${committeeId}`);
+
+            res.json({
+                success: true,
+                message: `Login link reset successfully for ${role}`,
+                newLoginToken: presidiumUser.loginToken
+            });
+
+        } catch (error) {
+            const logger = require('../utils/logger');
+            logger.error('Reset presidium login link error:', error);
+            res.status(500).json({
+                error: 'Failed to reset presidium login link'
+            });
+        }
+    }
 );
 
-// Get all QR tokens for committee (for PDF generation - admin only)
-router.get('/:committeeId/qr-tokens',
+// Get all login tokens for committee (for export - admin only)
+router.get('/:committeeId/login-tokens',
     global.auth.token,
     global.auth.admin,
     validateCommitteeIdParam,
     handleValidationErrors,
-    controller.getCommitteeQRTokens
+    async (req, res) => {
+        try {
+            const { committeeId } = req.params;
+
+            // Get committee with countries
+            const { Committee } = require('./model');
+            const committee = await Committee.findById(committeeId)
+                .select('name type countries')
+                .lean();
+
+            if (!committee) {
+                return res.status(404).json({
+                    error: 'Committee not found'
+                });
+            }
+
+            // Get presidium members
+            const { User } = require('../auth/model');
+            const presidiumMembers = await User.find({
+                committeeId: committeeId,
+                role: 'presidium'
+            }).select('presidiumRole loginToken').lean();
+
+            // Format response
+            const loginTokens = {
+                committee: {
+                    id: committee._id,
+                    name: committee.name,
+                    type: committee.type
+                },
+                presidium: presidiumMembers.map(member => ({
+                    role: member.presidiumRole,
+                    loginToken: member.loginToken
+                })),
+                delegates: committee.countries.map(country => ({
+                    name: country.name,
+                    loginToken: country.loginToken,
+                    isObserver: country.isObserver,
+                    specialRole: country.specialRole
+                }))
+            };
+
+            res.json({
+                success: true,
+                loginTokens
+            });
+
+        } catch (error) {
+            const logger = require('../utils/logger');
+            logger.error('Get committee login tokens error:', error);
+            res.status(500).json({
+                error: 'Failed to get login tokens'
+            });
+        }
+    }
 );
+
+// LEGACY ROUTES: Deprecated QR routes that return migration notices
+router.get('/:id/qr-codes', (req, res) => {
+    res.status(410).json({
+        error: 'QR code generation is deprecated. Please use link-based authentication.',
+        newEndpoint: `/committees/${req.params.id}/login-links`,
+        migration: 'QR codes have been replaced with direct login links for better user experience.'
+    });
+});
+
+router.post('/:id/qr-codes/regenerate', (req, res) => {
+    res.status(410).json({
+        error: 'QR code regeneration is deprecated. Please use link-based authentication.',
+        newEndpoint: `/committees/${req.params.id}/login-links/regenerate`
+    });
+});
+
+router.post('/:committeeId/presidium/generate-qrs', (req, res) => {
+    res.status(410).json({
+        error: 'Presidium QR generation is deprecated. Please use link-based authentication.',
+        newEndpoint: `/committees/${req.params.committeeId}/presidium/generate-links`
+    });
+});
 
 module.exports = router;
