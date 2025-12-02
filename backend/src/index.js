@@ -12,15 +12,15 @@ require('./db');
 const logger = require('./utils/logger');
 const { initializeWebSocket } = require('./websocket/socketManager');
 
-// // 🚀 INITIALIZE GLOBAL AUTH EARLY - Before importing routes
-// const { setupGlobalAuth } = require('./auth/globalAuth');
-// setupGlobalAuth();
+// 🚀 INITIALIZE GLOBAL AUTH EARLY - Before importing routes
+const { setupGlobalAuth } = require('./auth/globalAuth');
+setupGlobalAuth();
 
 // Import event automation service
 const { eventAutomationService } = require('./event/automationService');
 
-// Import global event protection middleware
-const { middleware: eventProtectionMiddleware, clearCache: clearEventCache, getCacheStats } = require('./auth/globalEventProtection');
+// // Import global event protection middleware
+// const { middleware: eventProtectionMiddleware, clearCache: clearEventCache, getCacheStats } = require('./auth/globalEventProtection');
 
 // Import route modules
 const adminRoutes = require('./admin/routes');
