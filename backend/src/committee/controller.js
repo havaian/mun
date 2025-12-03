@@ -72,8 +72,13 @@ const createCommittee = async (req, res) => {
 
                 await presidiumUser.save();
 
-                // CRITICAL: Add presidium user to committee's presidium array
-                committee.addPresidiumMember(presidiumUser._id, role, req.user.userId);
+                // FIXED: Manually add presidium member with correct schema structure
+                committee.presidium.push({
+                    userId: presidiumUser._id,
+                    role: role,
+                    appointedBy: req.user.userId,
+                    appointedAt: new Date()
+                });
 
                 // Store info for response
                 presidiumUsers.push({
