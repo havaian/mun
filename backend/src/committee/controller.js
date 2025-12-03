@@ -64,15 +64,15 @@ const createCommittee = async (req, res) => {
                     role: 'presidium',
                     presidiumRole: role,
                     committeeId: committee._id,
-                    loginToken: loginToken,          // FIXED: Add loginToken (required)
-                    isLoginActive: true,             // FIXED: Use isLoginActive instead of isQrActive
+                    loginToken: loginToken,          // Add loginToken (required)
+                    isLoginActive: true,             // Use isLoginActive instead of isQrActive
                     isActive: true
                     // No username, password, or email needed
                 });
 
                 await presidiumUser.save();
 
-                // FIXED: Manually add presidium member with correct schema structure
+                // Manually add presidium member with correct schema structure
                 committee.presidium.push({
                     userId: presidiumUser._id,
                     role: role,
@@ -84,7 +84,7 @@ const createCommittee = async (req, res) => {
                 presidiumUsers.push({
                     role: role,
                     userId: presidiumUser._id,
-                    loginToken: presidiumUser.loginToken  // FIXED: Return loginToken instead of qrToken
+                    loginToken: presidiumUser.loginToken  // Return loginToken instead of qrToken
                 });
 
                 logger.info(`✅ Created and added presidium user: ${role} for committee ${committee.name}`);

@@ -517,7 +517,7 @@ const showCountryManagement = ref(false)
 const showLoginLinksGeneration = ref(false)
 const showDeleteConfirm = ref(false)
 
-// Enhanced: Auto-opening committee details
+// Auto-opening committee details
 const pendingCommitteeId = ref(null)
 const isAutoOpeningCommittee = ref(false)
 
@@ -707,14 +707,14 @@ watch(() => filteredCommittees.value.length, (newLength) => {
     }
 })
 
-// Enhanced: Route watcher to handle committee ID in params
+// Route watcher to handle committee ID in params
 watch(() => route.params, async (newParams) => {
     if (newParams.committeeId && committees.value.length > 0) {
         await openCommitteeFromRoute(newParams.committeeId)
     }
 }, { immediate: true })
 
-// Enhanced: Watch for committees loading completion to handle pending committee opening
+// Watch for committees loading completion to handle pending committee opening
 watch(() => committees.value, async (newCommittees) => {
     if (pendingCommitteeId.value && newCommittees.length > 0) {
         await openCommitteeFromRoute(pendingCommitteeId.value)
@@ -767,7 +767,7 @@ const loadEvents = async () => {
     }
 }
 
-// Enhanced: Method to open committee from route parameter
+// Method to open committee from route parameter
 const openCommitteeFromRoute = async (committeeId) => {
     if (!committeeId) return
 
@@ -802,7 +802,7 @@ const openCommitteeFromRoute = async (committeeId) => {
 
                 // Clean up the URL to remove invalid committee ID
                 await router.replace({
-                    name: 'admin-committees',
+                    name: 'AdminCommittees',
                     query: route.query
                 })
                 return
@@ -817,7 +817,7 @@ const openCommitteeFromRoute = async (committeeId) => {
             // Update the URL to reflect the opened committee (if not already there)
             if (route.params.committeeId !== committee._id) {
                 await router.replace({
-                    name: 'admin-committee-details',
+                    name: 'AdminCommitteeDetails',
                     params: { committeeId: committee._id },
                     query: route.query
                 })
@@ -827,7 +827,7 @@ const openCommitteeFromRoute = async (committeeId) => {
 
             // Clean up the URL
             await router.replace({
-                name: 'admin-committees',
+                name: 'AdminCommittees',
                 query: route.query
             })
         }
@@ -902,20 +902,20 @@ const clearSelection = () => {
     selectedCommittees.value = []
 }
 
-// Enhanced: Committee actions
+// Committee actions
 const viewCommittee = async (committee) => {
     selectedCommittee.value = committee
     showCommitteeDetails.value = true
 
     // Update URL to include committee ID
     await router.push({
-        name: 'admin-committee-details',
+        name: 'AdminCommitteeDetails',
         params: { committeeId: committee._id },
         query: route.query
     })
 }
 
-// Enhanced: Committee details modal close handler
+// Committee details modal close handler
 const closeCommitteeDetails = () => {
     showCommitteeDetails.value = false
     selectedCommittee.value = null
@@ -923,7 +923,7 @@ const closeCommitteeDetails = () => {
     // Update URL to remove committee ID when modal is closed
     if (route.params.committeeId) {
         router.push({
-            name: 'admin-committees',
+            name: 'AdminCommittees',
             query: route.query
         })
     }
@@ -1107,7 +1107,7 @@ const formatStatus = (status) => {
     return statusMap[status] || status
 }
 
-// Enhanced: Lifecycle
+// Lifecycle
 onMounted(async () => {
     // Check if there's a committee ID in the route before loading
     if (route.params.committeeId) {

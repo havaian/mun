@@ -294,7 +294,7 @@ const closeModal = () => {
     emit('update:modelValue', false)
 }
 
-// ENHANCED: Format date with time
+// Format date with time
 const formatDate = (dateString) => {
     if (!dateString) return 'Not specified'
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -307,7 +307,7 @@ const formatDate = (dateString) => {
     })
 }
 
-// ENHANCED: Format just the date part for subtitle
+// Format just the date part for subtitle
 const formatEventDate = () => {
     if (!props.event?.startDate) return 'Date not specified'
 
@@ -331,7 +331,7 @@ const isRegistrationOpen = () => {
     return new Date() <= new Date(props.event.settings.registrationDeadline)
 }
 
-// ENHANCED: More detailed registration status with time
+// More detailed registration status with time
 const getRegistrationStatus = () => {
     if (!props.event?.settings?.registrationDeadline) return 'Not configured'
 
@@ -360,7 +360,7 @@ const getRegistrationStatus = () => {
     }
 }
 
-// FIXED: Precise event timeline status with hours/minutes
+// Precise event timeline status with hours/minutes
 const getEventTimelineStatus = () => {
     if (!props.event?.startDate || !props.event?.endDate) return 'Dates not set'
 

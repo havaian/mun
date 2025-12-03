@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { User, ActiveSession } = require('./model');
 const logger = require('../utils/logger');
 
-// ENHANCED: Dynamic expiration calculation
+// Dynamic expiration calculation
 const calculateTokenExpiration = async (user) => {
     // Admin always gets 24 hours
     if (user.role === 'admin') {
@@ -47,7 +47,7 @@ const calculateTokenExpiration = async (user) => {
     return '24h';
 };
 
-// ENHANCED: Helper function to generate JWT token with dynamic expiration
+// Helper function to generate JWT token with dynamic expiration
 const generateToken = async (payload, user = null) => {
     let expiration = '24h'; // default
 
@@ -78,7 +78,7 @@ const createActiveSession = async (userId, sessionToken, req) => {
     return session;
 };
 
-// ENHANCED: Admin login with standard 24h expiration
+// Admin login with standard 24h expiration
 const adminLogin = async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -149,7 +149,7 @@ const adminLogin = async (req, res) => {
     }
 };
 
-// ENHANCED: Link login with dynamic expiration
+// Link login with dynamic expiration
 const linkLogin = async (req, res) => {
     try {
         const { token } = req.body;
@@ -211,7 +211,7 @@ const linkLogin = async (req, res) => {
     }
 };
 
-// ENHANCED: Email binding with dynamic expiration
+// Email binding with dynamic expiration
 const bindEmail = async (req, res) => {
     try {
         const { token, email } = req.body;
@@ -316,7 +316,7 @@ const bindEmail = async (req, res) => {
     }
 };
 
-// ENHANCED: Email login with dynamic expiration
+// Email login with dynamic expiration
 const emailLogin = async (req, res) => {
     try {
         const { email, loginToken } = req.body;

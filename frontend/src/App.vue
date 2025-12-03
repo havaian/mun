@@ -181,7 +181,7 @@ const initializeApplication = async () => {
       loadingProgress.value = 60
 
       try {
-        // FIXED: Handle validation errors gracefully
+        // Handle validation errors gracefully
         const validationResult = await authStore.validateSession()
 
         // Check if validation was successful
@@ -197,7 +197,7 @@ const initializeApplication = async () => {
           console.log('Session validation failed, user will need to re-login')
         }
       } catch (error) {
-        // FIXED: Don't let auth errors break app initialization
+        // Don't let auth errors break app initialization
         console.warn('Session validation threw error during initialization:', error)
         isAuthValid = false
 
@@ -256,7 +256,7 @@ const initializeApplication = async () => {
     console.log('✅ App initialization completed successfully')
 
   } catch (error) {
-    // FIXED: Better error handling and logging
+    // Better error handling and logging
     console.error('App initialization error:', error)
 
     // Only show error toast for unexpected errors

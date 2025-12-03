@@ -227,7 +227,7 @@ const heightClasses = computed(() => {
     const heights = {
         auto: 'max-h-[95vh] min-h-[300px]',
         full: 'h-[95vh]',
-        fixed: 'h-[600px]'
+        'h-[600px]'
     }
     return heights[props.height] || heights.auto
 })

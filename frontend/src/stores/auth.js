@@ -16,7 +16,7 @@ export const useAuthStore = defineStore('auth', () => {
     const _validationCache = ref(null)
     const VALIDATION_CACHE_DURATION = 30000 // 30 seconds
 
-    // ENHANCED: Retry configuration for network errors
+    // Retry configuration for network errors
     const RETRY_CONFIG = {
         maxRetries: 3,
         retryDelay: 1000, // 1 second
@@ -48,7 +48,7 @@ export const useAuthStore = defineStore('auth', () => {
         return roleMap[role] || role
     }
 
-    // ENHANCED: Determine if error should clear token
+    // Determine if error should clear token
     const shouldClearTokenOnError = (error) => {
         // Only clear token for actual auth failures, not network errors
         if (!error.response) {
@@ -89,7 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
         return true
     }
 
-    // ENHANCED: Retry logic for network operations
+    // Retry logic for network operations
     const retryOperation = async (operation, retries = RETRY_CONFIG.maxRetries) => {
         for (let attempt = 0; attempt <= retries; attempt++) {
             try {
@@ -148,7 +148,7 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    // ENHANCED: Link login with retry
+    // Link login with retry
     const linkLogin = async (loginToken) => {
         try {
             isLoading.value = true
@@ -182,7 +182,7 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    // ENHANCED: Email binding with retry
+    // Email binding with retry
     const bindEmail = async (loginToken, email) => {
         try {
             isLoading.value = true
@@ -220,7 +220,7 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    // ENHANCED: Email login with retry
+    // Email login with retry
     const emailLogin = async (email, loginToken = null) => {
         try {
             isLoading.value = true
@@ -341,7 +341,13 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    // ENHANCED: Initialize auth state with better error handling
+    // Update user activity
+    const updateActivity = () => {
+        lastActivity.value = Date.now()
+        sessionWarningShown.value = false
+    }
+
+    // Initialize auth state with better error handling
     const initializeAuth = async () => {
         if (!token.value) {
             return false
@@ -415,6 +421,7 @@ export const useAuthStore = defineStore('auth', () => {
         committeeId,
 
         // Actions
+        updateActivity,
         adminLogin,
         linkLogin,
         bindEmail,

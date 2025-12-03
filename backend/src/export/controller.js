@@ -53,7 +53,7 @@ const generateCommitteeLinks = async (req, res) => {
         // Generate delegate links
         const delegateLinks = committee.countries.map(country => ({
             country: country.name,
-            link: `${baseUrl}/auth/login?token=${country.loginToken}`, // FIXED: Use proper login route
+            link: `${baseUrl}/auth/login?token=${country.loginToken}`, // Use proper login route
             loginToken: country.loginToken,
             isObserver: country.isObserver,
             specialRole: country.specialRole,
@@ -66,7 +66,7 @@ const generateCommitteeLinks = async (req, res) => {
                 .map(link => `${link.country}: ${link.link}`)
                 .join('\n');
 
-            // FIXED: Properly sanitize filename for HTTP header
+            // Properly sanitize filename for HTTP header
             const safeFilename = sanitizeFilename(committee.name);
             
             res.setHeader('Content-Type', 'text/plain; charset=utf-8');
@@ -146,7 +146,7 @@ const generatePresidiumLinks = async (req, res) => {
         // Generate presidium links
         const presidiumLinks = presidiumMembers.map(member => ({
             role: member.presidiumRole,
-            link: `${baseUrl}/auth/login?token=${member.loginToken}`, // FIXED: Use proper login route
+            link: `${baseUrl}/auth/login?token=${member.loginToken}`, // Use proper login route
             loginToken: member.loginToken,
             isActive: member.isLoginActive !== false // Default to true if not set
         }));
@@ -157,7 +157,7 @@ const generatePresidiumLinks = async (req, res) => {
                 .map(link => `${formatPresidiumRole(link.role)}: ${link.link}`)
                 .join('\n');
 
-            // FIXED: Properly sanitize filename for HTTP header
+            // Properly sanitize filename for HTTP header
             const safeFilename = sanitizeFilename(committee.name);
             
             res.setHeader('Content-Type', 'text/plain; charset=utf-8');
@@ -253,7 +253,7 @@ const generateCompleteLinks = async (req, res) => {
             type: 'presidium',
             role: member.presidiumRole,
             name: formatPresidiumRole(member.presidiumRole),
-            link: `${baseUrl}/auth/login?token=${member.loginToken}`, // FIXED: Use proper login route
+            link: `${baseUrl}/auth/login?token=${member.loginToken}`, // Use proper login route
             loginToken: member.loginToken,
             isActive: member.isLoginActive !== false
         }));
@@ -262,7 +262,7 @@ const generateCompleteLinks = async (req, res) => {
             type: 'delegate',
             role: 'delegate',
             name: country.name,
-            link: `${baseUrl}/auth/login?token=${country.loginToken}`, // FIXED: Use proper login route
+            link: `${baseUrl}/auth/login?token=${country.loginToken}`, // Use proper login route
             loginToken: country.loginToken,
             isObserver: country.isObserver,
             specialRole: country.specialRole,
@@ -282,7 +282,7 @@ const generateCompleteLinks = async (req, res) => {
                 .map(link => `${link.name}: ${link.link}`)
                 .join('\n');
 
-            // FIXED: Properly sanitize filename for HTTP header
+            // Properly sanitize filename for HTTP header
             const safeFilename = sanitizeFilename(committee.name);
             
             res.setHeader('Content-Type', 'text/plain; charset=utf-8');
