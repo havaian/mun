@@ -52,8 +52,8 @@ const validateCommitteeUpdate = [
         .trim(),
     body('language')
         .optional()
-        .isIn(['english', 'russian', 'uzbek'])
-        .withMessage('Language must be english, russian, or uzbek'),
+        .isIn(['en', 'ru', 'uz'])
+        .withMessage('Language must be en, ru, or uz'),
     body('status')
         .optional()
         .isIn(['setup', 'active', 'completed'])
