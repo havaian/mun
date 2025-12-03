@@ -309,7 +309,7 @@
                                     Manage Countries
                                 </AppButton>
 
-                                <!-- CHANGED: Generate Login Links button (was Generate QR Codes) -->
+                                <!-- Generate Login Links button (was Generate QR Codes) -->
                                 <AppButton @click="generateLoginLinks" variant="outline" size="sm" class="w-full">
                                     <LinkIcon class="w-4 h-4 mr-2" />
                                     Generate Login Links
@@ -351,7 +351,7 @@ import {
     ClockIcon,
     UserIcon,
     GlobeAltIcon,
-    LinkIcon // CHANGED: LinkIcon replaces QrCodeIcon
+    LinkIcon // LinkIcon replaces QrCodeIcon
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -365,7 +365,7 @@ const props = defineProps({
     }
 })
 
-// CHANGED: Updated emit events to use login links instead of QR
+// Updated emit events to use login links instead of QR
 const emit = defineEmits(['update:modelValue', 'edit', 'manage-countries', 'generate-login-links', 'view-sessions'])
 
 // Methods
@@ -461,7 +461,7 @@ const manageCountries = () => {
     closeModal()
 }
 
-// CHANGED: Generate login links instead of QR codes
+// Generate login links instead of QR codes
 const generateLoginLinks = () => {
     emit('generate-login-links', props.committee)
     closeModal()

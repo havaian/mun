@@ -149,6 +149,39 @@ const adminLogin = async (req, res) => {
     }
 };
 
+const refreshToken = async (req, res) => {
+    try {
+        const user = req.user;
+        
+        // Generate new token with full expiration
+        const tokenPayload = {
+            userId: user.userId,
+            role: user.role,
+            email: user.email,
+            committeeId: user.committeeId,
+            sessionId: user.sessionId
+        };
+
+        const newToken = await generateToken(tokenPayload, user);
+        
+        logger.info(`Token refreshed for user: ${user.email}`);
+        
+        res.json({
+            success: true,
+            token: newToken,
+            user: user,
+            message: 'Token refreshed successfully'
+        });
+        
+    } catch (error) {
+        logger.error('Token refresh error:', error);
+        res.status(500).json({
+            error: 'Failed to refresh token',
+            message: error.message
+        });
+    }
+};
+
 // Link login with dynamic expiration
 const linkLogin = async (req, res) => {
     try {
@@ -576,6 +609,7 @@ const reactivateLink = async (req, res) => {
 
 module.exports = {
     adminLogin,
+    refreshToken,
     linkLogin,
     bindEmail,
     emailLogin,

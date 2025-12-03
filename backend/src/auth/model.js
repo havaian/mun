@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
         required: function () { return this.role === 'delegate'; }
     },
 
-    // CHANGED: Login token for initial access (presidium AND delegates) - replaces qrToken
+    // Login token for initial access (presidium AND delegates) - replaces qrToken
     loginToken: {
         type: String,
         sparse: true,
@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema({
         required: function () { return this.role === 'presidium' || this.role === 'delegate'; }
     },
 
-    // CHANGED: Track if login token is active - replaces isQrActive
+    // Track if login token is active - replaces isQrActive
     isLoginActive: {
         type: Boolean,
         default: true
@@ -103,7 +103,7 @@ const userSchema = new mongoose.Schema({
 
 // Indexes for performance
 userSchema.index({ role: 1, committeeId: 1 });
-userSchema.index({ loginToken: 1 }, { sparse: true }); // CHANGED: was qrToken
+userSchema.index({ loginToken: 1 }, { sparse: true }); // was qrToken
 userSchema.index({ email: 1 }, { sparse: true });
 userSchema.index({ sessionId: 1 }, { sparse: true });
 userSchema.index({ presidiumRole: 1, committeeId: 1 });
@@ -158,7 +158,7 @@ userSchema.virtual('displayName').get(function () {
 userSchema.methods.toJSON = function () {
     const user = this.toObject();
     delete user.password;
-    delete user.loginToken; // CHANGED: was qrToken
+    delete user.loginToken; // was qrToken
     delete user.__v;
     return user;
 };

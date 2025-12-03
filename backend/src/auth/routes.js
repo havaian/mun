@@ -28,7 +28,7 @@ const validateAdminLogin = [
         .withMessage('Password must be at least 6 characters')
 ];
 
-// CHANGED: Link login validation (replaces QR validation)
+// Link login validation (replaces QR validation)
 const validateLinkLogin = [
     body('token')
         .notEmpty()
@@ -70,7 +70,12 @@ router.post('/admin-login',
     controller.adminLogin
 );
 
-// CHANGED: Link authentication (for both delegates AND presidium) - replaces qr-login
+router.post('/refresh-token',
+    global.auth.token,
+    controller.refreshToken
+);
+
+// Link authentication (for both delegates AND presidium) - replaces qr-login
 router.post('/link-login',
     global.auth.utils.authRateLimit,
     validateLinkLogin,
@@ -106,12 +111,12 @@ router.get('/validate-session',
     controller.validateSession
 );
 
-// CHANGED: Check login link status - replaces qr-status
+// Check login link status - replaces qr-status
 router.get('/link-status/:token',
     controller.checkLinkStatus
 );
 
-// CHANGED: Login link reactivation (admin only) - replaces reactivate-qr
+// Login link reactivation (admin only) - replaces reactivate-qr
 router.post('/reactivate-link',
     global.auth.token,
     global.auth.admin, // Only admin can reactivate login links

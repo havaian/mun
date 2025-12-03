@@ -49,14 +49,14 @@ const countrySchema = new mongoose.Schema({
         lowercase: true
     },
 
-    // CHANGED: Login token for authentication - replaces qrToken
+    // Login token for authentication - replaces qrToken
     loginToken: {
         type: String,
         unique: true,
         sparse: true
     },
 
-    // CHANGED: Track if login token is active - replaces isQrActive
+    // Track if login token is active - replaces isQrActive
     isLoginActive: {
         type: Boolean,
         default: true
@@ -233,7 +233,7 @@ const committeeSchema = new mongoose.Schema({
 committeeSchema.index({ eventId: 1, status: 1 });
 committeeSchema.index({ type: 1 });
 committeeSchema.index({ 'countries.name': 1 });
-committeeSchema.index({ 'countries.loginToken': 1 }, { sparse: true }); // CHANGED: was qrToken
+committeeSchema.index({ 'countries.loginToken': 1 }, { sparse: true }); // was qrToken
 committeeSchema.index({ 'presidium.userId': 1 });
 
 // Ensure unique country names within committee
@@ -254,7 +254,7 @@ committeeSchema.virtual('registeredParticipants').get(function () {
     return this.countries.filter(country => country.email).length;
 });
 
-// CHANGED: Method to generate login tokens for all countries - replaces generateQRTokens
+// Method to generate login tokens for all countries - replaces generateQRTokens
 committeeSchema.methods.generateLoginTokens = function () {
     this.countries.forEach(country => {
         if (!country.loginToken) {
@@ -272,7 +272,7 @@ committeeSchema.methods.isCountryNameUnique = function (countryName, excludeId =
     );
 };
 
-// CHANGED: Method to add country - updated to use loginToken
+// Method to add country - updated to use loginToken
 committeeSchema.methods.addCountry = function (countryData) {
     if (!this.isCountryNameUnique(countryData.name)) {
         throw new Error(`Country "${countryData.name}" already exists in this committee`);
@@ -323,7 +323,7 @@ committeeSchema.methods.updateCountry = function (countryName, updateData) {
     return country;
 };
 
-// CHANGED: Method to regenerate login token for country - replaces regenerateQRToken
+// Method to regenerate login token for country - replaces regenerateQRToken
 committeeSchema.methods.regenerateLoginToken = function (countryName) {
     const country = this.getCountry(countryName);
     if (!country) {

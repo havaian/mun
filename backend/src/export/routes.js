@@ -32,7 +32,7 @@ const validateFormat = [
         .withMessage('Format must be json, plain, or pdf')
 ];
 
-// CHANGED: Generate login links for committee delegates (admin only) - replaces QR codes
+// Generate login links for committee delegates (admin only) - replaces QR codes
 router.get('/delegate-links/:committeeId',
     global.auth.token,
     global.auth.admin, // Only admin can generate links
@@ -42,7 +42,7 @@ router.get('/delegate-links/:committeeId',
     controller.generateCommitteeLinks
 );
 
-// CHANGED: Generate presidium-only login links (admin only) - replaces QR codes
+// Generate presidium-only login links (admin only) - replaces QR codes
 router.get('/presidium-links/:committeeId',
     global.auth.token,
     global.auth.admin, // Only admin can generate links
@@ -52,7 +52,7 @@ router.get('/presidium-links/:committeeId',
     controller.generatePresidiumLinks
 );
 
-// CHANGED: Generate complete login links (presidium + delegates) (admin only) - replaces QR codes
+// Generate complete login links (presidium + delegates) (admin only) - replaces QR codes
 router.get('/complete-links/:committeeId',
     global.auth.token,
     global.auth.admin, // Only admin can generate links

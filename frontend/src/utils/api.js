@@ -171,13 +171,16 @@ export const apiMethods = {
     auth: {
         adminLogin: (credentials) => api.post('/auth/admin-login', credentials),
         
-        // CHANGED: Link login replaces qrLogin
+        // Link login replaces qrLogin
         linkLogin: (token) => api.post('/auth/link-login', { token }),
+
+        refreshToken: () => api.post('/auth/refresh-token'),
+        refreshToken: () => api.post('/auth/refresh-token'),
         
-        // CHANGED: Updated to use login tokens instead of QR tokens
+        // Updated to use login tokens instead of QR tokens
         bindEmail: (token, email) => api.post('/auth/bind-email', { token, email }),
         
-        // CHANGED: Updated email login to support login token verification
+        // Updated email login to support login token verification
         emailLogin: (email, loginToken = null) => api.post('/auth/email-login', { 
             email, 
             ...(loginToken && { loginToken }) 
@@ -186,10 +189,10 @@ export const apiMethods = {
         logout: () => api.post('/auth/logout'),
         validateSession: () => api.get('/auth/validate-session'),
         
-        // CHANGED: Check link status replaces QR status check
+        // Check link status replaces QR status check
         checkLinkStatus: (token) => api.get(`/auth/link-status/${token}`),
         
-        // CHANGED: Reactivate link replaces QR reactivation
+        // Reactivate link replaces QR reactivation
         reactivateLink: (userId) => api.post('/auth/reactivate-link', { userId }),
 
         // LEGACY: Deprecated QR methods (for backward compatibility warnings)
@@ -216,7 +219,7 @@ export const apiMethods = {
         getSystemConfig: () => api.get('/admin/export/config'),
         getAuditLogs: (params = {}) => api.get('/admin/export/audit-logs', { params }),
 
-        // CHANGED: Login Links Export Routes (replaces QR exports)
+        // Login Links Export Routes (replaces QR exports)
         generateDelegateLinks: (committeeId, format = 'json') => api.get(`/export/delegate-links/${committeeId}`, { 
             params: { format }
         }),
@@ -267,12 +270,12 @@ export const apiMethods = {
         removeCountry: (id, countryName) => api.delete(`/committees/${id}/countries/${countryName}`),
         updateCountryStatus: (id, countryName, statusData) => api.put(`/committees/${id}/countries/${countryName}/status`, statusData),
         
-        // CHANGED: Login Links management (replaces QR codes)
+        // Login Links management (replaces QR codes)
         generateLoginLinks: (id, params = {}) => api.get(`/committees/${id}/login-links`, { params }),
         regenerateLoginLinks: (id, reason = null) => api.post(`/committees/${id}/login-links/regenerate`, { reason }),
         regenerateCountryLoginLink: (id, countryName, reason = null) => api.post(`/committees/${id}/login-links/${countryName}/regenerate`, { reason }),
         
-        // CHANGED: Presidium login links (replaces QR codes)  
+        // Presidium login links (replaces QR codes)  
         generatePresidiumLoginLinks: (id, params = {}) => api.post(`/committees/${id}/presidium/generate-links`, {}, { params }),
         resetPresidiumLoginLink: (id, role, reason = null) => api.post(`/committees/${id}/presidium/${role}/reset-link`, { reason }),
         

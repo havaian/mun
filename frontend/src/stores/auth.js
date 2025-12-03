@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
+import { decodeJWT, getTokenRemainingTime, isTokenExpired } from '@/utils/jwt'
 
 export const useAuthStore = defineStore('auth', () => {
     const toast = useToast()
@@ -136,6 +137,7 @@ export const useAuthStore = defineStore('auth', () => {
 
                 toast.success(`Welcome, ${user.value.username}!`)
 
+                setupTokenRefresh()
                 return { success: true }
             }
 
@@ -160,6 +162,7 @@ export const useAuthStore = defineStore('auth', () => {
             )
 
             if (response.data.success) {
+                setupTokenRefresh()
                 return {
                     success: true,
                     data: {
@@ -208,6 +211,7 @@ export const useAuthStore = defineStore('auth', () => {
 
                 toast.success(`Welcome, ${userType}! Registration completed.`)
 
+                setupTokenRefresh()
                 return { success: true }
             }
 
@@ -286,6 +290,13 @@ export const useAuthStore = defineStore('auth', () => {
     const validateSession = async () => {
         // Return cached result if still valid
         const now = Date.now()
+        
+        if (token.value && isTokenExpired(token.value)) {
+            console.warn('Token expired client-side, logging out')
+            await logout(false)
+            return { success: false, error: 'Token expired' }
+        }
+
         if (now - _lastValidation.value < VALIDATION_CACHE_DURATION && _validationCache.value !== null) {
             return _validationCache.value
         }
@@ -408,6 +419,64 @@ export const useAuthStore = defineStore('auth', () => {
         return linkLogin(qrToken)
     }
 
+    const getTokenInfo = computed(() => {
+        if (!token.value) return null
+        
+        const payload = decodeJWT(token.value)
+        if (!payload) return null
+        
+        return {
+            userId: payload.userId,
+            role: payload.role,
+            exp: payload.exp,
+            iat: payload.iat,
+            expiresAt: new Date(payload.exp * 1000),
+            issuedAt: new Date(payload.iat * 1000),
+            remainingMs: getTokenRemainingTime(token.value)
+        }
+    })
+
+    const refreshToken = async () => {
+        try {
+            const response = await apiMethods.auth.refreshToken()
+            
+            if (response.data.success) {
+                token.value = response.data.token
+                user.value = response.data.user
+                localStorage.setItem('mun_token', token.value)
+                
+                console.log('Token refreshed successfully')
+                return { success: true }
+            }
+        } catch (error) {
+            console.error('Token refresh error:', error)
+            return { success: false, error }
+        }
+    }
+
+    const setupTokenRefresh = () => {
+        if (!token.value) return
+        
+        const remainingMs = getTokenRemainingTime(token.value)
+        if (remainingMs <= 0) return
+        
+        // Refresh when 1 hour left (or 10% of time, whichever is less)
+        const oneHour = 60 * 60 * 1000
+        const tenPercent = remainingMs * 0.1
+        const refreshTime = remainingMs - Math.min(oneHour, tenPercent)
+        
+        if (refreshTime > 0) {
+            setTimeout(async () => {
+                if (isAuthenticated.value) {
+                    await refreshToken()
+                    setupTokenRefresh() // Setup next refresh
+                }
+            }, refreshTime)
+            
+            console.log(`Token refresh scheduled in ${Math.floor(refreshTime / 1000 / 60)} minutes`)
+        }
+    }
+
     return {
         // State
         lastActivity,
@@ -424,6 +493,8 @@ export const useAuthStore = defineStore('auth', () => {
         committeeId,
 
         // Actions
+        refreshToken,
+        getTokenInfo,
         updateActivity,
         adminLogin,
         linkLogin,

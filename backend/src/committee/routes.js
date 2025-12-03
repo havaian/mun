@@ -233,7 +233,7 @@ router.get('/',
                 return {
                     ...committeeObj,
                     countriesCount: committeeObj.countries?.length || 0,
-                    // CHANGED: Check for login tokens instead of QR tokens
+                    // Check for login tokens instead of QR tokens
                     linksGenerated: committeeObj.countries?.some(country => country.loginToken) || false
                 };
             });
@@ -424,7 +424,7 @@ router.get('/:id/presidium',
     }
 );
 
-// CHANGED: Login Links management (replaces QR Code management)
+// Login Links management (replaces QR Code management)
 
 // Generate login links for delegates (presidium only)
 router.get('/:id/login-links',

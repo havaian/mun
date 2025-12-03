@@ -33,9 +33,6 @@
     <!-- Global Modal Container -->
     <ModalContainer />
 
-    <!-- Session Timeout Warning -->
-    <SessionTimeoutModal ref="sessionTimeoutModal" />
-
     <!-- WebSocket Connection Status -->
     <div v-if="showWebSocketStatus" class="fixed bottom-4 right-4 z-40 transition-all duration-300"
       :class="webSocketStatusClass">
@@ -111,7 +108,6 @@ import { useToast } from '@/plugins/toast'
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue'
 import ToastContainer from '@/components/ui/ToastContainer.vue'
 import ModalContainer from '@/components/ui/ModalContainer.vue'
-import SessionTimeoutModal from '@/components/modals/SessionTimeoutModal.vue'
 
 // Icons
 import {

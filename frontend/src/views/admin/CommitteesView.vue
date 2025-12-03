@@ -110,7 +110,7 @@
                         ]" @change="applyFilters" container-class="w-full" />
                     </div>
 
-                    <!-- CHANGED: Login Links filter instead of QR filter -->
+                    <!-- Login Links filter instead of QR filter -->
                     <div>
                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                             Has Login Links
@@ -175,7 +175,7 @@
                         {{ selectedCommittees.length }} selected
                     </span>
 
-                    <!-- CHANGED: Generate Links instead of Generate QR -->
+                    <!-- Generate Links instead of Generate QR -->
                     <button @click="bulkGenerateLinks" :disabled="isBulkGenerating" class="btn-un-secondary px-3 py-2">
                         <LinkIcon class="w-4 h-4 mr-2" />
                         Generate Links
@@ -441,7 +441,7 @@
         <CountryManagementModal v-model="showCountryManagement" :committee="selectedCommittee"
             @saved="handleCountriesUpdated" />
 
-        <!-- CHANGED: LoginLinksModal instead of QRGenerationModal -->
+        <!-- LoginLinksModal instead of QRGenerationModal -->
         <LoginLinksModal v-model="showLoginLinksGeneration" :committee="selectedCommittee"
             @generated="handleLinksGenerated" />
 
