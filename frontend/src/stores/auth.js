@@ -335,7 +335,7 @@ export const useAuthStore = defineStore('auth', () => {
                     error: 'Temporary validation error',
                     retainToken: true
                 }
-                // Don't cache network errors
+                // Don't cache network errors, but don't throw either
                 return result
             }
         }

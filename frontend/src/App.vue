@@ -169,36 +169,69 @@ const initializeApplication = async () => {
     loadingProgress.value = 20
     await new Promise(resolve => setTimeout(resolve, 100)) // Brief pause for UX
 
-    // Step 2: Check for existing session
+    // Step 2: Check for existing session (with graceful error handling)
     loadingMessage.value = 'Checking authentication...'
     loadingProgress.value = 40
 
     const token = localStorage.getItem('mun_token')
+    let isAuthValid = false
+
     if (token) {
       loadingMessage.value = 'Validating session...'
       loadingProgress.value = 60
 
-      const isValid = await authStore.validateSession()
+      try {
+        // FIXED: Handle validation errors gracefully
+        const validationResult = await authStore.validateSession()
 
-      if (isValid && authStore.isAuthenticated) {
-        // Step 3: Initialize WebSocket for authenticated users
+        // Check if validation was successful
+        if (validationResult && validationResult.success) {
+          isAuthValid = true
+        } else if (validationResult && validationResult.retainToken) {
+          // Validation failed temporarily but token should be retained
+          isAuthValid = true // Allow app to continue
+          console.warn('Session validation failed temporarily, continuing with cached auth state')
+        } else {
+          // Validation failed permanently
+          isAuthValid = false
+          console.log('Session validation failed, user will need to re-login')
+        }
+      } catch (error) {
+        // FIXED: Don't let auth errors break app initialization
+        console.warn('Session validation threw error during initialization:', error)
+        isAuthValid = false
+
+        // Only clear token for actual auth failures, not network errors
+        if (error.response && error.response.status === 401) {
+          localStorage.removeItem('mun_token')
+        }
+      }
+
+      // Step 3: Initialize WebSocket for authenticated users (only if auth is confirmed)
+      if (isAuthValid && authStore.isAuthenticated) {
         loadingMessage.value = 'Connecting to real-time services...'
         loadingProgress.value = 80
 
         try {
           await wsStore.connect()
         } catch (wsError) {
-          toast.warn('WebSocket connection failed:', wsError)
+          // WebSocket failure shouldn't break initialization
+          console.warn('WebSocket connection failed during initialization:', wsError)
           // Continue without WebSocket - not critical for basic functionality
         }
       }
     }
 
-    // Step 4: Load user preferences
+    // Step 4: Load user preferences (with error handling)
     loadingMessage.value = 'Loading preferences...'
     loadingProgress.value = 90
 
-    await loadUserPreferences()
+    try {
+      await loadUserPreferences()
+    } catch (prefError) {
+      console.warn('Failed to load user preferences:', prefError)
+      // Continue without preferences - not critical
+    }
 
     // Step 5: Complete initialization
     loadingMessage.value = 'Ready!'
@@ -207,21 +240,47 @@ const initializeApplication = async () => {
     // Set app as initialized
     appStore.setInitialized(true)
 
-    // Start session monitoring if authenticated
-    if (authStore.isAuthenticated) {
-      authStore.startSessionMonitoring()
+    // Start session monitoring if authenticated (with error handling)
+    if (isAuthValid && authStore.isAuthenticated) {
+      try {
+        // Check if this method exists before calling
+        if (typeof authStore.startSessionMonitoring === 'function') {
+          authStore.startSessionMonitoring()
+        }
+      } catch (monitorError) {
+        console.warn('Failed to start session monitoring:', monitorError)
+        // Continue without session monitoring
+      }
     }
 
+    console.log('✅ App initialization completed successfully')
+
   } catch (error) {
-    toast.error('App initialization error:', error)
+    // FIXED: Better error handling and logging
+    console.error('App initialization error:', error)
 
-    // Clear potentially corrupted state
-    authStore.logout(false)
+    // Only show error toast for unexpected errors
+    if (error.name !== 'NetworkError' && !error.message?.includes('fetch')) {
+      toast.error('Failed to initialize application. Please refresh the page.')
+    } else {
+      // For network errors, show a less alarming message
+      toast.warn('Connection issues detected. Some features may be limited.')
+    }
 
-    toast.error('Failed to initialize application. Please refresh the page.')
+    // Don't clear auth state for network errors during initialization
+    if (error.response && error.response.status === 401) {
+      authStore.logout(false)
+    }
+
   } finally {
-    // Delay hiding loading to show completion
-    await new Promise(resolve => setTimeout(resolve, 500))
+    // Always hide loading, even if initialization partially failed
+    try {
+      // Delay hiding loading to show completion
+      await new Promise(resolve => setTimeout(resolve, 500))
+    } catch {
+      // If even this fails, continue
+    }
+
     isGlobalLoading.value = false
     loadingProgress.value = 0
   }
