@@ -3,9 +3,59 @@ const jwt = require('jsonwebtoken');
 const { User, ActiveSession } = require('./model');
 const logger = require('../utils/logger');
 
-// Helper function to generate JWT token
-const generateToken = (payload) => {
-    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '24h' });
+// ENHANCED: Dynamic expiration calculation
+const calculateTokenExpiration = async (user) => {
+    // Admin always gets 24 hours
+    if (user.role === 'admin') {
+        return '24h';
+    }
+
+    // For presidium and delegates, use event end date
+    if (user.committeeId) {
+        try {
+            const { Committee } = require('../committee/model');
+            const { Event } = require('../event/model');
+
+            const committee = await Committee.findById(user.committeeId).lean();
+            if (committee && committee.eventId) {
+                const event = await Event.findById(committee.eventId).lean();
+                if (event && event.endDate) {
+                    const now = Date.now();
+                    const eventEndTime = new Date(event.endDate).getTime();
+
+                    // If event has ended, give 1 hour grace period
+                    const expirationTime = eventEndTime < now
+                        ? now + (60 * 60 * 1000) // 1 hour grace
+                        : eventEndTime;
+
+                    const secondsUntilExpiry = Math.floor((expirationTime - now) / 1000);
+
+                    // JWT library expects either string format or seconds
+                    if (secondsUntilExpiry > 0) {
+                        logger.info(`Token for ${user.role} will expire with event: ${new Date(expirationTime).toISOString()}`);
+                        return secondsUntilExpiry;
+                    }
+                }
+            }
+        } catch (error) {
+            logger.error('Error calculating dynamic expiration:', error);
+        }
+    }
+
+    // Fallback: 24 hours if no event found
+    logger.warn(`No event end date found for user ${user._id}, defaulting to 24h expiration`);
+    return '24h';
+};
+
+// ENHANCED: Helper function to generate JWT token with dynamic expiration
+const generateToken = async (payload, user = null) => {
+    let expiration = '24h'; // default
+
+    if (user) {
+        expiration = await calculateTokenExpiration(user);
+    }
+
+    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: expiration });
 };
 
 // Helper function to create active session
@@ -28,7 +78,7 @@ const createActiveSession = async (userId, sessionToken, req) => {
     return session;
 };
 
-// Admin login (unchanged)
+// ENHANCED: Admin login with standard 24h expiration
 const adminLogin = async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -70,7 +120,7 @@ const adminLogin = async (req, res) => {
         // Create active session
         await createActiveSession(user._id, sessionToken, req);
 
-        // Generate JWT
+        // Generate JWT (admin always gets 24h)
         const tokenPayload = {
             userId: user._id,
             role: user.role,
@@ -78,7 +128,7 @@ const adminLogin = async (req, res) => {
             sessionId: sessionToken
         };
 
-        const token = generateToken(tokenPayload);
+        const token = await generateToken(tokenPayload, user);
 
         logger.info(`Admin login successful: ${username}`);
 
@@ -89,7 +139,8 @@ const adminLogin = async (req, res) => {
                 id: user._id,
                 username: user.username,
                 role: user.role
-            }
+            },
+            expiresIn: '24h'
         });
 
     } catch (error) {
@@ -98,7 +149,7 @@ const adminLogin = async (req, res) => {
     }
 };
 
-// CHANGED: Link login (replaces qrLogin)
+// ENHANCED: Link login with dynamic expiration
 const linkLogin = async (req, res) => {
     try {
         const { token } = req.body;
@@ -160,7 +211,7 @@ const linkLogin = async (req, res) => {
     }
 };
 
-// CHANGED: Email binding after link verification (for both delegates AND presidium)
+// ENHANCED: Email binding with dynamic expiration
 const bindEmail = async (req, res) => {
     try {
         const { token, email } = req.body;
@@ -213,7 +264,7 @@ const bindEmail = async (req, res) => {
         // Create active session
         await createActiveSession(user._id, sessionToken, req);
 
-        // Generate JWT with role-specific data
+        // Generate JWT with role-specific data and dynamic expiration
         const tokenData = {
             userId: user._id,
             role: user.role,
@@ -230,13 +281,14 @@ const bindEmail = async (req, res) => {
             tokenData.presidiumRole = user.presidiumRole;
         }
 
-        const token_jwt = generateToken(tokenData);
+        const token_jwt = await generateToken(tokenData, user);
+        const expiration = await calculateTokenExpiration(user);
 
         const userType = user.role === 'delegate' ?
             user.countryName :
             `${user.presidiumRole} (Presidium)`;
 
-        logger.info(`Email bound and login successful: ${userType} - ${email}`);
+        logger.info(`Email bound and login successful: ${userType} - ${email}, token expires: ${typeof expiration === 'string' ? expiration : new Date(Date.now() + expiration * 1000).toISOString()}`);
 
         res.json({
             success: true,
@@ -254,7 +306,8 @@ const bindEmail = async (req, res) => {
                     presidiumRole: user.presidiumRole
                 })
             },
-            message: `Welcome, ${userType}!`
+            message: `Welcome, ${userType}!`,
+            expiresIn: expiration
         });
 
     } catch (error) {
@@ -263,7 +316,7 @@ const bindEmail = async (req, res) => {
     }
 };
 
-// Email login for returning users (delegates AND presidium)
+// ENHANCED: Email login with dynamic expiration
 const emailLogin = async (req, res) => {
     try {
         const { email, loginToken } = req.body;
@@ -302,7 +355,7 @@ const emailLogin = async (req, res) => {
         // Create active session
         await createActiveSession(user._id, sessionToken, req);
 
-        // Generate JWT
+        // Generate JWT with dynamic expiration
         const tokenData = {
             userId: user._id,
             role: user.role,
@@ -319,13 +372,14 @@ const emailLogin = async (req, res) => {
             tokenData.presidiumRole = user.presidiumRole;
         }
 
-        const token = generateToken(tokenData);
+        const token = await generateToken(tokenData, user);
+        const expiration = await calculateTokenExpiration(user);
 
         const userType = user.role === 'delegate' ?
             user.countryName :
             `${user.presidiumRole} (Presidium)`;
 
-        logger.info(`Email login successful: ${userType} - ${email}`);
+        logger.info(`Email login successful: ${userType} - ${email}, token expires: ${typeof expiration === 'string' ? expiration : new Date(Date.now() + expiration * 1000).toISOString()}`);
 
         res.json({
             success: true,
@@ -342,7 +396,8 @@ const emailLogin = async (req, res) => {
                 ...(user.role === 'presidium' && {
                     presidiumRole: user.presidiumRole
                 })
-            }
+            },
+            expiresIn: expiration
         });
 
     } catch (error) {
@@ -382,7 +437,7 @@ const validateSession = async (req, res) => {
         // User data is already attached by auth middleware
         const user = await User.findById(req.user.userId)
             .populate('committeeId')
-            .select('-password -loginToken'); // CHANGED: was -qrToken
+            .select('-password -loginToken');
 
         if (!user || !user.isActive) {
             return res.status(401).json({
@@ -432,7 +487,7 @@ const validateSession = async (req, res) => {
     }
 };
 
-// CHANGED: Check login link status (replaces checkQrStatus)
+// Check login link status (unchanged)
 const checkLinkStatus = async (req, res) => {
     try {
         const { token } = req.params;
@@ -465,7 +520,7 @@ const checkLinkStatus = async (req, res) => {
     }
 };
 
-// CHANGED: Login link reactivation (replaces reactivateQr) - admin only
+// Login link reactivation (unchanged)
 const reactivateLink = async (req, res) => {
     try {
         const { userId } = req.body;
@@ -521,11 +576,11 @@ const reactivateLink = async (req, res) => {
 
 module.exports = {
     adminLogin,
-    linkLogin, // CHANGED: was qrLogin
+    linkLogin,
     bindEmail,
     emailLogin,
     logout,
     validateSession,
-    checkLinkStatus, // CHANGED: was checkQrStatus
-    reactivateLink // CHANGED: was reactivateQr
+    checkLinkStatus,
+    reactivateLink
 };

@@ -16,6 +16,13 @@ export const useAuthStore = defineStore('auth', () => {
     const _validationCache = ref(null)
     const VALIDATION_CACHE_DURATION = 30000 // 30 seconds
 
+    // ENHANCED: Retry configuration for network errors
+    const RETRY_CONFIG = {
+        maxRetries: 3,
+        retryDelay: 1000, // 1 second
+        backoffMultiplier: 2
+    }
+
     // Computed
     const isAuthenticated = computed(() => !!token.value && !!user.value)
     const isAdmin = computed(() => user.value?.role === 'admin')
@@ -41,12 +48,80 @@ export const useAuthStore = defineStore('auth', () => {
         return roleMap[role] || role
     }
 
+    // ENHANCED: Determine if error should clear token
+    const shouldClearTokenOnError = (error) => {
+        // Only clear token for actual auth failures, not network errors
+        if (!error.response) {
+            // Network error (no response) - don't clear token
+            console.warn('Network error during validation, retaining token')
+            return false
+        }
+
+        const status = error.response.status
+        const errorCode = error.response.data?.code
+
+        // Clear token for actual authentication failures
+        if (status === 401) {
+            if (errorCode === 'TOKEN_EXPIRED') {
+                console.warn('Token expired, clearing auth state')
+                return true
+            }
+            if (errorCode === 'INVALID_TOKEN') {
+                console.warn('Invalid token, clearing auth state')
+                return true
+            }
+            if (errorCode === 'VERIFICATION_FAILED') {
+                console.warn('Token verification failed, clearing auth state')
+                return true
+            }
+            // Generic 401
+            console.warn('Authentication failed, clearing auth state')
+            return true
+        }
+
+        // Don't clear token for server errors (5xx) or other non-auth issues
+        if (status >= 500) {
+            console.warn('Server error during validation, retaining token')
+            return false
+        }
+
+        // For other errors (4xx), clear token
+        return true
+    }
+
+    // ENHANCED: Retry logic for network operations
+    const retryOperation = async (operation, retries = RETRY_CONFIG.maxRetries) => {
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            try {
+                return await operation()
+            } catch (error) {
+                // If this is the last attempt, throw the error
+                if (attempt === retries) {
+                    throw error
+                }
+
+                // Only retry on network errors or 5xx server errors
+                if (!error.response || error.response.status >= 500) {
+                    const delay = RETRY_CONFIG.retryDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, attempt)
+                    console.warn(`Operation failed (attempt ${attempt + 1}), retrying in ${delay}ms...`)
+                    await new Promise(resolve => setTimeout(resolve, delay))
+                    continue
+                }
+
+                // Don't retry auth errors (4xx)
+                throw error
+            }
+        }
+    }
+
     // Admin login
     const adminLogin = async (credentials) => {
         try {
             isLoading.value = true
 
-            const response = await apiMethods.auth.adminLogin(credentials)
+            const response = await retryOperation(() =>
+                apiMethods.auth.adminLogin(credentials)
+            )
 
             if (response.data.success) {
                 token.value = response.data.token
@@ -73,12 +148,14 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    // CHANGED: Link login (replaces qrLogin)
+    // ENHANCED: Link login with retry
     const linkLogin = async (loginToken) => {
         try {
             isLoading.value = true
 
-            const response = await apiMethods.auth.linkLogin(loginToken)
+            const response = await retryOperation(() =>
+                apiMethods.auth.linkLogin(loginToken)
+            )
 
             if (response.data.success) {
                 return {
@@ -105,12 +182,14 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    // CHANGED: Email binding (updated to use login tokens)
+    // ENHANCED: Email binding with retry
     const bindEmail = async (loginToken, email) => {
         try {
             isLoading.value = true
 
-            const response = await apiMethods.auth.bindEmail(loginToken, email)
+            const response = await retryOperation(() =>
+                apiMethods.auth.bindEmail(loginToken, email)
+            )
 
             if (response.data.success) {
                 token.value = response.data.token
@@ -141,12 +220,14 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    // CHANGED: Email login (updated to support login token verification)
+    // ENHANCED: Email login with retry
     const emailLogin = async (email, loginToken = null) => {
         try {
             isLoading.value = true
 
-            const response = await apiMethods.auth.emailLogin(email, loginToken)
+            const response = await retryOperation(() =>
+                apiMethods.auth.emailLogin(email, loginToken)
+            )
 
             if (response.data.success) {
                 token.value = response.data.token
@@ -178,9 +259,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     // Logout function
-    const logout = async () => {
+    const logout = async (showMessage = true) => {
         try {
             if (token.value) {
+                // Don't retry logout - if it fails, still clear local state
                 await apiMethods.auth.logout()
             }
         } catch (error) {
@@ -191,10 +273,14 @@ export const useAuthStore = defineStore('auth', () => {
             user.value = null
             localStorage.removeItem('mun_token')
             _clearValidationCache()
+
+            if (showMessage) {
+                toast.success('Logged out successfully')
+            }
         }
     }
 
-    // Session validation with caching
+    // FIXED: Session validation with smart error handling
     const validateSession = async () => {
         // Return cached result if still valid
         const now = Date.now()
@@ -209,7 +295,9 @@ export const useAuthStore = defineStore('auth', () => {
         }
 
         try {
-            const response = await apiMethods.auth.validateSession()
+            const response = await retryOperation(() =>
+                apiMethods.auth.validateSession()
+            )
 
             if (response.data.success) {
                 user.value = response.data.user
@@ -220,35 +308,65 @@ export const useAuthStore = defineStore('auth', () => {
 
                 return result
             } else {
-                // Session invalid - clear auth data
-                await logout()
+                // Session invalid according to server - clear auth data
+                console.warn('Session validation failed - server says invalid')
+                await logout(false)
                 const result = { success: false, error: 'Session invalid' }
                 _validationCache.value = result
                 return result
             }
 
         } catch (error) {
-            // Network or server error - clear auth data
-            await logout()
-            const result = {
-                success: false,
-                error: error.response?.data?.error || 'Session validation failed'
+            console.error('Session validation error:', error)
+
+            // FIXED: Only clear token for actual auth failures
+            if (shouldClearTokenOnError(error)) {
+                await logout(false)
+                const result = {
+                    success: false,
+                    error: error.response?.data?.error || 'Session validation failed'
+                }
+                _validationCache.value = result
+                return result
+            } else {
+                // Network/server error - keep token but return failure
+                const result = {
+                    success: false,
+                    error: 'Temporary validation error',
+                    retainToken: true
+                }
+                // Don't cache network errors
+                return result
             }
-            _validationCache.value = result
-            return result
         }
     }
 
-    // Initialize auth state from localStorage
+    // ENHANCED: Initialize auth state with better error handling
     const initializeAuth = async () => {
-        if (token.value) {
+        if (!token.value) {
+            return false
+        }
+
+        try {
             const validation = await validateSession()
-            if (!validation.success) {
-                // Token is invalid, clear everything
-                token.value = null
-                user.value = null
-                localStorage.removeItem('mun_token')
+
+            if (validation.success) {
+                return true
             }
+
+            // If validation failed but we should retain token, that's ok
+            if (validation.retainToken) {
+                console.warn('Auth initialization failed temporarily, will retry later')
+                return true // Allow app to continue
+            }
+
+            // Token is actually invalid
+            return false
+
+        } catch (error) {
+            console.error('Auth initialization error:', error)
+            // Don't clear token on initialization errors
+            return true // Allow app to continue, validation will retry later
         }
     }
 
@@ -298,7 +416,7 @@ export const useAuthStore = defineStore('auth', () => {
 
         // Actions
         adminLogin,
-        linkLogin, // CHANGED: was qrLogin
+        linkLogin,
         bindEmail,
         emailLogin,
         logout,
