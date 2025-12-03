@@ -208,12 +208,12 @@
             </div>
 
             <!-- User Profile -->
-            <div class="border-t border-mun-gray-200 p-4">
+            <div class="border-t border-mun-gray-200 px-2 py-4">
                 <div class="space-y-3">
                     <!-- User Info -->
                     <div :class="sidebarCollapsed ? 'flex justify-center' : 'flex items-center space-x-3'">
                         <div :class="[
-                            'flex items-center justify-center',
+                            'flex items-center justify-center rounded-xl',
                             roleConfig.userIconBackground,
                             sidebarCollapsed ? 'w-10 h-10' : 'w-8 h-8'
                         ]" :title="sidebarCollapsed ? userDisplayName : ''">
@@ -247,8 +247,8 @@
                     <!-- Collapsed User Actions -->
                     <div v-if="sidebarCollapsed" class="flex justify-center">
                         <button @click="$emit('logout')"
-                            class="p-2 text-red-700 hover:bg-red-50 rounded-lg transition-colors" title="Sign Out">
-                            <ArrowRightOnRectangleIcon class="w-5 h-5" />
+                            class="mt-2 text-red-700 hover:bg-red-50 rounded-xl transition-colors w-10 h-10" title="Sign Out">
+                            <ArrowRightOnRectangleIcon class="w-6 h-6" />
                         </button>
                     </div>
                 </div>
