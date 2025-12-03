@@ -12,6 +12,8 @@ export const useAuthStore = defineStore('auth', () => {
     const isLoading = ref(false)
 
     // Session validation cache
+    const lastActivity = ref(Date.now())
+    const sessionWarningShown = ref(false)
     const _lastValidation = ref(0)
     const _validationCache = ref(null)
     const VALIDATION_CACHE_DURATION = 30000 // 30 seconds
@@ -408,6 +410,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     return {
         // State
+        lastActivity,
         token: computed(() => token.value),
         user: computed(() => user.value),
         isLoading: computed(() => isLoading.value),
