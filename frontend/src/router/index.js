@@ -98,6 +98,13 @@ const routes = [
         component: AdminCommittees,
         meta: { title: 'Committee Management' }
       },
+      {
+        path: 'committees/:committeeId',
+        name: 'AdminCommitteeDetails',
+        component: AdminCommittees,
+        meta: { title: 'Committee Details' },
+        props: true
+      },
       // {
       //   path: 'users',
       //   name: 'AdminUsers',

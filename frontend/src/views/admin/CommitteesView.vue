@@ -254,7 +254,8 @@
 
                     <!-- Committee Badge -->
                     <div class="flex items-center space-x-2 mb-4">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-mun-blue-100 text-mun-blue-800">
+                        <span
+                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-mun-blue-100 text-mun-blue-800">
                             {{ committee.type || 'Other' }}
                         </span>
                         <span :class="[
@@ -270,11 +271,13 @@
                     <!-- Committee Stats -->
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-mun-gray-900">{{ committee.countries?.length || 0 }}</div>
+                            <div class="text-2xl font-bold text-mun-gray-900">{{ committee.countries?.length || 0 }}
+                            </div>
                             <div class="text-xs text-mun-gray-600">Countries</div>
                         </div>
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-mun-gray-900">{{ committee.presidium?.length || 0 }}</div>
+                            <div class="text-2xl font-bold text-mun-gray-900">{{ committee.presidium?.length || 0 }}
+                            </div>
                             <div class="text-xs text-mun-gray-600">Presidium</div>
                         </div>
                     </div>
@@ -316,22 +319,28 @@
                                     <input type="checkbox" @change="toggleSelectAll" :checked="isAllSelected"
                                         class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded">
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
                                     Committee
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
                                     Type & Status
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
                                     Event
                                 </th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-center text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
                                     Countries
                                 </th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
+                                <th
+                                    class="px-6 py-3 text-center text-xs font-medium text-mun-gray-500 uppercase tracking-wider">
                                     Presidium
                                 </th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-mun-gray-500 uppercase tracking-wider w-32">
+                                <th
+                                    class="px-6 py-3 text-right text-xs font-medium text-mun-gray-500 uppercase tracking-wider w-32">
                                     Actions
                                 </th>
                             </tr>
@@ -341,13 +350,15 @@
                                 class="hover:bg-mun-gray-50 cursor-pointer transition-colors"
                                 @click="viewCommittee(committee)">
                                 <td class="px-6 py-4 w-12">
-                                    <input type="checkbox" v-model="selectedCommittees" :value="committee._id" @click.stop
+                                    <input type="checkbox" v-model="selectedCommittees" :value="committee._id"
+                                        @click.stop
                                         class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded">
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center space-x-3">
                                         <div class="min-w-0 flex-1">
-                                            <div class="text-sm font-medium text-mun-gray-900 truncate">{{ committee.name }}</div>
+                                            <div class="text-sm font-medium text-mun-gray-900 truncate">{{
+                                                committee.name }}</div>
                                             <div class="text-sm text-mun-gray-500 truncate">
                                                 {{ committee.description || 'No description' }}
                                             </div>
@@ -356,7 +367,8 @@
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex flex-col space-y-1">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-mun-blue-100 text-mun-blue-800 w-fit">
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-mun-blue-100 text-mun-blue-800 w-fit">
                                             {{ committee.type || 'Other' }}
                                         </span>
                                         <span :class="[
@@ -416,36 +428,26 @@
         </div>
 
         <!-- Modals -->
-        <CreateEditCommitteeModal 
-            v-model="showCreateCommittee" 
-            :events="availableEvents"
+        <CreateEditCommitteeModal v-model="showCreateCommittee" :events="availableEvents"
             @created="handleCommitteeCreated" />
 
-        <CreateEditCommitteeModal 
-            v-model="showEditCommittee" 
-            :committee="selectedCommittee" 
-            :events="availableEvents"
-            mode="edit"
-            @updated="handleCommitteeUpdated" />
+        <CreateEditCommitteeModal v-model="showEditCommittee" :committee="selectedCommittee" :events="availableEvents"
+            mode="edit" @updated="handleCommitteeUpdated" />
 
         <CommitteeDetailsModal v-model="showCommitteeDetails" :committee="selectedCommittee"
-            @edit="editCommitteeFromDetails" @delete="deleteCommittee" @manage-countries="manageCountries"
-            @generate-login-links="generateLoginLinks" />
+            :is-loading="isAutoOpeningCommittee" @close="closeCommitteeDetails" @edit="editCommitteeFromDetails"
+            @delete="deleteCommittee" @manage-countries="manageCountries" @generate-login-links="generateLoginLinks" />
 
         <CountryManagementModal v-model="showCountryManagement" :committee="selectedCommittee"
             @saved="handleCountriesUpdated" />
 
         <!-- CHANGED: LoginLinksModal instead of QRGenerationModal -->
-        <LoginLinksModal v-model="showLoginLinksGeneration" :committee="selectedCommittee" @generated="handleLinksGenerated" />
+        <LoginLinksModal v-model="showLoginLinksGeneration" :committee="selectedCommittee"
+            @generated="handleLinksGenerated" />
 
-        <ConfirmationDialog 
-            v-model="showDeleteConfirm"
-            :title="`Delete Committee: ${selectedCommittee?.name}`"
-            :message="deleteConfirmMessage"
-            confirm-text="Delete Committee"
-            confirm-variant="danger"
-            @confirm="confirmDelete"
-        />
+        <ConfirmationDialog v-model="showDeleteConfirm" :title="`Delete Committee: ${selectedCommittee?.name}`"
+            :message="deleteConfirmMessage" confirm-text="Delete Committee" confirm-variant="danger"
+            @confirm="confirmDelete" />
     </div>
 </template>
 
@@ -468,7 +470,7 @@ import {
     Squares2X2Icon,
     ListBulletIcon,
     UserGroupIcon,
-    LinkIcon, // CHANGED: LinkIcon instead of QrCodeIcon
+    LinkIcon,
     DocumentArrowDownIcon,
     PencilIcon,
     DocumentDuplicateIcon,
@@ -483,7 +485,8 @@ import Pagination from '@/components/ui/Pagination.vue'
 import CreateEditCommitteeModal from '@/components/admin/CreateEditCommitteeModal.vue'
 import CommitteeDetailsModal from '@/components/admin/CommitteeDetailsModal.vue'
 import CountryManagementModal from '@/components/admin/CountryManagementModal.vue'
-import LoginLinksModal from '@/components/admin/LoginLinksModal.vue' // CHANGED: LoginLinksModal instead of QRGenerationModal
+import LoginLinksModal from '@/components/admin/LoginLinksModal.vue'
+import ConfirmationDialog from '@/components/ui/ConfirmationDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -511,8 +514,12 @@ const showCreateCommittee = ref(false)
 const showEditCommittee = ref(false)
 const showCommitteeDetails = ref(false)
 const showCountryManagement = ref(false)
-const showLoginLinksGeneration = ref(false) // CHANGED: loginLinks instead of QR
+const showLoginLinksGeneration = ref(false)
 const showDeleteConfirm = ref(false)
+
+// Enhanced: Auto-opening committee details
+const pendingCommitteeId = ref(null)
+const isAutoOpeningCommittee = ref(false)
 
 // Filters
 const filters = ref({
@@ -520,7 +527,7 @@ const filters = ref({
     type: '',
     status: '',
     countryRange: '',
-    hasLinks: '' // CHANGED: hasLinks instead of hasQR
+    hasLinks: ''
 })
 
 // Pagination
@@ -551,7 +558,6 @@ const committeeStats = computed(() => [
         color: 'purple'
     },
     {
-        // CHANGED: Links Generated instead of QR Generated
         title: 'Links Generated',
         value: committees.value.filter(c => c.linksGenerated).length,
         icon: LinkIcon,
@@ -609,7 +615,6 @@ const filteredCommittees = computed(() => {
         })
     }
 
-    // CHANGED: Filter by links instead of QR
     if (filters.value.hasLinks) {
         filtered = filtered.filter(committee => {
             if (filters.value.hasLinks === 'yes') return committee.linksGenerated
@@ -694,13 +699,28 @@ const deleteConfirmMessage = computed(() => {
     return message
 })
 
-// Watch for filtered committees change
+// Watchers
 watch(() => filteredCommittees.value.length, (newLength) => {
     pagination.value.totalPages = Math.ceil(newLength / pagination.value.pageSize)
     if (pagination.value.currentPage > pagination.value.totalPages && pagination.value.totalPages > 0) {
         pagination.value.currentPage = pagination.value.totalPages
     }
 })
+
+// Enhanced: Route watcher to handle committee ID in params
+watch(() => route.params, async (newParams) => {
+    if (newParams.committeeId && committees.value.length > 0) {
+        await openCommitteeFromRoute(newParams.committeeId)
+    }
+}, { immediate: true })
+
+// Enhanced: Watch for committees loading completion to handle pending committee opening
+watch(() => committees.value, async (newCommittees) => {
+    if (pendingCommitteeId.value && newCommittees.length > 0) {
+        await openCommitteeFromRoute(pendingCommitteeId.value)
+        pendingCommitteeId.value = null
+    }
+}, { immediate: true })
 
 // Methods
 const loadCommittees = async () => {
@@ -720,7 +740,7 @@ const loadCommittees = async () => {
         }
 
     } catch (error) {
-        toast.error('Load committees error:', error)
+        console.error('Load committees error:', error)
         toast.error('Failed to load committees')
         committees.value = []
         totalCommittees.value = 0
@@ -742,8 +762,81 @@ const loadEvents = async () => {
         }
 
     } catch (error) {
-        toast.error('Load events error:', error)
+        console.error('Load events error:', error)
         availableEvents.value = []
+    }
+}
+
+// Enhanced: Method to open committee from route parameter
+const openCommitteeFromRoute = async (committeeId) => {
+    if (!committeeId) return
+
+    try {
+        isAutoOpeningCommittee.value = true
+
+        // Try to find committee in already loaded committees first
+        let committee = committees.value.find(c => c._id === committeeId || c.id === committeeId)
+
+        if (!committee) {
+            // If not found in loaded committees, try to load it specifically
+            console.log(`Committee ${committeeId} not found in loaded committees, attempting to fetch...`)
+
+            try {
+                const response = await apiMethods.committees.getById(committeeId, {
+                    include: 'eventId,countries,documents,presidium'
+                })
+
+                if (response?.data?.success) {
+                    committee = response.data.committee
+
+                    // Add to committees array if not already present
+                    const existingIndex = committees.value.findIndex(c => c._id === committee._id)
+                    if (existingIndex === -1) {
+                        committees.value.push(committee)
+                        totalCommittees.value++
+                    }
+                }
+            } catch (fetchError) {
+                console.error('Failed to fetch committee by ID:', fetchError)
+                toast.error(`Committee with ID ${committeeId} not found`)
+
+                // Clean up the URL to remove invalid committee ID
+                await router.replace({
+                    name: 'admin-committees',
+                    query: route.query
+                })
+                return
+            }
+        }
+
+        if (committee) {
+            console.log(`Opening committee details for: ${committee.name}`)
+            selectedCommittee.value = committee
+            showCommitteeDetails.value = true
+
+            // Update the URL to reflect the opened committee (if not already there)
+            if (route.params.committeeId !== committee._id) {
+                await router.replace({
+                    name: 'admin-committee-details',
+                    params: { committeeId: committee._id },
+                    query: route.query
+                })
+            }
+        } else {
+            toast.error(`Committee with ID ${committeeId} not found`)
+
+            // Clean up the URL
+            await router.replace({
+                name: 'admin-committees',
+                query: route.query
+            })
+        }
+
+    } catch (error) {
+        console.error('Error opening committee from route:', error)
+        toast.error('Failed to open committee details')
+    } finally {
+        isAutoOpeningCommittee.value = false
     }
 }
 
@@ -777,12 +870,11 @@ const handlePageChange = (page) => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-// Add this utility function
 const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-        month: 'short', 
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
         day: 'numeric',
         year: 'numeric'
     })
@@ -810,10 +902,31 @@ const clearSelection = () => {
     selectedCommittees.value = []
 }
 
-// Committee actions
-const viewCommittee = (committee) => {
+// Enhanced: Committee actions
+const viewCommittee = async (committee) => {
     selectedCommittee.value = committee
     showCommitteeDetails.value = true
+
+    // Update URL to include committee ID
+    await router.push({
+        name: 'admin-committee-details',
+        params: { committeeId: committee._id },
+        query: route.query
+    })
+}
+
+// Enhanced: Committee details modal close handler
+const closeCommitteeDetails = () => {
+    showCommitteeDetails.value = false
+    selectedCommittee.value = null
+
+    // Update URL to remove committee ID when modal is closed
+    if (route.params.committeeId) {
+        router.push({
+            name: 'admin-committees',
+            query: route.query
+        })
+    }
 }
 
 const editCommittee = (committee) => {
@@ -839,10 +952,10 @@ const confirmDelete = async () => {
             // Remove from local state
             committees.value = committees.value.filter(c => c._id !== selectedCommittee.value._id)
             totalCommittees.value = Math.max(0, totalCommittees.value - 1)
-            
+
             // Also remove from selected committees if it was selected
             selectedCommittees.value = selectedCommittees.value.filter(id => id !== selectedCommittee.value._id)
-            
+
             toast.success('Committee deleted successfully')
         } else {
             toast.error(response?.data?.error || 'Failed to delete committee')
@@ -853,7 +966,7 @@ const confirmDelete = async () => {
 
     } catch (error) {
         console.error('Delete committee error:', error)
-        
+
         if (error.response?.data?.error) {
             toast.error(error.response.data.error)
         } else if (error.message) {
@@ -861,7 +974,7 @@ const confirmDelete = async () => {
         } else {
             toast.error('Failed to delete committee')
         }
-        
+
         showDeleteConfirm.value = false
         selectedCommittee.value = null
     }
@@ -872,14 +985,12 @@ const manageCountries = (committee) => {
     showCountryManagement.value = true
 }
 
-// CHANGED: generateLoginLinks instead of generateQR
 const generateLoginLinks = (committee) => {
     selectedCommittee.value = committee
     showLoginLinksGeneration.value = true
 }
 
 // Bulk actions
-// CHANGED: bulkGenerateLinks instead of bulkGenerateQR
 const bulkGenerateLinks = async () => {
     try {
         isBulkGenerating.value = true
@@ -918,7 +1029,7 @@ const bulkGenerateLinks = async () => {
         clearSelection()
 
     } catch (error) {
-        toast.error('Bulk generate links error:', error)
+        console.error('Bulk generate links error:', error)
         toast.error('Failed to generate login links')
     } finally {
         isBulkGenerating.value = false
@@ -943,7 +1054,7 @@ const bulkExport = async () => {
             toast.success('Committees exported successfully')
         }
     } catch (error) {
-        toast.error('Bulk export error:', error)
+        console.error('Bulk export error:', error)
         toast.error('Failed to export committees')
     }
 }
@@ -975,7 +1086,6 @@ const handleCountriesUpdated = (updatedCommittee) => {
     toast.success('Countries updated successfully')
 }
 
-// CHANGED: handleLinksGenerated instead of handleQRGenerated
 const handleLinksGenerated = (updatedCommittee) => {
     const index = committees.value.findIndex(c => c._id === updatedCommittee._id)
     if (index !== -1) {
@@ -997,13 +1107,26 @@ const formatStatus = (status) => {
     return statusMap[status] || status
 }
 
-// Lifecycle
+// Enhanced: Lifecycle
 onMounted(async () => {
+    // Check if there's a committee ID in the route before loading
+    if (route.params.committeeId) {
+        pendingCommitteeId.value = route.params.committeeId
+        console.log(`Pending committee ID from route: ${pendingCommitteeId.value}`)
+    }
+
+    // Load committees and events
     await Promise.all([loadCommittees(), loadEvents()])
 
     // Check for event filter from route query
-    if (route.query.event) {
-        filters.value.eventId = route.query.event
+    if (route.query.eventId) {
+        filters.value.eventId = route.query.eventId
+    }
+
+    // Handle pending committee opening after data is loaded
+    if (pendingCommitteeId.value && committees.value.length > 0) {
+        await openCommitteeFromRoute(pendingCommitteeId.value)
+        pendingCommitteeId.value = null
     }
 })
 </script>
