@@ -263,14 +263,14 @@ app.get('/api/health', (req, res) => {
       export: 'active',
       countries: 'active',
       websocket: 'active',
-      automation: automationStatus.isRunning ? 'active' : 'inactive',
+      // automation: automationStatus.isRunning ? 'active' : 'inactive',
       eventProtection: 'active'
     },
     services: {
       database: 'connected',
       countries: 'available',
       flags: 'cached',
-      eventAutomation: automationStatus.isRunning ? 'running' : 'stopped'
+      // eventAutomation: automationStatus.isRunning ? 'running' : 'stopped'
     },
     // eventProtection: {
     //   cacheSize: cacheStats.size,
