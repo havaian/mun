@@ -278,7 +278,7 @@ router.get('/:id',
 // Update committee settings
 router.put('/:id',
     global.auth.token,
-    global.auth.presidium,
+    global.auth.adminOrPresidium,
     validateCommitteeId,
     validateCommitteeUpdate,
     handleValidationErrors,
