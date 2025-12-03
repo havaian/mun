@@ -56,16 +56,16 @@ const createCommittee = async (req, res) => {
 
         for (const role of presidiumRoles) {
             try {
-                // Generate unique identifier using committee ID + timestamp + role
-                const uniqueId = `${committee._id.toString().slice(-8)}_${Date.now()}_${role}`;
+                // Generate unique tokens
+                const loginToken = crypto.randomBytes(32).toString('hex');
 
-                // Create presidium user WITHOUT email (will be bound during QR login)
+                // Create presidium user WITHOUT email (will be bound during login)
                 const presidiumUser = new User({
                     role: 'presidium',
                     presidiumRole: role,
                     committeeId: committee._id,
-                    qrToken: crypto.randomBytes(32).toString('hex'),
-                    isQrActive: true,
+                    loginToken: loginToken,          // FIXED: Add loginToken (required)
+                    isLoginActive: true,             // FIXED: Use isLoginActive instead of isQrActive
                     isActive: true
                     // No username, password, or email needed
                 });
@@ -79,7 +79,7 @@ const createCommittee = async (req, res) => {
                 presidiumUsers.push({
                     role: role,
                     userId: presidiumUser._id,
-                    qrToken: presidiumUser.qrToken
+                    loginToken: presidiumUser.loginToken  // FIXED: Return loginToken instead of qrToken
                 });
 
                 logger.info(`✅ Created and added presidium user: ${role} for committee ${committee.name}`);
