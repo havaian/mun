@@ -48,12 +48,12 @@
 
                     <!-- Admin Login Form -->
                     <div v-else-if="currentView === 'admin'" key="admin">
-                        <div class="flex items-center justify-center mb-4">
+                        <!-- <div class="flex items-center justify-center mb-4">
                             <button @click="currentView = 'selection'"
                                 class="text-mun-gray-400 hover:text-mun-gray-600 transition-colors">
                                 <ArrowLongLeftIcon class="w-6 h-6" />
                             </button>
-                        </div>
+                        </div> -->
 
                         <form @submit.prevent="handleAdminLogin" class="space-y-4">
                             <div>
@@ -308,7 +308,7 @@ const authStore = useAuthStore()
 const toast = useToast()
 
 // Current view state - controls what content is shown
-const currentView = ref('selection') // 'selection', 'admin', 'email', 'qr'
+const currentView = ref('admin') // 'selection', 'admin', 'email', 'qr'
 
 const adminForm = reactive({
     username: '',
