@@ -778,9 +778,6 @@ const openCommitteeFromRoute = async (committeeId) => {
         let committee = committees.value.find(c => c._id === committeeId || c.id === committeeId)
 
         if (!committee) {
-            // If not found in loaded committees, try to load it specifically
-            console.log(`Committee ${committeeId} not found in loaded committees, attempting to fetch...`)
-
             try {
                 const response = await apiMethods.committees.getById(committeeId, {
                     include: 'eventId,countries,documents,presidium'
@@ -800,11 +797,6 @@ const openCommitteeFromRoute = async (committeeId) => {
                 console.error('Failed to fetch committee by ID:', fetchError)
                 toast.error(`Committee with ID ${committeeId} not found`)
 
-                // Clean up the URL to remove invalid committee ID
-                await router.replace({
-                    name: 'AdminCommittees',
-                    query: route.query
-                })
                 return
             }
         }
@@ -813,23 +805,8 @@ const openCommitteeFromRoute = async (committeeId) => {
             console.log(`Opening committee details for: ${committee.name}`)
             selectedCommittee.value = committee
             showCommitteeDetails.value = true
-
-            // Update the URL to reflect the opened committee (if not already there)
-            if (route.params.committeeId !== committee._id) {
-                await router.replace({
-                    name: 'AdminCommitteeDetails',
-                    params: { committeeId: committee._id },
-                    query: route.query
-                })
-            }
         } else {
             toast.error(`Committee with ID ${committeeId} not found`)
-
-            // Clean up the URL
-            await router.replace({
-                name: 'AdminCommittees',
-                query: route.query
-            })
         }
 
     } catch (error) {
@@ -906,27 +883,12 @@ const clearSelection = () => {
 const viewCommittee = async (committee) => {
     selectedCommittee.value = committee
     showCommitteeDetails.value = true
-
-    // Update URL to include committee ID
-    await router.push({
-        name: 'AdminCommitteeDetails',
-        params: { committeeId: committee._id },
-        query: route.query
-    })
 }
 
 // Committee details modal close handler
 const closeCommitteeDetails = () => {
     showCommitteeDetails.value = false
     selectedCommittee.value = null
-
-    // Update URL to remove committee ID when modal is closed
-    if (route.params.committeeId) {
-        router.push({
-            name: 'AdminCommittees',
-            query: route.query
-        })
-    }
 }
 
 const editCommittee = (committee) => {
