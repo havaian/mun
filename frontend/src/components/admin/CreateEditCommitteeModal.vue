@@ -65,9 +65,9 @@
                             Working Language
                         </label>
                         <SleekSelect v-model="formData.language" :options="[
-                            { label: 'English', value: 'english' },
-                            { label: 'Russian', value: 'russian' },
-                            { label: 'Uzbek', value: 'uzbek' }
+                            { label: 'English', value: 'en' },
+                            { label: 'Russian', value: 'ru' },
+                            { label: 'Uzbek', value: 'uz' }
                         ]" size="md" />
                     </div>
 
@@ -180,7 +180,7 @@ const formData = reactive({
     type: '',
     eventId: '',
     description: '',
-    language: 'english',
+    language: 'en',
     status: 'setup'
 })
 
@@ -277,7 +277,7 @@ const resetForm = () => {
     formData.type = ''
     formData.eventId = ''
     formData.description = ''
-    formData.language = 'english'
+    formData.language = 'en'
     formData.status = 'setup'
     errors.value = {}
 }
