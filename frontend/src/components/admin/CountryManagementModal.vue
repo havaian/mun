@@ -92,7 +92,7 @@
                                 <!-- Assign Action Icon (shown on hover) -->
                                 <div class="transition-all duration-200"
                                     :class="hoveredCountry === country.code ? 'opacity-100' : 'opacity-0'">
-                                    <ChevronDoubleRightIcon class="w-5 h-5 text-mun-blue-600" />
+                                    <ChevronRightIcon class="w-5 h-5 text-mun-blue-600" />
                                 </div>
                             </div>
                         </div>
@@ -263,7 +263,7 @@ import {
     UserGroupIcon,
     ArrowPathIcon,
     CheckIcon,
-    ChevronDoubleRightIcon
+    ChevronRightIcon
 } from '@heroicons/vue/24/outline'
 
 // Props
