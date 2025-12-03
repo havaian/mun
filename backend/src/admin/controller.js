@@ -262,7 +262,7 @@ const getDashboardStats = async (req, res) => {
         logger.error('Get dashboard stats error:', error);
         res.status(500).json({
             error: 'Failed to get dashboard statistics',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            details: error.message
         });
     }
 };
@@ -379,7 +379,7 @@ const getRecentActivity = async (req, res) => {
         logger.error('Get recent activity error:', error);
         res.status(500).json({
             error: 'Failed to get recent activity',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            details: error.message
         });
     }
 };
@@ -511,7 +511,7 @@ const bulkGenerateQR = async (req, res) => {
         logger.error('Bulk generate QR error:', error);
         res.status(500).json({
             error: 'Failed to bulk generate QR codes',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            details: error.message
         });
     }
 };

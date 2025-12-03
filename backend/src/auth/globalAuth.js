@@ -27,9 +27,6 @@ const setupGlobalAuth = () => {
 
             // Flexible role checker
             roles: middleware.requireRoles,
-
-            // Development helper
-            rolesDev: middleware.requireRolesDev
         },
 
         // Convenience methods with cleaner syntax

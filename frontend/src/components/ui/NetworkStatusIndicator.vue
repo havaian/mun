@@ -79,7 +79,7 @@
         </transition>
 
         <!-- Network Info Debug Panel (Development) -->
-        <div v-if="showDebugInfo && isDevelopment"
+        <div v-if="showDebugInfo"
             class="fixed top-20 right-4 z-40 bg-black/80 text-white rounded-lg p-3 text-xs font-mono max-w-xs">
             <div class="space-y-1">
                 <div class="flex justify-between">
@@ -155,9 +155,6 @@ const retryInterval = 5000 // 5 seconds
 const progressDuration = retryInterval
 const toastDuration = 4000
 const speedTestInterval = 30000 // 30 seconds
-
-// Environment
-const isDevelopment = import.meta.env.DEV
 
 // Computed
 const isOffline = computed(() => !isOnline.value)

@@ -371,37 +371,17 @@ const handleLogout = async () => {
 const loadDelegateData = async () => {
     try {
         // Load delegate-specific data
-        userCountry.value = {
-            name: 'United States',
-            code: 'US'
-        }
+        userCountry.value = {}
 
-        committeeInfo.value = {
-            name: 'General Assembly',
-            topic: 'Climate Change and Sustainable Development',
-            countries: Array.from({ length: 25 }, (_, i) => ({ id: i + 1, name: `Country ${i + 1}` }))
-        }
+        committeeInfo.value = {}
 
-        delegateStats.value = {
-            speechesGiven: 3,
-            votesCast: 7,
-            documentsSubmitted: 2
-        }
+        delegateStats.value = {}
 
         // Mock session data
-        currentSession.value = {
-            id: 'session_1',
-            status: 'active',
-            currentMode: 'formal',
-            currentSpeaker: 'France'
-        }
+        currentSession.value = {}
 
         // Mock coalition data
-        userCoalition.value = {
-            name: 'Climate Action Coalition',
-            status: 'Active',
-            memberCount: 8
-        }
+        userCoalition.value = {}
 
         currentSpeaker.value = currentSession.value.currentSpeaker
 

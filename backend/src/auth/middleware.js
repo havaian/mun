@@ -171,18 +171,6 @@ const requireSameCommittee = (req, res, next) => {
     next();
 };
 
-// Optional: Middleware for development/testing (allows any role when NODE_ENV is development)
-const requireRolesDev = (...allowedRoles) => {
-    if (process.env.NODE_ENV === 'development' && process.env.SKIP_ROLE_CHECK === 'true') {
-        return (req, res, next) => {
-            logger.warn('DEVELOPMENT MODE: Skipping role authorization check');
-            next();
-        };
-    }
-
-    return requireRoles(...allowedRoles);
-};
-
 // Check if user can vote (excludes observers and special roles)
 const requireVotingRights = (req, res, next) => {
     if (!req.user) {
@@ -273,9 +261,6 @@ module.exports = {
     requireDelegate,
     requireAdminOrDelegate,
     requireAnyRole,
-
-    // Development helper
-    requireRolesDev,
 
     // Rate limit
     authRateLimit,

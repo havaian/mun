@@ -4,7 +4,18 @@ const { User } = require('../auth/model');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
 
-// CHANGED: Generate login links for committee delegates (replaces QR PDF)
+// Helper function to sanitize filenames for HTTP headers
+const sanitizeFilename = (name) => {
+    return name
+        .replace(/[^a-zA-Z0-9\s\-_]/g, '') // Remove special characters
+        .replace(/\s+/g, '_') // Replace spaces with underscores
+        .replace(/_+/g, '_') // Replace multiple underscores with single
+        .replace(/^_|_$/g, '') // Remove leading/trailing underscores
+        .substring(0, 50) // Limit length
+        || 'committee'; // Fallback if empty
+};
+
+// Generate login links for committee delegates
 const generateCommitteeLinks = async (req, res) => {
     try {
         const { committeeId } = req.params;
@@ -42,11 +53,11 @@ const generateCommitteeLinks = async (req, res) => {
         // Generate delegate links
         const delegateLinks = committee.countries.map(country => ({
             country: country.name,
-            link: `${baseUrl}/login/${country.loginToken}`,
+            link: `${baseUrl}/auth/login?token=${country.loginToken}`, // FIXED: Use proper login route
             loginToken: country.loginToken,
             isObserver: country.isObserver,
             specialRole: country.specialRole,
-            isActive: country.isLoginActive
+            isActive: country.isLoginActive !== false // Default to true if not set
         }));
 
         if (format === 'plain') {
@@ -55,8 +66,11 @@ const generateCommitteeLinks = async (req, res) => {
                 .map(link => `${link.country}: ${link.link}`)
                 .join('\n');
 
-            res.setHeader('Content-Type', 'text/plain');
-            res.setHeader('Content-Disposition', `attachment; filename="delegate_links_${committee.name.replace(/\s+/g, '_')}.txt"`);
+            // FIXED: Properly sanitize filename for HTTP header
+            const safeFilename = sanitizeFilename(committee.name);
+            
+            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+            res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}_delegate_links.txt"`);
             res.send(plainText);
         } else {
             // Return JSON format
@@ -80,12 +94,12 @@ const generateCommitteeLinks = async (req, res) => {
         logger.error('Delegate links generation error:', error);
         res.status(500).json({
             error: 'Failed to generate delegate links',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            details: error.message
         });
     }
 };
 
-// CHANGED: Generate presidium login links (replaces presidium QR PDF)
+// Generate presidium login
 const generatePresidiumLinks = async (req, res) => {
     try {
         const { committeeId } = req.params;
@@ -109,21 +123,22 @@ const generatePresidiumLinks = async (req, res) => {
         }).select('presidiumRole loginToken isLoginActive').lean();
 
         // Ensure all presidium members have login tokens
-        let needsUpdate = false;
+        const updates = [];
         for (let member of presidiumMembers) {
             if (!member.loginToken) {
                 member.loginToken = crypto.randomBytes(32).toString('hex');
-                needsUpdate = true;
+                updates.push(
+                    User.findByIdAndUpdate(member._id, {
+                        loginToken: member.loginToken,
+                        isLoginActive: true
+                    })
+                );
             }
         }
 
-        // Update presidium members if needed
-        if (needsUpdate) {
-            for (let member of presidiumMembers) {
-                await User.findByIdAndUpdate(member._id, {
-                    loginToken: member.loginToken
-                });
-            }
+        // Execute all updates
+        if (updates.length > 0) {
+            await Promise.all(updates);
         }
 
         const baseUrl = process.env.FRONTEND_URL || 'https://mun.uz';
@@ -131,19 +146,22 @@ const generatePresidiumLinks = async (req, res) => {
         // Generate presidium links
         const presidiumLinks = presidiumMembers.map(member => ({
             role: member.presidiumRole,
-            link: `${baseUrl}/login/${member.loginToken}`,
+            link: `${baseUrl}/auth/login?token=${member.loginToken}`, // FIXED: Use proper login route
             loginToken: member.loginToken,
-            isActive: member.isLoginActive
+            isActive: member.isLoginActive !== false // Default to true if not set
         }));
 
         if (format === 'plain') {
             // Return plain text format
             const plainText = presidiumLinks
-                .map(link => `${link.role}: ${link.link}`)
+                .map(link => `${formatPresidiumRole(link.role)}: ${link.link}`)
                 .join('\n');
 
-            res.setHeader('Content-Type', 'text/plain');
-            res.setHeader('Content-Disposition', `attachment; filename="presidium_links_${committee.name.replace(/\s+/g, '_')}.txt"`);
+            // FIXED: Properly sanitize filename for HTTP header
+            const safeFilename = sanitizeFilename(committee.name);
+            
+            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+            res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}_presidium_links.txt"`);
             res.send(plainText);
         } else {
             // Return JSON format
@@ -172,7 +190,7 @@ const generatePresidiumLinks = async (req, res) => {
     }
 };
 
-// CHANGED: Generate complete login links (both presidium and delegates) 
+// Generate complete login links (both presidium and delegates) 
 const generateCompleteLinks = async (req, res) => {
     try {
         const { committeeId } = req.params;
@@ -211,20 +229,21 @@ const generateCompleteLinks = async (req, res) => {
         }).select('presidiumRole loginToken isLoginActive').lean();
 
         // Ensure presidium members have login tokens
-        let needsPresidiumUpdate = false;
+        const updates = [];
         for (let member of presidiumMembers) {
             if (!member.loginToken) {
                 member.loginToken = crypto.randomBytes(32).toString('hex');
-                needsPresidiumUpdate = true;
+                updates.push(
+                    User.findByIdAndUpdate(member._id, {
+                        loginToken: member.loginToken,
+                        isLoginActive: true
+                    })
+                );
             }
         }
 
-        if (needsPresidiumUpdate) {
-            for (let member of presidiumMembers) {
-                await User.findByIdAndUpdate(member._id, {
-                    loginToken: member.loginToken
-                });
-            }
+        if (updates.length > 0) {
+            await Promise.all(updates);
         }
 
         const baseUrl = process.env.FRONTEND_URL || 'https://mun.uz';
@@ -233,38 +252,41 @@ const generateCompleteLinks = async (req, res) => {
         const presidiumLinks = presidiumMembers.map(member => ({
             type: 'presidium',
             role: member.presidiumRole,
-            name: member.presidiumRole,
-            link: `${baseUrl}/login/${member.loginToken}`,
+            name: formatPresidiumRole(member.presidiumRole),
+            link: `${baseUrl}/auth/login?token=${member.loginToken}`, // FIXED: Use proper login route
             loginToken: member.loginToken,
-            isActive: member.isLoginActive
+            isActive: member.isLoginActive !== false
         }));
 
         const delegateLinks = committee.countries.map(country => ({
             type: 'delegate',
             role: 'delegate',
             name: country.name,
-            link: `${baseUrl}/login/${country.loginToken}`,
+            link: `${baseUrl}/auth/login?token=${country.loginToken}`, // FIXED: Use proper login route
             loginToken: country.loginToken,
             isObserver: country.isObserver,
             specialRole: country.specialRole,
-            isActive: country.isLoginActive
+            isActive: country.isLoginActive !== false
         }));
 
         const allLinks = [...presidiumLinks, ...delegateLinks];
 
         if (format === 'plain') {
             // Return plain text format
-            let plainText = `PRESIDIUM:\n`;
+            let plainText = `PRESIDIUM MEMBERS:\n`;
             plainText += presidiumLinks
                 .map(link => `${link.name}: ${link.link}`)
                 .join('\n');
-            plainText += `\n\nDELEGATES:\n`;
+            plainText += `\n\nDELEGATE COUNTRIES:\n`;
             plainText += delegateLinks
                 .map(link => `${link.name}: ${link.link}`)
                 .join('\n');
 
-            res.setHeader('Content-Type', 'text/plain');
-            res.setHeader('Content-Disposition', `attachment; filename="complete_links_${committee.name.replace(/\s+/g, '_')}.txt"`);
+            // FIXED: Properly sanitize filename for HTTP header
+            const safeFilename = sanitizeFilename(committee.name);
+            
+            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+            res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}_complete_links.txt"`);
             res.send(plainText);
         } else {
             // Return JSON format
@@ -299,7 +321,18 @@ const generateCompleteLinks = async (req, res) => {
     }
 };
 
-// UNCHANGED: Export committee statistics
+// Helper function to format presidium roles
+const formatPresidiumRole = (role) => {
+    const roleMap = {
+        'chairman': 'Chairman',
+        'co-chairman': 'Co-Chairman',
+        'expert': 'Expert',
+        'secretary': 'Secretary'
+    };
+    return roleMap[role] || role.charAt(0).toUpperCase() + role.slice(1);
+};
+
+// Export committee statistics
 const exportStatistics = async (req, res) => {
     try {
         const { committeeId } = req.params;
@@ -320,7 +353,7 @@ const exportStatistics = async (req, res) => {
     }
 };
 
-// UNCHANGED: Other export methods remain the same
+// Other export methods remain the same
 const exportVotingResults = async (req, res) => {
     try {
         res.json({
@@ -364,9 +397,9 @@ const exportCompleteReport = async (req, res) => {
 };
 
 module.exports = {
-    generateCommitteeLinks, // CHANGED: was generateCommitteeQRPDF
-    generatePresidiumLinks, // CHANGED: was generatePresidiumQRPDF  
-    generateCompleteLinks,  // CHANGED: was generateCompleteQRPDF
+    generateCommitteeLinks,
+    generatePresidiumLinks,  
+    generateCompleteLinks,
     exportStatistics,
     exportVotingResults,
     exportResolutions,

@@ -62,7 +62,7 @@
     </div>
 
     <!-- Debug Information (Development Only) -->
-    <div v-if="isDevelopment && showDebugInfo"
+    <div v-if="showDebugInfo"
       class="fixed bottom-4 left-4 z-40 bg-black/80 text-white rounded-lg p-3 text-xs font-mono max-w-xs">
       <div class="space-y-1">
         <div class="flex justify-between">
@@ -92,7 +92,7 @@
     </div>
 
     <!-- Quick Debug Toggle (Development Only) -->
-    <button v-if="isDevelopment && !showDebugInfo" @click="showDebugInfo = true"
+    <button v-if="!showDebugInfo" @click="showDebugInfo = true"
       class="fixed bottom-4 left-4 z-40 bg-gray-800 text-white rounded-full p-2 opacity-50 hover:opacity-100">
       <span class="text-xs">🐛</span>
     </button>

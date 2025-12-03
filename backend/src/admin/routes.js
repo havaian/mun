@@ -433,7 +433,7 @@ router.use((error, req, res, next) => {
 
     res.status(500).json({
         error: 'Internal server error in admin module',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        details: error.message,
         timestamp: new Date().toISOString(),
         path: req.path
     });

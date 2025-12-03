@@ -367,10 +367,6 @@ const startServer = async () => {
       logger.info(`🔗 API: http://localhost:${PORT}/api`);
       logger.info(`⚡ Event automation: ${eventAutomationService.getStatus().isRunning ? 'ACTIVE' : 'INACTIVE'}`);
       logger.info(`🛡️  Event protection: ACTIVE`);
-
-      if (process.env.NODE_ENV === 'development') {
-        logger.info(`🔧 Development mode enabled`);
-      }
     });
 
   } catch (error) {

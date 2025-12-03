@@ -310,61 +310,13 @@ const loadCoalitionsData = async () => {
         isLoading.value = true
 
         // Sample my coalitions
-        myCoalitions.value = [
-            {
-                id: 1,
-                name: "Climate Action Alliance",
-                description: "Focused on environmental protection and sustainable development",
-                isHead: false,
-                members: ["France", "Germany", "United Kingdom", "Canada", "Norway"],
-                resolutions: [
-                    { id: 1, title: "Resolution A/1: Climate Framework", status: "submitted" }
-                ],
-                createdAt: new Date(Date.now() - 172800000).toISOString() // 2 days ago
-            },
-            {
-                id: 2,
-                name: "Nuclear Disarmament Coalition",
-                description: "Working towards global nuclear disarmament",
-                isHead: true,
-                members: ["United States", "Japan", "Australia"],
-                resolutions: [
-                    { id: 2, title: "Draft Resolution B/1: Nuclear Treaties", status: "draft" }
-                ],
-                createdAt: new Date(Date.now() - 86400000).toISOString() // 1 day ago
-            }
-        ]
+        myCoalitions.value = []
 
         // Sample pending invitations
-        pendingInvitations.value = [
-            {
-                id: 1,
-                coalitionName: "Economic Development Group",
-                invitedBy: "Brazil",
-                memberCount: 8,
-                description: "Focused on sustainable economic growth in developing nations"
-            }
-        ]
+        pendingInvitations.value = []
 
         // Sample available coalitions
-        availableCoalitions.value = [
-            {
-                id: 3,
-                name: "Human Rights Coalition",
-                description: "Promoting and protecting human rights globally",
-                head: "Sweden",
-                members: ["Sweden", "Norway", "Denmark", "Netherlands", "Canada"],
-                createdAt: new Date(Date.now() - 259200000).toISOString() // 3 days ago
-            },
-            {
-                id: 4,
-                name: "Technology and Innovation Alliance",
-                description: "Addressing challenges and opportunities in digital transformation",
-                head: "South Korea",
-                members: ["South Korea", "Japan", "Singapore", "Estonia"],
-                createdAt: new Date(Date.now() - 345600000).toISOString() // 4 days ago
-            }
-        ]
+        availableCoalitions.value = []
 
         // Update stats
         stats.myCoalitions = myCoalitions.value.length
