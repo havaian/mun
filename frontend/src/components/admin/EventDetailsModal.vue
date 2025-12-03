@@ -51,7 +51,7 @@
                                                     : 'bg-gray-100 text-gray-800'
                                         ]">
                                             {{ event?.status?.charAt(0).toUpperCase() + event?.status?.slice(1) ||
-                                            'Unknown' }}
+                                                'Unknown' }}
                                         </span>
                                         <span class="text-sm text-mun-gray-600">{{ getEventTimelineStatus() }}</span>
                                     </div>
@@ -294,15 +294,20 @@ const closeModal = () => {
     emit('update:modelValue', false)
 }
 
+// ENHANCED: Format date with time
 const formatDate = (dateString) => {
     if (!dateString) return 'Not specified'
     return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
     })
 }
 
+// ENHANCED: Format just the date part for subtitle
 const formatEventDate = () => {
     if (!props.event?.startDate) return 'Date not specified'
 
@@ -326,6 +331,7 @@ const isRegistrationOpen = () => {
     return new Date() <= new Date(props.event.settings.registrationDeadline)
 }
 
+// ENHANCED: More detailed registration status with time
 const getRegistrationStatus = () => {
     if (!props.event?.settings?.registrationDeadline) return 'Not configured'
 
@@ -333,8 +339,20 @@ const getRegistrationStatus = () => {
     const deadline = new Date(props.event.settings.registrationDeadline)
 
     if (now <= deadline) {
-        const daysLeft = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24))
-        return `Open (${daysLeft} days left)`
+        const timeDiff = deadline.getTime() - now.getTime()
+        const daysLeft = Math.floor(timeDiff / (1000 * 60 * 60 * 24))
+        const hoursLeft = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const minutesLeft = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))
+
+        if (daysLeft > 0) {
+            return `Open (${daysLeft} days, ${hoursLeft}h left)`
+        } else if (hoursLeft > 0) {
+            return `Open (${hoursLeft}h ${minutesLeft}m left)`
+        } else if (minutesLeft > 0) {
+            return `Open (${minutesLeft}m left)`
+        } else {
+            return 'Closing soon'
+        }
     } else if (props.event.settings.allowLateRegistration) {
         return 'Late registration allowed'
     } else {
@@ -342,6 +360,7 @@ const getRegistrationStatus = () => {
     }
 }
 
+// FIXED: Precise event timeline status with hours/minutes
 const getEventTimelineStatus = () => {
     if (!props.event?.startDate || !props.event?.endDate) return 'Dates not set'
 
@@ -350,12 +369,47 @@ const getEventTimelineStatus = () => {
     const endDate = new Date(props.event.endDate)
 
     if (now < startDate) {
-        const daysLeft = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24))
-        return `Starts in ${daysLeft} days`
+        const timeDiff = startDate.getTime() - now.getTime()
+        const daysLeft = Math.floor(timeDiff / (1000 * 60 * 60 * 24))
+        const hoursLeft = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const minutesLeft = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))
+
+        if (daysLeft > 0) {
+            return `Starts in ${daysLeft} days, ${hoursLeft}h`
+        } else if (hoursLeft > 0) {
+            return `Starts in ${hoursLeft}h ${minutesLeft}m`
+        } else if (minutesLeft > 0) {
+            return `Starts in ${minutesLeft} minutes`
+        } else {
+            return 'Starting now'
+        }
     } else if (now >= startDate && now <= endDate) {
-        return 'In progress'
+        const timeDiff = endDate.getTime() - now.getTime()
+        const daysLeft = Math.floor(timeDiff / (1000 * 60 * 60 * 24))
+        const hoursLeft = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const minutesLeft = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))
+
+        if (daysLeft > 0) {
+            return `In progress (ends in ${daysLeft} days, ${hoursLeft}h)`
+        } else if (hoursLeft > 0) {
+            return `In progress (ends in ${hoursLeft}h ${minutesLeft}m)`
+        } else if (minutesLeft > 0) {
+            return `In progress (ends in ${minutesLeft} minutes)`
+        } else {
+            return 'Ending now'
+        }
     } else {
-        return 'Completed'
+        const timeDiff = now.getTime() - endDate.getTime()
+        const daysAgo = Math.floor(timeDiff / (1000 * 60 * 60 * 24))
+        const hoursAgo = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+
+        if (daysAgo > 0) {
+            return `Completed ${daysAgo} days ago`
+        } else if (hoursAgo > 0) {
+            return `Completed ${hoursAgo}h ago`
+        } else {
+            return 'Just completed'
+        }
     }
 }
 
@@ -366,9 +420,17 @@ const getEventTimelineColor = () => {
     const startDate = new Date(props.event.startDate)
     const endDate = new Date(props.event.endDate)
 
-    if (now < startDate) return 'bg-blue-500'
-    if (now >= startDate && now <= endDate) return 'bg-green-500'
-    return 'bg-purple-500'
+    if (now < startDate) {
+        // Different colors based on how soon it starts
+        const timeDiff = startDate.getTime() - now.getTime()
+        const hoursLeft = Math.floor(timeDiff / (1000 * 60 * 60))
+
+        if (hoursLeft <= 2) return 'bg-orange-500' // Starting very soon
+        if (hoursLeft <= 24) return 'bg-blue-500' // Starting today
+        return 'bg-blue-400' // Starting later
+    }
+    if (now >= startDate && now <= endDate) return 'bg-green-500' // In progress
+    return 'bg-purple-500' // Completed
 }
 
 const editEvent = () => {
@@ -377,9 +439,8 @@ const editEvent = () => {
 }
 
 const viewCommittees = () => {
-    // Fixed routing - ensure proper navigation to committees view
     router.push({
-        name: 'admin-committees',
+        name: 'AdminCommittees',
         query: { eventId: props.event._id || props.event.id }
     })
     closeModal()
