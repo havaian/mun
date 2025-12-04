@@ -163,27 +163,43 @@ export const useAuthStore = defineStore('auth', () => {
 
     const bindEmail = async (data) => {
         try {
+            isLoading.value = true
             const response = await apiMethods.auth.bindEmail(data)
+            
+            console.log('Bind email response:', response.data) // Debug log
             
             if (response.data.success) {
                 await setAuthData(response.data.token, response.data.user)
                 return { success: true, data: response.data }
+            } else {
+                throw new Error(response.data.error || 'Email binding failed')
             }
         } catch (error) {
-            return { success: false, error }
+            console.error('Bind email error:', error)
+            throw error // Re-throw so the component can handle it
+        } finally {
+            isLoading.value = false
         }
     }
 
     const linkEmailLogin = async (data) => {
         try {
+            isLoading.value = true
             const response = await apiMethods.auth.emailLogin(data)
+            
+            console.log('Link email login response:', response.data) // Debug log
             
             if (response.data.success) {
                 await setAuthData(response.data.token, response.data.user)
                 return { success: true, data: response.data }
+            } else {
+                throw new Error(response.data.error || 'Login failed')
             }
         } catch (error) {
-            return { success: false, error }
+            console.error('Link email login error:', error)
+            throw error // Re-throw so the component can handle it
+        } finally {
+            isLoading.value = false
         }
     }
 
@@ -353,10 +369,18 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Get dashboard route based on user role
     const getDashboardRoute = () => {
-        if (isAdmin.value) return 'AdminDashboard'
-        if (isPresidium.value) return 'PresidiumDashboard'
-        if (isDelegate.value) return 'DelegateDashboard'
-        return 'Login'
+        if (!user.value?.role) return 'Login'
+        
+        switch (user.value.role) {
+            case 'admin':
+                return 'AdminDashboard'
+            case 'presidium':
+                return 'PresidiumDashboard'
+            case 'delegate':
+                return 'DelegateDashboard'
+            default:
+                return 'Login'
+        }
     }
 
     // Check if user has specific permission

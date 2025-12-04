@@ -784,35 +784,48 @@ const verifyLoginLink = async (token) => {
 }
 
 const handleEmailBinding = async () => {
-    try {        
+    if (!linkEmail.value.trim()) {
+        toast.error('Please enter your email address')
+        return
+    }
+
+    try {
         const response = await authStore.bindEmail({
             token: loginToken.value,
             email: linkEmail.value
         })
 
-        if (response.success) {
-            toast.success(response.data.message || 'Registration completed successfully!')
-            router.push({ name: authStore.getDashboardRoute() })
-        }
+        toast.success('Registration completed successfully!')
+        router.push({ name: authStore.getDashboardRoute() })
 
     } catch (err) {
         console.error('Email binding error:', err)
-        const errorMsg = err.response?.data?.error || 'Failed to complete registration'
-        toast.error(errorMsg)
+        
+        // Handle specific error cases
+        if (err.response?.status === 409) {
+            toast.error('This email is already registered. Try signing in instead.')
+            requiresEmailBinding.value = false // Switch to login mode
+        } else {
+            const errorMsg = err.response?.data?.error || 'Failed to complete registration'
+            toast.error(errorMsg)
+        }
     }
 }
 
 const handleLinkEmailLogin = async () => {
-    try {        
+    if (!linkEmail.value.trim()) {
+        toast.error('Please enter your email address')
+        return
+    }
+
+    try {
         const response = await authStore.linkEmailLogin({
             email: linkEmail.value,
             loginToken: loginToken.value
         })
 
-        if (response.success) {
-            toast.success('Login successful!')
-            router.push({ name: authStore.getDashboardRoute() })
-        }
+        toast.success('Login successful!')
+        router.push({ name: authStore.getDashboardRoute() })
 
     } catch (err) {
         console.error('Email login error:', err)
