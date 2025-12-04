@@ -33,7 +33,6 @@ const validateLinkLogin = [
     body('token')
         .notEmpty()
         .withMessage('Login token is required')
-        .isLength({ min: 10 })
         .withMessage('Invalid login token format')
 ];
 

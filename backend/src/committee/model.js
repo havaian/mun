@@ -57,7 +57,7 @@ const countrySchema = new mongoose.Schema({
     },
 
     // Track if login token is active - replaces isQrActive
-    isLoginActive: {
+    isActive: {
         type: Boolean,
         default: true
     },
@@ -259,7 +259,7 @@ committeeSchema.methods.generateLoginTokens = function () {
     this.countries.forEach(country => {
         if (!country.loginToken) {
             country.loginToken = crypto.randomBytes(32).toString('hex');
-            country.isLoginActive = true;
+            country.isActive = true;
         }
     });
 };
@@ -281,7 +281,7 @@ committeeSchema.methods.addCountry = function (countryData) {
     const country = {
         ...countryData,
         loginToken: crypto.randomBytes(32).toString('hex'),
-        isLoginActive: true
+        isActive: true
     };
 
     this.countries.push(country);
@@ -331,7 +331,7 @@ committeeSchema.methods.regenerateLoginToken = function (countryName) {
     }
 
     country.loginToken = crypto.randomBytes(32).toString('hex');
-    country.isLoginActive = true;
+    country.isActive = true;
     country.email = null; // Reset email binding
     country.registeredAt = null;
 

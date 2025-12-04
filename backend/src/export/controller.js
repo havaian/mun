@@ -57,7 +57,7 @@ const generateCommitteeLinks = async (req, res) => {
             loginToken: country.loginToken,
             isObserver: country.isObserver,
             specialRole: country.specialRole,
-            isActive: country.isLoginActive !== false // Default to true if not set
+            isActive: country.isActive !== false // Default to true if not set
         }));
 
         if (format === 'plain') {
@@ -120,7 +120,7 @@ const generatePresidiumLinks = async (req, res) => {
         const presidiumMembers = await User.find({
             committeeId: committeeId,
             role: 'presidium'
-        }).select('presidiumRole loginToken isLoginActive').lean();
+        }).select('presidiumRole loginToken isActive').lean();
 
         // Ensure all presidium members have login tokens
         const updates = [];
@@ -130,7 +130,7 @@ const generatePresidiumLinks = async (req, res) => {
                 updates.push(
                     User.findByIdAndUpdate(member._id, {
                         loginToken: member.loginToken,
-                        isLoginActive: true
+                        isActive: true
                     })
                 );
             }
@@ -148,7 +148,7 @@ const generatePresidiumLinks = async (req, res) => {
             role: member.presidiumRole,
             link: `${baseUrl}/auth/login?token=${member.loginToken}`, // Use proper login route
             loginToken: member.loginToken,
-            isActive: member.isLoginActive !== false // Default to true if not set
+            isActive: member.isActive !== false // Default to true if not set
         }));
 
         if (format === 'plain') {
@@ -226,7 +226,7 @@ const generateCompleteLinks = async (req, res) => {
         const presidiumMembers = await User.find({
             committeeId: committeeId,
             role: 'presidium'
-        }).select('presidiumRole loginToken isLoginActive').lean();
+        }).select('presidiumRole loginToken isActive').lean();
 
         // Ensure presidium members have login tokens
         const updates = [];
@@ -236,7 +236,7 @@ const generateCompleteLinks = async (req, res) => {
                 updates.push(
                     User.findByIdAndUpdate(member._id, {
                         loginToken: member.loginToken,
-                        isLoginActive: true
+                        isActive: true
                     })
                 );
             }
@@ -255,7 +255,7 @@ const generateCompleteLinks = async (req, res) => {
             name: formatPresidiumRole(member.presidiumRole),
             link: `${baseUrl}/auth/login?token=${member.loginToken}`, // Use proper login route
             loginToken: member.loginToken,
-            isActive: member.isLoginActive !== false
+            isActive: member.isActive !== false
         }));
 
         const delegateLinks = committee.countries.map(country => ({
@@ -266,7 +266,7 @@ const generateCompleteLinks = async (req, res) => {
             loginToken: country.loginToken,
             isObserver: country.isObserver,
             specialRole: country.specialRole,
-            isActive: country.isLoginActive !== false
+            isActive: country.isActive !== false
         }));
 
         const allLinks = [...presidiumLinks, ...delegateLinks];

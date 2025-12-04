@@ -65,7 +65,7 @@ const createCommittee = async (req, res) => {
                     presidiumRole: role,
                     committeeId: committee._id,
                     loginToken: loginToken,          // Add loginToken (required)
-                    isLoginActive: true,             // Use isLoginActive instead of isQrActive
+                    isActive: true,             // Use isActive instead of isQrActive
                     isActive: true
                     // No username, password, or email needed
                 });

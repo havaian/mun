@@ -453,7 +453,7 @@ router.get('/:id/login-links',
             committee.countries.forEach(country => {
                 if (!country.loginToken) {
                     country.loginToken = crypto.randomBytes(32).toString('hex');
-                    country.isLoginActive = true;
+                    country.isActive = true;
                     needsUpdate = true;
                 }
             });
@@ -471,7 +471,7 @@ router.get('/:id/login-links',
                 loginToken: country.loginToken,
                 isObserver: country.isObserver,
                 specialRole: country.specialRole,
-                isActive: country.isLoginActive
+                isActive: country.isActive
             }));
 
             logger.info(`Generated ${delegateLinks.length} delegate login links for committee: ${committee.name}`);
@@ -528,7 +528,7 @@ router.post('/:id/login-links/regenerate',
             // Generate new login tokens for all countries
             committee.countries.forEach(country => {
                 country.loginToken = crypto.randomBytes(32).toString('hex');
-                country.isLoginActive = true;
+                country.isActive = true;
                 country.email = null; // Reset email binding
             });
 
@@ -540,7 +540,7 @@ router.post('/:id/login-links/regenerate',
                     { countryName: country.name, committeeId: id },
                     {
                         loginToken: country.loginToken,
-                        isLoginActive: true,
+                        isActive: true,
                         email: null,
                         sessionId: null
                     }
@@ -611,7 +611,7 @@ router.post('/:id/login-links/:countryName/regenerate',
 
             // Generate new login token
             country.loginToken = crypto.randomBytes(32).toString('hex');
-            country.isLoginActive = true;
+            country.isActive = true;
             country.email = null; // Reset email binding
 
             await committee.save();
@@ -621,7 +621,7 @@ router.post('/:id/login-links/:countryName/regenerate',
                 { countryName, committeeId: id },
                 {
                     loginToken: country.loginToken,
-                    isLoginActive: true,
+                    isActive: true,
                     email: null,
                     sessionId: null
                 }
@@ -682,7 +682,7 @@ router.post('/:committeeId/presidium/generate-links',
             for (const member of presidiumMembers) {
                 if (!member.loginToken) {
                     member.loginToken = crypto.randomBytes(32).toString('hex');
-                    member.isLoginActive = true;
+                    member.isActive = true;
                     await member.save();
                     updatedCount++;
                 }
@@ -694,7 +694,7 @@ router.post('/:committeeId/presidium/generate-links',
                 role: member.presidiumRole,
                 link: `${baseUrl}/login/${member.loginToken}`,
                 loginToken: member.loginToken,
-                isActive: member.isLoginActive
+                isActive: member.isActive
             }));
 
             logger.info(`Generated login links for ${presidiumMembers.length} presidium members in committee ${committeeId}`);
@@ -740,12 +740,12 @@ router.get('/:committeeId/presidium/status',
             const presidiumMembers = await User.find({
                 committeeId: committeeId,
                 role: 'presidium'
-            }).select('presidiumRole loginToken isLoginActive email');
+            }).select('presidiumRole loginToken isActive email');
 
             const presidiumStatus = presidiumMembers.map(member => ({
                 role: member.presidiumRole,
                 hasLoginLink: !!member.loginToken,
-                isActive: member.isLoginActive,
+                isActive: member.isActive,
                 hasEmail: !!member.email
             }));
 
@@ -791,7 +791,7 @@ router.post('/:committeeId/presidium/:role/reset-link',
 
             // Generate new login token
             presidiumUser.loginToken = crypto.randomBytes(32).toString('hex');
-            presidiumUser.isLoginActive = true;
+            presidiumUser.isActive = true;
             presidiumUser.email = null; // Reset email binding
             presidiumUser.sessionId = null;
 

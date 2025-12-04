@@ -196,7 +196,7 @@ const linkLogin = async (req, res) => {
         // Find user by login token (delegate OR presidium)
         const user = await User.findOne({
             loginToken: token,
-            isLoginActive: true,
+            isActive: true,
             role: { $in: ['delegate', 'presidium'] }
         }).populate('committeeId');
 
@@ -274,7 +274,7 @@ const bindEmail = async (req, res) => {
         // Find user by login token (delegate OR presidium)
         const user = await User.findOne({
             loginToken: token,
-            isLoginActive: true,
+            isActive: true,
             role: { $in: ['delegate', 'presidium'] }
         }).populate('committeeId');
 
@@ -286,7 +286,7 @@ const bindEmail = async (req, res) => {
 
         // Bind email and deactivate login link
         user.email = email.toLowerCase();
-        user.isLoginActive = false; // Link can no longer be used for first-time registration
+        user.isActive = false; // Link can no longer be used for first-time registration
         user.lastLogin = new Date();
         user.lastActivity = new Date();
 
@@ -538,8 +538,8 @@ const checkLinkStatus = async (req, res) => {
 
         res.json({
             success: true,
-            isActive: user.isLoginActive,
-            isUsed: !user.isLoginActive,
+            isActive: user.isActive,
+            isUsed: !user.isActive,
             userType: user.role,
             committeeId: user.committeeId._id,
             committeeName: user.committeeId.name,
@@ -580,7 +580,7 @@ const reactivateLink = async (req, res) => {
         }
 
         // Reactivate login link and clear email
-        user.isLoginActive = true;
+        user.isActive = true;
         user.email = null;
         user.sessionId = null;
 

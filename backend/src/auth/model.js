@@ -42,7 +42,7 @@ const userSchema = new mongoose.Schema({
     },
 
     // Track if login token is active - replaces isQrActive
-    isLoginActive: {
+    isActive: {
         type: Boolean,
         default: true
     },
