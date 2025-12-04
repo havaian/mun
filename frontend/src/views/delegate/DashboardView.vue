@@ -65,7 +65,7 @@
         </div>
 
         <!-- Session Status -->
-        <div class="mun-card p-6">
+        <!-- <div class="mun-card p-6">
             <h2 class="text-lg font-semibold text-mun-gray-900 mb-4">Current Session</h2>
             <div v-if="currentSession" class="space-y-4">
                 <div class="flex items-center justify-between">
@@ -83,7 +83,7 @@
                     </span>
                 </div>
 
-                <!-- Speakers List Position -->
+                <!-- Speakers List Position
                 <div v-if="speakersPosition" class="p-4 bg-mun-blue/5 border border-mun-blue/20 rounded-lg">
                     <div class="flex items-center justify-between">
                         <div>
@@ -96,7 +96,7 @@
                     </div>
                 </div>
 
-                <!-- Current Speaker -->
+                <!-- Current Speaker
                 <div v-if="currentSpeaker" class="p-4 bg-mun-yellow-50 border border-mun-yellow-200 rounded-lg">
                     <div class="flex items-center justify-between">
                         <div>
@@ -110,7 +110,7 @@
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
+                <!-- Quick Actions
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <button @click="joinSpeakersList" :disabled="!!speakersPosition"
                         class="btn-un-primary text-center py-3">
@@ -144,7 +144,7 @@
                 <h3 class="mt-4 text-lg font-medium text-mun-gray-900">No Active Session</h3>
                 <p class="mt-2 text-mun-gray-600">Committee session has not started yet</p>
             </div>
-        </div>
+        </div> -->
 
         <!-- Recent Activity & Tasks -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
