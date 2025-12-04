@@ -463,6 +463,18 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    const setAuthData = async (tokenValue, userData) => {
+        token.value = tokenValue
+        user.value = userData
+        localStorage.setItem('mun_token', tokenValue)
+        
+        // Clear validation cache
+        _clearValidationCache()
+        
+        // Setup token refresh
+        setupTokenRefresh()
+    }
+
     return {
         // State
         lastActivity,
@@ -492,6 +504,7 @@ export const useAuthStore = defineStore('auth', () => {
         initializeAuth,
         getDashboardRoute,
         hasPermission,
+        setAuthData,
 
         // LEGACY: Deprecated methods
         qrLogin // Will show deprecation warning
