@@ -181,10 +181,7 @@ export const apiMethods = {
         bindEmail: (data) => api.post('/auth/bind-email', data),
         
         // Updated email login to support login token verification
-        emailLogin: (email, loginToken = null) => api.post('/auth/email-login', { 
-            email, 
-            ...(loginToken && { loginToken }) 
-        }),
+        emailLogin: (data) => api.post('/auth/email-login', data),
         
         logout: () => api.post('/auth/logout'),
         validateSession: () => api.get('/auth/validate-session'),
