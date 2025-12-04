@@ -33,6 +33,7 @@ const validateLinkLogin = [
     body('token')
         .notEmpty()
         .withMessage('Login token is required')
+        .isLength({ min: 10 })
         .withMessage('Invalid login token format')
 ];
 
@@ -44,7 +45,7 @@ const validateEmailBinding = [
     body('email')
         .isEmail()
         .withMessage('Valid email address is required')
-        .normalizeEmail()
+        .toLowerCase()
 ];
 
 // Email login validation
@@ -52,7 +53,7 @@ const validateEmailLogin = [
     body('email')
         .isEmail()
         .withMessage('Valid email address is required')
-        .normalizeEmail(),
+        .toLowerCase(),
     body('loginToken')
         .optional()
         .isLength({ min: 10 })
