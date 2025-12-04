@@ -462,7 +462,7 @@ router.get('/:id/login-links',
                 await committee.save();
             }
 
-            const baseUrl = process.env.FRONTEND_URL || 'https://mun.uz';
+            const baseUrl = process.env.PROJECT_URL || 'https://mun.uz';
 
             // Generate delegate links
             const delegateLinks = committee.countries.map(country => ({
@@ -688,7 +688,7 @@ router.post('/:committeeId/presidium/generate-links',
                 }
             }
 
-            const baseUrl = process.env.FRONTEND_URL || 'https://mun.uz';
+            const baseUrl = process.env.PROJECT_URL || 'https://mun.uz';
 
             const presidiumLinks = presidiumMembers.map(member => ({
                 role: member.presidiumRole,

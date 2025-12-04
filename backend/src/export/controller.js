@@ -48,7 +48,7 @@ const generateCommitteeLinks = async (req, res) => {
             });
         }
 
-        const baseUrl = process.env.FRONTEND_URL || 'https://mun.uz';
+        const baseUrl = process.env.PROJECT_URL || 'https://mun.uz';
 
         // Generate delegate links
         const delegateLinks = committee.countries.map(country => ({
@@ -141,7 +141,7 @@ const generatePresidiumLinks = async (req, res) => {
             await Promise.all(updates);
         }
 
-        const baseUrl = process.env.FRONTEND_URL || 'https://mun.uz';
+        const baseUrl = process.env.PROJECT_URL || 'https://mun.uz';
 
         // Generate presidium links
         const presidiumLinks = presidiumMembers.map(member => ({
@@ -246,7 +246,7 @@ const generateCompleteLinks = async (req, res) => {
             await Promise.all(updates);
         }
 
-        const baseUrl = process.env.FRONTEND_URL || 'https://mun.uz';
+        const baseUrl = process.env.PROJECT_URL || 'https://mun.uz';
 
         // Generate all links
         const presidiumLinks = presidiumMembers.map(member => ({
