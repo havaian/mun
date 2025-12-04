@@ -87,6 +87,18 @@ const eventSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
+    },
+
+    // Soft delete fields
+    deletedAt: {
+        type: Date,
+        default: null
+    },
+
+    deletedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
     }
 }, {
     timestamps: true,
@@ -97,6 +109,20 @@ const eventSchema = new mongoose.Schema({
 eventSchema.index({ status: 1, startDate: 1 });
 eventSchema.index({ createdBy: 1 });
 eventSchema.index({ 'settings.registrationDeadline': 1 });
+eventSchema.index({ deletedAt: 1 });
+
+// Query middleware to exclude soft deleted events
+eventSchema.pre(/^find/, function () {
+    this.where({ deletedAt: null });
+});
+
+eventSchema.pre('aggregate', function () {
+    this.pipeline().unshift({ $match: { deletedAt: null } });
+});
+
+eventSchema.pre('countDocuments', function () {
+    this.where({ deletedAt: null });
+});
 
 // Virtual for event duration
 eventSchema.virtual('duration').get(function () {
@@ -140,6 +166,25 @@ eventSchema.methods.updateStatistics = async function () {
     await this.save();
 };
 
+// Soft delete method
+eventSchema.methods.softDelete = function (deletedByUserId) {
+    this.deletedAt = new Date();
+    this.deletedBy = deletedByUserId;
+    return this.save();
+};
+
+// Restore method
+eventSchema.methods.restore = function () {
+    this.deletedAt = null;
+    this.deletedBy = null;
+    return this.save();
+};
+
+// Static method to find deleted events
+eventSchema.statics.findOneDeleted = function (filter) {
+    return this.findOne({ ...filter, deletedAt: { $ne: null } });
+};
+
 // New Pre-save middleware to set qrExpirationPeriod default
 eventSchema.pre('save', function (next) {
     // Check if the qrExpirationPeriod has NOT been set by the user (is new or modified)
@@ -152,7 +197,7 @@ eventSchema.pre('save', function (next) {
     if (!this.settings.qrExpirationPeriod) {
         this.settings.qrExpirationPeriod = this.endDate;
     }
-    
+
     next();
 });
 

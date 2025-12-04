@@ -223,6 +223,18 @@ const committeeSchema = new mongoose.Schema({
             type: Number,
             default: 0
         }
+    },
+
+    // Soft delete fields
+    deletedAt: {
+        type: Date,
+        default: null
+    },
+
+    deletedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
     }
 }, {
     timestamps: true,
@@ -235,9 +247,23 @@ committeeSchema.index({ type: 1 });
 committeeSchema.index({ 'countries.name': 1 });
 committeeSchema.index({ 'countries.loginToken': 1 }, { sparse: true }); // was qrToken
 committeeSchema.index({ 'presidium.userId': 1 });
+committeeSchema.index({ deletedAt: 1 });
 
 // Ensure unique country names within committee
 committeeSchema.index({ _id: 1, 'countries.name': 1 }, { unique: true });
+
+// Query middleware to exclude soft deleted committees
+committeeSchema.pre(/^find/, function () {
+    this.where({ deletedAt: null });
+});
+
+committeeSchema.pre('aggregate', function () {
+    this.pipeline().unshift({ $match: { deletedAt: null } });
+});
+
+committeeSchema.pre('countDocuments', function () {
+    this.where({ deletedAt: null });
+});
 
 // Virtual for active country count
 committeeSchema.virtual('activeCountryCount').get(function () {
@@ -370,6 +396,25 @@ committeeSchema.methods.removePresidiumMember = function (role) {
 // Method to get presidium member by role
 committeeSchema.methods.getPresidiumMember = function (role) {
     return this.presidium.find(member => member.role === role);
+};
+
+// Soft delete method
+committeeSchema.methods.softDelete = function (deletedByUserId) {
+    this.deletedAt = new Date();
+    this.deletedBy = deletedByUserId;
+    return this.save();
+};
+
+// Restore method
+committeeSchema.methods.restore = function () {
+    this.deletedAt = null;
+    this.deletedBy = null;
+    return this.save();
+};
+
+// Static method to find deleted committees
+committeeSchema.statics.findOneDeleted = function (filter) {
+    return this.findOne({ ...filter, deletedAt: { $ne: null } });
 };
 
 const Committee = mongoose.model('Committee', committeeSchema);

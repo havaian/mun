@@ -529,14 +529,8 @@ const deleteCommittee = async (req, res) => {
             return res.status(404).json({ error: 'Committee not found' });
         }
 
-        // Check if committee has active sessions, resolutions, etc.
-        // TODO: Add checks for related data when those modules are implemented
-
-        // Remove all User records associated with this committee
-        await User.deleteMany({ committeeId: id });
-
-        // Delete the committee
-        await Committee.findByIdAndDelete(id);
+        // Soft delete the committee
+        await committee.softDelete(req.user.userId);
 
         // Update event statistics
         const event = await Event.findById(committee.eventId);
@@ -544,7 +538,7 @@ const deleteCommittee = async (req, res) => {
             await event.updateStatistics();
         }
 
-        logger.info(`Committee deleted: ${committee.name}`);
+        logger.info(`Committee soft deleted: ${committee.name} by ${req.user.userId}`);
 
         res.json({
             success: true,
@@ -554,6 +548,45 @@ const deleteCommittee = async (req, res) => {
     } catch (error) {
         logger.error('Delete committee error:', error);
         res.status(500).json({ error: 'Failed to delete committee' });
+    }
+};
+
+// Restore committee (admin only)
+const restoreCommittee = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find including soft-deleted committees
+        const committee = await Committee.findOneDeleted({ _id: id });
+
+        if (!committee) {
+            return res.status(404).json({ error: 'Committee not found' });
+        }
+
+        if (!committee.deletedAt) {
+            return res.status(400).json({ error: 'Committee is not deleted' });
+        }
+
+        // Restore the committee
+        await committee.restore();
+
+        // Update event statistics
+        const event = await Event.findById(committee.eventId);
+        if (event) {
+            await event.updateStatistics();
+        }
+
+        logger.info(`Committee restored: ${committee.name} by ${req.user.userId}`);
+
+        res.json({
+            success: true,
+            committee,
+            message: 'Committee restored successfully'
+        });
+
+    } catch (error) {
+        logger.error('Restore committee error:', error);
+        res.status(500).json({ error: 'Failed to restore committee' });
     }
 };
 
@@ -815,6 +848,7 @@ module.exports = {
     generateQRCodes,
     updatePresidium,
     deleteCommittee,
+    restoreCommittee,
     generatePresidiumQRs,
     getPresidiumStatus,
     resetPresidiumQR,

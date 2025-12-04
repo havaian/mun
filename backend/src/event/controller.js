@@ -241,20 +241,18 @@ const deleteEvent = async (req, res) => {
             return res.status(404).json({ error: 'Event not found' });
         }
 
-        // Check if event has committees
-        const Committee = require('../committee/model').Committee;
-        const committeeCount = await Committee.countDocuments({ eventId: id });
-
-        if (committeeCount > 0) {
+        // Prevent deletion of active events
+        if (event.status === 'active') {
             return res.status(400).json({
-                error: 'Cannot delete event with existing committees',
-                details: `Event has ${committeeCount} committee(s). Delete committees first.`
+                error: 'Cannot delete active events',
+                details: 'Please change event status before deletion'
             });
         }
 
-        await Event.findByIdAndDelete(id);
+        // Soft delete the event
+        await event.softDelete(req.user.userId);
 
-        logger.info(`Event deleted: ${event.name} by ${req.user.userId}`);
+        logger.info(`Event soft deleted: ${event.name} by ${req.user.userId}`);
 
         res.json({
             success: true,
@@ -264,6 +262,39 @@ const deleteEvent = async (req, res) => {
     } catch (error) {
         logger.error('Delete event error:', error);
         res.status(500).json({ error: 'Failed to delete event' });
+    }
+};
+
+// Restore event (admin only)
+const restoreEvent = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find including soft-deleted events by skipping middleware
+        const event = await Event.findOneDeleted({ _id: id });
+
+        if (!event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        if (!event.deletedAt) {
+            return res.status(400).json({ error: 'Event is not deleted' });
+        }
+
+        // Restore the event
+        await event.restore();
+
+        logger.info(`Event restored: ${event.name} by ${req.user.userId}`);
+
+        res.json({
+            success: true,
+            event,
+            message: 'Event restored successfully'
+        });
+
+    } catch (error) {
+        logger.error('Restore event error:', error);
+        res.status(500).json({ error: 'Failed to restore event' });
     }
 };
 
@@ -322,5 +353,6 @@ module.exports = {
     updateEvent,
     updateEventStatus,
     deleteEvent,
+    restoreEvent,
     getEventStatistics
 };
