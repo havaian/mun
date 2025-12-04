@@ -248,6 +248,111 @@
                             </p>
                         </div>
                     </div>
+
+                    <!-- Link Login (Email Binding or Login) -->
+                    <div v-else-if="currentView === 'link'" key="link">
+                        <!-- Loading State -->
+                        <div v-if="isLinkProcessing" class="text-center py-8">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-mun-blue mx-auto mb-4"></div>
+                            <p class="text-mun-gray-600">Verifying login link...</p>
+                        </div>
+
+                        <!-- Error State -->
+                        <div v-else-if="linkError" class="text-center py-8">
+                            <ExclamationTriangleIcon class="w-12 h-12 text-red-500 mx-auto mb-4" />
+                            <h3 class="text-lg font-semibold text-mun-gray-900 mb-2">Login Link Invalid</h3>
+                            <p class="text-red-600 mb-4">{{ linkError }}</p>
+                            <AppButton @click="currentView = 'selection'" variant="outline" class="w-full">
+                                Back to Login Options
+                            </AppButton>
+                        </div>
+
+                        <!-- Link Login Form -->
+                        <div v-else>
+                            <!-- Committee Info -->
+                            <div v-if="linkInfo" class="text-center mb-6 p-4 bg-mun-blue-50 rounded-xl">
+                                <h3 class="text-lg font-semibold text-mun-gray-900">{{ linkInfo.committeeName }}</h3>
+                                <div class="flex items-center justify-center space-x-2 mt-2">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-mun-blue-100 text-mun-blue-800">
+                                        {{ linkInfo.userType }}
+                                    </span>
+                                    <span v-if="linkInfo.countryName" class="text-sm text-mun-gray-600">
+                                        {{ linkInfo.countryName }}
+                                    </span>
+                                    <span v-if="linkInfo.presidiumRole" class="text-sm text-mun-gray-600">
+                                        {{ linkInfo.presidiumRole }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- First Time User (Email Binding) -->
+                            <div v-if="requiresEmailBinding">
+                                <h2 class="text-xl font-semibold text-mun-gray-900 mb-2">Welcome!</h2>
+                                <p class="text-mun-gray-600 mb-6">Please enter your email address to complete registration.</p>
+                                
+                                <form @submit.prevent="handleEmailBinding">
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Email Address
+                                        </label>
+                                        <input
+                                            v-model="linkEmail"
+                                            type="email"
+                                            required
+                                            :disabled="authStore.isLoading"
+                                            class="input-field w-full"
+                                            placeholder="your.email@example.com"
+                                        />
+                                        <p class="text-xs text-mun-gray-500 mt-1">
+                                            This email will be used for future logins
+                                        </p>
+                                    </div>
+
+                                    <AppButton 
+                                        type="submit" 
+                                        :loading="authStore.isLoading" 
+                                        variant="primary" 
+                                        size="lg"
+                                        full-width
+                                    >
+                                        Complete Registration
+                                    </AppButton>
+                                </form>
+                            </div>
+
+                            <!-- Returning User (Email Login) -->
+                            <div v-else>
+                                <h2 class="text-xl font-semibold text-mun-gray-900 mb-2">Welcome Back!</h2>
+                                <p class="text-mun-gray-600 mb-6">Enter your registered email to continue.</p>
+                                
+                                <form @submit.prevent="handleLinkEmailLogin">
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                                            Email Address
+                                        </label>
+                                        <input
+                                            v-model="linkEmail"
+                                            type="email"
+                                            required
+                                            :disabled="authStore.isLoading"
+                                            class="input-field w-full"
+                                            placeholder="your.email@example.com"
+                                        />
+                                    </div>
+
+                                    <AppButton 
+                                        type="submit" 
+                                        :loading="authStore.isLoading" 
+                                        variant="primary" 
+                                        size="lg" 
+                                        full-width
+                                    >
+                                        Sign In
+                                    </AppButton>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </transition>
             </div>
         </div>
@@ -285,8 +390,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, nextTick, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, nextTick, onUnmounted, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import jsQR from 'jsqr'
@@ -303,6 +408,7 @@ import {
     StopIcon
 } from '@heroicons/vue/24/outline'
 
+const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const toast = useToast()
@@ -335,6 +441,12 @@ const availableCameras = ref([])
 const currentCameraIndex = ref(0)
 const lastScanTime = ref(0)
 const scanCooldown = 2000 // 2 seconds between scans
+const linkInfo = ref(null)
+const requiresEmailBinding = ref(false)
+const loginToken = ref('')
+const linkEmail = ref('')
+const isLinkProcessing = ref(false)
+const linkError = ref('')
 
 // Methods
 const handleAdminLogin = async () => {
@@ -634,6 +746,88 @@ const closeManualEntry = () => {
     showManualEntry.value = false
     manualCode.value = ''
 }
+
+const verifyLoginLink = async (token) => {
+    try {
+        isLinkProcessing.value = true
+        linkError.value = ''
+        loginToken.value = token
+
+        const response = await authStore.linkLogin({ token })
+        
+        if (response.success) {
+            linkInfo.value = {
+                committeeName: response.data.committee.name,
+                userType: response.data.userType,
+                countryName: response.data.countryName,
+                presidiumRole: response.data.presidiumRole
+            }
+
+            requiresEmailBinding.value = response.data.firstTime || false
+            currentView.value = 'link'
+
+            if (response.data.firstTime) {
+                toast.success('Welcome! Please complete your registration.')
+            } else {
+                toast.log('Please enter your registered email to continue.')
+            }
+        }
+
+    } catch (err) {
+        console.error('Link verification error:', err)
+        linkError.value = err.response?.data?.error || 'Failed to verify login link'
+        currentView.value = 'link'
+        toast.error(linkError.value)
+    } finally {
+        isLinkProcessing.value = false
+    }
+}
+
+const handleEmailBinding = async () => {
+    try {        
+        const response = await authStore.bindEmail({
+            token: loginToken.value,
+            email: linkEmail.value
+        })
+
+        if (response.success) {
+            toast.success(response.data.message || 'Registration completed successfully!')
+            router.push({ name: authStore.getDashboardRoute() })
+        }
+
+    } catch (err) {
+        console.error('Email binding error:', err)
+        const errorMsg = err.response?.data?.error || 'Failed to complete registration'
+        toast.error(errorMsg)
+    }
+}
+
+const handleLinkEmailLogin = async () => {
+    try {        
+        const response = await authStore.linkEmailLogin({
+            email: linkEmail.value,
+            loginToken: loginToken.value
+        })
+
+        if (response.success) {
+            toast.success('Login successful!')
+            router.push({ name: authStore.getDashboardRoute() })
+        }
+
+    } catch (err) {
+        console.error('Email login error:', err)
+        const errorMsg = err.response?.data?.error || 'Failed to sign in'
+        toast.error(errorMsg)
+    }
+}
+
+onMounted(() => {
+    // Check if there's a token in the URL
+    const token = route.query.token
+    if (token) {
+        verifyLoginLink(token)
+    }
+})
 
 // Cleanup on unmount
 onUnmounted(() => {

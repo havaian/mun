@@ -152,79 +152,41 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    // Link login with retry
-    const linkLogin = async (loginToken) => {
+    const linkLogin = async (data) => {
         try {
-            isLoading.value = true
-
-            const response = await retryOperation(() =>
-                apiMethods.auth.linkLogin(loginToken)
-            )
-
-            if (response.data.success) {
-                setupTokenRefresh()
-                return {
-                    success: true,
-                    data: {
-                        userType: response.data.userType,
-                        country: response.data.countryName,
-                        presidiumRole: response.data.presidiumRole,
-                        committee: response.data.committee,
-                        loginToken: response.data.loginToken,
-                        firstTime: response.data.firstTime,
-                        message: response.data.message
-                    }
-                }
-            }
-
-            return { success: false, error: 'Login link verification failed' }
-
+            const response = await apiMethods.auth.linkLogin(data)
+            return { success: true, data: response.data }
         } catch (error) {
-            const message = error.response?.data?.error || 'Link verification failed'
-            return { success: false, error: message }
-        } finally {
-            isLoading.value = false
+            return { success: false, error }
         }
     }
 
-    // Email binding with retry
-    const bindEmail = async (loginToken, email) => {
+    const bindEmail = async (data) => {
         try {
-            isLoading.value = true
-
-            const response = await retryOperation(() =>
-                apiMethods.auth.bindEmail(loginToken, email)
-            )
-
+            const response = await apiMethods.auth.bindEmail(data)
+            
             if (response.data.success) {
-                token.value = response.data.token
-                user.value = response.data.user
-
-                localStorage.setItem('mun_token', token.value)
-
-                // Clear validation cache since we have new auth data
-                _clearValidationCache()
-
-                const userType = user.value.role === 'delegate' ?
-                    user.value.countryName :
-                    formatPresidiumRole(user.value.presidiumRole)
-
-                toast.success(`Welcome, ${userType}! Registration completed.`)
-
-                setupTokenRefresh()
-                return { success: true }
+                await setAuthData(response.data.token, response.data.user)
+                return { success: true, data: response.data }
             }
-
-            return { success: false, error: 'Email binding failed' }
-
         } catch (error) {
-            const message = error.response?.data?.error || 'Email binding failed'
-            toast.error(message)
-            return { success: false, error: message }
-        } finally {
-            isLoading.value = false
+            return { success: false, error }
         }
     }
+
+    const linkEmailLogin = async (data) => {
+        try {
+            const response = await apiMethods.auth.emailLogin(data)
+            
+            if (response.data.success) {
+                await setAuthData(response.data.token, response.data.user)
+                return { success: true, data: response.data }
+            }
+        } catch (error) {
+            return { success: false, error }
+        }
+    }
+
 
     // Email login with retry
     const emailLogin = async (email, loginToken = null) => {
@@ -499,6 +461,7 @@ export const useAuthStore = defineStore('auth', () => {
         adminLogin,
         linkLogin,
         bindEmail,
+        linkEmailLogin,
         emailLogin,
         logout,
         validateSession,

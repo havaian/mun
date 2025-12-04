@@ -172,13 +172,13 @@ export const apiMethods = {
         adminLogin: (credentials) => api.post('/auth/admin-login', credentials),
         
         // Link login replaces qrLogin
-        linkLogin: (token) => api.post('/auth/link-login', { token }),
+        linkLogin: (data) => api.post('/auth/link-login', data),
 
         refreshToken: () => api.post('/auth/refresh-token'),
         refreshToken: () => api.post('/auth/refresh-token'),
         
         // Updated to use login tokens instead of QR tokens
-        bindEmail: (token, email) => api.post('/auth/bind-email', { token, email }),
+        bindEmail: (data) => api.post('/auth/bind-email', data),
         
         // Updated email login to support login token verification
         emailLogin: (email, loginToken = null) => api.post('/auth/email-login', { 
