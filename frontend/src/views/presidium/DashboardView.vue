@@ -297,11 +297,7 @@ const loadDashboardData = async () => {
 
         // Load pending documents count
         try {
-            const docsResponse = await apiMethods.documents.getAll({
-                committeeId: committeeId,
-                status: 'pending',
-                limit: 5
-            })
+            const docsResponse = await apiMethods.documents.getByCommitteeId(committeeId)
             if (docsResponse.data.success) {
                 stats.pendingDocuments = docsResponse.data.total || docsResponse.data.documents?.length || 0
                 recentDocuments.value = docsResponse.data.documents?.slice(0, 3) || []

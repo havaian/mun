@@ -324,7 +324,7 @@ export const apiMethods = {
     documents: {
         // ✅ IMPLEMENTED - Basic Document Management
         getAll: (params = {}) => api.get('/documents/', { params }),
-        getById: (id) => api.get(`/documents/${id}`), // NOT USED
+        getByCommitteeId: (id) => api.get(`/documents/public/${id}`),
 
         // ⚠️ MISMATCH - General upload route missing
         upload: (formData) => api.post('/documents/', formData, { // MISMATCH: Backend has no general '/documents/' POST route, only specific ones // NOT USED
