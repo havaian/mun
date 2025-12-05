@@ -396,6 +396,8 @@ onUnmounted(() => {
     }
 })
 
+console.log(currentSession);
+
 // Watch for real-time updates
 watch(() => wsStore.sessionUpdates[currentSession.value?._id], (update) => {
     if (update && currentSession.value) {
@@ -421,6 +423,8 @@ watch(() => {
         }
     }
 }, { deep: true })
+
+console.log(wsStore.votingUpdates)
 
 // Watch for voting updates
 watch(() => Object.values(wsStore.votingUpdates), (votings) => {

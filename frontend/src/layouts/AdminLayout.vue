@@ -103,14 +103,14 @@ const navigationSections = computed(() => [
                 to: '/admin/reports',
                 icon: DocumentChartBarIcon
             },
-            {
-                name: 'AdminLogs',
-                label: 'System Logs',
-                to: '/admin/logs',
-                icon: ClipboardDocumentListIcon,
-                badge: adminStore.stats.recentErrors > 0 ? adminStore.stats.recentErrors : null,
-                badgeType: 'danger'
-            }
+            // {
+            //     name: 'AdminLogs',
+            //     label: 'System Logs',
+            //     to: '/admin/logs',
+            //     icon: ClipboardDocumentListIcon,
+            //     badge: adminStore.stats.recentErrors > 0 ? adminStore.stats.recentErrors : null,
+            //     badgeType: 'danger'
+            // }
         ]
     },
     // {
