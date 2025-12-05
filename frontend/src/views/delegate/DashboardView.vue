@@ -290,7 +290,7 @@ const stats = ref({
 })
 
 // Computed
-const committeeId = computed(() => authStore.user?.committeeId)
+const committeeId = computed(() => authStore.user?.committeeId?._id)
 const countryName = computed(() => authStore.user?.countryName)
 
 // Methods

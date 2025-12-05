@@ -184,7 +184,7 @@ const sessions = ref([])
 const showCreateModal = ref(false)
 const changeModeModal = ref(false)
 
-const committeeId = computed(() => authStore.user?.committeeId)
+const committeeId = computed(() => authStore.user?.committeeId?._id)
 const activeSession = computed(() => sessions.value.find(s => s.status === 'active' || s.status === 'paused'))
 
 // Methods

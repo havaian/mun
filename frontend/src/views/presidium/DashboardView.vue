@@ -242,19 +242,7 @@ const recentDocuments = ref([])
 const recentActivity = ref([])
 
 // Computed
-const committeeId = computed(() => {
-    const id = authStore.user?.committeeId
-
-    console.log(authStore.user)
-    
-    // Ensure it's a string, not an object
-    if (typeof id === 'object' && id !== null) {
-        // If it's a MongoDB ObjectId object, get the string value
-        return id._id || id.toString()
-    }
-    
-    return typeof id === 'string' ? id : null
-})
+const committeeId = computed(() => authStore.user?.committeeId?._id)
 
 // Methods
 const loadDashboardData = async () => {
@@ -262,7 +250,7 @@ const loadDashboardData = async () => {
         isLoading.value = true
 
         // Get committee ID from auth store
-        const committeeId = authStore.user?.committeeId
+        const committeeId = authStore.user?.committeeId?._id
 
         if (!committeeId) {
             toast.error('No committee assigned to your account')

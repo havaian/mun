@@ -55,7 +55,7 @@ class WebSocketService {
 
             // Join committee room if user has committeeId
             if (this.authStore?.user?.committeeId) {
-                this.joinCommittee(this.authStore.user.committeeId)
+                this.joinCommittee(this.authStore.user.committeeId._id)
             }
 
             // Emit custom event

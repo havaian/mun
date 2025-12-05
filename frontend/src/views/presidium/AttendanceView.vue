@@ -267,7 +267,7 @@ const statusFilters = [
 ]
 
 // Computed
-const committeeId = computed(() => authStore.user?.committeeId)
+const committeeId = computed(() => authStore.user?.committeeId?._id)
 
 const filteredCountries = computed(() => {
     let filtered = countries.value
