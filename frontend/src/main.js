@@ -13,7 +13,6 @@ import Modal from './plugins/modal'
 import WebSocketPlugin from './plugins/websocket'
 import LoadingSpinner from './components/ui/LoadingSpinner.vue'
 import AppButton from './components/ui/AppButton.vue'
-import AppCard from './components/ui/AppCard.vue'
 import SleekSelect from './components/ui/SleekSelect.vue'
 import ModalWrapper from './components/ui/ModalWrapper.vue'
 import ConfirmationDialog from './components/ui/ConfirmationDialog.vue'
@@ -41,7 +40,6 @@ flagsStore.initializeFlags().then(() => {
 // Register global components
 app.component('LoadingSpinner', LoadingSpinner)
 app.component('AppButton', AppButton)
-app.component('AppCard', AppCard)
 app.component('SleekSelect', SleekSelect)
 app.component('ModalWrapper', ModalWrapper)
 app.component('ConfirmationDialog', ConfirmationDialog)
