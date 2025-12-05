@@ -10,7 +10,7 @@ require('dotenv').config();
 require('./db');
 
 // Set up global logger
-const { setupGlobalLogger } = require('./src/logger/globalLogger');
+const { setupGlobalLogger } = require('./logger/globalLogger');
 setupGlobalLogger();
 
 const { initializeWebSocket } = require('./websocket/socketManager');
