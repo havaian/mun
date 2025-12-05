@@ -1,7 +1,7 @@
 const { Event } = require('./model');
 const logger = require('../utils/logger');
 
-// Get all events (admin only)
+// Get all events (admin only) - UPDATED to include committee statistics
 const getAllEvents = async (req, res) => {
     try {
         const { status, page = 1, limit = 10 } = req.query;
@@ -12,12 +12,54 @@ const getAllEvents = async (req, res) => {
             filter.status = status;
         }
 
-        const events = await Event.find(filter)
-            .populate('createdBy', 'username role')
-            .sort({ startDate: -1 })
-            .skip(skip)
-            .limit(parseInt(limit));
+        // Use aggregation to efficiently get events with committee counts
+        const pipeline = [
+            { $match: filter },
+            {
+                $lookup: {
+                    from: 'committees',
+                    localField: '_id',
+                    foreignField: 'eventId',
+                    as: 'committees'
+                }
+            },
+            {
+                $addFields: {
+                    'statistics.totalCommittees': { $size: '$committees' },
+                    'statistics.totalParticipants': {
+                        $sum: {
+                            $map: {
+                                input: '$committees',
+                                as: 'committee',
+                                in: { $size: '$$committee.countries' }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'createdBy',
+                    foreignField: '_id',
+                    as: 'createdBy',
+                    pipeline: [{ $project: { username: 1, role: 1 } }]
+                }
+            },
+            {
+                $addFields: {
+                    createdBy: { $arrayElemAt: ['$createdBy', 0] }
+                }
+            },
+            { $project: { committees: 0 } }, // Remove the committees array to keep response clean
+            { $sort: { startDate: -1 } },
+            { $skip: skip },
+            { $limit: parseInt(limit) }
+        ];
 
+        const events = await Event.aggregate(pipeline);
+
+        // Get total count for pagination
         const totalEvents = await Event.countDocuments(filter);
 
         res.json({
@@ -107,7 +149,13 @@ const createEvent = async (req, res) => {
                 allowLateRegistration: settings.allowLateRegistration || false,
                 timezone: settings.timezone || 'UTC'
             },
-            createdBy: req.user.userId
+            createdBy: req.user.userId,
+            // Initialize statistics
+            statistics: {
+                totalCommittees: 0,
+                totalParticipants: 0,
+                totalCountries: 0
+            }
         };
 
         const event = new Event(eventData);
@@ -171,6 +219,9 @@ const updateEvent = async (req, res) => {
 
         await event.save();
         await event.populate('createdBy', 'username role');
+
+        // Update statistics after saving
+        await event.updateStatistics();
 
         logger.info(`Event updated: ${event.name} by ${req.user.userId}`);
 
@@ -239,6 +290,17 @@ const deleteEvent = async (req, res) => {
 
         if (!event) {
             return res.status(404).json({ error: 'Event not found' });
+        }
+
+        // Check if event has committees
+        const Committee = require('../committee/model').Committee;
+        const committeesCount = await Committee.countDocuments({ eventId: id });
+
+        if (committeesCount > 0) {
+            return res.status(400).json({
+                error: 'Cannot delete event with existing committees',
+                details: 'Please delete all committees first before deleting the event'
+            });
         }
 
         // Prevent deletion of active events
