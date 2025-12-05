@@ -308,10 +308,7 @@ const loadDashboardData = async () => {
 
         // Load active votings count
         try {
-            const votingsResponse = await apiMethods.voting.getAll({
-                committeeId: committeeId,
-                status: 'active'
-            })
+            const votingsResponse = await apiMethods.voting.loadCommitteeVotingDetails(committeeId)
             if (votingsResponse.data.success) {
                 stats.activeVotings = votingsResponse.data.votings?.length || 0
             }

@@ -184,9 +184,71 @@ export const useVotingStore = defineStore('voting', () => {
         }
     }
 
+    const loadCommitteeVotingHistory = async (committeeId) => {
+        try {
+            isLoading.value = true
+
+            const response = await apiMethods.voting.getAll({ committeeId })
+
+            if (response.data.success) {
+                votingHistory.value = response.data.votings || []
+
+                // Find active voting
+                const active = votingHistory.value.find(v => v.status === 'active')
+                if (active) {
+                    activeVoting.value = active
+                    await loadCommitteeVotingDetails(active._id)
+                }
+
+                // Update stats
+                updateVotingStats()
+            }
+
+        } catch (err) {
+            error.value = err.message
+            console.error('Load voting history error:', err)
+        } finally {
+            isLoading.value = false
+        }
+    }
+
     const loadVotingDetails = async (votingId) => {
         try {
             const response = await apiMethods.voting.getById(votingId)
+
+            if (response.data.success) {
+                const voting = response.data.voting
+
+                activeVoting.value = voting
+                votingType.value = voting.votingType || 'simple'
+                majorityType.value = voting.majorityType || 'simple'
+                eligibleVoters.value = voting.eligibleVoters || []
+                votes.value = voting.votes || []
+
+                // Update progress
+                updateProgress()
+
+                // Load results if completed
+                if (voting.status === 'completed') {
+                    Object.assign(results, voting.results || {})
+                }
+
+                // Setup roll call data if needed
+                if (voting.votingType === 'roll-call') {
+                    rollCallOrder.value = voting.rollCallOrder || []
+                    currentVoter.value = voting.currentVoter || null
+                }
+            }
+
+        } catch (err) {
+            error.value = err.message
+            console.error('Load voting details error:', err)
+        }
+    }
+
+    const loadCommitteeVotingDetails = async (votingId) => {
+        try {
+            const response = await apiMethods.voting.getByCommitteeId(votingId)
 
             if (response.data.success) {
                 const voting = response.data.voting
@@ -534,7 +596,9 @@ export const useVotingStore = defineStore('voting', () => {
         // Actions - Voting Management
         createVoting,
         loadVotingHistory,
+        loadCommitteeVotingHistory,
         loadVotingDetails,
+        loadCommitteeVotingDetails,
         loadEligibleVoters,
 
         // Actions - Vote Casting

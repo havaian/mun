@@ -407,6 +407,7 @@ export const apiMethods = {
     voting: {
         getAll: (params = {}) => api.get('/voting', { params }),
         getById: (id) => api.get(`/voting/${id}`),
+        getByCommitteeId: (id) => api.get(`/voting/committee/${id}`),
         create: (data) => api.post('/voting', data),
         castVote: (id, vote) => api.post(`/voting/${id}/vote`, vote),
         getResults: (id) => api.get(`/voting/${id}/results`), // NOT USED
