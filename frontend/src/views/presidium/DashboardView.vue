@@ -202,9 +202,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useWebSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
 import { apiMethods } from '@/utils/api'
 
@@ -220,6 +221,7 @@ import {
 
 const router = useRouter()
 const authStore = useAuthStore()
+const wsStore = useWebSocketStore()
 const toast = useToast()
 
 // State
@@ -238,6 +240,9 @@ const stats = reactive({
 
 const recentDocuments = ref([])
 const recentActivity = ref([])
+
+// Computed
+const committeeId = computed(() => authStore.user?.committeeId)
 
 // Methods
 const loadDashboardData = async () => {
@@ -358,7 +363,67 @@ const formatTime = (timestamp) => {
 }
 
 // Lifecycle
-onMounted(() => {
-    loadDashboardData()
+onMounted(async () => {
+    await loadDashboardData()
+
+    // Connect WebSocket if not connected
+    if (!wsStore.isConnected) {
+        try {
+            await wsStore.connect()
+        } catch (error) {
+            console.error('Failed to connect WebSocket:', error)
+        }
+    }
+
+    // Join committee room
+    if (committeeId.value && wsStore.isConnected) {
+        wsStore.joinCommittee(committeeId.value)
+    }
+
+    // Join session room if there's an active session
+    if (currentSession.value?._id && wsStore.isConnected) {
+        wsStore.joinSession(currentSession.value._id)
+    }
 })
+
+onUnmounted(() => {
+    // Leave rooms on unmount
+    if (committeeId.value) {
+        wsStore.leaveCommittee(committeeId.value)
+    }
+    if (currentSession.value?._id) {
+        wsStore.leaveSession(currentSession.value._id)
+    }
+})
+
+// Watch for real-time updates
+watch(() => wsStore.sessionUpdates[currentSession.value?._id], (update) => {
+    if (update && currentSession.value) {
+        // Update current session with real-time data
+        currentSession.value.mode = update.newMode || update.mode
+        currentSession.value.status = update.status
+    }
+}, { deep: true })
+
+// Watch for attendance updates
+watch(() => {
+    const sessionId = currentSession.value?._id
+    return sessionId ? wsStore.attendanceUpdates[sessionId] : null
+}, (update) => {
+    if (update) {
+        // Update attendance stats from WebSocket
+        if (update.presentCount !== undefined) {
+            stats.presentCount = update.presentCount
+        }
+        if (update.quorumStatus) {
+            stats.hasQuorum = update.quorumStatus.hasQuorum
+            stats.quorumCount = update.quorumStatus.required
+        }
+    }
+}, { deep: true })
+
+// Watch for voting updates
+watch(() => Object.values(wsStore.votingUpdates), (votings) => {
+    stats.activeVotings = votings.filter(v => v.status === 'active').length
+}, { deep: true })
 </script>

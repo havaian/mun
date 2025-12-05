@@ -61,16 +61,16 @@ const routes = [
           hideForAuthenticated: true
         }
       },
-      {
-        path: 'language',
-        name: 'LanguageSelection',
-        component: LanguageSelectionView,
-        meta: {
-          title: 'Select Language',
-          requiresAuth: true,
-          newUserOnly: true
-        }
-      }
+      // {
+      //   path: 'language',
+      //   name: 'LanguageSelection',
+      //   component: LanguageSelectionView,
+      //   meta: {
+      //     title: 'Select Language',
+      //     requiresAuth: true,
+      //     newUserOnly: true
+      //   }
+      // }
     ]
   },
 
@@ -149,18 +149,18 @@ const routes = [
         component: PresidiumSessions,
         meta: { title: 'Session Management' }
       },
-      {
-        path: 'documents',
-        name: 'PresidiumDocuments',
-        component: PresidiumDocuments,
-        meta: { title: 'Document Review' }
-      },
-      {
-        path: 'voting',
-        name: 'PresidiumVoting',
-        component: PresidiumVoting,
-        meta: { title: 'Voting Management' }
-      },
+      // {
+      //   path: 'documents',
+      //   name: 'PresidiumDocuments',
+      //   component: PresidiumDocuments,
+      //   meta: { title: 'Document Review' }
+      // },
+      // {
+      //   path: 'voting',
+      //   name: 'PresidiumVoting',
+      //   component: PresidiumVoting,
+      //   meta: { title: 'Voting Management' }
+      // },
       {
         path: 'attendance',
         name: 'PresidiumAttendance',
@@ -182,30 +182,30 @@ const routes = [
         component: DelegateDashboard,
         meta: { title: 'Delegate Dashboard' }
       },
-      {
-        path: 'documents',
-        name: 'DelegateDocuments',
-        component: DelegateDocuments,
-        meta: { title: 'My Documents' }
-      },
-      {
-        path: 'coalitions',
-        name: 'DelegateCoalitions',
-        component: DelegateCoalitions,
-        meta: { title: 'Coalitions' }
-      },
-      {
-        path: 'messages',
-        name: 'DelegateMessages',
-        component: DelegateMessages,
-        meta: { title: 'Messages' }
-      },
-      {
-        path: 'voting',
-        name: 'DelegateVoting',
-        component: DelegateVoting,
-        meta: { title: 'Voting' }
-      }
+      // {
+      //   path: 'documents',
+      //   name: 'DelegateDocuments',
+      //   component: DelegateDocuments,
+      //   meta: { title: 'My Documents' }
+      // },
+      // {
+      //   path: 'coalitions',
+      //   name: 'DelegateCoalitions',
+      //   component: DelegateCoalitions,
+      //   meta: { title: 'Coalitions' }
+      // },
+      // {
+      //   path: 'messages',
+      //   name: 'DelegateMessages',
+      //   component: DelegateMessages,
+      //   meta: { title: 'Messages' }
+      // },
+      // {
+      //   path: 'voting',
+      //   name: 'DelegateVoting',
+      //   component: DelegateVoting,
+      //   meta: { title: 'Voting' }
+      // }
     ]
   },
 

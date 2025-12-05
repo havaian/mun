@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
+import { useWebSocketStore } from '@/stores/websocket'
 import { decodeJWT, getTokenRemainingTime, isTokenExpired } from '@/utils/jwt'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -165,9 +166,9 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             isLoading.value = true
             const response = await apiMethods.auth.bindEmail(data)
-            
+
             console.log('Bind email response:', response.data) // Debug log
-            
+
             if (response.data.success) {
                 await setAuthData(response.data.token, response.data.user)
                 return { success: true, data: response.data }
@@ -186,9 +187,9 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             isLoading.value = true
             const response = await apiMethods.auth.emailLogin(data)
-            
+
             console.log('Link email login response:', response.data) // Debug log
-            
+
             if (response.data.success) {
                 await setAuthData(response.data.token, response.data.user)
                 return { success: true, data: response.data }
@@ -252,6 +253,9 @@ export const useAuthStore = defineStore('auth', () => {
         } catch (error) {
             console.warn('Logout API call failed:', error)
         } finally {
+            // Disconnect WebSocket
+            disconnectWebSocket()
+
             // Always clear local state regardless of API success
             token.value = null
             user.value = null
@@ -264,11 +268,41 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    // Initialize WebSocket connection (call after successful login)
+    const initializeWebSocket = () => {
+        if (!token.value) {
+            console.warn('Cannot initialize WebSocket: no token')
+            return
+        }
+
+        try {
+            const wsStore = useWebSocketStore()
+
+            // Connect with current token
+            wsStore.connect(token.value)
+
+            console.log('✅ WebSocket initialized')
+        } catch (error) {
+            console.error('Failed to initialize WebSocket:', error)
+        }
+    }
+
+    // Disconnect WebSocket (call in logout)
+    const disconnectWebSocket = () => {
+        try {
+            const wsStore = useWebSocketStore()
+            wsStore.disconnect()
+            console.log('🔌 WebSocket disconnected')
+        } catch (error) {
+            console.error('Failed to disconnect WebSocket:', error)
+        }
+    }
+
     // FIXED: Session validation with smart error handling
     const validateSession = async () => {
         // Return cached result if still valid
         const now = Date.now()
-        
+
         if (token.value && isTokenExpired(token.value)) {
             console.warn('Token expired client-side, logging out')
             await logout(false)
@@ -370,7 +404,7 @@ export const useAuthStore = defineStore('auth', () => {
     // Get dashboard route based on user role
     const getDashboardRoute = () => {
         if (!user.value?.role) return 'Login'
-        
+
         switch (user.value.role) {
             case 'admin':
                 return 'AdminDashboard'
@@ -407,10 +441,10 @@ export const useAuthStore = defineStore('auth', () => {
 
     const getTokenInfo = computed(() => {
         if (!token.value) return null
-        
+
         const payload = decodeJWT(token.value)
         if (!payload) return null
-        
+
         return {
             userId: payload.userId,
             role: payload.role,
@@ -425,12 +459,12 @@ export const useAuthStore = defineStore('auth', () => {
     const refreshToken = async () => {
         try {
             const response = await apiMethods.auth.refreshToken()
-            
+
             if (response.data.success) {
                 token.value = response.data.token
                 user.value = response.data.user
                 localStorage.setItem('mun_token', token.value)
-                
+
                 console.log('Token refreshed successfully')
                 return { success: true }
             }
@@ -442,15 +476,15 @@ export const useAuthStore = defineStore('auth', () => {
 
     const setupTokenRefresh = () => {
         if (!token.value) return
-        
+
         const remainingMs = getTokenRemainingTime(token.value)
         if (remainingMs <= 0) return
-        
+
         // Refresh when 1 hour left (or 10% of time, whichever is less)
         const oneHour = 60 * 60 * 1000
         const tenPercent = remainingMs * 0.1
         const refreshTime = remainingMs - Math.min(oneHour, tenPercent)
-        
+
         if (refreshTime > 0) {
             setTimeout(async () => {
                 if (isAuthenticated.value) {
@@ -458,7 +492,7 @@ export const useAuthStore = defineStore('auth', () => {
                     setupTokenRefresh() // Setup next refresh
                 }
             }, refreshTime)
-            
+
             console.log(`Token refresh scheduled in ${Math.floor(refreshTime / 1000 / 60)} minutes`)
         }
     }
@@ -467,10 +501,10 @@ export const useAuthStore = defineStore('auth', () => {
         token.value = tokenValue
         user.value = userData
         localStorage.setItem('mun_token', tokenValue)
-        
+
         // Clear validation cache
         _clearValidationCache()
-        
+
         // Setup token refresh
         setupTokenRefresh()
     }

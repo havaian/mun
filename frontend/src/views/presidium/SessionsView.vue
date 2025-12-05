@@ -3,251 +3,175 @@
         <!-- Header -->
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-2xl font-bold text-mun-gray-900">Voting Management</h1>
-                <p class="text-mun-gray-600">Create and manage voting sessions</p>
+                <h1 class="text-2xl font-bold text-mun-gray-900">Session Management</h1>
+                <p class="text-mun-gray-600">{{ committee?.name || 'Loading...' }}</p>
             </div>
-            <button @click="createNewVoting" class="btn-un-primary">
+            <button @click="showCreateModal = true" class="btn-un-primary">
                 <PlusIcon class="w-5 h-5 mr-2" />
-                Create Voting
+                Create New Session
             </button>
         </div>
 
-        <!-- Voting Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div class="mun-card p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-blue/10">
-                        <HandRaisedIcon class="w-6 h-6 text-mun-blue" />
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-mun-gray-600">Active Votings</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.active }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mun-card p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-green-500/10">
-                        <CheckCircleIcon class="w-6 h-6 text-mun-green-500" />
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-mun-gray-600">Completed</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.completed }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mun-card p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-yellow-500/10">
-                        <ClockIcon class="w-6 h-6 text-mun-yellow-500" />
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-mun-gray-600">Pending</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.pending }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mun-card p-6">
-                <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-mun-red-500/10">
-                        <UsersIcon class="w-6 h-6 text-mun-red-500" />
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-mun-gray-600">Eligible Voters</p>
-                        <p class="text-2xl font-bold text-mun-gray-900">{{ stats.eligibleVoters }}</p>
-                    </div>
-                </div>
-            </div>
+        <!-- Loading State -->
+        <div v-if="isLoading" class="flex items-center justify-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-mun-blue"></div>
         </div>
 
-        <!-- Active Voting -->
-        <div v-if="activeVoting" class="mun-card p-6">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h2 class="text-lg font-semibold text-mun-gray-900">{{ activeVoting.title }}</h2>
-                    <p class="text-mun-gray-600">{{ activeVoting.description }}</p>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <span class="px-3 py-1 bg-mun-green-100 text-mun-green-700 rounded-full text-sm font-medium">
-                        Active
+        <!-- Sessions List -->
+        <div v-else class="space-y-4">
+            <!-- Active Session (if exists) -->
+            <div v-if="activeSession" class="mun-card p-6 border-l-4 border-mun-green-500">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="flex h-3 w-3 relative">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-mun-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-mun-green-500"></span>
+                        </span>
+                        <h3 class="text-lg font-semibold text-mun-gray-900">Active Session</h3>
+                    </div>
+                    <span class="px-3 py-1 text-sm font-medium rounded-lg bg-mun-green-100 text-mun-green-700">
+                        LIVE
                     </span>
-                    <button @click="endVoting(activeVoting)"
-                        class="px-4 py-2 bg-mun-red-500 hover:bg-mun-red-600 text-white rounded-lg transition-colors">
-                        End Voting
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <p class="text-sm text-mun-gray-600">Session Number</p>
+                        <p class="text-lg font-semibold text-mun-gray-900">{{ activeSession.sessionNumber || 1 }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-mun-gray-600">Current Mode</p>
+                        <p class="text-lg font-semibold text-mun-gray-900">{{ formatMode(activeSession.mode) }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-mun-gray-600">Duration</p>
+                        <p class="text-lg font-semibold text-mun-gray-900">{{ formatDuration(activeSession.startedAt) }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 pt-4 border-t border-mun-gray-100">
+                    <button @click="pauseSession(activeSession._id)" v-if="activeSession.status === 'active'"
+                        class="btn-un-secondary">
+                        <PauseIcon class="w-4 h-4 mr-2" />
+                        Pause Session
+                    </button>
+                    <button @click="resumeSession(activeSession._id)" v-else class="btn-un-primary">
+                        <PlayIcon class="w-4 h-4 mr-2" />
+                        Resume Session
+                    </button>
+
+                    <button @click="changeModeModal = true" class="btn-un-secondary">
+                        <ArrowPathIcon class="w-4 h-4 mr-2" />
+                        Change Mode
+                    </button>
+
+                    <RouterLink :to="`/presidium/attendance`" class="btn-un-secondary text-center">
+                        <ClipboardDocumentListIcon class="w-4 h-4 mr-2" />
+                        Take Attendance
+                    </RouterLink>
+
+                    <button @click="endSession(activeSession._id)" class="btn-un-danger">
+                        <StopIcon class="w-4 h-4 mr-2" />
+                        End Session
                     </button>
                 </div>
             </div>
 
-            <!-- Voting Progress -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-mun-green-500">{{ activeVoting.results.favour }}</div>
-                    <div class="text-sm text-mun-gray-600">In Favour</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-mun-red-500">{{ activeVoting.results.against }}</div>
-                    <div class="text-sm text-mun-gray-600">Against</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-mun-yellow-500">{{ activeVoting.results.abstain }}</div>
-                    <div class="text-sm text-mun-gray-600">Abstentions</div>
-                </div>
-            </div>
+            <!-- All Sessions List -->
+            <div class="mun-card p-6">
+                <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">All Sessions</h3>
 
-            <!-- Progress Bar -->
-            <div class="space-y-2 mb-6">
-                <div class="flex justify-between text-sm text-mun-gray-600">
-                    <span>Votes Cast: {{ activeVoting.results.total }} / {{ stats.eligibleVoters }}</span>
-                    <span>{{ Math.round((activeVoting.results.total / stats.eligibleVoters) * 100) }}%
-                        participation</span>
-                </div>
-                <div class="w-full bg-mun-gray-200 rounded-full h-2">
-                    <div class="bg-mun-blue h-2 rounded-full transition-all duration-300"
-                        :style="{ width: `${(activeVoting.results.total / stats.eligibleVoters) * 100}%` }"></div>
-                </div>
-            </div>
-
-            <!-- Real-time Voting Display -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <h3 class="font-medium text-mun-gray-900 mb-3">Recent Votes</h3>
-                    <div class="space-y-2 max-h-48 overflow-y-auto">
-                        <div v-for="vote in activeVoting.recentVotes" :key="vote.id"
-                            class="flex items-center justify-between p-2 bg-mun-gray-50 rounded">
-                            <span class="text-sm font-medium">{{ vote.country }}</span>
-                            <span :class="[
-                                'px-2 py-1 rounded text-xs font-medium',
-                                vote.vote === 'favour' ? 'bg-mun-green-100 text-mun-green-700' :
-                                    vote.vote === 'against' ? 'bg-mun-red-100 text-mun-red-700' :
-                                        'bg-mun-yellow-100 text-mun-yellow-700'
-                            ]">
-                                {{ vote.vote === 'favour' ? 'For' : vote.vote === 'against' ? 'Against' : 'Abstain' }}
-                            </span>
+                <div v-if="sessions.length > 0" class="space-y-3">
+                    <div v-for="session in sessions" :key="session._id"
+                        class="p-4 border border-mun-gray-200 rounded-lg hover:border-mun-blue transition-colors">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <h4 class="font-semibold text-mun-gray-900">
+                                        Session {{ session.sessionNumber || 1 }}
+                                    </h4>
+                                    <span :class="getStatusClass(session.status)">
+                                        {{ session.status }}
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                    <div>
+                                        <span class="text-mun-gray-600">Mode:</span>
+                                        <span class="ml-1 text-mun-gray-900">{{ formatMode(session.mode) }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-mun-gray-600">Started:</span>
+                                        <span class="ml-1 text-mun-gray-900">{{ formatDate(session.startedAt) }}</span>
+                                    </div>
+                                    <div v-if="session.endedAt">
+                                        <span class="text-mun-gray-600">Ended:</span>
+                                        <span class="ml-1 text-mun-gray-900">{{ formatDate(session.endedAt) }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-mun-gray-600">Duration:</span>
+                                        <span class="ml-1 text-mun-gray-900">{{ formatDuration(session.startedAt,
+                                            session.endedAt) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2 ml-4">
+                                <button v-if="session.status === 'draft'" @click="startSession(session._id)"
+                                    class="p-2 rounded-lg bg-mun-green-500 text-white hover:bg-mun-green-600 transition-colors">
+                                    <PlayIcon class="w-5 h-5" />
+                                </button>
+                                <button @click="viewSessionDetails(session)"
+                                    class="p-2 rounded-lg bg-mun-blue/10 text-mun-blue hover:bg-mun-blue/20 transition-colors">
+                                    <EyeIcon class="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div>
-                    <h3 class="font-medium text-mun-gray-900 mb-3">Not Yet Voted</h3>
-                    <div class="space-y-1 max-h-48 overflow-y-auto">
-                        <div v-for="country in activeVoting.notVoted" :key="country"
-                            class="text-sm text-mun-gray-600 p-2 bg-mun-gray-50 rounded">
-                            {{ country }}
-                        </div>
-                    </div>
+                <div v-else class="text-center py-12">
+                    <CalendarDaysIcon class="mx-auto h-12 w-12 text-mun-gray-300" />
+                    <h3 class="mt-4 text-lg font-medium text-mun-gray-900">No sessions yet</h3>
+                    <p class="mt-2 text-mun-gray-600">Create your first session to begin committee work</p>
+                    <button @click="showCreateModal = true" class="mt-4 btn-un-primary">
+                        Create Session
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Voting History -->
-        <div class="mun-card">
-            <div class="px-6 py-4 border-b border-mun-gray-200">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-mun-gray-900">Voting History</h2>
-                    <div class="flex items-center space-x-3">
-                        <div class="flex items-center space-x-3">
-                            <SleekSelect v-model="historyFilter" :options="[
-                                { label: 'All Votings', value: '' },
-                                { label: 'Resolutions', value: 'resolution' },
-                                { label: 'Amendments', value: 'amendment' },
-                                { label: 'Procedural', value: 'procedural' }
-                            ]" containerClass="max-w-xs" placeholder="Filter by type" />
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Create Session Modal -->
+        <SessionCreateModal v-model="showCreateModal" :committee-id="committeeId"
+            @session-created="handleSessionCreated" />
 
-            <div v-if="isLoading" class="flex items-center justify-center py-12">
-                <LoadingSpinner />
-            </div>
-
-            <div v-else-if="filteredVotingHistory.length === 0" class="text-center py-12">
-                <HandRaisedIcon class="mx-auto h-12 w-12 text-mun-gray-300" />
-                <h3 class="mt-4 text-lg font-medium text-mun-gray-900">No Voting History</h3>
-                <p class="mt-2 text-mun-gray-600">No completed votings found</p>
-            </div>
-
-            <div v-else class="divide-y divide-mun-gray-200">
-                <div v-for="voting in filteredVotingHistory" :key="voting.id"
-                    class="p-6 hover:bg-mun-gray-50 transition-colors">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-3 mb-2">
-                                <h3 class="text-lg font-medium text-mun-gray-900">{{ voting.title }}</h3>
-                                <span :class="[
-                                    'px-2 py-1 rounded-full text-xs font-medium',
-                                    voting.type === 'resolution' ? 'bg-purple-100 text-purple-700' :
-                                        voting.type === 'amendment' ? 'bg-orange-100 text-orange-700' :
-                                            'bg-gray-100 text-gray-700'
-                                ]">
-                                    {{ voting.type }}
-                                </span>
-                                <span :class="[
-                                    'px-2 py-1 rounded-full text-xs font-medium',
-                                    voting.result === 'passed' ? 'bg-mun-green-100 text-mun-green-700' :
-                                        'bg-mun-red-100 text-mun-red-700'
-                                ]">
-                                    {{ voting.result }}
-                                </span>
-                            </div>
-
-                            <p class="text-sm text-mun-gray-600 mb-3">{{ voting.description }}</p>
-
-                            <div class="flex items-center space-x-6 text-sm">
-                                <span class="text-mun-green-600">
-                                    <strong>{{ voting.results.favour }}</strong> For
-                                </span>
-                                <span class="text-mun-red-600">
-                                    <strong>{{ voting.results.against }}</strong> Against
-                                </span>
-                                <span class="text-mun-yellow-600">
-                                    <strong>{{ voting.results.abstain }}</strong> Abstain
-                                </span>
-                                <span class="text-mun-gray-500">
-                                    {{ formatDate(voting.completedAt) }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center space-x-2 ml-4">
-                            <button @click="viewVotingDetails(voting)" class="btn-un-secondary px-3 py-2">
-                                <EyeIcon class="w-4 h-4 mr-1" />
-                                Details
-                            </button>
-                            <button @click="exportVotingResults(voting)" class="btn-un-secondary px-3 py-2">
-                                <ArrowDownTrayIcon class="w-4 h-4 mr-1" />
-                                Export
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Create Voting Modal would go here -->
-        <!-- VotingModal -->
+        <!-- Change Mode Modal -->
+        <ChangeModeModal v-model="changeModeModal" :session="activeSession" @mode-changed="handleModeChanged" />
     </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
+import { apiMethods } from '@/utils/api'
 
 // Icons
 import {
     PlusIcon,
-    HandRaisedIcon,
-    CheckCircleIcon,
-    ClockIcon,
-    UsersIcon,
-    EyeIcon,
-    ArrowDownTrayIcon
+    PlayIcon,
+    PauseIcon,
+    StopIcon,
+    ArrowPathIcon,
+    ClipboardDocumentListIcon,
+    CalendarDaysIcon,
+    EyeIcon
 } from '@heroicons/vue/24/outline'
+
+// Components
+import SessionCreateModal from '@/components/presidium/SessionCreateModal.vue'
+import ChangeModeModal from '@/components/presidium/ChangeModeModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -255,142 +179,175 @@ const toast = useToast()
 
 // State
 const isLoading = ref(false)
-const historyFilter = ref('')
-const activeVoting = ref(null)
-const votingHistory = ref([])
+const committee = ref(null)
+const sessions = ref([])
+const showCreateModal = ref(false)
+const changeModeModal = ref(false)
 
-const stats = reactive({
-    active: 0,
-    completed: 0,
-    pending: 0,
-    eligibleVoters: 0
-})
-
-// Computed
-const filteredVotingHistory = computed(() => {
-    if (!historyFilter.value) return votingHistory.value
-    return votingHistory.value.filter(v => v.type === historyFilter.value)
-})
+const committeeId = computed(() => authStore.user?.committeeId)
+const activeSession = computed(() => sessions.value.find(s => s.status === 'active' || s.status === 'paused'))
 
 // Methods
-const loadVotingData = async () => {
+const loadSessions = async () => {
     try {
         isLoading.value = true
 
-        // Sample active voting
-        activeVoting.value = {
-            id: 1,
-            title: "Resolution A/1: Nuclear Disarmament",
-            description: "Vote on the proposed nuclear disarmament framework",
-            type: "resolution",
-            status: "active",
-            results: {
-                favour: 12,
-                against: 8,
-                abstain: 5,
-                total: 25
-            },
-            recentVotes: [
-                { id: 1, country: "United States", vote: "favour" },
-                { id: 2, country: "Russia", vote: "against" },
-                { id: 3, country: "China", vote: "abstain" },
-                { id: 4, country: "France", vote: "favour" }
-            ],
-            notVoted: ["Germany", "United Kingdom", "Japan", "Brazil", "India"]
+        // Load committee info
+        const committeeResponse = await apiMethods.committees.getById(committeeId.value)
+        if (committeeResponse.data.success) {
+            committee.value = committeeResponse.data.committee
         }
 
-        // Sample voting history
-        votingHistory.value = [
-            {
-                id: 2,
-                title: "Amendment to Resolution A/1",
-                description: "Proposed changes to paragraph 3 regarding timeline",
-                type: "amendment",
-                result: "failed",
-                results: { favour: 15, against: 20, abstain: 8 },
-                completedAt: new Date(Date.now() - 3600000).toISOString()
-            },
-            {
-                id: 3,
-                title: "Procedural Motion: Extension of Debate",
-                description: "Motion to extend debate time by 30 minutes",
-                type: "procedural",
-                result: "passed",
-                results: { favour: 28, against: 12, abstain: 3 },
-                completedAt: new Date(Date.now() - 7200000).toISOString()
-            }
-        ]
-
-        // Update stats
-        stats.active = activeVoting.value ? 1 : 0
-        stats.completed = votingHistory.value.length
-        stats.pending = 2
-        stats.eligibleVoters = 48
+        // Load sessions
+        const sessionsResponse = await apiMethods.sessions.getAll(committeeId.value)
+        if (sessionsResponse.data.success) {
+            sessions.value = sessionsResponse.data.sessions || []
+        }
 
     } catch (error) {
-        toast.error('Load voting data error:', error)
-        toast.error('Failed to load voting data')
+        console.error('Load sessions error:', error)
+        toast.error('Failed to load sessions')
     } finally {
         isLoading.value = false
     }
 }
 
-const createNewVoting = () => {
-    toast.log('Create voting modal would open here')
-    // TODO: Open create voting modal
-}
-
-const endVoting = async (voting) => {
+const startSession = async (sessionId) => {
     try {
-        // Move to history
-        votingHistory.value.unshift({
-            ...voting,
-            result: voting.results.favour > voting.results.against ? 'passed' : 'failed',
-            completedAt: new Date().toISOString()
-        })
+        const response = await apiMethods.sessions.updateStatus(sessionId, { status: 'active' })
 
-        activeVoting.value = null
-        stats.active = 0
-        stats.completed = votingHistory.value.length
-
-        toast.success('Voting ended successfully')
+        if (response.data.success) {
+            toast.success('Session started successfully')
+            await loadSessions()
+        }
     } catch (error) {
-        toast.error('End voting error:', error)
-        toast.error('Failed to end voting')
+        console.error('Start session error:', error)
+        toast.error('Failed to start session')
     }
 }
 
-const viewVotingDetails = (voting) => {
-    toast.log(`Viewing details for ${voting.title}`)
-    // TODO: Open voting details modal
+const pauseSession = async (sessionId) => {
+    try {
+        const response = await apiMethods.sessions.updateStatus(sessionId, { status: 'paused' })
+
+        if (response.data.success) {
+            toast.success('Session paused')
+            await loadSessions()
+        }
+    } catch (error) {
+        console.error('Pause session error:', error)
+        toast.error('Failed to pause session')
+    }
 }
 
-const exportVotingResults = (voting) => {
-    toast.success(`Exporting results for ${voting.title}`)
-    // TODO: Export voting results
+const resumeSession = async (sessionId) => {
+    try {
+        const response = await apiMethods.sessions.updateStatus(sessionId, { status: 'active' })
+
+        if (response.data.success) {
+            toast.success('Session resumed')
+            await loadSessions()
+        }
+    } catch (error) {
+        console.error('Resume session error:', error)
+        toast.error('Failed to resume session')
+    }
+}
+
+const endSession = async (sessionId) => {
+    if (!confirm('Are you sure you want to end this session? This action cannot be undone.')) {
+        return
+    }
+
+    try {
+        const response = await apiMethods.sessions.updateStatus(sessionId, { status: 'completed' })
+
+        if (response.data.success) {
+            toast.success('Session ended successfully')
+            await loadSessions()
+        }
+    } catch (error) {
+        console.error('End session error:', error)
+        toast.error('Failed to end session')
+    }
+}
+
+const handleSessionCreated = () => {
+    showCreateModal.value = false
+    loadSessions()
+    toast.success('Session created successfully')
+}
+
+const handleModeChanged = () => {
+    changeModeModal.value = false
+    loadSessions()
+    toast.success('Session mode changed successfully')
+}
+
+const viewSessionDetails = (session) => {
+    // TODO: Implement session details view
+    console.log('View session details:', session)
+}
+
+// Formatting helpers
+const formatMode = (mode) => {
+    const modeMap = {
+        'formal': 'Formal Debate',
+        'moderated': 'Moderated Caucus',
+        'unmoderated': 'Unmoderated Caucus',
+        'informal': 'Informal Consultation',
+        'closed': 'Closed Session'
+    }
+    return modeMap[mode] || mode || 'Unknown'
 }
 
 const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now - date
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
-
-    if (diffMins < 60) {
-        return `${diffMins}m ago`
-    } else if (diffHours < 24) {
-        return `${diffHours}h ago`
-    } else if (diffDays < 7) {
-        return `${diffDays}d ago`
-    } else {
-        return date.toLocaleDateString()
+    if (!dateString) return 'N/A'
+    try {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+    } catch {
+        return 'Invalid date'
     }
+}
+
+const formatDuration = (startDate, endDate = null) => {
+    if (!startDate) return '0m'
+
+    try {
+        const start = new Date(startDate)
+        const end = endDate ? new Date(endDate) : new Date()
+        const diffMs = end - start
+        const diffMins = Math.floor(diffMs / 60000)
+        const hours = Math.floor(diffMins / 60)
+        const minutes = diffMins % 60
+
+        if (hours > 0) {
+            return `${hours}h ${minutes}m`
+        }
+        return `${minutes}m`
+    } catch {
+        return '0m'
+    }
+}
+
+const getStatusClass = (status) => {
+    const classes = {
+        'active': 'px-2 py-1 text-xs font-medium rounded-lg bg-mun-green-100 text-mun-green-700',
+        'paused': 'px-2 py-1 text-xs font-medium rounded-lg bg-mun-yellow-100 text-mun-yellow-700',
+        'completed': 'px-2 py-1 text-xs font-medium rounded-lg bg-mun-gray-100 text-mun-gray-700',
+        'draft': 'px-2 py-1 text-xs font-medium rounded-lg bg-mun-blue-100 text-mun-blue-700'
+    }
+    return classes[status] || classes.draft
 }
 
 // Lifecycle
 onMounted(() => {
-    loadVotingData()
+    loadSessions()
 })
 </script>

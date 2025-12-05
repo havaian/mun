@@ -10,6 +10,7 @@ import './assets/css/main.css'
 // Import global components and plugins
 import Toast, { toastService } from './plugins/toast'
 import Modal from './plugins/modal'
+import WebSocketPlugin from './plugins/websocket'
 import LoadingSpinner from './components/ui/LoadingSpinner.vue'
 import AppButton from './components/ui/AppButton.vue'
 import AppCard from './components/ui/AppCard.vue'
@@ -28,6 +29,7 @@ const flagsStore = useFlagsStore()
 app.use(router)
 app.use(Toast)
 app.use(Modal)
+app.use(WebSocketPlugin) // WebSocket plugin
 
 // Initialize flags on app startup
 flagsStore.initializeFlags().then(() => {
