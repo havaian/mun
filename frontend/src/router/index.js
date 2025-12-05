@@ -20,16 +20,16 @@ const AdminDocuments = () => import('@/views/admin/DocumentsView.vue')
 // Presidium views
 const PresidiumDashboard = () => import('@/views/presidium/DashboardView.vue')
 const PresidiumSessions = () => import('@/views/presidium/SessionsView.vue')
-const PresidiumDocuments = () => import('@/views/presidium/DocumentsView.vue')
-const PresidiumVoting = () => import('@/views/presidium/VotingView.vue')
+// const PresidiumDocuments = () => import('@/views/presidium/DocumentsView.vue')
+// const PresidiumVoting = () => import('@/views/presidium/VotingView.vue')
 const PresidiumAttendance = () => import('@/views/presidium/AttendanceView.vue')
 
 // Delegate views
 const DelegateDashboard = () => import('@/views/delegate/DashboardView.vue')
-const DelegateDocuments = () => import('@/views/delegate/DocumentsView.vue')
-const DelegateCoalitions = () => import('@/views/delegate/CoalitionsView.vue')
-const DelegateMessages = () => import('@/views/delegate/MessagesView.vue')
-const DelegateVoting = () => import('@/views/delegate/VotingView.vue')
+// const DelegateDocuments = () => import('@/views/delegate/DocumentsView.vue')
+// const DelegateCoalitions = () => import('@/views/delegate/CoalitionsView.vue')
+// const DelegateMessages = () => import('@/views/delegate/MessagesView.vue')
+// const DelegateVoting = () => import('@/views/delegate/VotingView.vue')
 
 // Shared views
 const ProfileView = () => import('@/views/shared/ProfileView.vue')
