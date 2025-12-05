@@ -1,6 +1,6 @@
 // backend/src/auth/middleware.js
 const jwt = require('jsonwebtoken');
-const { User } = require('./model');\
+const { User } = require('./model');
 
 // Existing authenticateToken middleware - FIXED VERSION
 const authenticateToken = async (req, res, next) => {
