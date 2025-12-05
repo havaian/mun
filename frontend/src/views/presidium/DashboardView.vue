@@ -389,35 +389,35 @@ onUnmounted(() => {
     }
 })
 
-console.log(currentSession);
+console.log(wsStore);
+console.log(wsStore.activeVotings);
 
 // Watch for real-time updates
-watch(() => wsStore.sessionUpdates[currentSession.value?._id], (update) => {
-    if (update && currentSession.value) {
-        // Update current session with real-time data
-        currentSession.value.mode = update.newMode || update.mode
-        currentSession.value.status = update.status
+watch(() => wsStore.activeVotings, (votings) => {
+    if (Array.isArray(votings)) {
+        stats.activeVotings = votings.filter(v => v.status === 'active').length
     }
 }, { deep: true })
 
 // Watch for attendance updates
 watch(() => {
     const sessionId = currentSession.value?._id
-    return sessionId ? wsStore.attendanceUpdates[sessionId] : null
+    console.log(currentSession)
+    return sessionId ? wsStore.sessionUpdates?.[sessionId] : null
 }, (update) => {
-    if (update) {
-        // Update attendance stats from WebSocket
-        if (update.presentCount !== undefined) {
-            stats.presentCount = update.presentCount
+    if (update && currentSession.value) {
+        // Safely update session properties
+        if (update.newMode) {
+            currentSession.value.mode = update.newMode
+        } else if (update.mode) {
+            currentSession.value.mode = update.mode
         }
-        if (update.quorumStatus) {
-            stats.hasQuorum = update.quorumStatus.hasQuorum
-            stats.quorumCount = update.quorumStatus.required
+        
+        if (update.status) {
+            currentSession.value.status = update.status
         }
     }
 }, { deep: true })
-
-console.log(wsStore.votingUpdates)
 
 // Watch for voting updates
 watch(() => Object.values(wsStore.votingUpdates), (votings) => {
