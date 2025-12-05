@@ -389,9 +389,6 @@ onUnmounted(() => {
     }
 })
 
-console.log(wsStore);
-console.log(wsStore.activeVotings);
-
 // Watch for real-time updates
 watch(() => wsStore.activeVotings, (votings) => {
     if (Array.isArray(votings)) {
@@ -402,7 +399,6 @@ watch(() => wsStore.activeVotings, (votings) => {
 // Watch for attendance updates
 watch(() => {
     const sessionId = currentSession.value?._id
-    console.log(currentSession)
     return sessionId ? wsStore.sessionUpdates?.[sessionId] : null
 }, (update) => {
     if (update && currentSession.value) {

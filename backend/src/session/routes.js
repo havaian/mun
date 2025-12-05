@@ -127,7 +127,7 @@ const validatePagination = [
 // Create new session (presidium only)
 router.post('/',
     global.auth.token,
-    global.auth.presidium,
+    global.auth.adminOrPresidium,
     validateSessionCreation,
     handleValidationErrors,
     global.auth.sameCommittee,

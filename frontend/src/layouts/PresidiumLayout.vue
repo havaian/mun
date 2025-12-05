@@ -80,20 +80,20 @@ const navigationSections = computed(() => [
                 badge: currentSession.value?.status === 'active' ? 'LIVE' : null,
                 badgeType: 'live'
             },
-            {
-                name: 'PresidiumDocuments',
-                label: 'Document Review',
-                to: '/presidium/documents',
-                icon: DocumentTextIcon,
-                badge: pendingDocuments.value > 0 ? pendingDocuments.value : null,
-                badgeType: 'warning'
-            },
-            {
-                name: 'PresidiumVoting',
-                label: 'Voting Management',
-                to: '/presidium/voting',
-                icon: HandRaisedIcon
-            },
+            // {
+            //     name: 'PresidiumDocuments',
+            //     label: 'Document Review',
+            //     to: '/presidium/documents',
+            //     icon: DocumentTextIcon,
+            //     badge: pendingDocuments.value > 0 ? pendingDocuments.value : null,
+            //     badgeType: 'warning'
+            // },
+            // {
+            //     name: 'PresidiumVoting',
+            //     label: 'Voting Management',
+            //     to: '/presidium/voting',
+            //     icon: HandRaisedIcon
+            // },
             {
                 name: 'PresidiumAttendance',
                 label: 'Attendance',
@@ -293,9 +293,6 @@ const loadPresidiumData = async () => {
             name: 'General Assembly',
             countries: Array.from({ length: 25 }, (_, i) => ({ id: i + 1, name: `Country ${i + 1}` }))
         }
-
-        attendanceCount.value = 18
-        pendingDocuments.value = 3
 
         // Mock session data
         currentSession.value = {
