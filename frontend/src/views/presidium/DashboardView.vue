@@ -420,7 +420,9 @@ watch(() => {
 }, { deep: true })
 
 // Watch for voting updates
-watch(() => Object.values(wsStore.votingUpdates), (votings) => {
-    stats.activeVotings = votings.filter(v => v.status === 'active').length
+watch(() => wsStore.activeVotings, (votings) => {
+    if (Array.isArray(votings)) {
+        stats.activeVotings = votings.filter(v => v.status === 'active').length
+    }
 }, { deep: true })
 </script>
