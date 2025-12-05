@@ -1,7 +1,6 @@
 // backend/src/auth/middleware.js
 const jwt = require('jsonwebtoken');
-const { User } = require('./model');
-const logger = require('../utils/logger');
+const { User } = require('./model');\
 
 // Existing authenticateToken middleware - FIXED VERSION
 const authenticateToken = async (req, res, next) => {
@@ -10,19 +9,19 @@ const authenticateToken = async (req, res, next) => {
         const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
         if (!token) {
-            logger.warn('No token provided in Authorization header');
+            global.logger.warn('No token provided in Authorization header');
             return res.status(401).json({
                 error: 'Access denied. No token provided.'
             });
         }
 
         // Debug log for JWT verification
-        logger.debug(`Attempting JWT verification with token: ${token.substring(0, 20)}...`);
+        global.logger.debug(`Attempting JWT verification with token: ${token.substring(0, 20)}...`);
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         // Debug log for successful JWT decode
-        logger.debug(`JWT decoded successfully. User ID: ${decoded.userId}, Role: ${decoded.role}`);
+        global.logger.debug(`JWT decoded successfully. User ID: ${decoded.userId}, Role: ${decoded.role}`);
 
         // Get fresh user data to ensure current permissions
         const user = await User.findById(decoded.userId)
@@ -30,14 +29,14 @@ const authenticateToken = async (req, res, next) => {
             .lean();
 
         if (!user) {
-            logger.warn(`User not found for ID: ${decoded.userId}`);
+            global.logger.warn(`User not found for ID: ${decoded.userId}`);
             return res.status(401).json({
                 error: 'Access denied. User not found.'
             });
         }
 
         if (!user.isActive) {
-            logger.warn(`User is inactive: ${decoded.userId}`);
+            global.logger.warn(`User is inactive: ${decoded.userId}`);
             return res.status(401).json({
                 error: 'Access denied. User account is inactive.'
             });
@@ -58,30 +57,30 @@ const authenticateToken = async (req, res, next) => {
             ...user
         };
 
-        logger.debug(`Authentication successful for user: ${req.user.email || req.user.userId}`);
+        global.logger.debug(`Authentication successful for user: ${req.user.email || req.user.userId}`);
         next();
 
     } catch (error) {
-        logger.error('Token authentication error:', {
+        global.logger.error('Token authentication error:', {
             error: error.message,
             name: error.name,
             stack: error.stack
         });
 
         if (error.name === 'TokenExpiredError') {
-            logger.warn('Token expired');
+            global.logger.warn('Token expired');
             return res.status(401).json({
                 error: 'Access denied. Token expired.',
                 code: 'TOKEN_EXPIRED'
             });
         } else if (error.name === 'JsonWebTokenError') {
-            logger.warn('Invalid JWT token');
+            global.logger.warn('Invalid JWT token');
             return res.status(401).json({
                 error: 'Access denied. Invalid token.',
                 code: 'INVALID_TOKEN'
             });
         } else if (error.name === 'NotBeforeError') {
-            logger.warn('Token not active yet');
+            global.logger.warn('Token not active yet');
             return res.status(401).json({
                 error: 'Access denied. Token not active.',
                 code: 'TOKEN_NOT_ACTIVE'
@@ -112,7 +111,7 @@ const requireRoles = (...allowedRoles) => {
         const hasRequiredRole = roles.includes(userRole);
 
         if (!hasRequiredRole) {
-            logger.warn(`Access denied for user ${req.user.email || req.user._id}. Required roles: [${roles.join(', ')}], User role: ${userRole}`);
+            global.logger.warn(`Access denied for user ${req.user.email || req.user._id}. Required roles: [${roles.join(', ')}], User role: ${userRole}`);
 
             return res.status(403).json({
                 error: `Access denied. Required role(s): ${roles.join(' or ')}.`,
@@ -122,7 +121,7 @@ const requireRoles = (...allowedRoles) => {
         }
 
         // Log successful role authorization for audit
-        logger.info(`Role authorization successful: ${userRole} (${req.user.email || req.user._id}) accessing ${req.method} ${req.path}`);
+        global.logger.info(`Role authorization successful: ${userRole} (${req.user.email || req.user._id}) accessing ${req.method} ${req.path}`);
 
         next();
     };
@@ -160,7 +159,7 @@ const requireSameCommittee = (req, res, next) => {
     }
 
     if (requestedCommitteeId !== userCommitteeId) {
-        logger.warn(`Committee access denied for user ${req.user.email || req.user._id}. Requested: ${requestedCommitteeId}, Assigned: ${userCommitteeId}`);
+        global.logger.warn(`Committee access denied for user ${req.user.email || req.user._id}. Requested: ${requestedCommitteeId}, Assigned: ${userCommitteeId}`);
 
         return res.status(403).json({
             error: 'Access denied. You can only access your assigned committee.',
@@ -189,7 +188,7 @@ const requireVotingRights = (req, res, next) => {
         return next();
     }
 
-    logger.warn(`Voting access denied for user: ${req.user.countryName || req.user.userId} (${req.user.role}/${req.user.specialRole})`);
+    global.logger.warn(`Voting access denied for user: ${req.user.countryName || req.user.userId} (${req.user.role}/${req.user.specialRole})`);
     return res.status(403).json({
         error: 'No voting rights',
         reason: 'Only regular country delegates can vote'

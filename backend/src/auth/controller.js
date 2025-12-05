@@ -1,7 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { User, ActiveSession } = require('./model');
-const logger = require('../utils/logger');
 
 // Dynamic expiration calculation
 const calculateTokenExpiration = async (user) => {
@@ -32,18 +31,18 @@ const calculateTokenExpiration = async (user) => {
 
                     // JWT library expects either string format or seconds
                     if (secondsUntilExpiry > 0) {
-                        logger.info(`Token for ${user.role} will expire with event: ${new Date(expirationTime).toISOString()}`);
+                        global.logger.info(`Token for ${user.role} will expire with event: ${new Date(expirationTime).toISOString()}`);
                         return secondsUntilExpiry;
                     }
                 }
             }
         } catch (error) {
-            logger.error('Error calculating dynamic expiration:', error);
+            global.logger.error('Error calculating dynamic expiration:', error);
         }
     }
 
     // Fallback: 24 hours if no event found
-    logger.warn(`No event end date found for user ${user._id}, defaulting to 24h expiration`);
+    global.logger.warn(`No event end date found for user ${user._id}, defaulting to 24h expiration`);
     return '24h';
 };
 
@@ -96,7 +95,7 @@ const adminLogin = async (req, res) => {
         });
 
         if (!user) {
-            logger.warn(`Failed admin login attempt for username: ${username}`);
+            global.logger.warn(`Failed admin login attempt for username: ${username}`);
             return res.status(401).json({
                 error: 'Invalid credentials'
             });
@@ -105,7 +104,7 @@ const adminLogin = async (req, res) => {
         // Check password
         const isPasswordValid = await user.comparePassword(password);
         if (!isPasswordValid) {
-            logger.warn(`Invalid password for admin: ${username}`);
+            global.logger.warn(`Invalid password for admin: ${username}`);
             return res.status(401).json({
                 error: 'Invalid credentials'
             });
@@ -130,7 +129,7 @@ const adminLogin = async (req, res) => {
 
         const token = await generateToken(tokenPayload, user);
 
-        logger.info(`Admin login successful: ${username}`);
+        global.logger.info(`Admin login successful: ${username}`);
 
         res.json({
             success: true,
@@ -144,7 +143,7 @@ const adminLogin = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Admin login error:', error);
+        global.logger.error('Admin login error:', error);
         res.status(500).json({ error: 'Login failed' });
     }
 };
@@ -164,7 +163,7 @@ const refreshToken = async (req, res) => {
 
         const newToken = await generateToken(tokenPayload, user);
         
-        logger.info(`Token refreshed for user: ${user.email}`);
+        global.logger.info(`Token refreshed for user: ${user.email}`);
         
         res.json({
             success: true,
@@ -174,7 +173,7 @@ const refreshToken = async (req, res) => {
         });
         
     } catch (error) {
-        logger.error('Token refresh error:', error);
+        global.logger.error('Token refresh error:', error);
         res.status(500).json({
             error: 'Failed to refresh token',
             message: error.message
@@ -239,7 +238,7 @@ const linkLogin = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Link login error:', error);
+        global.logger.error('Link login error:', error);
         res.status(500).json({ error: 'Link verification failed' });
     }
 };
@@ -321,7 +320,7 @@ const bindEmail = async (req, res) => {
             user.countryName :
             `${user.presidiumRole} (Presidium)`;
 
-        logger.info(`Email bound and login successful: ${userType} - ${email}, token expires: ${typeof expiration === 'string' ? expiration : new Date(Date.now() + expiration * 1000).toISOString()}`);
+        global.logger.info(`Email bound and login successful: ${userType} - ${email}, token expires: ${typeof expiration === 'string' ? expiration : new Date(Date.now() + expiration * 1000).toISOString()}`);
 
         res.json({
             success: true,
@@ -344,7 +343,7 @@ const bindEmail = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Email binding error:', error);
+        global.logger.error('Email binding error:', error);
         res.status(500).json({ error: 'Email binding failed' });
     }
 };
@@ -412,7 +411,7 @@ const emailLogin = async (req, res) => {
             user.countryName :
             `${user.presidiumRole} (Presidium)`;
 
-        logger.info(`Email login successful: ${userType} - ${email}, token expires: ${typeof expiration === 'string' ? expiration : new Date(Date.now() + expiration * 1000).toISOString()}`);
+        global.logger.info(`Email login successful: ${userType} - ${email}, token expires: ${typeof expiration === 'string' ? expiration : new Date(Date.now() + expiration * 1000).toISOString()}`);
 
         res.json({
             success: true,
@@ -434,7 +433,7 @@ const emailLogin = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Email login error:', error);
+        global.logger.error('Email login error:', error);
         res.status(500).json({ error: 'Login failed' });
     }
 };
@@ -451,7 +450,7 @@ const logout = async (req, res) => {
             { $set: { isActive: false } }
         );
 
-        logger.info(`User logged out: ${userId}`);
+        global.logger.info(`User logged out: ${userId}`);
 
         res.json({
             success: true,
@@ -459,7 +458,7 @@ const logout = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Logout error:', error);
+        global.logger.error('Logout error:', error);
         res.status(500).json({ error: 'Logout failed' });
     }
 };
@@ -513,7 +512,7 @@ const validateSession = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Session validation error:', error);
+        global.logger.error('Session validation error:', error);
         res.status(500).json({
             error: 'VALIDATION_ERROR'
         });
@@ -548,7 +547,7 @@ const checkLinkStatus = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Link status check error:', error);
+        global.logger.error('Link status check error:', error);
         res.status(500).json({ error: 'Failed to check link status' });
     }
 };
@@ -593,7 +592,7 @@ const reactivateLink = async (req, res) => {
         await user.save();
 
         const userType = user.role === 'delegate' ? user.countryName : user.presidiumRole;
-        logger.info(`Login link reactivated for: ${userType} by admin ${req.user.userId}`);
+        global.logger.info(`Login link reactivated for: ${userType} by admin ${req.user.userId}`);
 
         res.json({
             success: true,
@@ -602,7 +601,7 @@ const reactivateLink = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Link reactivation error:', error);
+        global.logger.error('Link reactivation error:', error);
         res.status(500).json({ error: 'Link reactivation failed' });
     }
 };

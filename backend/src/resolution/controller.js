@@ -1,7 +1,6 @@
 const { Coalition, Resolution } = require('./model');
 const { Committee } = require('../committee/model');
 const { User } = require('../auth/model');
-const logger = require('../utils/logger');
 const { emitToCommittee, emitToPresidium, emitToUser } = require('../websocket/socketManager');
 
 // Create coalition (delegate only)
@@ -111,7 +110,7 @@ const createCoalition = async (req, res) => {
             }
         }
 
-        logger.info(`Coalition created: "${name}" by ${req.user.countryName}`);
+        global.logger.info(`Coalition created: "${name}" by ${req.user.countryName}`);
 
         res.status(201).json({
             success: true,
@@ -128,7 +127,7 @@ const createCoalition = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Create coalition error:', error);
+        global.logger.error('Create coalition error:', error);
         res.status(500).json({ error: 'Failed to create coalition' });
     }
 };
@@ -170,7 +169,7 @@ const getCoalitions = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get coalitions error:', error);
+        global.logger.error('Get coalitions error:', error);
         res.status(500).json({ error: 'Failed to fetch coalitions' });
     }
 };
@@ -200,7 +199,7 @@ const getCoalition = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get coalition error:', error);
+        global.logger.error('Get coalition error:', error);
         res.status(500).json({ error: 'Failed to fetch coalition' });
     }
 };
@@ -266,7 +265,7 @@ const respondToInvitation = async (req, res) => {
             });
         }
 
-        logger.info(`Coalition invitation ${response}: ${req.user.countryName} -> "${coalition.name}"`);
+        global.logger.info(`Coalition invitation ${response}: ${req.user.countryName} -> "${coalition.name}"`);
 
         res.json({
             success: true,
@@ -282,7 +281,7 @@ const respondToInvitation = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Respond to invitation error:', error);
+        global.logger.error('Respond to invitation error:', error);
         res.status(500).json({ error: 'Failed to respond to invitation' });
     }
 };
@@ -336,7 +335,7 @@ const activateCoalition = async (req, res) => {
             });
         }
 
-        logger.info(`Coalition activated: "${coalition.name}" with ${coalition.acceptedMembers.length} members`);
+        global.logger.info(`Coalition activated: "${coalition.name}" with ${coalition.acceptedMembers.length} members`);
 
         res.json({
             success: true,
@@ -345,7 +344,7 @@ const activateCoalition = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Activate coalition error:', error);
+        global.logger.error('Activate coalition error:', error);
         res.status(500).json({ error: 'Failed to activate coalition' });
     }
 };
@@ -405,7 +404,7 @@ const leaveCoalition = async (req, res) => {
             });
         }
 
-        logger.info(`Left coalition: ${req.user.countryName} left "${coalition.name}"`);
+        global.logger.info(`Left coalition: ${req.user.countryName} left "${coalition.name}"`);
 
         res.json({
             success: true,
@@ -413,7 +412,7 @@ const leaveCoalition = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Leave coalition error:', error);
+        global.logger.error('Leave coalition error:', error);
         res.status(500).json({ error: 'Failed to leave coalition' });
     }
 };
@@ -508,7 +507,7 @@ const submitResolution = async (req, res) => {
             });
         }
 
-        logger.info(`Resolution submitted: "${title}" by coalition "${coalition.name}"`);
+        global.logger.info(`Resolution submitted: "${title}" by coalition "${coalition.name}"`);
 
         res.status(201).json({
             success: true,
@@ -527,7 +526,7 @@ const submitResolution = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Submit resolution error:', error);
+        global.logger.error('Submit resolution error:', error);
         res.status(500).json({ error: 'Failed to submit resolution' });
     }
 };
@@ -568,7 +567,7 @@ const getResolutions = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get resolutions error:', error);
+        global.logger.error('Get resolutions error:', error);
         res.status(500).json({ error: 'Failed to fetch resolutions' });
     }
 };
@@ -599,7 +598,7 @@ const getResolution = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get resolution error:', error);
+        global.logger.error('Get resolution error:', error);
         res.status(500).json({ error: 'Failed to fetch resolution' });
     }
 };
@@ -660,7 +659,7 @@ const reviewResolution = async (req, res) => {
             });
         }
 
-        logger.info(`Resolution reviewed: "${resolution.title}" - ${decision}`);
+        global.logger.info(`Resolution reviewed: "${resolution.title}" - ${decision}`);
 
         res.json({
             success: true,
@@ -671,7 +670,7 @@ const reviewResolution = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Review resolution error:', error);
+        global.logger.error('Review resolution error:', error);
         res.status(500).json({ error: 'Failed to review resolution' });
     }
 };

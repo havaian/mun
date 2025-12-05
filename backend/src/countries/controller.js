@@ -11,7 +11,6 @@ const {
     getCountryByName,
     getCountryByCode
 } = require('./countries');
-const logger = require('../utils/logger');
 
 // Flag storage configuration
 const FLAG_DIR = path.join(__dirname, '../../../uploads/flags');
@@ -28,12 +27,12 @@ let cacheInitialized = false;
 async function initializeFlagCache() {
     if (cacheInitialized) return;
 
-    logger.info('Initializing flag cache...');
+    global.logger.info('Initializing flag cache...');
 
     try {
         // Check if flag directory exists
         if (!fs.existsSync(FLAG_DIR)) {
-            logger.warn(`Flag directory not found: ${FLAG_DIR}`);
+            global.logger.warn(`Flag directory not found: ${FLAG_DIR}`);
             return;
         }
 
@@ -55,7 +54,7 @@ async function initializeFlagCache() {
                 flagData[countryCode] = svgContent;
                 loadedCount++;
             } catch (error) {
-                logger.warn(`Failed to load flag ${file}: ${error.message}`);
+                global.logger.warn(`Failed to load flag ${file}: ${error.message}`);
                 errorCount++;
             }
         }
@@ -73,11 +72,11 @@ async function initializeFlagCache() {
         });
 
         cacheInitialized = true;
-        logger.info(`Flag cache initialized: ${loadedCount} flags loaded, ${errorCount} errors`);
-        logger.info(`Batch response size: ${jsonResponse.length} bytes (${allFlagsCacheCompressed.length} bytes compressed)`);
+        global.logger.info(`Flag cache initialized: ${loadedCount} flags loaded, ${errorCount} errors`);
+        global.logger.info(`Batch response size: ${jsonResponse.length} bytes (${allFlagsCacheCompressed.length} bytes compressed)`);
 
     } catch (error) {
-        logger.error('Flag cache initialization failed:', error);
+        global.logger.error('Flag cache initialization failed:', error);
     }
 }
 
@@ -93,7 +92,7 @@ async function fetchExternalFlag(countryCode) {
                 response.on('end', () => {
                     // Cache the fetched flag for future use
                     flagCache.set(countryCode, data);
-                    logger.info(`Fetched external flag for ${countryCode}`);
+                    global.logger.info(`Fetched external flag for ${countryCode}`);
                     resolve(data);
                 });
             } else {
@@ -143,7 +142,7 @@ const getCountries = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get countries error:', error);
+        global.logger.error('Get countries error:', error);
         res.status(500).json({ error: 'Failed to retrieve countries' });
     }
 };
@@ -186,7 +185,7 @@ const getCountry = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get country error:', error);
+        global.logger.error('Get country error:', error);
         res.status(500).json({ error: 'Failed to retrieve country' });
     }
 };
@@ -216,7 +215,7 @@ const getSingleFlag = async (req, res) => {
             try {
                 flagSvg = await fetchExternalFlag(countryCode);
             } catch (error) {
-                logger.warn(`Failed to fetch external flag for ${countryCode}: ${error.message}`);
+                global.logger.warn(`Failed to fetch external flag for ${countryCode}: ${error.message}`);
                 return res.status(404).json({
                     error: `Flag not found for country code: ${countryCode}`,
                     fallbackUrl: `${FALLBACK_SVG_URL}/${countryCode}.svg`
@@ -234,7 +233,7 @@ const getSingleFlag = async (req, res) => {
         res.send(flagSvg);
 
     } catch (error) {
-        logger.error('Get single flag error:', error);
+        global.logger.error('Get single flag error:', error);
         res.status(500).json({ error: 'Failed to retrieve flag' });
     }
 };
@@ -280,7 +279,7 @@ const getAllFlags = async (req, res) => {
 
             zlib.gzip(jsonString, (err, compressed) => {
                 if (err) {
-                    logger.error('Compression error:', err);
+                    global.logger.error('Compression error:', err);
                     res.set(headers);
                     res.json(responseData);
                 } else {
@@ -294,10 +293,10 @@ const getAllFlags = async (req, res) => {
             res.json(responseData);
         }
 
-        logger.info(`Served batch flags to ${req.user.role}: ${Object.keys(allFlagsCache).length} flags`);
+        global.logger.info(`Served batch flags to ${req.user.role}: ${Object.keys(allFlagsCache).length} flags`);
 
     } catch (error) {
-        logger.error('Get all flags error:', error);
+        global.logger.error('Get all flags error:', error);
         res.status(500).json({ error: 'Failed to retrieve flags batch' });
     }
 };
@@ -325,7 +324,7 @@ const getFlagMetadata = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get flag metadata error:', error);
+        global.logger.error('Get flag metadata error:', error);
         res.status(500).json({ error: 'Failed to retrieve flag metadata' });
     }
 };
@@ -333,7 +332,7 @@ const getFlagMetadata = async (req, res) => {
 // Refresh flag cache (admin only)
 const refreshFlagCache = async (req, res) => {
     try {
-        logger.info('Refreshing flag cache...');
+        global.logger.info('Refreshing flag cache...');
 
         // Clear existing cache
         flagCache.clear();
@@ -352,7 +351,7 @@ const refreshFlagCache = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Refresh flag cache error:', error);
+        global.logger.error('Refresh flag cache error:', error);
         res.status(500).json({ error: 'Failed to refresh flag cache' });
     }
 };
@@ -382,7 +381,7 @@ const getServiceHealth = async (req, res) => {
         res.json(health);
 
     } catch (error) {
-        logger.error('Countries service health check error:', error);
+        global.logger.error('Countries service health check error:', error);
         res.status(500).json({
             service: 'countries-service',
             status: 'unhealthy',

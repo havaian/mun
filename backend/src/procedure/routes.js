@@ -277,7 +277,7 @@ router.get('/motions/:id',
             });
 
         } catch (error) {
-            logger.error('Get motion error:', error);
+            global.logger.error('Get motion error:', error);
             res.status(500).json({ error: 'Failed to get motion details' });
         }
     }
@@ -366,7 +366,7 @@ router.get('/questions/:id',
             });
 
         } catch (error) {
-            logger.error('Get question error:', error);
+            global.logger.error('Get question error:', error);
             res.status(500).json({ error: 'Failed to get question details' });
         }
     }

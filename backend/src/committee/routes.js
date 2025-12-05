@@ -251,8 +251,7 @@ router.get('/',
             });
 
         } catch (error) {
-            const logger = require('../utils/logger');
-            logger.error('Get all committees error:', error);
+            global.logger.error('Get all committees error:', error);
             res.status(500).json({ error: 'Failed to fetch committees' });
         }
     }
@@ -372,8 +371,7 @@ router.put('/:id/countries/:countryName/status',
             });
 
         } catch (error) {
-            const logger = require('../utils/logger');
-            logger.error('Update country status error:', error);
+            global.logger.error('Update country status error:', error);
             res.status(500).json({ error: 'Failed to update country status' });
         }
     }
@@ -417,8 +415,7 @@ router.get('/:id/presidium',
             });
 
         } catch (error) {
-            const logger = require('../utils/logger');
-            logger.error('Get presidium error:', error);
+            global.logger.error('Get presidium error:', error);
             res.status(500).json({ error: 'Failed to fetch presidium' });
         }
     }
@@ -440,7 +437,6 @@ router.get('/:id/login-links',
 
             const { Committee } = require('./model');
             const crypto = require('crypto');
-            const logger = require('../utils/logger');
 
             const committee = await Committee.findById(id);
 
@@ -474,7 +470,7 @@ router.get('/:id/login-links',
                 isActive: country.isActive
             }));
 
-            logger.info(`Generated ${delegateLinks.length} delegate login links for committee: ${committee.name}`);
+            global.logger.info(`Generated ${delegateLinks.length} delegate login links for committee: ${committee.name}`);
 
             if (format === 'plain') {
                 const plainText = delegateLinks
@@ -495,8 +491,7 @@ router.get('/:id/login-links',
             }
 
         } catch (error) {
-            const logger = require('../utils/logger');
-            logger.error('Generate delegate login links error:', error);
+            global.logger.error('Generate delegate login links error:', error);
             res.status(500).json({ error: 'Failed to generate delegate login links' });
         }
     }
@@ -517,7 +512,6 @@ router.post('/:id/login-links/regenerate',
             const { Committee } = require('./model');
             const { User } = require('../auth/model');
             const crypto = require('crypto');
-            const logger = require('../utils/logger');
 
             const committee = await Committee.findById(id);
 
@@ -557,7 +551,7 @@ router.post('/:id/login-links/regenerate',
                 { isActive: false }
             );
 
-            logger.info(`All login links regenerated for committee ${committee.name}. Reason: ${reason}`);
+            global.logger.info(`All login links regenerated for committee ${committee.name}. Reason: ${reason}`);
 
             res.json({
                 success: true,
@@ -566,7 +560,7 @@ router.post('/:id/login-links/regenerate',
             });
 
         } catch (error) {
-            logger.error('Regenerate login links error:', error);
+            global.logger.error('Regenerate login links error:', error);
             res.status(500).json({ error: 'Failed to regenerate login links' });
         }
     }
@@ -594,7 +588,6 @@ router.post('/:id/login-links/:countryName/regenerate',
             const { Committee } = require('./model');
             const { User, ActiveSession } = require('../auth/model');
             const crypto = require('crypto');
-            const logger = require('../utils/logger');
 
             const committee = await Committee.findById(id);
 
@@ -635,7 +628,7 @@ router.post('/:id/login-links/:countryName/regenerate',
                 );
             }
 
-            logger.info(`Login link regenerated for ${countryName} in committee ${committee.name}. Reason: ${reason}`);
+            global.logger.info(`Login link regenerated for ${countryName} in committee ${committee.name}. Reason: ${reason}`);
 
             res.json({
                 success: true,
@@ -644,7 +637,7 @@ router.post('/:id/login-links/:countryName/regenerate',
             });
 
         } catch (error) {
-            logger.error('Regenerate country login link error:', error);
+            global.logger.error('Regenerate country login link error:', error);
             res.status(500).json({ error: 'Failed to regenerate login link' });
         }
     }
@@ -663,7 +656,6 @@ router.post('/:committeeId/presidium/generate-links',
 
             const { User } = require('../auth/model');
             const crypto = require('crypto');
-            const logger = require('../utils/logger');
 
             // Find presidium members for this committee
             const presidiumMembers = await User.find({
@@ -697,7 +689,7 @@ router.post('/:committeeId/presidium/generate-links',
                 isActive: member.isActive
             }));
 
-            logger.info(`Generated login links for ${presidiumMembers.length} presidium members in committee ${committeeId}`);
+            global.logger.info(`Generated login links for ${presidiumMembers.length} presidium members in committee ${committeeId}`);
 
             if (format === 'plain') {
                 const plainText = presidiumLinks
@@ -718,8 +710,7 @@ router.post('/:committeeId/presidium/generate-links',
             }
 
         } catch (error) {
-            const logger = require('../utils/logger');
-            logger.error('Generate presidium login links error:', error);
+            global.logger.error('Generate presidium login links error:', error);
             res.status(500).json({ error: 'Failed to generate presidium login links' });
         }
     }
@@ -755,8 +746,7 @@ router.get('/:committeeId/presidium/status',
             });
 
         } catch (error) {
-            const logger = require('../utils/logger');
-            logger.error('Get presidium status error:', error);
+            global.logger.error('Get presidium status error:', error);
             res.status(500).json({ error: 'Failed to get presidium status' });
         }
     }
@@ -775,7 +765,6 @@ router.post('/:committeeId/presidium/:role/reset-link',
 
             const { User } = require('../auth/model');
             const crypto = require('crypto');
-            const logger = require('../utils/logger');
 
             const presidiumUser = await User.findOne({
                 committeeId: committeeId,
@@ -804,7 +793,7 @@ router.post('/:committeeId/presidium/:role/reset-link',
                 { isActive: false }
             );
 
-            logger.info(`Login link reset for presidium role '${role}' in committee ${committeeId}`);
+            global.logger.info(`Login link reset for presidium role '${role}' in committee ${committeeId}`);
 
             res.json({
                 success: true,
@@ -813,8 +802,7 @@ router.post('/:committeeId/presidium/:role/reset-link',
             });
 
         } catch (error) {
-            const logger = require('../utils/logger');
-            logger.error('Reset presidium login link error:', error);
+            global.logger.error('Reset presidium login link error:', error);
             res.status(500).json({
                 error: 'Failed to reset presidium login link'
             });
@@ -876,8 +864,7 @@ router.get('/:committeeId/login-tokens',
             });
 
         } catch (error) {
-            const logger = require('../utils/logger');
-            logger.error('Get committee login tokens error:', error);
+            global.logger.error('Get committee login tokens error:', error);
             res.status(500).json({
                 error: 'Failed to get login tokens'
             });

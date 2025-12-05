@@ -1,7 +1,6 @@
 const { Conversation } = require('./model');
 const { Committee } = require('../committee/model');
 const { User } = require('../auth/model');
-const logger = require('../utils/logger');
 const { emitToUser, emitToRoom } = require('../websocket/socketManager');
 
 // Create bilateral conversation
@@ -61,7 +60,7 @@ const createBilateralConversation = async (req, res) => {
             });
         }
 
-        logger.info(`Bilateral conversation created between ${req.user.countryName} and ${targetCountry}`);
+        global.logger.info(`Bilateral conversation created between ${req.user.countryName} and ${targetCountry}`);
 
         res.status(201).json({
             success: true,
@@ -70,7 +69,7 @@ const createBilateralConversation = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Create bilateral conversation error:', error);
+        global.logger.error('Create bilateral conversation error:', error);
         res.status(500).json({ error: 'Failed to create bilateral conversation' });
     }
 };
@@ -128,7 +127,7 @@ const createGroupConversation = async (req, res) => {
             }
         }
 
-        logger.info(`Group conversation created: "${title}" by ${req.user.countryName}`);
+        global.logger.info(`Group conversation created: "${title}" by ${req.user.countryName}`);
 
         res.status(201).json({
             success: true,
@@ -137,7 +136,7 @@ const createGroupConversation = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Create group conversation error:', error);
+        global.logger.error('Create group conversation error:', error);
         res.status(500).json({ error: 'Failed to create group conversation' });
     }
 };
@@ -185,7 +184,7 @@ const sendMessage = async (req, res) => {
                 });
         }
 
-        logger.info(`Message sent in conversation ${id} by ${req.user.countryName}`);
+        global.logger.info(`Message sent in conversation ${id} by ${req.user.countryName}`);
 
         res.status(201).json({
             success: true,
@@ -194,7 +193,7 @@ const sendMessage = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Send message error:', error);
+        global.logger.error('Send message error:', error);
         res.status(500).json({ error: error.message || 'Failed to send message' });
     }
 };
@@ -233,7 +232,7 @@ const editMessage = async (req, res) => {
                 });
         }
 
-        logger.info(`Message edited in conversation ${id} by ${req.user.countryName}`);
+        global.logger.info(`Message edited in conversation ${id} by ${req.user.countryName}`);
 
         res.json({
             success: true,
@@ -241,7 +240,7 @@ const editMessage = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Edit message error:', error);
+        global.logger.error('Edit message error:', error);
         res.status(500).json({ error: error.message || 'Failed to edit message' });
     }
 };
@@ -272,7 +271,7 @@ const markAsRead = async (req, res) => {
                     markedCount++;
                 } catch (error) {
                     // Continue with other messages if one fails
-                    logger.warn(`Failed to mark message ${messageId} as read: ${error.message}`);
+                    global.logger.warn(`Failed to mark message ${messageId} as read: ${error.message}`);
                 }
             }
         } else {
@@ -300,7 +299,7 @@ const markAsRead = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Mark as read error:', error);
+        global.logger.error('Mark as read error:', error);
         res.status(500).json({ error: 'Failed to mark messages as read' });
     }
 };
@@ -358,7 +357,7 @@ const getUserConversations = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get user conversations error:', error);
+        global.logger.error('Get user conversations error:', error);
         res.status(500).json({ error: 'Failed to get conversations' });
     }
 };
@@ -417,7 +416,7 @@ const getConversation = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get conversation error:', error);
+        global.logger.error('Get conversation error:', error);
         res.status(500).json({ error: 'Failed to get conversation details' });
     }
 };
@@ -472,7 +471,7 @@ const addParticipant = async (req, res) => {
                 });
         }
 
-        logger.info(`Participant ${country} added to conversation ${id} by ${req.user.countryName}`);
+        global.logger.info(`Participant ${country} added to conversation ${id} by ${req.user.countryName}`);
 
         res.json({
             success: true,
@@ -481,7 +480,7 @@ const addParticipant = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Add participant error:', error);
+        global.logger.error('Add participant error:', error);
         res.status(500).json({ error: error.message || 'Failed to add participant' });
     }
 };
@@ -522,7 +521,7 @@ const leaveConversation = async (req, res) => {
                 });
         }
 
-        logger.info(`${req.user.countryName} left conversation ${id}`);
+        global.logger.info(`${req.user.countryName} left conversation ${id}`);
 
         res.json({
             success: true,
@@ -530,7 +529,7 @@ const leaveConversation = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Leave conversation error:', error);
+        global.logger.error('Leave conversation error:', error);
         res.status(500).json({ error: error.message || 'Failed to leave conversation' });
     }
 };

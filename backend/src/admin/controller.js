@@ -1,5 +1,3 @@
-const logger = require('../utils/logger');
-
 // Performance optimization: Cache frequently accessed data
 const cache = new Map();
 const CACHE_TTL = 30000; // 30 seconds
@@ -256,10 +254,10 @@ const getDashboardStats = async (req, res) => {
             }
         });
 
-        logger.info(`Dashboard stats requested by admin - Cache hit: ${stats.cacheHit}`);
+        global.logger.info(`Dashboard stats requested by admin - Cache hit: ${stats.cacheHit}`);
 
     } catch (error) {
-        logger.error('Get dashboard stats error:', error);
+        global.logger.error('Get dashboard stats error:', error);
         res.status(500).json({
             error: 'Failed to get dashboard statistics',
             details: error.message
@@ -376,7 +374,7 @@ const getRecentActivity = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get recent activity error:', error);
+        global.logger.error('Get recent activity error:', error);
         res.status(500).json({
             error: 'Failed to get recent activity',
             details: error.message
@@ -467,7 +465,7 @@ const bulkGenerateQR = async (req, res) => {
                     return result;
 
                 } catch (error) {
-                    logger.error(`Bulk QR error for committee ${committee._id}:`, error);
+                    global.logger.error(`Bulk QR error for committee ${committee._id}:`, error);
                     totalErrors++;
                     return {
                         committeeId: committee._id,
@@ -503,12 +501,12 @@ const bulkGenerateQR = async (req, res) => {
             }
         };
 
-        logger.info(`Bulk QR generation completed. Total QR codes generated: ${totalGenerated}, Errors: ${totalErrors}`);
+        global.logger.info(`Bulk QR generation completed. Total QR codes generated: ${totalGenerated}, Errors: ${totalErrors}`);
 
         res.json(response);
 
     } catch (error) {
-        logger.error('Bulk generate QR error:', error);
+        global.logger.error('Bulk generate QR error:', error);
         res.status(500).json({
             error: 'Failed to bulk generate QR codes',
             details: error.message
@@ -573,7 +571,7 @@ const getSystemHealth = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get system health error:', error);
+        global.logger.error('Get system health error:', error);
         res.status(500).json({
             error: 'Failed to get system health',
             details: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -587,7 +585,7 @@ const clearCaches = async (req, res) => {
         const cacheSize = cache.size;
         cache.clear();
 
-        logger.info(`Admin cleared all caches. ${cacheSize} entries removed.`);
+        global.logger.info(`Admin cleared all caches. ${cacheSize} entries removed.`);
 
         res.json({
             success: true,
@@ -596,7 +594,7 @@ const clearCaches = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Clear caches error:', error);
+        global.logger.error('Clear caches error:', error);
         res.status(500).json({
             error: 'Failed to clear caches'
         });

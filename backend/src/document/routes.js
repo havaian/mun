@@ -182,7 +182,7 @@ router.get('/',
             });
 
         } catch (error) {
-            logger.error('Get all documents error:', error);
+            global.logger.error('Get all documents error:', error);
             res.status(500).json({ error: 'Failed to fetch documents' });
         }
     }
@@ -311,14 +311,14 @@ router.post('/public',
             });
 
         } catch (error) {
-            logger.error('Upload public document error:', error);
+            global.logger.error('Upload public document error:', error);
 
             // Clean up file on error
             if (req.file) {
                 try {
                     await require('fs').promises.unlink(req.file.path);
                 } catch (unlinkError) {
-                    logger.error('File cleanup error:', unlinkError);
+                    global.logger.error('File cleanup error:', unlinkError);
                 }
             }
 
@@ -398,7 +398,7 @@ router.put('/public/:id',
             });
 
         } catch (error) {
-            logger.error('Update public document error:', error);
+            global.logger.error('Update public document error:', error);
             res.status(500).json({ error: 'Failed to update public document' });
         }
     }
@@ -439,11 +439,11 @@ router.delete('/public/:id',
                     try {
                         await require('fs').promises.unlink(version.filePath);
                     } catch (versionError) {
-                        logger.warn('Failed to delete version file:', versionError);
+                        global.logger.warn('Failed to delete version file:', versionError);
                     }
                 }
             } catch (fileError) {
-                logger.warn('Failed to delete document file:', fileError);
+                global.logger.warn('Failed to delete document file:', fileError);
             }
 
             await Document.findByIdAndDelete(id);
@@ -454,7 +454,7 @@ router.delete('/public/:id',
             });
 
         } catch (error) {
-            logger.error('Delete public document error:', error);
+            global.logger.error('Delete public document error:', error);
             res.status(500).json({ error: 'Failed to delete public document' });
         }
     }

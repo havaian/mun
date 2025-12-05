@@ -2,7 +2,6 @@ const { ProceduralMotion, Question } = require('./model');
 const { Committee } = require('../committee/model');
 const { Session } = require('../session/model');
 const { User } = require('../auth/model');
-const logger = require('../utils/logger');
 const { emitToRoom, emitToUser } = require('../websocket/socketManager');
 
 // Procedural Motion Controllers
@@ -81,7 +80,7 @@ const submitMotion = async (req, res) => {
             });
         }
 
-        logger.info(`Procedural motion submitted: ${motionType} by ${req.user.countryName} (${req.user.email})`);
+        global.logger.info(`Procedural motion submitted: ${motionType} by ${req.user.countryName} (${req.user.email})`);
 
         res.status(201).json({
             success: true,
@@ -90,7 +89,7 @@ const submitMotion = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Submit motion error:', error);
+        global.logger.error('Submit motion error:', error);
         res.status(500).json({ error: 'Failed to submit procedural motion' });
     }
 };
@@ -153,7 +152,7 @@ const submitPresidiumMotion = async (req, res) => {
             });
         }
 
-        logger.info(`Presidium motion submitted: ${motionType} by ${req.user.username} (${req.user.email})`);
+        global.logger.info(`Presidium motion submitted: ${motionType} by ${req.user.username} (${req.user.email})`);
 
         res.status(201).json({
             success: true,
@@ -162,7 +161,7 @@ const submitPresidiumMotion = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Submit presidium motion error:', error);
+        global.logger.error('Submit presidium motion error:', error);
         res.status(500).json({ error: 'Failed to submit presidium motion' });
     }
 };
@@ -211,7 +210,7 @@ const supportMotion = async (req, res) => {
             }
         }
 
-        logger.info(`Motion supported: ${motion._id} by ${req.user.countryName}`);
+        global.logger.info(`Motion supported: ${motion._id} by ${req.user.countryName}`);
 
         res.json({
             success: true,
@@ -220,7 +219,7 @@ const supportMotion = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Support motion error:', error);
+        global.logger.error('Support motion error:', error);
         res.status(500).json({ error: error.message || 'Failed to support motion' });
     }
 };
@@ -285,7 +284,7 @@ const reviewMotion = async (req, res) => {
             });
         }
 
-        logger.info(`Motion reviewed: ${motion._id} - ${action.toUpperCase()} by ${req.user.username}`);
+        global.logger.info(`Motion reviewed: ${motion._id} - ${action.toUpperCase()} by ${req.user.username}`);
 
         res.json({
             success: true,
@@ -294,7 +293,7 @@ const reviewMotion = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Review motion error:', error);
+        global.logger.error('Review motion error:', error);
         res.status(500).json({ error: 'Failed to review motion' });
     }
 };
@@ -352,7 +351,7 @@ const getSessionMotions = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get session motions error:', error);
+        global.logger.error('Get session motions error:', error);
         res.status(500).json({ error: 'Failed to get session motions' });
     }
 };
@@ -423,7 +422,7 @@ const submitQuestion = async (req, res) => {
             });
         }
 
-        logger.info(`Question submitted: ${questionType} by ${req.user.countryName} (${req.user.email})`);
+        global.logger.info(`Question submitted: ${questionType} by ${req.user.countryName} (${req.user.email})`);
 
         res.status(201).json({
             success: true,
@@ -432,7 +431,7 @@ const submitQuestion = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Submit question error:', error);
+        global.logger.error('Submit question error:', error);
         res.status(500).json({ error: 'Failed to submit question' });
     }
 };
@@ -482,7 +481,7 @@ const answerQuestion = async (req, res) => {
             });
         }
 
-        logger.info(`Question answered: ${question._id} by ${req.user.email}`);
+        global.logger.info(`Question answered: ${question._id} by ${req.user.email}`);
 
         res.json({
             success: true,
@@ -491,7 +490,7 @@ const answerQuestion = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Answer question error:', error);
+        global.logger.error('Answer question error:', error);
         res.status(500).json({ error: 'Failed to answer question' });
     }
 };
@@ -546,7 +545,7 @@ const getSessionQuestions = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get session questions error:', error);
+        global.logger.error('Get session questions error:', error);
         res.status(500).json({ error: 'Failed to get session questions' });
     }
 };

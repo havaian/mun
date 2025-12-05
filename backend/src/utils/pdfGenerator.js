@@ -3,7 +3,6 @@ const PDFDocument = require('pdfkit');
 const QRCode = require('qrcode');
 const fs = require('fs');
 const path = require('path');
-const logger = require('./logger');
 
 class PDFGenerator {
     constructor() {
@@ -134,7 +133,7 @@ class PDFGenerator {
             });
 
         } catch (error) {
-            logger.error('PDF generation error:', error);
+            global.logger.error('PDF generation error:', error);
             throw new Error(`Failed to generate PDF: ${error.message}`);
         }
     }
@@ -193,7 +192,7 @@ class PDFGenerator {
                 });
 
         } catch (error) {
-            logger.error('Error adding presidium card:', error);
+            global.logger.error('Error adding presidium card:', error);
             // Add error placeholder
             doc.rect(x, y, cardWidth, cardHeight)
                 .fillAndStroke('#fee', '#fcc');
@@ -260,7 +259,7 @@ class PDFGenerator {
                 });
 
         } catch (error) {
-            logger.error('Error adding delegate card:', error);
+            global.logger.error('Error adding delegate card:', error);
             // Add error placeholder
             doc.rect(x, y, cardWidth, cardHeight)
                 .fillAndStroke('#fee', '#fcc');

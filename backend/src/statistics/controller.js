@@ -2,7 +2,6 @@ const { Activity, DelegateStats, CommitteeStats } = require('./model');
 const { Committee } = require('../committee/model');
 const { Event } = require('../event/model');
 const { User } = require('../auth/model');
-const logger = require('../utils/logger');
 
 // Record activity
 const recordActivity = async (activityData) => {
@@ -15,7 +14,7 @@ const recordActivity = async (activityData) => {
 
         return activity;
     } catch (error) {
-        logger.error('Record activity error:', error);
+        global.logger.error('Record activity error:', error);
         throw error;
     }
 };
@@ -126,7 +125,7 @@ const updateDelegateStats = async (activity) => {
         await stats.save();
 
     } catch (error) {
-        logger.error('Update delegate stats error:', error);
+        global.logger.error('Update delegate stats error:', error);
     }
 };
 
@@ -166,7 +165,7 @@ const getDelegateStats = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get delegate stats error:', error);
+        global.logger.error('Get delegate stats error:', error);
         res.status(500).json({ error: 'Failed to get delegate statistics' });
     }
 };
@@ -215,7 +214,7 @@ const getCommitteeStats = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get committee stats error:', error);
+        global.logger.error('Get committee stats error:', error);
         res.status(500).json({ error: 'Failed to get committee statistics' });
     }
 };
@@ -329,7 +328,7 @@ const calculateCommitteeStats = async (committeeId) => {
         return stats;
 
     } catch (error) {
-        logger.error('Calculate committee stats error:', error);
+        global.logger.error('Calculate committee stats error:', error);
         throw error;
     }
 };
@@ -361,7 +360,7 @@ const getDelegateRankings = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get delegate rankings error:', error);
+        global.logger.error('Get delegate rankings error:', error);
         res.status(500).json({ error: 'Failed to get delegate rankings' });
     }
 };
@@ -443,7 +442,7 @@ const getActivityFeed = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get activity feed error:', error);
+        global.logger.error('Get activity feed error:', error);
         res.status(500).json({ error: 'Failed to get activity feed' });
     }
 };
@@ -462,7 +461,7 @@ const awardAchievement = async (req, res) => {
         stats.addAchievement(awardType, awardName, description, criteria);
         await stats.save();
 
-        logger.info(`Achievement awarded: ${awardName} to ${stats.countryName}`);
+        global.logger.info(`Achievement awarded: ${awardName} to ${stats.countryName}`);
 
         res.json({
             success: true,
@@ -471,7 +470,7 @@ const awardAchievement = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Award achievement error:', error);
+        global.logger.error('Award achievement error:', error);
         res.status(500).json({ error: 'Failed to award achievement' });
     }
 };

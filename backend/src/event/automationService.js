@@ -1,7 +1,6 @@
 // backend/src/event/automationService.js
 const { Event } = require('./model');
 const { Committee } = require('../committee/model');
-const logger = require('../utils/logger');
 
 class EventAutomationService {
     constructor() {
@@ -16,7 +15,7 @@ class EventAutomationService {
      */
     start() {
         if (this.isRunning) {
-            logger.warn('Event automation service is already running');
+            global.logger.warn('Event automation service is already running');
             return;
         }
 
@@ -30,7 +29,7 @@ class EventAutomationService {
             this.checkEventStatuses();
         }, this.checkInterval);
 
-        logger.info('Event automation service started - checking every 5 minutes');
+        global.logger.info('Event automation service started - checking every 5 minutes');
     }
 
     /**
@@ -47,7 +46,7 @@ class EventAutomationService {
         }
 
         this.isRunning = false;
-        logger.info('Event automation service stopped');
+        global.logger.info('Event automation service stopped');
     }
 
     /**
@@ -58,7 +57,7 @@ class EventAutomationService {
             const now = new Date();
             let updatedCount = 0;
 
-            logger.debug('Starting automated event status check');
+            global.logger.debug('Starting automated event status check');
 
             // Find events that need status updates
             const events = await Event.find({
@@ -85,11 +84,11 @@ class EventAutomationService {
             }
 
             if (updatedCount > 0) {
-                logger.info(`Automated status update completed: ${updatedCount} events updated`);
+                global.logger.info(`Automated status update completed: ${updatedCount} events updated`);
             }
 
         } catch (error) {
-            logger.error('Error in automated event status check:', error);
+            global.logger.error('Error in automated event status check:', error);
         }
     }
 
@@ -105,14 +104,14 @@ class EventAutomationService {
             if (event.status === 'draft' && currentTime >= new Date(event.startDate)) {
                 newStatus = 'active';
                 shouldUpdateCommittees = true;
-                logger.info(`Auto-activating event: ${event.name} (ID: ${event._id})`);
+                global.logger.info(`Auto-activating event: ${event.name} (ID: ${event._id})`);
             }
 
             // Task 6: Active event should automatically end
             if (event.status === 'active' && currentTime > new Date(event.endDate)) {
                 newStatus = 'completed';
                 shouldUpdateCommittees = true;
-                logger.info(`Auto-completing event: ${event.name} (ID: ${event._id})`);
+                global.logger.info(`Auto-completing event: ${event.name} (ID: ${event._id})`);
             }
 
             if (newStatus) {
@@ -138,14 +137,14 @@ class EventAutomationService {
                     });
                 }
 
-                logger.info(`Event status auto-updated: ${event.name} from ${oldStatus} to ${newStatus}`);
+                global.logger.info(`Event status auto-updated: ${event.name} from ${oldStatus} to ${newStatus}`);
                 return true;
             }
 
             return false;
 
         } catch (error) {
-            logger.error(`Error updating event status for ${event.name}:`, error);
+            global.logger.error(`Error updating event status for ${event.name}:`, error);
             return false;
         }
     }
@@ -182,7 +181,7 @@ class EventAutomationService {
             );
 
             if (result.modifiedCount > 0) {
-                logger.info(`Updated ${result.modifiedCount} committee(s) to status: ${committeeStatus} for event: ${eventId}`);
+                global.logger.info(`Updated ${result.modifiedCount} committee(s) to status: ${committeeStatus} for event: ${eventId}`);
 
                 // Emit WebSocket event for committee status changes
                 if (global.io) {
@@ -196,7 +195,7 @@ class EventAutomationService {
             }
 
         } catch (error) {
-            logger.error(`Error updating committee statuses for event ${eventId}:`, error);
+            global.logger.error(`Error updating committee statuses for event ${eventId}:`, error);
         }
     }
 
@@ -204,7 +203,7 @@ class EventAutomationService {
      * Manual trigger for event status check (useful for testing or immediate execution)
      */
     async runManualCheck() {
-        logger.info('Manual event status check triggered');
+        global.logger.info('Manual event status check triggered');
         await this.checkEventStatuses();
     }
 
@@ -243,7 +242,7 @@ class EventAutomationService {
      */
     async forceCheckAllEvents() {
         try {
-            logger.info('Force checking all events for status updates');
+            global.logger.info('Force checking all events for status updates');
 
             const now = new Date();
             const allEvents = await Event.find({
@@ -258,11 +257,11 @@ class EventAutomationService {
                 }
             }
 
-            logger.info(`Force check completed: ${updatedCount} events updated`);
+            global.logger.info(`Force check completed: ${updatedCount} events updated`);
             return { success: true, updatedCount, totalChecked: allEvents.length };
 
         } catch (error) {
-            logger.error('Error in force check all events:', error);
+            global.logger.error('Error in force check all events:', error);
             return { success: false, error: error.message };
         }
     }

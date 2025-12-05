@@ -1,7 +1,6 @@
 const { Session } = require('./model');
 const { Committee } = require('../committee/model');
 const { User } = require('../auth/model');
-const logger = require('../utils/logger');
 const { emitToCommittee, emitToPresidium } = require('../websocket/socketManager');
 
 // Create new session (presidium only)
@@ -13,6 +12,17 @@ const createSession = async (req, res) => {
         const committee = await Committee.findById(committeeId);
         if (!committee) {
             return res.status(404).json({ error: 'Committee not found' });
+        }
+
+        const userCommitteeId = req.user.committeeId?.toString();
+        
+        if (committeeId !== userCommitteeId) {
+            global.logger.warn(`Committee access denied for user ${req.user.email || req.user._id}. Requested: ${committeeId}, Assigned: ${userCommitteeId}`);
+    
+            return res.status(403).json({
+                error: 'Access denied. You can only access your assigned committee.',
+                assignedCommittee: userCommitteeId
+            });
         }
 
         // Check if there's already an active session
@@ -76,7 +86,7 @@ const createSession = async (req, res) => {
             });
         }
 
-        logger.info(`Session ${sessionNumber} created for committee ${committee.name}`);
+        global.logger.info(`Session ${sessionNumber} created for committee ${committee.name}`);
 
         res.status(201).json({
             success: true,
@@ -85,7 +95,7 @@ const createSession = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Create session error:', error);
+        global.logger.error('Create session error:', error);
         res.status(500).json({ error: 'Failed to create session' });
     }
 };
@@ -116,7 +126,7 @@ const getSession = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get session error:', error);
+        global.logger.error('Get session error:', error);
         res.status(500).json({ error: 'Failed to fetch session' });
     }
 };
@@ -155,7 +165,7 @@ const getCommitteeSessions = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get committee sessions error:', error);
+        global.logger.error('Get committee sessions error:', error);
         res.status(500).json({ error: 'Failed to fetch sessions' });
     }
 };
@@ -205,7 +215,7 @@ const updateSessionStatus = async (req, res) => {
             });
         }
 
-        logger.info(`Session ${session.number} status changed from ${oldStatus} to ${status}`);
+        global.logger.info(`Session ${session.number} status changed from ${oldStatus} to ${status}`);
 
         res.json({
             success: true,
@@ -214,7 +224,7 @@ const updateSessionStatus = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Update session status error:', error);
+        global.logger.error('Update session status error:', error);
         res.status(500).json({ error: 'Failed to update session status' });
     }
 };
@@ -260,7 +270,7 @@ const changeDebateMode = async (req, res) => {
             });
         }
 
-        logger.info(`Session ${session.number} mode changed from ${oldMode} to ${mode}`);
+        global.logger.info(`Session ${session.number} mode changed from ${oldMode} to ${mode}`);
 
         res.json({
             success: true,
@@ -273,7 +283,7 @@ const changeDebateMode = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Change debate mode error:', error);
+        global.logger.error('Change debate mode error:', error);
         res.status(500).json({ error: 'Failed to change debate mode' });
     }
 };
@@ -319,7 +329,7 @@ const updateAttendance = async (req, res) => {
             });
         }
 
-        logger.info(`Attendance updated for session ${session.number}: ${session.quorum.present} present`);
+        global.logger.info(`Attendance updated for session ${session.number}: ${session.quorum.present} present`);
 
         res.json({
             success: true,
@@ -329,7 +339,7 @@ const updateAttendance = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Update attendance error:', error);
+        global.logger.error('Update attendance error:', error);
         res.status(500).json({ error: 'Failed to update attendance' });
     }
 };
@@ -354,7 +364,7 @@ const getCurrentAttendance = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get attendance error:', error);
+        global.logger.error('Get attendance error:', error);
         res.status(500).json({ error: 'Failed to fetch attendance' });
     }
 };
@@ -441,7 +451,7 @@ const updateSpeakerList = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Update speaker list error:', error);
+        global.logger.error('Update speaker list error:', error);
 
         if (error.message.includes('already in the speaker list') ||
             error.message.includes('not found in speaker list')) {
@@ -486,7 +496,7 @@ const setCurrentSpeaker = async (req, res) => {
             });
         }
 
-        logger.info(`Current speaker set to ${country} in session ${session.number}`);
+        global.logger.info(`Current speaker set to ${country} in session ${session.number}`);
 
         res.json({
             success: true,
@@ -497,7 +507,7 @@ const setCurrentSpeaker = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Set current speaker error:', error);
+        global.logger.error('Set current speaker error:', error);
 
         if (error.message.includes('not found in speaker list')) {
             return res.status(400).json({ error: error.message });
@@ -530,7 +540,7 @@ const deleteSession = async (req, res) => {
 
         await Session.findByIdAndDelete(id);
 
-        logger.info(`Session ${session.number} deleted`);
+        global.logger.info(`Session ${session.number} deleted`);
 
         res.json({
             success: true,
@@ -538,7 +548,7 @@ const deleteSession = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Delete session error:', error);
+        global.logger.error('Delete session error:', error);
         res.status(500).json({ error: 'Failed to delete session' });
     }
 };

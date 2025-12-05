@@ -7,8 +7,7 @@
 // const { Message } = require('../messaging/model');
 // const { Timer } = require('../timer/model');
 // const { ProceduralMotion, Question } = require('../procedure/model');
-// const { Resolution } = require('../resolution/model');
-// const logger = require('../utils/logger');
+// const { Resolution } = require('../resolution/model');\
 
 // /**
 //  * Simple and robust event protection middleware
@@ -105,7 +104,7 @@
 //                 name: event.name
 //             };
 //         } catch (error) {
-//             logger.error('Error fetching event status:', error);
+//             global.logger.error('Error fetching event status:', error);
 //             return null;
 //         }
 //     }
@@ -147,7 +146,7 @@
 
 //             return null;
 //         } catch (error) {
-//             logger.error('Error extracting event ID:', error);
+//             global.logger.error('Error extracting event ID:', error);
 //             return null;
 //         }
 //     }
@@ -201,7 +200,7 @@
 
 //             return null;
 //         } catch (error) {
-//             logger.error('Error getting event from resource:', error);
+//             global.logger.error('Error getting event from resource:', error);
 //             return null;
 //         }
 //     }
@@ -235,7 +234,7 @@
 //             const eventInfo = await this.getEventStatus(eventId);
 
 //             if (!eventInfo) {
-//                 logger.warn(`Event not found for ID: ${eventId}`);
+//                 global.logger.warn(`Event not found for ID: ${eventId}`);
 //                 return next();
 //             }
 
@@ -245,7 +244,7 @@
 
 //                 // Block QR operations completely (even for admins)
 //                 if (isQR) {
-//                     logger.warn(`Blocked QR operation on completed event: ${eventInfo.name} - Path: ${path} - User: ${user?.email}`);
+//                     global.logger.warn(`Blocked QR operation on completed event: ${eventInfo.name} - Path: ${path} - User: ${user?.email}`);
 
 //                     return res.status(403).json({
 //                         success: false,
@@ -257,7 +256,7 @@
 //                 }
 
 //                 // Block other modification operations for all users
-//                 logger.warn(`Blocked ${method} operation on completed event: ${eventInfo.name} - Path: ${path} - User: ${user?.email} - Role: ${user?.role}`);
+//                 global.logger.warn(`Blocked ${method} operation on completed event: ${eventInfo.name} - Path: ${path} - User: ${user?.email} - Role: ${user?.role}`);
 
 //                 return res.status(405).json({
 //                     success: false,
@@ -279,7 +278,7 @@
 //             next();
 
 //         } catch (error) {
-//             logger.error('Error in event protection middleware:', error);
+//             global.logger.error('Error in event protection middleware:', error);
 //             res.status(500).json({
 //                 success: false,
 //                 error: 'Failed to verify event access permissions'
@@ -292,7 +291,7 @@
 //      */
 //     clearCache() {
 //         this.eventStatusCache.clear();
-//         logger.info('Event protection cache cleared');
+//         global.logger.info('Event protection cache cleared');
 //     }
 
 //     /**

@@ -1,6 +1,5 @@
 // backend/src/auth/globalAuth.js
 const middleware = require('./middleware');
-const logger = require('../utils/logger');
 
 /**
  * Setup global authentication methods
@@ -73,7 +72,7 @@ const setupGlobalAuth = () => {
         optionalAuth: middleware.optionalAuth
     };
 
-    logger.info('Global authentication middleware initialized');
+    global.logger.info('Global authentication middleware initialized');
 
     // Return the global auth object for convenience
     return global.auth;

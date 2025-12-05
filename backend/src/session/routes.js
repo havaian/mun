@@ -130,7 +130,6 @@ router.post('/',
     global.auth.adminOrPresidium,
     validateSessionCreation,
     handleValidationErrors,
-    global.auth.sameCommittee,
     controller.createSession
 );
 
@@ -217,7 +216,7 @@ router.get('/:id/quorum',
             });
 
         } catch (error) {
-            logger.error('Get quorum error:', error);
+            global.logger.error('Get quorum error:', error);
             res.status(500).json({ error: 'Failed to fetch quorum status' });
         }
     }
@@ -258,7 +257,7 @@ router.get('/:id/speaker-list',
             });
 
         } catch (error) {
-            logger.error('Get speaker list error:', error);
+            global.logger.error('Get speaker list error:', error);
             res.status(500).json({ error: 'Failed to fetch speaker list' });
         }
     }
@@ -303,7 +302,7 @@ router.post('/:id/speaker-list/add',
             return controller.updateSpeakerList(req, res);
 
         } catch (error) {
-            logger.error('Add to speaker list error:', error);
+            global.logger.error('Add to speaker list error:', error);
             res.status(500).json({ error: 'Failed to add to speaker list' });
         }
     }
@@ -338,7 +337,7 @@ router.put('/:id/speaker-list/move',
             return controller.updateSpeakerList(req, res);
 
         } catch (error) {
-            logger.error('Move in speaker list error:', error);
+            global.logger.error('Move in speaker list error:', error);
             res.status(500).json({ error: 'Failed to move in speaker list' });
         }
     }
@@ -368,7 +367,7 @@ router.get('/:id/current-mode',
             });
 
         } catch (error) {
-            logger.error('Get current mode error:', error);
+            global.logger.error('Get current mode error:', error);
             res.status(500).json({ error: 'Failed to fetch current mode' });
         }
     }
@@ -397,7 +396,7 @@ router.get('/:id/mode-history',
             });
 
         } catch (error) {
-            logger.error('Get mode history error:', error);
+            global.logger.error('Get mode history error:', error);
             res.status(500).json({ error: 'Failed to fetch mode history' });
         }
     }

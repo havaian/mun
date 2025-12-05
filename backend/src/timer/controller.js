@@ -1,7 +1,6 @@
 const { Timer } = require('./model');
 const { Committee } = require('../committee/model');
 const { Session } = require('../session/model');
-const logger = require('../utils/logger');
 const { emitToRoom } = require('../websocket/socketManager');
 
 // Active timer intervals storage
@@ -101,7 +100,7 @@ const createTimer = async (req, res) => {
             });
         }
 
-        logger.info(`Timer created: "${name}" (${timerType}) for committee ${committeeId} by ${req.user.email}`);
+        global.logger.info(`Timer created: "${name}" (${timerType}) for committee ${committeeId} by ${req.user.email}`);
 
         res.status(201).json({
             success: true,
@@ -110,7 +109,7 @@ const createTimer = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Create timer error:', error);
+        global.logger.error('Create timer error:', error);
         res.status(500).json({ error: 'Failed to create timer' });
     }
 };
@@ -152,7 +151,7 @@ const pauseTimer = async (req, res) => {
             });
         }
 
-        logger.info(`Timer paused: ${timer.name} (${timer._id}) by ${req.user.email}`);
+        global.logger.info(`Timer paused: ${timer.name} (${timer._id}) by ${req.user.email}`);
 
         res.json({
             success: true,
@@ -161,7 +160,7 @@ const pauseTimer = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Pause timer error:', error);
+        global.logger.error('Pause timer error:', error);
         res.status(500).json({ error: error.message || 'Failed to pause timer' });
     }
 }
@@ -203,7 +202,7 @@ const startTimer = async (req, res) => {
             });
         }
 
-        logger.info(`Timer paused: ${timer.name} (${timer._id}) by ${req.user.email}`);
+        global.logger.info(`Timer paused: ${timer.name} (${timer._id}) by ${req.user.email}`);
 
         res.json({
             success: true,
@@ -212,7 +211,7 @@ const startTimer = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Pause timer error:', error);
+        global.logger.error('Pause timer error:', error);
         res.status(500).json({ error: error.message || 'Failed to pause timer' });
     }
 };
@@ -253,7 +252,7 @@ const resumeTimer = async (req, res) => {
             });
         }
 
-        logger.info(`Timer resumed: ${timer.name} (${timer._id}) by ${req.user.email}`);
+        global.logger.info(`Timer resumed: ${timer.name} (${timer._id}) by ${req.user.email}`);
 
         res.json({
             success: true,
@@ -262,7 +261,7 @@ const resumeTimer = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Resume timer error:', error);
+        global.logger.error('Resume timer error:', error);
         res.status(500).json({ error: error.message || 'Failed to resume timer' });
     }
 };
@@ -299,7 +298,7 @@ const extendTimer = async (req, res) => {
             });
         }
 
-        logger.info(`Timer extended: ${timer.name} (${timer._id}) by ${additionalSeconds}s by ${req.user.email}. Reason: ${reason}`);
+        global.logger.info(`Timer extended: ${timer.name} (${timer._id}) by ${additionalSeconds}s by ${req.user.email}. Reason: ${reason}`);
 
         res.json({
             success: true,
@@ -308,7 +307,7 @@ const extendTimer = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Extend timer error:', error);
+        global.logger.error('Extend timer error:', error);
         res.status(500).json({ error: error.message || 'Failed to extend timer' });
     }
 };
@@ -345,7 +344,7 @@ const completeTimer = async (req, res) => {
             });
         }
 
-        logger.info(`Timer completed: ${timer.name} (${timer._id}) by ${req.user.email}`);
+        global.logger.info(`Timer completed: ${timer.name} (${timer._id}) by ${req.user.email}`);
 
         res.json({
             success: true,
@@ -354,7 +353,7 @@ const completeTimer = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Complete timer error:', error);
+        global.logger.error('Complete timer error:', error);
         res.status(500).json({ error: error.message || 'Failed to complete timer' });
     }
 };
@@ -392,7 +391,7 @@ const cancelTimer = async (req, res) => {
             });
         }
 
-        logger.info(`Timer cancelled: ${timer.name} (${timer._id}) by ${req.user.email}. Reason: ${reason}`);
+        global.logger.info(`Timer cancelled: ${timer.name} (${timer._id}) by ${req.user.email}. Reason: ${reason}`);
 
         res.json({
             success: true,
@@ -400,7 +399,7 @@ const cancelTimer = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Cancel timer error:', error);
+        global.logger.error('Cancel timer error:', error);
         res.status(500).json({ error: error.message || 'Failed to cancel timer' });
     }
 };
@@ -423,7 +422,7 @@ const getTimer = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get timer error:', error);
+        global.logger.error('Get timer error:', error);
         res.status(500).json({ error: 'Failed to get timer details' });
     }
 };
@@ -466,7 +465,7 @@ const getCommitteeTimers = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get committee timers error:', error);
+        global.logger.error('Get committee timers error:', error);
         res.status(500).json({ error: 'Failed to get committee timers' });
     }
 };
@@ -495,7 +494,7 @@ const getActiveTimers = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get active timers error:', error);
+        global.logger.error('Get active timers error:', error);
         res.status(500).json({ error: 'Failed to get active timers' });
     }
 };
@@ -588,7 +587,7 @@ const startTimerInterval = (timer) => {
                     });
                 }
 
-                logger.info(`Timer expired: ${currentTimer.name} (${currentTimer._id})`);
+                global.logger.info(`Timer expired: ${currentTimer.name} (${currentTimer._id})`);
             }
 
             // Save if there were changes
@@ -610,7 +609,7 @@ const startTimerInterval = (timer) => {
             }
 
         } catch (error) {
-            logger.error('Timer interval error:', error);
+            global.logger.error('Timer interval error:', error);
             stopTimerInterval(timer._id);
         }
     }, 1000); // Update every second
@@ -637,9 +636,9 @@ const initializeActiveTimers = async () => {
             startTimerInterval(timer);
         }
 
-        logger.info(`Initialized ${activeTimers.length} active timers`);
+        global.logger.info(`Initialized ${activeTimers.length} active timers`);
     } catch (error) {
-        logger.error('Failed to initialize active timers:', error);
+        global.logger.error('Failed to initialize active timers:', error);
     }
 };
 

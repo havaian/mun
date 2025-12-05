@@ -2,7 +2,6 @@ const { Voting } = require('./model');
 const { Committee } = require('../committee/model');
 const { User } = require('../auth/model');
 const { Session } = require('../session/model');
-const logger = require('../utils/logger');
 const { emitToRoom, emitToUser } = require('../websocket/socketManager');
 
 // Create new voting (presidium only)
@@ -95,7 +94,7 @@ const createVoting = async (req, res) => {
             });
         }
 
-        logger.info(`Voting created: "${title}" by ${req.user.email} for committee ${committeeId}`);
+        global.logger.info(`Voting created: "${title}" by ${req.user.email} for committee ${committeeId}`);
 
         res.status(201).json({
             success: true,
@@ -114,7 +113,7 @@ const createVoting = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Create voting error:', error);
+        global.logger.error('Create voting error:', error);
         res.status(500).json({ error: 'Failed to create voting' });
     }
 };
@@ -171,7 +170,7 @@ const startVoting = async (req, res) => {
             });
         }
 
-        logger.info(`Voting started: ${voting.title} (${voting._id})`);
+        global.logger.info(`Voting started: ${voting.title} (${voting._id})`);
 
         res.json({
             success: true,
@@ -185,7 +184,7 @@ const startVoting = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Start voting error:', error);
+        global.logger.error('Start voting error:', error);
         res.status(500).json({ error: 'Failed to start voting' });
     }
 };
@@ -299,7 +298,7 @@ const castVote = async (req, res) => {
             }
         }
 
-        logger.info(`Vote cast: ${voter.country} voted "${vote}" in voting ${voting._id}${isVeto ? ' (VETO)' : ''}`);
+        global.logger.info(`Vote cast: ${voter.country} voted "${vote}" in voting ${voting._id}${isVeto ? ' (VETO)' : ''}`);
 
         res.json({
             success: true,
@@ -314,7 +313,7 @@ const castVote = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Cast vote error:', error);
+        global.logger.error('Cast vote error:', error);
         res.status(500).json({ error: 'Failed to cast vote' });
     }
 };
@@ -382,7 +381,7 @@ const skipVote = async (req, res) => {
             }
         }
 
-        logger.info(`Vote skipped: ${voter.country} in voting ${voting._id}`);
+        global.logger.info(`Vote skipped: ${voter.country} in voting ${voting._id}`);
 
         res.json({
             success: true,
@@ -392,7 +391,7 @@ const skipVote = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Skip vote error:', error);
+        global.logger.error('Skip vote error:', error);
         res.status(500).json({ error: 'Failed to skip vote' });
     }
 };
@@ -441,7 +440,7 @@ const completeVoting = async (req, res) => {
             });
         }
 
-        logger.info(`Voting completed: ${voting.title} (${voting._id}) - ${voting.results.passed ? 'PASSED' : 'FAILED'}`);
+        global.logger.info(`Voting completed: ${voting.title} (${voting._id}) - ${voting.results.passed ? 'PASSED' : 'FAILED'}`);
 
         res.json({
             success: true,
@@ -456,7 +455,7 @@ const completeVoting = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Complete voting error:', error);
+        global.logger.error('Complete voting error:', error);
         res.status(500).json({ error: 'Failed to complete voting' });
     }
 };
@@ -543,7 +542,7 @@ const getVoting = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get voting error:', error);
+        global.logger.error('Get voting error:', error);
         res.status(500).json({ error: 'Failed to get voting details' });
     }
 };
@@ -609,7 +608,7 @@ const getCommitteeVotings = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get committee votings error:', error);
+        global.logger.error('Get committee votings error:', error);
         res.status(500).json({ error: 'Failed to get committee votings' });
     }
 };

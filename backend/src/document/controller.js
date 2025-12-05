@@ -1,6 +1,5 @@
 const { Document } = require('./model');
 const { Committee } = require('../committee/model');
-const logger = require('../utils/logger');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
@@ -74,7 +73,7 @@ const extractTextFromFile = async (filePath, mimeType) => {
         };
 
     } catch (error) {
-        logger.error('Text extraction error:', error);
+        global.logger.error('Text extraction error:', error);
         return {
             extractedText: '',
             pageCount: 0,
@@ -134,7 +133,7 @@ const uploadPositionPaper = async (req, res) => {
 
         await document.save();
 
-        logger.info(`Position paper uploaded: ${req.user.countryName} (${req.user.email})`);
+        global.logger.info(`Position paper uploaded: ${req.user.countryName} (${req.user.email})`);
 
         res.status(201).json({
             success: true,
@@ -154,14 +153,14 @@ const uploadPositionPaper = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Upload position paper error:', error);
+        global.logger.error('Upload position paper error:', error);
 
         // Clean up uploaded file on error
         if (req.file) {
             try {
                 await fs.unlink(req.file.path);
             } catch (unlinkError) {
-                logger.error('File cleanup error:', unlinkError);
+                global.logger.error('File cleanup error:', unlinkError);
             }
         }
 
@@ -197,7 +196,7 @@ const uploadNewVersion = async (req, res, existingDocument) => {
         existingDocument.updateContent(contentData);
         await existingDocument.save();
 
-        logger.info(`New version uploaded: ${existingDocument.authorCountry} v${newVersion}`);
+        global.logger.info(`New version uploaded: ${existingDocument.authorCountry} v${newVersion}`);
 
         res.json({
             success: true,
@@ -217,14 +216,14 @@ const uploadNewVersion = async (req, res, existingDocument) => {
         });
 
     } catch (error) {
-        logger.error('Upload new version error:', error);
+        global.logger.error('Upload new version error:', error);
 
         // Clean up uploaded file on error
         if (req.file) {
             try {
                 await fs.unlink(req.file.path);
             } catch (unlinkError) {
-                logger.error('File cleanup error:', unlinkError);
+                global.logger.error('File cleanup error:', unlinkError);
             }
         }
 
@@ -276,7 +275,7 @@ const getDocuments = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get documents error:', error);
+        global.logger.error('Get documents error:', error);
         res.status(500).json({ error: 'Failed to fetch documents' });
     }
 };
@@ -310,7 +309,7 @@ const getDocument = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get document error:', error);
+        global.logger.error('Get document error:', error);
         res.status(500).json({ error: 'Failed to fetch document' });
     }
 };
@@ -359,7 +358,7 @@ const downloadDocument = async (req, res) => {
         res.download(filePath, originalName);
 
     } catch (error) {
-        logger.error('Download document error:', error);
+        global.logger.error('Download document error:', error);
         res.status(500).json({ error: 'Failed to download document' });
     }
 };
@@ -404,7 +403,7 @@ const reviewDocument = async (req, res) => {
 
         await document.save();
 
-        logger.info(`Document reviewed: ${document.authorCountry} - ${decision} by ${req.user.presidiumRole}`);
+        global.logger.info(`Document reviewed: ${document.authorCountry} - ${decision} by ${req.user.presidiumRole}`);
 
         res.json({
             success: true,
@@ -414,7 +413,7 @@ const reviewDocument = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Review document error:', error);
+        global.logger.error('Review document error:', error);
         res.status(500).json({ error: 'Failed to review document' });
     }
 };
@@ -448,7 +447,7 @@ const getDocumentVersions = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get document versions error:', error);
+        global.logger.error('Get document versions error:', error);
         res.status(500).json({ error: 'Failed to fetch document versions' });
     }
 };
@@ -499,7 +498,7 @@ const getDocumentPreview = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get document preview error:', error);
+        global.logger.error('Get document preview error:', error);
         res.status(500).json({ error: 'Failed to fetch document preview' });
     }
 };

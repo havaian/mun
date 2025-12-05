@@ -210,7 +210,7 @@ router.get('/:id/roll-call-order',
             });
 
         } catch (error) {
-            logger.error('Get roll call order error:', error);
+            global.logger.error('Get roll call order error:', error);
             res.status(500).json({ error: 'Failed to get roll call order' });
         }
     }
@@ -257,7 +257,7 @@ router.get('/:id/eligible-voters',
             });
 
         } catch (error) {
-            logger.error('Get eligible voters error:', error);
+            global.logger.error('Get eligible voters error:', error);
             res.status(500).json({ error: 'Failed to get eligible voters' });
         }
     }
@@ -307,7 +307,7 @@ router.delete('/:id',
                 });
             }
 
-            logger.info(`Voting cancelled: ${voting.title} (${voting._id}) by ${req.user.email}. Reason: ${reason}`);
+            global.logger.info(`Voting cancelled: ${voting.title} (${voting._id}) by ${req.user.email}. Reason: ${reason}`);
 
             res.json({
                 success: true,
@@ -315,7 +315,7 @@ router.delete('/:id',
             });
 
         } catch (error) {
-            logger.error('Cancel voting error:', error);
+            global.logger.error('Cancel voting error:', error);
             res.status(500).json({ error: 'Failed to cancel voting' });
         }
     }

@@ -1,5 +1,4 @@
 const { Event } = require('./model');
-const logger = require('../utils/logger');
 
 // Get all events (admin only) - UPDATED to include committee statistics
 const getAllEvents = async (req, res) => {
@@ -75,7 +74,7 @@ const getAllEvents = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get all events error:', error);
+        global.logger.error('Get all events error:', error);
         res.status(500).json({ error: 'Failed to fetch events' });
     }
 };
@@ -101,7 +100,7 @@ const getEvent = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get event error:', error);
+        global.logger.error('Get event error:', error);
         res.status(500).json({ error: 'Failed to fetch event' });
     }
 };
@@ -163,7 +162,7 @@ const createEvent = async (req, res) => {
 
         await event.populate('createdBy', 'username role');
 
-        logger.info(`Event created: ${name} by ${req.user.userId}`);
+        global.logger.info(`Event created: ${name} by ${req.user.userId}`);
 
         res.status(201).json({
             success: true,
@@ -172,7 +171,7 @@ const createEvent = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Create event error:', error);
+        global.logger.error('Create event error:', error);
 
         if (error.name === 'ValidationError') {
             return res.status(400).json({
@@ -223,7 +222,7 @@ const updateEvent = async (req, res) => {
         // Update statistics after saving
         await event.updateStatistics();
 
-        logger.info(`Event updated: ${event.name} by ${req.user.userId}`);
+        global.logger.info(`Event updated: ${event.name} by ${req.user.userId}`);
 
         res.json({
             success: true,
@@ -232,7 +231,7 @@ const updateEvent = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Update event error:', error);
+        global.logger.error('Update event error:', error);
 
         if (error.name === 'ValidationError') {
             return res.status(400).json({
@@ -267,7 +266,7 @@ const updateEventStatus = async (req, res) => {
         event.status = status;
         await event.save();
 
-        logger.info(`Event status changed: ${event.name} from ${oldStatus} to ${status} by ${req.user.userId}`);
+        global.logger.info(`Event status changed: ${event.name} from ${oldStatus} to ${status} by ${req.user.userId}`);
 
         res.json({
             success: true,
@@ -276,7 +275,7 @@ const updateEventStatus = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Update event status error:', error);
+        global.logger.error('Update event status error:', error);
         res.status(500).json({ error: 'Failed to update event status' });
     }
 };
@@ -314,7 +313,7 @@ const deleteEvent = async (req, res) => {
         // Soft delete the event
         await event.softDelete(req.user.userId);
 
-        logger.info(`Event soft deleted: ${event.name} by ${req.user.userId}`);
+        global.logger.info(`Event soft deleted: ${event.name} by ${req.user.userId}`);
 
         res.json({
             success: true,
@@ -322,7 +321,7 @@ const deleteEvent = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Delete event error:', error);
+        global.logger.error('Delete event error:', error);
         res.status(500).json({ error: 'Failed to delete event' });
     }
 };
@@ -346,7 +345,7 @@ const restoreEvent = async (req, res) => {
         // Restore the event
         await event.restore();
 
-        logger.info(`Event restored: ${event.name} by ${req.user.userId}`);
+        global.logger.info(`Event restored: ${event.name} by ${req.user.userId}`);
 
         res.json({
             success: true,
@@ -355,7 +354,7 @@ const restoreEvent = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Restore event error:', error);
+        global.logger.error('Restore event error:', error);
         res.status(500).json({ error: 'Failed to restore event' });
     }
 };
@@ -403,7 +402,7 @@ const getEventStatistics = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get event statistics error:', error);
+        global.logger.error('Get event statistics error:', error);
         res.status(500).json({ error: 'Failed to fetch event statistics' });
     }
 };

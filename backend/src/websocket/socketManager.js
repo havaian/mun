@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-const logger = require('../utils/logger');
 const { User } = require('../auth/model');
 
 // Store active connections
@@ -39,7 +38,7 @@ const initializeWebSocket = (socketIO) => {
 
             next();
         } catch (error) {
-            logger.error('WebSocket authentication error:', error);
+            global.logger.error('WebSocket authentication error:', error);
             next(new Error('Authentication failed'));
         }
     });
@@ -48,7 +47,7 @@ const initializeWebSocket = (socketIO) => {
         handleConnection(socket);
     });
 
-    logger.info('WebSocket server initialized');
+    global.logger.info('WebSocket server initialized');
 };
 
 // Handle new socket connection
@@ -56,7 +55,7 @@ const handleConnection = (socket) => {
     const userId = socket.userId;
     const user = socket.user;
 
-    logger.info(`User connected: ${user.email} (${socket.id})`);
+    global.logger.info(`User connected: ${user.email} (${socket.id})`);
 
     // Track connection
     if (!activeConnections.has(userId)) {
@@ -125,7 +124,7 @@ const joinUserRooms = (socket, user) => {
     // Store user rooms
     userRooms.set(socket.userId, rooms);
 
-    logger.debug(`User ${user.email} joined rooms: ${Array.from(rooms).join(', ')}`);
+    global.logger.debug(`User ${user.email} joined rooms: ${Array.from(rooms).join(', ')}`);
 };
 
 // Setup event handlers for socket
@@ -146,7 +145,7 @@ const setupEventHandlers = (socket) => {
             userRooms.get(socket.userId).add(roomName);
 
             socket.emit('room-joined', { roomName });
-            logger.debug(`User ${user.email} joined room: ${roomName}`);
+            global.logger.debug(`User ${user.email} joined room: ${roomName}`);
         } else {
             socket.emit('room-join-failed', {
                 roomName,
@@ -164,7 +163,7 @@ const setupEventHandlers = (socket) => {
         }
 
         socket.emit('room-left', { roomName });
-        logger.debug(`User ${user.email} left room: ${roomName}`);
+        global.logger.debug(`User ${user.email} left room: ${roomName}`);
     });
 
     // Voting-related events
@@ -224,7 +223,7 @@ const setupEventHandlers = (socket) => {
 
     // Error handling
     socket.on('error', (error) => {
-        logger.error(`Socket error for user ${user.email}:`, error);
+        global.logger.error(`Socket error for user ${user.email}:`, error);
     });
 };
 
@@ -233,7 +232,7 @@ const handleDisconnection = (socket, reason) => {
     const userId = socket.userId;
     const user = socket.user;
 
-    logger.info(`User disconnected: ${user.email} (${socket.id}) - ${reason}`);
+    global.logger.info(`User disconnected: ${user.email} (${socket.id}) - ${reason}`);
 
     // Remove from tracking
     if (activeConnections.has(userId)) {
@@ -374,7 +373,7 @@ const broadcastSystemMessage = (message, level = 'info') => {
         timestamp: new Date()
     });
 
-    logger.info(`System broadcast: ${message}`);
+    global.logger.info(`System broadcast: ${message}`);
 };
 
 // Get IO instance for external use
@@ -387,7 +386,7 @@ const cleanup = () => {
         activeConnections.clear();
         socketUsers.clear();
         userRooms.clear();
-        logger.info('WebSocket server closed');
+        global.logger.info('WebSocket server closed');
     }
 };
 

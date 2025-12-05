@@ -1,7 +1,6 @@
 const { Committee } = require('./model');
 const { Event } = require('../event/model');
 const { User } = require('../auth/model');
-const logger = require('../utils/logger');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const QRCode = require('qrcode');
@@ -87,10 +86,10 @@ const createCommittee = async (req, res) => {
                     loginToken: presidiumUser.loginToken  // Return loginToken instead of qrToken
                 });
 
-                logger.info(`✅ Created and added presidium user: ${role} for committee ${committee.name}`);
+                global.logger.info(`✅ Created and added presidium user: ${role} for committee ${committee.name}`);
 
             } catch (error) {
-                logger.error(`❌ Failed to create presidium user for role ${role}:`, error);
+                global.logger.error(`❌ Failed to create presidium user for role ${role}:`, error);
                 // Continue with other roles even if one fails
             }
         }
@@ -101,7 +100,7 @@ const createCommittee = async (req, res) => {
         // Update event statistics
         await event.updateStatistics();
 
-        logger.info(`Committee created: ${committee.name} with ${presidiumUsers.length} presidium members`);
+        global.logger.info(`Committee created: ${committee.name} with ${presidiumUsers.length} presidium members`);
 
         // Include presidium info in response
         res.status(201).json({
@@ -112,7 +111,7 @@ const createCommittee = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Create committee error:', error);
+        global.logger.error('Create committee error:', error);
 
         if (error.name === 'ValidationError') {
             return res.status(400).json({
@@ -151,7 +150,7 @@ const getCommittee = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get committee error:', error);
+        global.logger.error('Get committee error:', error);
         res.status(500).json({ error: 'Failed to fetch committee' });
     }
 };
@@ -196,7 +195,7 @@ const updateCommittee = async (req, res) => {
 
         await committee.save();
 
-        logger.info(`Committee updated: ${committee.name} by ${req.user.userId}`);
+        global.logger.info(`Committee updated: ${committee.name} by ${req.user.userId}`);
 
         res.json({
             success: true,
@@ -205,7 +204,7 @@ const updateCommittee = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Update committee error:', error);
+        global.logger.error('Update committee error:', error);
         res.status(500).json({ error: 'Failed to update committee' });
     }
 };
@@ -273,7 +272,7 @@ const addCountries = async (req, res) => {
             }
         }
 
-        logger.info(`Countries added to ${committee.name}: ${addedCountries.length} successful, ${errors.length} failed`);
+        global.logger.info(`Countries added to ${committee.name}: ${addedCountries.length} successful, ${errors.length} failed`);
 
         res.json({
             success: true,
@@ -283,7 +282,7 @@ const addCountries = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Add countries error:', error);
+        global.logger.error('Add countries error:', error);
         res.status(500).json({ error: 'Failed to add countries' });
     }
 };
@@ -315,7 +314,7 @@ const removeCountry = async (req, res) => {
             role: 'delegate'
         });
 
-        logger.info(`Country removed from ${committee.name}: ${countryName}`);
+        global.logger.info(`Country removed from ${committee.name}: ${countryName}`);
 
         res.json({
             success: true,
@@ -323,7 +322,7 @@ const removeCountry = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Remove country error:', error);
+        global.logger.error('Remove country error:', error);
 
         if (error.message.includes('not found')) {
             return res.status(404).json({ error: error.message });
@@ -356,7 +355,7 @@ const getCountries = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get countries error:', error);
+        global.logger.error('Get countries error:', error);
         res.status(500).json({ error: 'Failed to fetch countries' });
     }
 };
@@ -431,10 +430,10 @@ const generateQRCodes = async (req, res) => {
             message: 'QR codes generated successfully'
         });
 
-        logger.info(`QR codes generated for committee ${committee.name} (${qrCodes.length} codes)`);
+        global.logger.info(`QR codes generated for committee ${committee.name} (${qrCodes.length} codes)`);
 
     } catch (error) {
-        logger.error('Generate QR codes error:', error);
+        global.logger.error('Generate QR codes error:', error);
         res.status(500).json({ error: 'Failed to generate QR codes' });
     }
 };
@@ -504,7 +503,7 @@ const updatePresidium = async (req, res) => {
 
         await committee.populate('presidium.userId', 'username email');
 
-        logger.info(`Presidium updated for committee ${committee.name}`);
+        global.logger.info(`Presidium updated for committee ${committee.name}`);
 
         res.json({
             success: true,
@@ -513,7 +512,7 @@ const updatePresidium = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Update presidium error:', error);
+        global.logger.error('Update presidium error:', error);
         res.status(500).json({ error: 'Failed to update presidium' });
     }
 };
@@ -538,7 +537,7 @@ const deleteCommittee = async (req, res) => {
             await event.updateStatistics();
         }
 
-        logger.info(`Committee soft deleted: ${committee.name} by ${req.user.userId}`);
+        global.logger.info(`Committee soft deleted: ${committee.name} by ${req.user.userId}`);
 
         res.json({
             success: true,
@@ -546,7 +545,7 @@ const deleteCommittee = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Delete committee error:', error);
+        global.logger.error('Delete committee error:', error);
         res.status(500).json({ error: 'Failed to delete committee' });
     }
 };
@@ -576,7 +575,7 @@ const restoreCommittee = async (req, res) => {
             await event.updateStatistics();
         }
 
-        logger.info(`Committee restored: ${committee.name} by ${req.user.userId}`);
+        global.logger.info(`Committee restored: ${committee.name} by ${req.user.userId}`);
 
         res.json({
             success: true,
@@ -585,7 +584,7 @@ const restoreCommittee = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Restore committee error:', error);
+        global.logger.error('Restore committee error:', error);
         res.status(500).json({ error: 'Failed to restore committee' });
     }
 };
@@ -647,10 +646,10 @@ const generatePresidiumQRs = async (req, res) => {
                     });
                 }
 
-                logger.info(`Presidium QR ${createdUsers[createdUsers.length - 1].status}: ${role} for committee ${committee.name}`);
+                global.logger.info(`Presidium QR ${createdUsers[createdUsers.length - 1].status}: ${role} for committee ${committee.name}`);
 
             } catch (error) {
-                logger.error(`Error creating presidium QR for ${role}:`, error);
+                global.logger.error(`Error creating presidium QR for ${role}:`, error);
                 errors.push({
                     role: role,
                     error: error.message
@@ -666,7 +665,7 @@ const generatePresidiumQRs = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Generate presidium QRs error:', error);
+        global.logger.error('Generate presidium QRs error:', error);
         res.status(500).json({
             error: 'Failed to generate presidium QR tokens'
         });
@@ -722,7 +721,7 @@ const getPresidiumStatus = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get presidium status error:', error);
+        global.logger.error('Get presidium status error:', error);
         res.status(500).json({
             error: 'Failed to get presidium status'
         });
@@ -768,7 +767,7 @@ const resetPresidiumQR = async (req, res) => {
 
         await presidiumUser.save();
 
-        logger.info(`Reset QR for presidium ${role} in committee ${committeeId} by admin ${req.user.userId}`);
+        global.logger.info(`Reset QR for presidium ${role} in committee ${committeeId} by admin ${req.user.userId}`);
 
         res.json({
             success: true,
@@ -777,7 +776,7 @@ const resetPresidiumQR = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Reset presidium QR error:', error);
+        global.logger.error('Reset presidium QR error:', error);
         res.status(500).json({
             error: 'Failed to reset presidium QR'
         });
@@ -831,7 +830,7 @@ const getCommitteeQRTokens = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Get committee QR tokens error:', error);
+        global.logger.error('Get committee QR tokens error:', error);
         res.status(500).json({
             error: 'Failed to get QR tokens'
         });

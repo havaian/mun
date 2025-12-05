@@ -1,7 +1,6 @@
 // backend/src/export/controller.js - Updated with Link-Based Export
 const { Committee } = require('../committee/model');
 const { User } = require('../auth/model');
-const logger = require('../utils/logger');
 const crypto = require('crypto');
 
 // Helper function to sanitize filenames for HTTP headers
@@ -88,10 +87,10 @@ const generateCommitteeLinks = async (req, res) => {
             });
         }
 
-        logger.info(`Generated delegate links for committee: ${committee.name} (${delegateLinks.length} links)`);
+        global.logger.info(`Generated delegate links for committee: ${committee.name} (${delegateLinks.length} links)`);
 
     } catch (error) {
-        logger.error('Delegate links generation error:', error);
+        global.logger.error('Delegate links generation error:', error);
         res.status(500).json({
             error: 'Failed to generate delegate links',
             details: error.message
@@ -179,10 +178,10 @@ const generatePresidiumLinks = async (req, res) => {
             });
         }
 
-        logger.info(`Generated presidium links for committee: ${committee.name} (${presidiumLinks.length} links)`);
+        global.logger.info(`Generated presidium links for committee: ${committee.name} (${presidiumLinks.length} links)`);
 
     } catch (error) {
-        logger.error('Presidium links generation error:', error);
+        global.logger.error('Presidium links generation error:', error);
         res.status(500).json({
             error: 'Failed to generate presidium links',
             details: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -310,10 +309,10 @@ const generateCompleteLinks = async (req, res) => {
             });
         }
 
-        logger.info(`Generated complete links for committee: ${committee.name} (${allLinks.length} total links)`);
+        global.logger.info(`Generated complete links for committee: ${committee.name} (${allLinks.length} total links)`);
 
     } catch (error) {
-        logger.error('Complete links generation error:', error);
+        global.logger.error('Complete links generation error:', error);
         res.status(500).json({
             error: 'Failed to generate complete links',
             details: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -346,7 +345,7 @@ const exportStatistics = async (req, res) => {
         });
 
     } catch (error) {
-        logger.error('Statistics export error:', error);
+        global.logger.error('Statistics export error:', error);
         res.status(500).json({
             error: 'Failed to export statistics'
         });
@@ -361,7 +360,7 @@ const exportVotingResults = async (req, res) => {
             message: 'Voting results export not yet implemented'
         });
     } catch (error) {
-        logger.error('Voting results export error:', error);
+        global.logger.error('Voting results export error:', error);
         res.status(500).json({
             error: 'Failed to export voting results'
         });
@@ -375,7 +374,7 @@ const exportResolutions = async (req, res) => {
             message: 'Resolutions export not yet implemented'
         });
     } catch (error) {
-        logger.error('Resolutions export error:', error);
+        global.logger.error('Resolutions export error:', error);
         res.status(500).json({
             error: 'Failed to export resolutions'
         });
@@ -389,7 +388,7 @@ const exportCompleteReport = async (req, res) => {
             message: 'Complete report export not yet implemented'
         });
     } catch (error) {
-        logger.error('Complete report export error:', error);
+        global.logger.error('Complete report export error:', error);
         res.status(500).json({
             error: 'Failed to export complete report'
         });

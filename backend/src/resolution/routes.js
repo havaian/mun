@@ -262,7 +262,7 @@ router.post('/:id/new-version',
             });
 
         } catch (error) {
-            logger.error('Submit new version error:', error);
+            global.logger.error('Submit new version error:', error);
             res.status(500).json({ error: 'Failed to submit new version' });
         }
     }
@@ -312,7 +312,7 @@ router.get('/:id/versions',
             });
 
         } catch (error) {
-            logger.error('Get resolution versions error:', error);
+            global.logger.error('Get resolution versions error:', error);
             res.status(500).json({ error: 'Failed to fetch resolution versions' });
         }
     }
@@ -349,7 +349,6 @@ router.post('/presidium-draft',
             const { committeeId, title, content, designatedAuthors = [] } = req.body;
 
             const { Resolution } = require('./model');
-            const logger = require('../utils/logger');
 
             // Create presidium resolution
             const resolution = new Resolution({
@@ -370,7 +369,7 @@ router.post('/presidium-draft',
 
             await resolution.save();
 
-            logger.info(`Presidium resolution submitted: "${title}" by ${req.user.presidiumRole}`);
+            global.logger.info(`Presidium resolution submitted: "${title}" by ${req.user.presidiumRole}`);
 
             res.status(201).json({
                 success: true,
@@ -386,7 +385,7 @@ router.post('/presidium-draft',
             });
 
         } catch (error) {
-            logger.error('Submit presidium resolution error:', error);
+            global.logger.error('Submit presidium resolution error:', error);
             res.status(500).json({ error: 'Failed to submit presidium resolution' });
         }
     }
