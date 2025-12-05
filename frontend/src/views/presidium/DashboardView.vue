@@ -242,7 +242,19 @@ const recentDocuments = ref([])
 const recentActivity = ref([])
 
 // Computed
-const committeeId = computed(() => authStore.user?.committeeId)
+const committeeId = computed(() => {
+    const id = authStore.user?.committeeId
+
+    console.log(authStore.user)
+    
+    // Ensure it's a string, not an object
+    if (typeof id === 'object' && id !== null) {
+        // If it's a MongoDB ObjectId object, get the string value
+        return id._id || id.toString()
+    }
+    
+    return typeof id === 'string' ? id : null
+})
 
 // Methods
 const loadDashboardData = async () => {
