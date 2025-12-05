@@ -334,20 +334,20 @@ const roleConfigs = {
     presidium: {
         title: 'Presidium',
         subtitle: 'Committee Control',
-        headerGradient: 'from-mun-green-600 to-mun-green-700',
-        logoBackground: 'bg-indigo',
+        headerGradient: 'from-mun-blue-600 to-mun-blue-700',
+        logoBackground: 'bg-mun-blue',
         logoIcon: 'UserGroupIcon',
-        subtitleColor: 'text-green-100',
-        userIconBackground: 'bg-indigo'
+        subtitleColor: 'text-blue-100',
+        userIconBackground: 'bg-mun-blue'
     },
     delegate: {
         title: 'Delegate Portal',
         subtitle: 'Committee Participation',
-        headerGradient: 'from-mun-red-600 to-mun-red-700',
-        logoBackground: 'bg-violet',
+        headerGradient: 'from-mun-blue-600 to-mun-blue-700',
+        logoBackground: 'bg-mun-blue',
         logoIcon: 'HandRaisedIcon',
-        subtitleColor: 'text-red-100',
-        userIconBackground: 'bg-violet'
+        subtitleColor: 'text-blue-100',
+        userIconBackground: 'bg-mun-blue'
     }
 }
 
