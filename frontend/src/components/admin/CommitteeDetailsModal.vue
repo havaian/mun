@@ -309,10 +309,10 @@
                                     Manage Countries
                                 </AppButton>
 
-                                <!-- Generate Login Links button (was Generate QR Codes) -->
+                                <!-- Login Links button (was Generate QR Codes) -->
                                 <AppButton @click="generateLoginLinks" variant="outline" size="sm" class="w-full">
                                     <LinkIcon class="w-4 h-4 mr-2" />
-                                    Generate Login Links
+                                    Login Links
                                 </AppButton>
 
                                 <AppButton @click="viewSessions" variant="outline" size="sm" class="w-full">

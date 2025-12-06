@@ -5,18 +5,30 @@ const crypto = require('crypto');
 
 // Helper function to sanitize filenames for HTTP headers
 const sanitizeFilename = (name) => {
-    return name
+    const sanitized = name
         .replace(/[^a-zA-Z0-9\s\-_]/g, '') // Remove special characters
         .replace(/\s+/g, '_') // Replace spaces with underscores
         .replace(/_+/g, '_') // Replace multiple underscores with single
         .replace(/^_|_$/g, '') // Remove leading/trailing underscores
-        .substring(0, 50) // Limit length
-        || 'committee'; // Fallback if empty
+        .substring(0, 50); // Limit length
+        
+    // Return the sanitized name or 'untitled' if it's empty after processing
+    return sanitized || 'untitled'; 
 };
 
 const createExportFilename = (eventName, committeeName, type) => {
-    const safeEventName = sanitizeFilename(eventName);
-    const safeCommitteeName = sanitizeFilename(committeeName);
+    // Fallback to a default name if either is missing, so it's not omitted
+    const fallbackEventName = eventName || 'event';
+    const fallbackCommitteeName = committeeName || 'committee';
+    
+    const safeEventName = sanitizeFilename(fallbackEventName);
+    const safeCommitteeName = sanitizeFilename(fallbackCommitteeName);
+    
+    // Ensure we don't end up with event_committee_delegate_links.txt if both are valid
+    if (safeEventName === safeCommitteeName) {
+         return `${safeEventName}_${type}`;
+    }
+
     return `${safeEventName}_${safeCommitteeName}_${type}`;
 };
 
