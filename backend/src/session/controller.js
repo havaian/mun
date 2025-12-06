@@ -6,7 +6,14 @@ const { emitToCommittee, emitToPresidium } = require('../websocket/socketManager
 // Create new session (presidium only)
 const createSession = async (req, res) => {
     try {
-        const { committeeId, title } = req.body;
+        const { 
+            committeeId, 
+            title, 
+            sessionNumber,  // Accept from frontend
+            mode = 'formal', // Accept mode setting
+            status = 'draft', // Accept status setting
+            settings = {}    // Accept session settings
+        } = req.body;
 
         // Verify committee exists and user has access
         const committee = await Committee.findById(committeeId);
@@ -38,13 +45,6 @@ const createSession = async (req, res) => {
             });
         }
 
-        // Get next session number
-        const lastSession = await Session.findOne({ committeeId })
-            .sort({ number: -1 })
-            .select('number');
-
-        const sessionNumber = (lastSession?.number || 0) + 1;
-
         // Initialize session with basic attendance from committee
         const attendance = committee.countries.map(country => ({
             country: country.name,
@@ -54,17 +54,47 @@ const createSession = async (req, res) => {
             markedBy: req.user.userId
         }));
 
+        // Use provided sessionNumber or calculate next
+        let finalSessionNumber;
+        if (sessionNumber) {
+            // Check if this session number already exists
+            const existingSession = await Session.findOne({
+                committeeId,
+                number: sessionNumber
+            });
+            if (existingSession) {
+                return res.status(400).json({
+                    error: `Session number ${sessionNumber} already exists`
+                });
+            }
+            finalSessionNumber = sessionNumber;
+        } else {
+            // Auto-calculate next session number
+            const lastSession = await Session.findOne({ committeeId })
+                .sort({ number: -1 })
+                .select('number');
+            finalSessionNumber = (lastSession?.number || 0) + 1;
+        }
+
+        // Create session with provided settings
         const session = new Session({
             committeeId,
-            number: sessionNumber,
-            title: title || `Session ${sessionNumber}`,
+            number: finalSessionNumber,
+            title: title || `Session ${finalSessionNumber}`,
+            status: status, // Use provided status
             attendance,
-            currentMode: 'formal',
+            currentMode: mode, // Use provided mode
             modeStartedAt: new Date(),
             modeSettings: {
-                speechTime: committee.settings.speechSettings.defaultSpeechTime,
-                allowQuestions: false
-            }
+                speechTime: settings.defaultSpeechTime || 90,
+                allowQuestions: settings.allowQuestions || false,
+                allowExtensions: settings.allowExtensions || true,
+                extensionTime: settings.extensionTime || 30,
+                totalTime: settings.totalTime,
+                topic: settings.topic
+            },
+            // Store additional settings
+            sessionSettings: settings
         });
 
         // Initialize session timer (default 3 hours)

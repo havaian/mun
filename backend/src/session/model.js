@@ -186,7 +186,7 @@ const sessionSchema = new mongoose.Schema({
     // Current status
     status: {
         type: String,
-        enum: ['active', 'paused', 'completed'],
+        enum: ['draft', 'active', 'paused', 'completed'],
         default: 'active'
     },
 
@@ -284,6 +284,11 @@ const sessionSchema = new mongoose.Schema({
         session: timerSchema,
         speaker: timerSchema,
         additional: [timerSchema]
+    },
+
+    sessionSettings: {
+        type: mongoose.Schema.Types.Mixed,
+        default: {}
     }
 }, {
     timestamps: true,
