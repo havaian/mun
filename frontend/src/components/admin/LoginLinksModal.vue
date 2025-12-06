@@ -430,6 +430,19 @@ const generateAllLinks = async () => {
     }
 }
 
+const getFilenameFromContentDisposition = (response) => {
+    const contentDisposition = response.headers['content-disposition']
+    if (contentDisposition) {
+        // Example: attachment; filename="Test_1235_complete_links.txt"
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/)
+        if (filenameMatch.length > 1) {
+            return filenameMatch[1]
+        }
+    }
+    // Fallback to a default name if header is missing or unparseable
+    return 'download.txt'
+}
+
 const downloadPresidiumLinks = async () => {
     try {
         isDownloadingPresidium.value = true
@@ -437,7 +450,7 @@ const downloadPresidiumLinks = async () => {
         const response = await apiMethods.exports.generatePresidiumLinks(props.committee._id, 'plain')
 
         if (response.data) {
-            const filename = `${props.committee.name}-presidium-links.txt`
+            const filename = getFilenameFromContentDisposition(response)
             downloadText(response.data, filename)
             addToHistory('Presidium links downloaded', 'success', filename)
             toast.success('Presidium links downloaded successfully')
@@ -459,7 +472,7 @@ const downloadDelegateLinks = async () => {
         const response = await apiMethods.exports.generateDelegateLinks(props.committee._id, 'plain')
 
         if (response.data) {
-            const filename = `${props.committee.name}-delegate-links.txt`
+            const filename = getFilenameFromContentDisposition(response)
             downloadText(response.data, filename)
             addToHistory('Delegate links downloaded', 'success', filename)
             toast.success('Delegate links downloaded successfully')
@@ -481,7 +494,7 @@ const downloadCompleteLinks = async () => {
         const response = await apiMethods.exports.generateCompleteLinks(props.committee._id, 'plain')
 
         if (response.data) {
-            const filename = `${props.committee.name}-complete-links.txt`
+            const filename = getFilenameFromContentDisposition(response)
             downloadText(response.data, filename)
             addToHistory('Complete links downloaded', 'success', filename)
             toast.success('Complete links downloaded successfully')
