@@ -332,6 +332,75 @@ const submitPositionPaperText = async (req, res) => {
     }
 };
 
+// Add this method to your backend/src/document/controller.js
+
+// Get position paper by delegate email and committee
+const getPositionPaper = async (req, res) => {
+    try {
+        const { committeeId } = req.params;
+        const { email } = req.query;
+
+        // Use requesting user's email if not provided (for delegates accessing their own)
+        const authorEmail = email || req.user.email;
+
+        // Check if user can access this position paper
+        if (req.user.role === 'delegate' && authorEmail !== req.user.email) {
+            return res.status(403).json({ error: 'Cannot access other delegates\' position papers' });
+        }
+
+        const document = await Document.findOne({
+            authorEmail,
+            committeeId,
+            type: 'position_paper',
+            parentDocumentId: null
+        }).populate('committeeId', 'name');
+
+        if (!document) {
+            return res.status(404).json({ 
+                success: false,
+                error: 'Position paper not found' 
+            });
+        }
+
+        // Return full document data for the user
+        const documentData = {
+            _id: document._id,
+            type: document.type,
+            authorEmail: document.authorEmail,
+            authorCountry: document.authorCountry,
+            originalName: document.originalName,
+            fileSize: document.fileSize,
+            mimeType: document.mimeType,
+            version: document.version,
+            status: document.status,
+            createdAt: document.createdAt,
+            updatedAt: document.updatedAt,
+            isLateSubmission: document.isLateSubmission,
+            content: {
+                wordCount: document.content.wordCount,
+                pageCount: document.content.pageCount,
+                extractedText: document.content.extractedText
+            },
+            presidiumReview: document.presidiumReview,
+            versions: document.versions,
+            // Text submission fields
+            textContent: document.textContent,
+            textTitle: document.textTitle,
+            // Committee info
+            committee: document.committeeId
+        };
+
+        res.json({
+            success: true,
+            document: documentData
+        });
+
+    } catch (error) {
+        global.logger.error('Get position paper error:', error);
+        res.status(500).json({ error: 'Failed to fetch position paper' });
+    }
+};
+
 // Upload new version of existing document
 const uploadNewVersion = async (req, res, existingDocument) => {
     try {
