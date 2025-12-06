@@ -138,6 +138,11 @@ const committeeSchema = new mongoose.Schema({
         default: 'setup'
     },
 
+    completedAt: {
+        type: Date,
+        default: null
+    },
+
     // Committee participants
     countries: [countrySchema],
 

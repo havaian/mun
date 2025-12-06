@@ -45,6 +45,10 @@ const validateEventCreation = [
         .optional()
         .isISO8601()
         .withMessage('Valid registration deadline is required'),
+    body('settings.positionPaperDeadline') // NEW
+        .optional()
+        .isISO8601()
+        .withMessage('Valid position paper deadline is required'),
     body('settings.qrExpirationPeriod')
         .optional()
         .isInt({ min: 1, max: 720 })
@@ -53,6 +57,10 @@ const validateEventCreation = [
         .optional()
         .isBoolean()
         .withMessage('Allow late registration must be boolean'),
+    body('settings.allowLatePositionPapers') // NEW
+        .optional()
+        .isBoolean()
+        .withMessage('Allow late position papers must be boolean'),
     body('settings.maxCommittees')
         .optional()
         .isInt({ min: 1, max: 50 })
@@ -82,6 +90,10 @@ const validateEventUpdate = [
         .optional()
         .isISO8601()
         .withMessage('Valid registration deadline is required'),
+    body('settings.positionPaperDeadline') // NEW
+        .optional()
+        .isISO8601()
+        .withMessage('Valid position paper deadline is required'),
     body('settings.qrExpirationPeriod')
         .optional()
         .isInt({ min: 1, max: 720 })
@@ -90,6 +102,10 @@ const validateEventUpdate = [
         .optional()
         .isBoolean()
         .withMessage('Allow late registration must be boolean'),
+    body('settings.allowLatePositionPapers') // NEW
+        .optional()
+        .isBoolean()
+        .withMessage('Allow late position papers must be boolean'),
     body('settings.maxCommittees')
         .optional()
         .isInt({ min: 1, max: 50 })
@@ -121,6 +137,18 @@ const validatePagination = [
         .optional()
         .isIn(['draft', 'active', 'completed'])
         .withMessage('Status filter must be draft, active, or completed')
+];
+
+// NEW: Position paper deadline validation
+const validatePositionPaperDeadlineUpdate = [
+    body('positionPaperDeadline')
+        .optional()
+        .isISO8601()
+        .withMessage('Valid position paper deadline is required'),
+    body('allowLatePositionPapers')
+        .optional()
+        .isBoolean()
+        .withMessage('Allow late position papers must be boolean')
 ];
 
 // Routes - all require admin authentication
@@ -188,6 +216,26 @@ router.get('/:id/statistics',
     validateEventId,
     handleValidationErrors,
     controller.getEventStatistics
+);
+
+// NEW: Position paper related routes
+
+// Get position paper submission status for event (accessible by all authenticated users)
+router.get('/:id/position-papers/status',
+    global.auth.token, // Any authenticated user can check status
+    validateEventId,
+    handleValidationErrors,
+    controller.getPositionPaperStatus
+);
+
+// Update position paper deadline (admin only)
+router.put('/:id/position-papers/deadline',
+    global.auth.token,
+    global.auth.admin, // Admin only
+    validateEventId,
+    validatePositionPaperDeadlineUpdate,
+    handleValidationErrors,
+    controller.updatePositionPaperDeadline
 );
 
 module.exports = router;

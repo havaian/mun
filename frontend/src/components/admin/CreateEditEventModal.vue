@@ -92,8 +92,23 @@
                         </p>
                     </div>
 
-                    <!-- Timezone -->
+                    <!-- Position Paper Deadline -->
                     <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
+                            Position Paper Deadline
+                        </label>
+                        <input v-model="formData.positionPaperDeadline" type="datetime-local" class="input-field"
+                            :class="{ 'border-mun-red-300': errors.positionPaperDeadline }" />
+                        <p v-if="errors.positionPaperDeadline" class="mt-1 text-sm text-mun-red-600">
+                            {{ errors.positionPaperDeadline }}
+                        </p>
+                        <p class="mt-1 text-xs text-mun-gray-500">
+                            Delegates must submit position papers before this deadline
+                        </p>
+                    </div>
+
+                    <!-- Timezone -->
+                    <div class="lg:col-span-2">
                         <label class="block text-sm font-medium text-mun-gray-700 mb-2">
                             Timezone
                         </label>
@@ -117,7 +132,7 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Allow Late Registration -->
-                    <div class="lg:col-span-2">
+                    <div>
                         <div class="flex items-center">
                             <input id="allowLateRegistration" v-model="formData.allowLateRegistration" type="checkbox"
                                 class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
@@ -125,6 +140,21 @@
                                 Allow late registration after deadline
                             </label>
                         </div>
+                    </div>
+
+                    <!-- Allow Late Position Papers -->
+                    <div>
+                        <div class="flex items-center">
+                            <input id="allowLatePositionPapers" v-model="formData.allowLatePositionPapers"
+                                type="checkbox"
+                                class="h-4 w-4 text-mun-blue focus:ring-mun-blue border-mun-gray-300 rounded" />
+                            <label for="allowLatePositionPapers" class="ml-2 text-sm text-mun-gray-700">
+                                Allow late position paper submissions
+                            </label>
+                        </div>
+                        <p class="ml-6 text-xs text-mun-gray-500 mt-1">
+                            Presidium can still accept late submissions after deadline
+                        </p>
                     </div>
                 </div>
             </div>
@@ -203,62 +233,25 @@ const formData = reactive({
     startDate: '',
     endDate: '',
     registrationDeadline: '',
+    positionPaperDeadline: '', // NEW
     timezone: 'UTC',
 
     // Settings
-    allowLateRegistration: false
+    allowLateRegistration: false,
+    allowLatePositionPapers: true // NEW
 })
-
-// Select options
-const eventTypeOptions = [
-    { label: 'Select event type', value: '' },
-    { label: 'Model United Nations', value: 'mun' },
-    { label: 'Conference', value: 'conference' },
-    { label: 'Workshop', value: 'workshop' },
-    { label: 'Simulation', value: 'simulation' },
-    { label: 'Training', value: 'training' },
-    { label: 'Seminar', value: 'seminar' },
-    { label: 'Competition', value: 'competition' }
-]
-
-const statusOptions = [
-    { label: 'Draft', value: 'draft' },
-    { label: 'Active', value: 'active' },
-    { label: 'Completed', value: 'completed' }
-]
-
-const languageOptions = [
-    { label: 'English', value: 'en' },
-    { label: 'Russian', value: 'ru' },
-    { label: 'Uzbek', value: 'uz' },
-    { label: 'French', value: 'fr' },
-    { label: 'Spanish', value: 'es' },
-    { label: 'Arabic', value: 'ar' },
-    { label: 'Chinese', value: 'zh' }
-]
-
-const timezoneOptions = [
-    { label: 'Tashkent (UTC+5)', value: 'Asia/Tashkent' },
-    { label: 'Moscow (UTC+3)', value: 'Europe/Moscow' },
-    { label: 'London (UTC+0)', value: 'Europe/London' },
-    { label: 'New York (UTC-5)', value: 'America/New_York' },
-    { label: 'Dubai (UTC+4)', value: 'Asia/Dubai' }
-]
-
-const currencyOptions = [
-    { label: 'USD ($)', value: 'USD' },
-    { label: 'UZS (сўм)', value: 'UZS' },
-    { label: 'EUR (€)', value: 'EUR' },
-    { label: 'RUB (₽)', value: 'RUB' }
-]
 
 // Computed
 const isValid = computed(() => {
     return formData.name.trim() !== '' &&
-        formData.eventType !== '' &&
         formData.startDate !== '' &&
         formData.endDate !== '' &&
         Object.keys(errors.value).length === 0
+})
+
+const hasUnsavedChanges = computed(() => {
+    // Add logic to detect unsaved changes
+    return false
 })
 
 // Watchers
@@ -272,6 +265,7 @@ const validateDates = () => {
     // Clear previous errors
     delete errors.value.endDate
     delete errors.value.registrationDeadline
+    delete errors.value.positionPaperDeadline // NEW
     delete errors.value.startDate
 
     // Validate start and end dates
@@ -294,9 +288,21 @@ const validateDates = () => {
             errors.value.registrationDeadline = 'Registration deadline must be before event starts'
         }
     }
+
+    // Validate position paper deadline (NEW)
+    if (formData.positionPaperDeadline && formData.startDate) {
+        const ppDeadline = new Date(formData.positionPaperDeadline)
+        const eventStart = new Date(formData.startDate)
+
+        // Position paper deadline should be BEFORE event start
+        if (ppDeadline >= eventStart) {
+            errors.value.positionPaperDeadline = 'Position paper deadline must be before event starts'
+        }
+    }
 }
 
 watch(() => formData.registrationDeadline, validateDates)
+watch(() => formData.positionPaperDeadline, validateDates) // NEW
 watch(() => formData.startDate, validateDates)
 watch(() => formData.endDate, validateDates)
 watch(() => formData.name, () => {
@@ -325,8 +331,12 @@ const initializeForm = () => {
         if (props.event.settings) {
             formData.registrationDeadline = props.event.settings.registrationDeadline ?
                 convertUTCToLocal(props.event.settings.registrationDeadline) : ''
+            formData.positionPaperDeadline = props.event.settings.positionPaperDeadline ?
+                convertUTCToLocal(props.event.settings.positionPaperDeadline) : '' // NEW
             formData.timezone = props.event.settings.timezone || 'UTC'
             formData.allowLateRegistration = props.event.settings.allowLateRegistration || false
+            formData.allowLatePositionPapers = props.event.settings.allowLatePositionPapers !== undefined ?
+                props.event.settings.allowLatePositionPapers : true // NEW
         }
     } else {
         // Reset form for new event
@@ -356,7 +366,7 @@ const resetForm = () => {
             formData[key] = []
         } else if (typeof formData[key] === 'boolean') {
             formData[key] = key === 'allowWaitlist' || key === 'sendWelcomeEmail' ||
-                key === 'isPublic' || key === 'enableFeedback'
+                key === 'isPublic' || key === 'enableFeedback' || key === 'allowLatePositionPapers' // NEW
         } else if (typeof formData[key] === 'number') {
             formData[key] = key === 'registrationFee' ? 0 : null
         } else if (key === 'status') {
@@ -396,21 +406,6 @@ const validateForm = () => {
     return Object.keys(errors.value).length === 0
 }
 
-const addTag = () => {
-    const tag = newTag.value.trim()
-    if (tag && !formData.tags.includes(tag)) {
-        formData.tags.push(tag)
-        newTag.value = ''
-    }
-}
-
-const removeTag = (tag) => {
-    const index = formData.tags.indexOf(tag)
-    if (index > -1) {
-        formData.tags.splice(index, 1)
-    }
-}
-
 async function submitForm() {
     if (!validateForm()) {
         toast.error('Please fix the form errors before submitting')
@@ -429,7 +424,9 @@ async function submitForm() {
             endDate: convertLocalToUTC(formData.endDate),
             settings: {
                 registrationDeadline: convertLocalToUTC(formData.registrationDeadline),
+                positionPaperDeadline: convertLocalToUTC(formData.positionPaperDeadline), // NEW
                 allowLateRegistration: formData.allowLateRegistration,
+                allowLatePositionPapers: formData.allowLatePositionPapers, // NEW
                 timezone: formData.timezone
             }
         }
@@ -477,7 +474,9 @@ const saveDraft = async () => {
             endDate: convertLocalToUTC(formData.endDate),
             settings: {
                 registrationDeadline: convertLocalToUTC(formData.registrationDeadline),
+                positionPaperDeadline: convertLocalToUTC(formData.positionPaperDeadline), // NEW
                 allowLateRegistration: formData.allowLateRegistration,
+                allowLatePositionPapers: formData.allowLatePositionPapers, // NEW
                 timezone: formData.timezone
             }
         }
@@ -525,22 +524,6 @@ const handleSaveDraft = async () => {
 
 const close = () => {
     emit('update:modelValue', false)
-}
-
-const getCommitteeSubtitle = () => {
-    const parts = []
-    if (props.committee?.type) {
-        parts.push(formatCommitteeType(props.committee.type))
-    }
-    if (props.committee?.eventId?.name) {
-        parts.push(props.committee.eventId.name)
-    }
-    return parts.join(' • ')
-}
-
-const getFooterText = () => {
-    if (!props.committee?.createdAt) return ''
-    return `Created ${formatDate(props.committee.createdAt)} • Last updated ${formatDate(props.committee.updatedAt)}`
 }
 
 // Lifecycle

@@ -170,25 +170,25 @@ export const apiMethods = {
     // ✅ FULLY IMPLEMENTED - Authentication (8/8 methods working)
     auth: {
         adminLogin: (credentials) => api.post('/auth/admin-login', credentials),
-        
+
         // Link login replaces qrLogin
         linkLogin: (data) => api.post('/auth/link-login', data),
 
         refreshToken: () => api.post('/auth/refresh-token'),
         refreshToken: () => api.post('/auth/refresh-token'),
-        
+
         // Updated to use login tokens instead of QR tokens
         bindEmail: (data) => api.post('/auth/bind-email', data),
-        
+
         // Updated email login to support login token verification
         emailLogin: (data) => api.post('/auth/email-login', data),
-        
+
         logout: () => api.post('/auth/logout'),
         validateSession: () => api.get('/auth/validate-session'),
-        
+
         // Check link status replaces QR status check
         checkLinkStatus: (token) => api.get(`/auth/link-status/${token}`),
-        
+
         // Reactivate link replaces QR reactivation
         reactivateLink: (userId) => api.post('/auth/reactivate-link', { userId }),
 
@@ -207,7 +207,10 @@ export const apiMethods = {
         create: (data) => api.post('/events', data),
         update: (id, data) => api.put(`/events/${id}`, data),
         updateStatusById: (id, data) => api.put(`/events/${id}/status`, data), // NOT USED
-        delete: (id) => api.delete(`/events/${id}`)
+        delete: (id) => api.delete(`/events/${id}`),
+        // Position paper deadline management
+        getPositionPaperStatus: (eventId) => api.get(`/events/${eventId}/position-papers/status`),
+        updatePositionPaperDeadline: (eventId, deadlineData) => api.put(`/events/${eventId}/position-papers/deadline`, deadlineData),
     },
 
     // Export Management  
@@ -217,13 +220,13 @@ export const apiMethods = {
         getAuditLogs: (params = {}) => api.get('/admin/export/audit-logs', { params }),
 
         // Login Links Export Routes (replaces QR exports)
-        generateDelegateLinks: (committeeId, format = 'json') => api.get(`/export/delegate-links/${committeeId}`, { 
+        generateDelegateLinks: (committeeId, format = 'json') => api.get(`/export/delegate-links/${committeeId}`, {
             params: { format }
         }),
-        generatePresidiumLinks: (committeeId, format = 'json') => api.get(`/export/presidium-links/${committeeId}`, { 
+        generatePresidiumLinks: (committeeId, format = 'json') => api.get(`/export/presidium-links/${committeeId}`, {
             params: { format }
         }),
-        generateCompleteLinks: (committeeId, format = 'json') => api.get(`/export/complete-links/${committeeId}`, { 
+        generateCompleteLinks: (committeeId, format = 'json') => api.get(`/export/complete-links/${committeeId}`, {
             params: { format }
         }),
 
@@ -234,7 +237,7 @@ export const apiMethods = {
         exportCompleteReport: (committeeId) => api.get(`/export/committee-report/${committeeId}`, { responseType: 'blob' }),
 
         // ❌ TODO - Admin Bulk Export Routes (Missing)
-        exportCommitteesBulk: (ids) => api.get('/admin/committees/export', { 
+        exportCommitteesBulk: (ids) => api.get('/admin/committees/export', {
             params: { ids },
             responseType: 'blob'
         }),
@@ -266,16 +269,16 @@ export const apiMethods = {
         addCountry: (id, countryData) => api.post(`/committees/${id}/countries`, countryData),
         removeCountry: (id, countryName) => api.delete(`/committees/${id}/countries/${countryName}`),
         updateCountryStatus: (id, countryName, statusData) => api.put(`/committees/${id}/countries/${countryName}/status`, statusData),
-        
+
         // Login Links management (replaces QR codes)
         generateLoginLinks: (id, params = {}) => api.get(`/committees/${id}/login-links`, { params }),
         regenerateLoginLinks: (id, reason = null) => api.post(`/committees/${id}/login-links/regenerate`, { reason }),
         regenerateCountryLoginLink: (id, countryName, reason = null) => api.post(`/committees/${id}/login-links/${countryName}/regenerate`, { reason }),
-        
+
         // Presidium login links (replaces QR codes)  
         generatePresidiumLoginLinks: (id, params = {}) => api.post(`/committees/${id}/presidium/generate-links`, {}, { params }),
         resetPresidiumLoginLink: (id, role, reason = null) => api.post(`/committees/${id}/presidium/${role}/reset-link`, { reason }),
-        
+
         // Status and information
         getPresidium: (id) => api.get(`/committees/${id}/presidium`),
         updatePresidium: (id, presidiumData) => api.put(`/committees/${id}/presidium`, presidiumData),
@@ -326,37 +329,56 @@ export const apiMethods = {
         getAll: (params = {}) => api.get('/documents/', { params }),
         getByCommitteeId: (id) => api.get(`/documents/public/${id}`),
 
-        // ⚠️ MISMATCH - General upload route missing
-        upload: (formData) => api.post('/documents/', formData, { // MISMATCH: Backend has no general '/documents/' POST route, only specific ones // NOT USED
+        // Fixed upload route - matches your existing pattern
+        upload: (formData) => api.post('/documents/', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         }),
 
-        download: (id) => api.get(`/documents/${id}/download`, {
-            responseType: 'blob'
-        }),
-        getDocumentVersions: (id) => api.get(`/documents/${id}/versions`), // NOT USED
+        download: (id, version = null) => {
+            const params = version ? { version } : {};
+            return api.get(`/documents/${id}/download`, {
+                responseType: 'blob',
+                params
+            });
+        },
+
+        getDocumentVersions: (id) => api.get(`/documents/${id}/versions`),
         preview: (id) => api.get(`/documents/${id}/preview`),
+        delete: (id) => api.delete(`/documents/${id}`),
 
-        // ❌ MISSING - General delete route
-        delete: (id) => api.delete(`/documents/${id}`), // TODO: No general delete route implemented // NOT USED
+        // ✅ UPDATED - Position Papers (fixed to match backend implementation)
+        // Upload position paper file
+        uploadPositionPaper: (formData) => api.post('/documents/position-papers', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        }),
 
-        // ✅ IMPLEMENTED - Position Papers
-        createPositionPapers: (data) => api.post('/documents/position-papers', data), // NOT USED
+        // NEW - Submit position paper as text
+        submitPositionPaperText: (data) => api.post('/documents/position-papers/text', data),
 
-        // ⚠️ MISMATCH - Method mismatch (GET vs POST)
-        getPositionPapersForCommittee: (committeeId) => api.post(`/documents/position-papers/${committeeId}`), // MISMATCH: Backend uses GET, not POST // NOT USED
+        // Fixed - Get position paper for specific delegate/committee (corrected method and route)
+        getPositionPaper: (committeeId, email = null) => {
+            const params = email ? { email } : {};
+            return api.get(`/documents/position-papers/${committeeId}`, { params });
+        },
 
-        // ⚠️ MISMATCH - Route path mismatch  
-        reviewPositionPapersForCommittee: (committeeId, data) => api.put(`/documents/position-papers/${committeeId}`, data), // MISMATCH: Backend route is '/documents/position-papers/:id/review' // NOT USED
+        // Fixed - Get all position papers for committee (presidium use)
+        getPositionPapersForCommittee: (committeeId, params = {}) => {
+            return api.get(`/documents/position-papers/${committeeId}`, {
+                params: { ...params, type: 'position_paper' }
+            });
+        },
 
-        // ✅ IMPLEMENTED - Public Documents
-        uploadPublicDocument: (data) => api.post('/documents/public', data), // NOT USED
-        getPublicDocumentsForCommittee: (committeeId, data) => api.get(`/documents/public/${committeeId}`, data), // NOT USED
+        // Fixed - Review position paper (corrected route)
+        reviewPositionPaper: (documentId, reviewData) => api.put(`/documents/position-papers/${documentId}/review`, reviewData),
 
-        // ❌ MISSING - Get single public document
-        getPublicDocumentsById: (id, data) => api.get(`/documents/public/${id}`, data), // TODO: Route not implemented // NOT USED
+        // NEW - Check position paper eligibility
+        checkPositionPaperEligibility: (committeeId) => api.get(`/documents/position-papers/${committeeId}/eligibility`),
 
-        deletePublicDocumentsById: (id) => api.delete(`/documents/public/${id}`), // NOT USED
+        // ✅ IMPLEMENTED - Public Documents  
+        uploadPublicDocument: (data) => api.post('/documents/public', data),
+        getPublicDocumentsForCommittee: (committeeId, params = {}) => api.get(`/documents/public/${committeeId}`, { params }),
+        getPublicDocumentById: (id) => api.get(`/documents/public/${id}`),
+        deletePublicDocument: (id) => api.delete(`/documents/public/${id}`),
     },
 
     // ✅ FULLY IMPLEMENTED - Coalitions (6/6) & Resolutions (7/7), 🚨 MISSING - Amendments (11/11)

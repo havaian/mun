@@ -1,5 +1,6 @@
 const { Document } = require('./model');
 const { Committee } = require('../committee/model');
+const { Event } = require('../event/model');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
@@ -78,6 +79,67 @@ const extractTextFromFile = async (filePath, mimeType) => {
             extractedText: '',
             pageCount: 0,
             wordCount: 0
+        };
+    }
+};
+
+// Check position paper submission eligibility
+const checkPositionPaperEligibility = async (committeeId, authorEmail) => {
+    try {
+        // Get committee and event information
+        const committee = await Committee.findById(committeeId).populate('eventId');
+        if (!committee || !committee.eventId) {
+            return {
+                canSubmit: false,
+                reason: 'Committee or event not found'
+            };
+        }
+
+        const event = committee.eventId;
+
+        // Check if position paper submissions are allowed for this event
+        if (!event.canSubmitPositionPaper()) {
+            const deadlinePassed = event.isPositionPaperDeadlinePassed();
+            const allowLateSubmissions = event.settings.allowLatePositionPapers;
+
+            if (deadlinePassed && !allowLateSubmissions) {
+                return {
+                    canSubmit: false,
+                    reason: 'Position paper deadline has passed and late submissions are not allowed',
+                    deadline: event.settings.positionPaperDeadline,
+                    deadlinePassed: true
+                };
+            }
+        }
+
+        // Check if delegate has already submitted an approved position paper
+        const existingDocument = await Document.findOne({
+            authorEmail,
+            committeeId,
+            type: 'position_paper',
+            parentDocumentId: null,
+            status: 'approved'
+        });
+
+        if (existingDocument) {
+            return {
+                canSubmit: false,
+                reason: 'Position paper already approved',
+                existingDocument
+            };
+        }
+
+        return {
+            canSubmit: true,
+            event,
+            isLateSubmission: event.isPositionPaperDeadlinePassed()
+        };
+
+    } catch (error) {
+        global.logger.error('Position paper eligibility check error:', error);
+        return {
+            canSubmit: false,
+            reason: 'Error checking eligibility'
         };
     }
 };
@@ -168,6 +230,108 @@ const uploadPositionPaper = async (req, res) => {
     }
 };
 
+// Submit position paper as text (alternative to file upload)
+const submitPositionPaperText = async (req, res) => {
+    try {
+        const { committeeId, title, content } = req.body;
+
+        // Validate input
+        if (!title || !content) {
+            return res.status(400).json({ error: 'Title and content are required' });
+        }
+
+        if (content.length < 100) {
+            return res.status(400).json({ error: 'Position paper content must be at least 100 characters' });
+        }
+
+        if (content.length > 50000) {
+            return res.status(400).json({ error: 'Position paper content cannot exceed 50,000 characters' });
+        }
+
+        // Verify committee exists
+        const committee = await Committee.findById(committeeId);
+        if (!committee) {
+            return res.status(404).json({ error: 'Committee not found' });
+        }
+
+        // Check position paper submission eligibility
+        const eligibility = await checkPositionPaperEligibility(committeeId, req.user.email);
+        
+        if (!eligibility.canSubmit) {
+            return res.status(400).json({ 
+                error: eligibility.reason,
+                deadline: eligibility.deadline,
+                deadlinePassed: eligibility.deadlinePassed
+            });
+        }
+
+        // Check if position paper already exists
+        const existingDocument = await Document.findOne({
+            authorEmail: req.user.email,
+            committeeId,
+            type: 'position_paper',
+            parentDocumentId: null
+        });
+
+        if (existingDocument) {
+            // Update existing document with new text content
+            return updatePositionPaperText(req, res, existingDocument, eligibility);
+        }
+
+        // Calculate content statistics
+        const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
+        const pageCount = Math.ceil(content.length / 3000);
+
+        // Create new text-based position paper
+        const document = new Document({
+            type: 'position_paper',
+            committeeId,
+            authorEmail: req.user.email,
+            authorCountry: req.user.countryName,
+            filename: `${req.user.countryName}_position_paper.txt`,
+            originalName: `${title}.txt`,
+            fileSize: Buffer.byteLength(content, 'utf8'),
+            mimeType: 'text/plain',
+            filePath: null, // No physical file for text submissions
+            content: {
+                extractedText: content,
+                pageCount,
+                wordCount
+            },
+            isLateSubmission: eligibility.isLateSubmission,
+            // Text-specific fields
+            textContent: content,
+            textTitle: title
+        });
+
+        await document.save();
+
+        global.logger.info(`Position paper text submitted: ${req.user.countryName} (${req.user.email})${eligibility.isLateSubmission ? ' [LATE]' : ''}`);
+
+        res.status(201).json({
+            success: true,
+            document: {
+                _id: document._id,
+                type: document.type,
+                authorCountry: document.authorCountry,
+                originalName: document.originalName,
+                version: document.version,
+                status: document.status,
+                createdAt: document.createdAt,
+                isLateSubmission: document.isLateSubmission,
+                wordCount: document.content.wordCount,
+                pageCount: document.content.pageCount,
+                isTextSubmission: true
+            },
+            message: `Position paper submitted successfully${eligibility.isLateSubmission ? ' (late submission)' : ''}`
+        });
+
+    } catch (error) {
+        global.logger.error('Submit position paper text error:', error);
+        res.status(500).json({ error: 'Failed to submit position paper' });
+    }
+};
+
 // Upload new version of existing document
 const uploadNewVersion = async (req, res, existingDocument) => {
     try {
@@ -228,6 +392,79 @@ const uploadNewVersion = async (req, res, existingDocument) => {
         }
 
         throw error;
+    }
+};
+
+// Update position paper text content
+const updatePositionPaperText = async (req, res, existingDocument, eligibility) => {
+    try {
+        const { title, content } = req.body;
+
+        // Check if updates are allowed
+        if (existingDocument.status === 'approved') {
+            return res.status(400).json({
+                error: 'Cannot update approved position paper'
+            });
+        }
+
+        // Calculate content statistics
+        const wordCount = content.split(/\s+/).filter(word => word.length > 0).length;
+        const pageCount = Math.ceil(content.length / 3000);
+
+        // Create new version
+        const newVersionNumber = existingDocument.version + 1;
+        
+        // Add current version to history
+        existingDocument.versions.push({
+            version: existingDocument.version,
+            filename: existingDocument.filename,
+            uploadedAt: existingDocument.updatedAt || existingDocument.createdAt,
+            status: existingDocument.status,
+            extractedText: existingDocument.content.extractedText,
+            pageCount: existingDocument.content.pageCount,
+            wordCount: existingDocument.content.wordCount
+        });
+
+        // Update with new content
+        existingDocument.originalName = `${title}.txt`;
+        existingDocument.fileSize = Buffer.byteLength(content, 'utf8');
+        existingDocument.content = {
+            extractedText: content,
+            pageCount,
+            wordCount
+        };
+        existingDocument.textContent = content;
+        existingDocument.textTitle = title;
+        existingDocument.version = newVersionNumber;
+        existingDocument.status = 'uploaded';
+        existingDocument.presidiumReview = undefined;
+        existingDocument.isLateSubmission = eligibility.isLateSubmission;
+
+        await existingDocument.save();
+
+        global.logger.info(`Position paper text updated: ${existingDocument.authorCountry} v${newVersionNumber}${eligibility.isLateSubmission ? ' [LATE]' : ''}`);
+
+        res.json({
+            success: true,
+            document: {
+                _id: existingDocument._id,
+                type: existingDocument.type,
+                authorCountry: existingDocument.authorCountry,
+                originalName: existingDocument.originalName,
+                version: existingDocument.version,
+                status: existingDocument.status,
+                updatedAt: existingDocument.updatedAt,
+                isLateSubmission: existingDocument.isLateSubmission,
+                wordCount: existingDocument.content.wordCount,
+                pageCount: existingDocument.content.pageCount,
+                isTextSubmission: true
+            },
+            message: `Position paper updated to version ${newVersionNumber}${eligibility.isLateSubmission ? ' (late submission)' : ''}`
+        });
+
+    } catch (error) {
+        global.logger.error('Update position paper text error:', error);
+        res.status(500).json({ error: 'Failed to update position paper' });
     }
 };
 
@@ -506,6 +743,11 @@ const getDocumentPreview = async (req, res) => {
 module.exports = {
     upload,
     uploadPositionPaper,
+    extractTextFromFile,
+    checkPositionPaperEligibility,
+    uploadPositionPaper,
+    submitPositionPaperText,
+    getPositionPaper,
     getDocuments,
     getDocument,
     downloadDocument,

@@ -74,18 +74,18 @@ router.get('/',
     handleValidationErrors,
     async (req, res) => {
         try {
-            const { 
-                page = 1, 
-                limit = 20, 
-                type, 
-                status, 
-                search, 
+            const {
+                page = 1,
+                limit = 20,
+                type,
+                status,
+                search,
                 committeeId,
-                dateRange 
+                dateRange
             } = req.query;
 
             const { Document } = require('./model');
-            
+
             // Build filter
             const filter = {};
 
@@ -240,6 +240,59 @@ router.put('/position-papers/:id/review',
     validateDocumentReview,
     handleValidationErrors,
     controller.reviewDocument
+);
+
+// Submit position paper as text (delegates only)
+router.post('/position-papers/text',
+    global.auth.token,
+    global.auth.delegate,
+    [
+        body('committeeId')
+            .isMongoId()
+            .withMessage('Valid committee ID is required'),
+        body('title')
+            .isLength({ min: 3, max: 200 })
+            .withMessage('Title must be between 3 and 200 characters')
+            .trim(),
+        body('content')
+            .isLength({ min: 100, max: 50000 })
+            .withMessage('Content must be between 100 and 50,000 characters')
+    ],
+    handleValidationErrors,
+    global.auth.sameCommittee,
+    controller.submitPositionPaperText
+);
+
+// Get position paper eligibility (delegates only) 
+router.get('/position-papers/:committeeId/eligibility',
+    global.auth.token,
+    global.auth.delegate,
+    validateCommitteeId,
+    handleValidationErrors,
+    global.auth.sameCommittee,
+    async (req, res) => {
+        try {
+            const { committeeId } = req.params;
+            const eligibility = await controller.checkPositionPaperEligibility(committeeId, req.user.email);
+
+            res.json({
+                success: true,
+                eligibility
+            });
+        } catch (error) {
+            global.logger.error('Position paper eligibility check error:', error);
+            res.status(500).json({ error: 'Failed to check eligibility' });
+        }
+    }
+);
+
+// Get single position paper by delegate and committee
+router.get('/position-papers/:committeeId/delegate',
+    global.auth.token,
+    validateCommitteeId,
+    handleValidationErrors,
+    global.auth.sameCommittee,
+    controller.getPositionPaper
 );
 
 // Public Documents Routes (presidium only)

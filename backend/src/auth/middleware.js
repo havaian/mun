@@ -94,7 +94,7 @@ const authenticateToken = async (req, res, next) => {
     }
 };
 
-// NEW: Flexible role-based authorization middleware
+//  Flexible role-based authorization middleware
 const requireRoles = (...allowedRoles) => {
     // Flatten the roles array in case arrays are passed
     const roles = allowedRoles.flat();

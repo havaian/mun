@@ -46,6 +46,15 @@ const versionSchema = new mongoose.Schema({
     wordCount: {
         type: Number,
         default: 0
+    },
+
+    textContent: {
+        type: String,
+        default: null
+    },
+    textTitle: {
+        type: String,
+        default: null
     }
 }, { _id: false });
 

@@ -18,7 +18,7 @@ class PDFGenerator {
         return this.generateCompleteQRPDF(committee, [], baseUrl);
     }
 
-    // NEW: Generate presidium-only QR codes PDF
+    //  Generate presidium-only QR codes PDF
     async generatePresidiumQRPDF(committee, presidiumMembers, baseUrl = 'https://mun.uz') {
         try {
             const doc = new PDFDocument({
@@ -81,7 +81,7 @@ class PDFGenerator {
         }
     }
 
-    // NEW: Generate delegates-only QR codes PDF
+    //  Generate delegates-only QR codes PDF
     async generateDelegateQRPDF(committee, baseUrl = 'https://mun.uz') {
         try {
             const doc = new PDFDocument({
@@ -144,7 +144,7 @@ class PDFGenerator {
         }
     }
 
-    // NEW: Generate complete QR codes PDF (presidium + delegates)
+    //  Generate complete QR codes PDF (presidium + delegates)
     async generateCompleteQRPDF(committee, presidiumMembers = [], baseUrl = 'https://mun.uz') {
         try {
             const doc = new PDFDocument({

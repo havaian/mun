@@ -137,6 +137,9 @@ const createEvent = async (req, res) => {
         // Default registration deadline to 24 hours before start
         const defaultRegistrationDeadline = new Date(start.getTime() - 24 * 60 * 60 * 1000);
 
+        // Default position paper deadline to 48 hours before start
+        const defaultPositionPaperDeadline = new Date(start.getTime() - 48 * 60 * 60 * 1000);
+
         const eventData = {
             name: name.trim(),
             description: description?.trim(),
@@ -145,7 +148,11 @@ const createEvent = async (req, res) => {
             settings: {
                 registrationDeadline: settings.registrationDeadline ?
                     new Date(settings.registrationDeadline) : defaultRegistrationDeadline,
+                positionPaperDeadline: settings.positionPaperDeadline ?
+                    new Date(settings.positionPaperDeadline) : defaultPositionPaperDeadline,
                 allowLateRegistration: settings.allowLateRegistration || false,
+                allowLatePositionPapers: settings.allowLatePositionPapers !== undefined ?
+                    settings.allowLatePositionPapers : true,
                 timezone: settings.timezone || 'UTC'
             },
             createdBy: req.user.userId,
@@ -153,7 +160,15 @@ const createEvent = async (req, res) => {
             statistics: {
                 totalCommittees: 0,
                 totalParticipants: 0,
-                totalCountries: 0
+                totalCountries: 0,
+                positionPapers: {
+                    total: 0,
+                    submitted: 0,
+                    approved: 0,
+                    rejected: 0,
+                    underReview: 0,
+                    lateSubmissions: 0
+                }
             }
         };
 
@@ -244,7 +259,7 @@ const updateEvent = async (req, res) => {
     }
 };
 
-// Update event status
+// Update event status with active session prevention
 const updateEventStatus = async (req, res) => {
     try {
         const { id } = req.params;
@@ -262,21 +277,164 @@ const updateEventStatus = async (req, res) => {
             return res.status(404).json({ error: 'Event not found' });
         }
 
+        // 🚨 PREVENTION: Check for active sessions before completing event
+        if (status === 'completed') {
+            const Committee = require('../committee/model').Committee;
+            const Session = require('../session/model').Session;
+
+            // Get all committees for this event
+            const committees = await Committee.find({ eventId: id }).select('_id name');
+            const committeeIds = committees.map(c => c._id);
+
+            // Check for active or paused sessions
+            const activeSessions = await Session.find({
+                committeeId: { $in: committeeIds },
+                status: { $in: ['active', 'paused'] }
+            }).populate('committeeId', 'name');
+
+            if (activeSessions.length > 0) {
+                // Prevent completion and return detailed info about active sessions
+                const sessionDetails = activeSessions.map(session => ({
+                    sessionId: session._id,
+                    sessionNumber: session.number,
+                    committeeName: session.committeeId.name,
+                    status: session.status,
+                    startedAt: session.startedAt
+                }));
+
+                return res.status(400).json({
+                    error: 'Cannot complete event while sessions are still active',
+                    details: `Found ${activeSessions.length} active/paused session(s). Please complete all sessions first.`,
+                    activeSessions: sessionDetails,
+                    message: 'Complete all sessions before marking the event as completed'
+                });
+            }
+        }
+
         const oldStatus = event.status;
         event.status = status;
         await event.save();
+
+        // ✅ SAFE COMPLETION: Only complete committees after session check passes
+        if (status === 'completed') {
+            try {
+                const Committee = require('../committee/model').Committee;
+
+                // Complete all committees (now safe since no active sessions)
+                const updateResult = await Committee.updateMany(
+                    {
+                        eventId: id,
+                        status: { $ne: 'completed' }
+                    },
+                    {
+                        status: 'completed',
+                        completedAt: new Date()
+                    }
+                );
+
+                global.logger.info(`Event completed: ${event.name}. Completed ${updateResult.modifiedCount} committees.`);
+
+                // Emit WebSocket events to notify committees
+                if (req.app.locals.io) {
+                    const committees = await Committee.find({ eventId: id });
+                    committees.forEach(committee => {
+                        const { emitToCommittee } = require('../websocket/socketManager');
+                        emitToCommittee(req.app.locals.io, committee._id.toString(), 'committee-completed', {
+                            committeeId: committee._id,
+                            eventId: id,
+                            reason: 'Event completed',
+                            completedAt: new Date()
+                        });
+                    });
+                }
+
+            } catch (cascadeError) {
+                global.logger.error('Error completing committees:', cascadeError);
+
+                return res.json({
+                    success: true,
+                    event,
+                    message: `Event status updated to ${status}`,
+                    warning: 'Event completed but some committees may not have been updated. Please check committee statuses manually.'
+                });
+            }
+        }
 
         global.logger.info(`Event status changed: ${event.name} from ${oldStatus} to ${status} by ${req.user.userId}`);
 
         res.json({
             success: true,
             event,
-            message: `Event status updated to ${status}`
+            message: `Event status updated to ${status}`,
+            info: status === 'completed' ? 'All associated committees have been completed' : null
         });
 
     } catch (error) {
         global.logger.error('Update event status error:', error);
         res.status(500).json({ error: 'Failed to update event status' });
+    }
+};
+
+// Get completion readiness info
+const getEventCompletionReadiness = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const event = await Event.findById(id);
+        if (!event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        const Committee = require('../committee/model').Committee;
+        const Session = require('../session/model').Session;
+
+        // Get all committees for this event
+        const committees = await Committee.find({ eventId: id }).select('_id name status');
+        const committeeIds = committees.map(c => c._id);
+
+        // Check for active sessions
+        const activeSessions = await Session.find({
+            committeeId: { $in: committeeIds },
+            status: { $in: ['active', 'paused'] }
+        }).populate('committeeId', 'name').select('number title status startedAt committeeId');
+
+        // Check for non-completed committees
+        const activeCommittees = committees.filter(c => c.status !== 'completed');
+
+        const readiness = {
+            eventId: id,
+            eventName: event.name,
+            currentStatus: event.status,
+            canComplete: activeSessions.length === 0,
+            blockers: {
+                activeSessions: activeSessions.length,
+                activeCommittees: activeCommittees.length
+            },
+            details: {
+                activeSessions: activeSessions.map(session => ({
+                    sessionId: session._id,
+                    sessionNumber: session.number,
+                    title: session.title,
+                    status: session.status,
+                    committeeName: session.committeeId.name,
+                    startedAt: session.startedAt
+                })),
+                activeCommittees: activeCommittees.map(committee => ({
+                    committeeId: committee._id,
+                    name: committee.name,
+                    status: committee.status
+                }))
+            }
+        };
+
+        res.json({
+            success: true,
+            readiness
+        });
+
+    } catch (error) {
+        global.logger.error('Get completion readiness error:', error);
+        res.status(500).json({ error: 'Failed to get completion readiness' });
     }
 };
 
@@ -396,6 +554,7 @@ const getEventStatistics = async (req, res) => {
                     totalCountries: event.statistics.totalCountries,
                     eventDuration: event.duration,
                     registrationOpen: event.registrationOpen,
+                    positionPaperSubmissionOpen: event.positionPaperSubmissionOpen,
                     isActive: event.isActive()
                 }
             }
@@ -407,6 +566,90 @@ const getEventStatistics = async (req, res) => {
     }
 };
 
+// Check position paper submission status for event
+const getPositionPaperStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const event = await Event.findById(id);
+
+        if (!event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        const status = {
+            eventId: id,
+            eventName: event.name,
+            deadline: event.settings.positionPaperDeadline,
+            deadlinePassed: event.isPositionPaperDeadlinePassed(),
+            submissionsOpen: event.canSubmitPositionPaper(),
+            allowLateSubmissions: event.settings.allowLatePositionPapers,
+            timezone: event.settings.timezone,
+            currentTimeInTimezone: event.getCurrentTimeInEventTimezone(),
+            timeRemaining: null
+        };
+
+        // Calculate time remaining if deadline exists and hasn't passed
+        if (event.settings.positionPaperDeadline && !status.deadlinePassed) {
+            const now = event.getCurrentTimeInEventTimezone();
+            const deadline = event.getDateInEventTimezone(event.settings.positionPaperDeadline);
+            status.timeRemaining = Math.max(0, deadline.getTime() - now.getTime());
+        }
+
+        res.json({
+            success: true,
+            positionPaperStatus: status
+        });
+
+    } catch (error) {
+        global.logger.error('Get position paper status error:', error);
+        res.status(500).json({ error: 'Failed to fetch position paper status' });
+    }
+};
+
+// Update position paper deadline for event (admin only)
+const updatePositionPaperDeadline = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { positionPaperDeadline, allowLatePositionPapers } = req.body;
+
+        const event = await Event.findById(id);
+
+        if (!event) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        // Validate new deadline
+        if (positionPaperDeadline) {
+            const newDeadline = new Date(positionPaperDeadline);
+            if (newDeadline >= event.startDate) {
+                return res.status(400).json({
+                    error: 'Position paper deadline must be before event start date'
+                });
+            }
+            event.settings.positionPaperDeadline = newDeadline;
+        }
+
+        if (allowLatePositionPapers !== undefined) {
+            event.settings.allowLatePositionPapers = allowLatePositionPapers;
+        }
+
+        await event.save();
+
+        global.logger.info(`Position paper deadline updated for event: ${event.name} by ${req.user.userId}`);
+
+        res.json({
+            success: true,
+            event,
+            message: 'Position paper deadline updated successfully'
+        });
+
+    } catch (error) {
+        global.logger.error('Update position paper deadline error:', error);
+        res.status(500).json({ error: 'Failed to update position paper deadline' });
+    }
+};
+
 module.exports = {
     getAllEvents,
     getEvent,
@@ -415,5 +658,8 @@ module.exports = {
     updateEventStatus,
     deleteEvent,
     restoreEvent,
-    getEventStatistics
+    getEventStatistics,
+    getPositionPaperStatus,
+    updatePositionPaperDeadline,
+    getEventCompletionReadiness
 };

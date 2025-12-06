@@ -198,7 +198,7 @@ app.use('/api/countries', countriesRoutes);
 //   }
 // );
 
-// // NEW: Event Protection Management Routes (Admin only)
+// //  Event Protection Management Routes (Admin only)
 // app.get('/api/admin/event-protection/cache',
 //   global.auth.token,
 //   global.auth.admin,
