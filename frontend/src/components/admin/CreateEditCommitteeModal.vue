@@ -169,7 +169,6 @@ const toast = useToast()
 const isSubmitting = ref(false)
 const isDraftSaving = ref(false)
 const errors = ref({})
-const availableEvents = ref([])
 const hasUnsavedChanges = ref(false)
 const originalFormData = ref(null)
 
@@ -192,6 +191,10 @@ const isValid = computed(() => {
         Object.keys(errors.value).length === 0
 })
 
+const availableEvents = computed(() => {
+    return props.events.filter(event => event.status === 'draft')
+})
+
 // Watchers
 watch(() => props.modelValue, (newVal) => {
     if (newVal) {
@@ -206,12 +209,6 @@ watch(() => props.modelValue, (newVal) => {
         }
     }
 })
-
-watch(() => props.events, (newEvents) => {
-    if (newEvents && newEvents.length > 0) {
-        availableEvents.value = newEvents
-    }
-}, { immediate: true })
 
 watch(() => formData, (newVal) => {
     if (!originalFormData.value) return
