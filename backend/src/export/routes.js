@@ -39,7 +39,7 @@ router.get('/delegate-links/:committeeId',
     validateCommitteeId,
     validateFormat,
     handleValidationErrors,
-    controller.generateCommitteeLinks
+    controller.generateDelegateLinks
 );
 
 // Generate presidium-only login links (admin only) - replaces QR codes

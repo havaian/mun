@@ -21,7 +21,7 @@ const createExportFilename = (eventName, committeeName, type) => {
 };
 
 // Generate login links for committee delegates
-const generateCommitteeLinks = async (req, res) => {
+const generateDelegateLinks = async (req, res) => {
     try {
         const { committeeId } = req.params;
         const { format = 'json' } = req.query; // json, plain, or pdf
@@ -79,7 +79,7 @@ const generateCommitteeLinks = async (req, res) => {
             );
             
             res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-            res.setHeader('Content-Disposition', `attachment; filename="${filename}_delegate_links.txt"`);
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
             res.send(plainText);
         } else {
             // Return JSON format
@@ -174,7 +174,7 @@ const generatePresidiumLinks = async (req, res) => {
             );
             
             res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-            res.setHeader('Content-Disposition', `attachment; filename="${filename}_presidium_links.txt"`);
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
             res.send(plainText);
         } else {
             // Return JSON format
@@ -299,11 +299,11 @@ const generateCompleteLinks = async (req, res) => {
             const filename = createExportFilename(
                 committee.eventId.name, 
                 committee.name, 
-                'presidium_links.txt'
+                'complete_links.txt'
             );
             
             res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-            res.setHeader('Content-Disposition', `attachment; filename="${filename}_complete_links.txt"`);
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
             res.send(plainText);
         } else {
             // Return JSON format
@@ -414,7 +414,7 @@ const exportCompleteReport = async (req, res) => {
 };
 
 module.exports = {
-    generateCommitteeLinks,
+    generateDelegateLinks,
     generatePresidiumLinks,  
     generateCompleteLinks,
     exportStatistics,
