@@ -151,7 +151,7 @@ const adminLogin = async (req, res) => {
 const refreshToken = async (req, res) => {
     try {
         const user = req.user;
-        
+
         // Generate new token with full expiration
         const tokenPayload = {
             userId: user.userId,
@@ -162,16 +162,16 @@ const refreshToken = async (req, res) => {
         };
 
         const newToken = await generateToken(tokenPayload, user);
-        
+
         global.logger.info(`Token refreshed for user: ${user.email}`);
-        
+
         res.json({
             success: true,
             token: newToken,
             user: user,
             message: 'Token refreshed successfully'
         });
-        
+
     } catch (error) {
         global.logger.error('Token refresh error:', error);
         res.status(500).json({
@@ -262,15 +262,7 @@ const bindEmail = async (req, res) => {
             });
         }
 
-        // Check if email is already used
-        const existingUser = await User.findOne({ email: email.toLowerCase() });
-        if (existingUser) {
-            return res.status(409).json({
-                error: 'Email address is already registered to another account'
-            });
-        }
-
-        // Find user by login token (delegate OR presidium)
+        // Find user by login token first (delegate OR presidium)
         const user = await User.findOne({
             loginToken: token,
             isActive: true,
@@ -280,6 +272,27 @@ const bindEmail = async (req, res) => {
         if (!user) {
             return res.status(401).json({
                 error: 'Invalid or expired login link'
+            });
+        }
+
+        // Check if email is already used within the same event
+        // Get the event ID from the user's committee
+        const eventId = user.committeeId.eventId;
+
+        // Find all committees in the same event
+        const { Committee } = require('../committee/model');
+        const eventCommittees = await Committee.find({ eventId }).select('_id');
+        const eventCommitteeIds = eventCommittees.map(c => c._id);
+
+        // Check if email is already used by any user in the same event
+        const existingUser = await User.findOne({
+            email: email.toLowerCase(),
+            committeeId: { $in: eventCommitteeIds }
+        });
+
+        if (existingUser) {
+            return res.status(409).json({
+                error: 'Email address is already registered to another account in this event'
             });
         }
 

@@ -89,10 +89,10 @@
     </div>
 
     <!-- Quick Debug Toggle (Development Only) -->
-    <button v-if="!showDebugInfo" @click="showDebugInfo = true"
+    <!-- <button v-if="!showDebugInfo" @click="showDebugInfo = true"
       class="fixed bottom-4 left-4 z-40 bg-gray-800 text-white rounded-full p-2 opacity-50 hover:opacity-100">
       <span class="text-xs">🐛</span>
-    </button>
+    </button> -->
   </div>
 </template>
 
