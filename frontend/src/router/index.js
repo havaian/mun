@@ -18,18 +18,19 @@ const AdminReports = () => import('@/views/admin/ReportsView.vue')
 // const AdminDocuments = () => import('@/views/admin/DocumentsView.vue')
 
 // Presidium views
-const PresidiumDashboard = () => import('@/views/presidium/DashboardView.vue')
-const PresidiumSessions = () => import('@/views/presidium/SessionsView.vue')
-// const PresidiumDocuments = () => import('@/views/presidium/DocumentsView.vue')
-const PresidiumVoting = () => import('@/views/presidium/VotingView.vue')
 const PresidiumAttendance = () => import('@/views/presidium/AttendanceView.vue')
+const PresidiumCoalitions = () => import('@/views/presidium/CoalitionsView.vue')
+const PresidiumDashboard = () => import('@/views/presidium/DashboardView.vue')
+// const PresidiumDocuments = () => import('@/views/presidium/DocumentsView.vue')
 const PresidiumDiplomacy = () => import('@/views/presidium/DiplomacyView.vue')
+const PresidiumSessions = () => import('@/views/presidium/SessionsView.vue')
+const PresidiumVoting = () => import('@/views/presidium/VotingView.vue')
 
 // Delegate views
-const DelegateDashboard = () => import('@/views/delegate/DashboardView.vue')
-// const DelegateDocuments = () => import('@/views/delegate/DocumentsView.vue')
 const DelegateCoalitions = () => import('@/views/delegate/CoalitionsView.vue')
+const DelegateDashboard = () => import('@/views/delegate/DashboardView.vue')
 const DelegateDiplomacy = () => import('@/views/delegate/DiplomacyView.vue')
+// const DelegateDocuments = () => import('@/views/delegate/DocumentsView.vue')
 const DelegateVoting = () => import('@/views/delegate/VotingView.vue')
 
 // Shared views
@@ -173,6 +174,12 @@ const routes = [
         name: 'PresidiumMessages',
         component: PresidiumDiplomacy,
         meta: { title: 'Messages' }
+      },
+      {
+        path: 'messages',
+        name: 'PresidiumCoalitions',
+        component: PresidiumCoalitions,
+        meta: { title: 'Coalitions' }
       }
     ]
   },
