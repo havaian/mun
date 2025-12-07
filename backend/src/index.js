@@ -23,7 +23,7 @@ setupGlobalAuth();
 const { eventAutomationService } = require('./event/automationService');
 
 // // Import global event protection middleware
-// const { middleware: eventProtectionMiddleware, clearCache: clearEventCache, getCacheStats } = require('./auth/globalEventProtection');
+// const { middleware: eventProtectionMiddleware, clearCache: ✅ MongoDB, getCacheStats } = require('./auth/globalEventProtection');
 
 // Import route modules
 const adminRoutes = require('./admin/routes');
@@ -326,8 +326,8 @@ const gracefulShutdown = (signal) => {
   // Stop event automation service
   eventAutomationService.stop();
 
-  // Clear event protection cache
-  clearEventCache();
+  // // Clear event protection cache
+  // clearEventCache();
 
   server.close((err) => {
     if (err) {

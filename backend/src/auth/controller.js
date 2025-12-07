@@ -372,23 +372,39 @@ const emailLogin = async (req, res) => {
             });
         }
 
-        // Find user by email (delegate OR presidium)
-        const user = await User.findOne({
-            email: email.toLowerCase(),
-            role: { $in: ['delegate', 'presidium'] }
-        }).populate('committeeId');
+        let user;
 
-        if (!user) {
-            return res.status(401).json({
-                error: 'No account found with this email address'
-            });
-        }
+        if (loginToken) {
+            // If loginToken is provided, find user by token first
+            user = await User.findOne({
+                loginToken: loginToken,
+                role: { $in: ['delegate', 'presidium'] }
+            }).populate('committeeId');
 
-        // If loginToken provided, verify it matches this user
-        if (loginToken && user.loginToken !== loginToken) {
-            return res.status(401).json({
-                error: 'This email is not associated with this login link'
-            });
+            if (!user) {
+                return res.status(401).json({
+                    error: 'Invalid login link'
+                });
+            }
+
+            // Check if the email matches the user found by token
+            if (!user.email || user.email !== email.toLowerCase()) {
+                return res.status(401).json({
+                    error: 'This email is not associated with this login link'
+                });
+            }
+        } else {
+            // If no loginToken provided, find user by email only
+            user = await User.findOne({
+                email: email.toLowerCase(),
+                role: { $in: ['delegate', 'presidium'] }
+            }).populate('committeeId');
+
+            if (!user) {
+                return res.status(401).json({
+                    error: 'No account found with this email address'
+                });
+            }
         }
 
         // Generate session
