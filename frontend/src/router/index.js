@@ -11,25 +11,26 @@ const LanguageSelectionView = () => import('@/views/auth/LanguageSelectionView.v
 const AdminDashboard = () => import('@/views/admin/DashboardView.vue')
 const AdminEvents = () => import('@/views/admin/EventsView.vue')
 const AdminCommittees = () => import('@/views/admin/CommitteesView.vue')
-const AdminUsers = () => import('@/views/admin/UsersView.vue')
+// const AdminUsers = () => import('@/views/admin/UsersView.vue')
 const AdminReports = () => import('@/views/admin/ReportsView.vue')
-const AdminLogs = () => import('@/views/admin/LogsView.vue')
-const AdminSettings = () => import('@/views/admin/SettingsView.vue')
-const AdminDocuments = () => import('@/views/admin/DocumentsView.vue')
+// const AdminLogs = () => import('@/views/admin/LogsView.vue')
+// const AdminSettings = () => import('@/views/admin/SettingsView.vue')
+// const AdminDocuments = () => import('@/views/admin/DocumentsView.vue')
 
 // Presidium views
 const PresidiumDashboard = () => import('@/views/presidium/DashboardView.vue')
 const PresidiumSessions = () => import('@/views/presidium/SessionsView.vue')
 // const PresidiumDocuments = () => import('@/views/presidium/DocumentsView.vue')
-// const PresidiumVoting = () => import('@/views/presidium/VotingView.vue')
+const PresidiumVoting = () => import('@/views/presidium/VotingView.vue')
 const PresidiumAttendance = () => import('@/views/presidium/AttendanceView.vue')
+const PresidiumDiplomacy = () => import('@/views/presidium/DiplomacyView.vue')
 
 // Delegate views
 const DelegateDashboard = () => import('@/views/delegate/DashboardView.vue')
 // const DelegateDocuments = () => import('@/views/delegate/DocumentsView.vue')
-// const DelegateCoalitions = () => import('@/views/delegate/CoalitionsView.vue')
-// const DelegateMessages = () => import('@/views/delegate/MessagesView.vue')
-// const DelegateVoting = () => import('@/views/delegate/VotingView.vue')
+const DelegateCoalitions = () => import('@/views/delegate/CoalitionsView.vue')
+const DelegateDiplomacy = () => import('@/views/delegate/DiplomacyView.vue')
+const DelegateVoting = () => import('@/views/delegate/VotingView.vue')
 
 // Shared views
 const ProfileView = () => import('@/views/shared/ProfileView.vue')
@@ -155,17 +156,23 @@ const routes = [
       //   component: PresidiumDocuments,
       //   meta: { title: 'Document Review' }
       // },
-      // {
-      //   path: 'voting',
-      //   name: 'PresidiumVoting',
-      //   component: PresidiumVoting,
-      //   meta: { title: 'Voting Management' }
-      // },
+      {
+        path: 'voting',
+        name: 'PresidiumVoting',
+        component: PresidiumVoting,
+        meta: { title: 'Voting Management' }
+      },
       {
         path: 'attendance',
         name: 'PresidiumAttendance',
         component: PresidiumAttendance,
         meta: { title: 'Attendance Tracking' }
+      },
+      {
+        path: 'messages',
+        name: 'PresidiumMessages',
+        component: PresidiumDiplomacy,
+        meta: { title: 'Messages' }
       }
     ]
   },
@@ -188,24 +195,24 @@ const routes = [
       //   component: DelegateDocuments,
       //   meta: { title: 'My Documents' }
       // },
-      // {
-      //   path: 'coalitions',
-      //   name: 'DelegateCoalitions',
-      //   component: DelegateCoalitions,
-      //   meta: { title: 'Coalitions' }
-      // },
-      // {
-      //   path: 'messages',
-      //   name: 'DelegateMessages',
-      //   component: DelegateMessages,
-      //   meta: { title: 'Messages' }
-      // },
-      // {
-      //   path: 'voting',
-      //   name: 'DelegateVoting',
-      //   component: DelegateVoting,
-      //   meta: { title: 'Voting' }
-      // }
+      {
+        path: 'coalitions',
+        name: 'DelegateCoalitions',
+        component: DelegateCoalitions,
+        meta: { title: 'Coalitions' }
+      },
+      {
+        path: 'messages',
+        name: 'DelegateMessages',
+        component: DelegateDiplomacy,
+        meta: { title: 'Messages' }
+      },
+      {
+        path: 'voting',
+        name: 'DelegateVoting',
+        component: DelegateVoting,
+        meta: { title: 'Voting' }
+      }
     ]
   },
 

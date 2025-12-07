@@ -40,6 +40,7 @@ import {
     PlayIcon,
     PauseIcon,
     ClipboardDocumentListIcon,
+    ChatBubbleLeftRightIcon,
     UserIcon,
     CogIcon
 } from '@heroicons/vue/24/outline'
@@ -88,18 +89,26 @@ const navigationSections = computed(() => [
             //     badge: pendingDocuments.value > 0 ? pendingDocuments.value : null,
             //     badgeType: 'warning'
             // },
-            // {
-            //     name: 'PresidiumVoting',
-            //     label: 'Voting Management',
-            //     to: '/presidium/voting',
-            //     icon: HandRaisedIcon
-            // },
+            {
+                name: 'PresidiumVoting',
+                label: 'Voting Management',
+                to: '/presidium/voting',
+                icon: HandRaisedIcon
+            },
             {
                 name: 'PresidiumAttendance',
                 label: 'Attendance',
                 to: '/presidium/attendance',
                 icon: ClockIcon,
                 badge: attendanceCount.value > 0 ? attendanceCount.value : null,
+                badgeType: 'info'
+            },
+            {
+                name: 'PresidiumMessaing',
+                label: 'Messages',
+                to: '/presidium/messaging',
+                icon: ChatBubbleLeftRightIcon,
+                badge: null,
                 badgeType: 'info'
             }
         ]

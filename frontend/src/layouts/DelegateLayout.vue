@@ -120,14 +120,14 @@ const navigationSections = computed(() => [
     {
         title: 'Committee Participation',
         items: [
-            {
-                name: 'DelegateDocuments',
-                label: 'Documents',
-                to: '/delegate/documents',
-                icon: DocumentTextIcon,
-                badge: pendingDocuments.value > 0 ? pendingDocuments.value : null,
-                badgeType: 'warning'
-            },
+            // {
+            //     name: 'DelegateDocuments',
+            //     label: 'Documents',
+            //     to: '/delegate/documents',
+            //     icon: DocumentTextIcon,
+            //     badge: pendingDocuments.value > 0 ? pendingDocuments.value : null,
+            //     badgeType: 'warning'
+            // },
             {
                 name: 'DelegateVoting',
                 label: 'Voting',
