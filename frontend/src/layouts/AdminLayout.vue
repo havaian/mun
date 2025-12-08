@@ -32,7 +32,7 @@ import UniversalSidebar from '@/components/layout/UniversalSidebar.vue'
 
 // Icons
 import {
-    ChartBarIcon,
+    RectangleGroupIcon,
     CalendarDaysIcon,
     UserGroupIcon,
     UsersIcon,
@@ -58,7 +58,7 @@ const primaryNavigation = computed(() => [
         name: 'AdminDashboard',
         label: 'Dashboard',
         to: '/admin',
-        icon: ChartBarIcon,
+        icon: RectangleGroupIcon,
         badge: adminStore.stats.unreadNotifications > 0 ? adminStore.stats.unreadNotifications : null,
         badgeType: 'default'
     }

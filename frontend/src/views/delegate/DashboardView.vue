@@ -1,528 +1,356 @@
 <template>
-    <div class="p-6 space-y-6">
-        <!-- Loading State -->
-        <div v-if="isLoading" class="flex items-center justify-center py-12">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-mun-blue"></div>
-        </div>
-
-        <!-- Main Content -->
-        <template v-else>
-            <!-- Header with Country Info -->
-            <div class="mun-card p-6">
+    <div class="h-screen flex bg-gray-50">
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col">
+            <!-- Header -->
+            <div class="bg-white border-b border-gray-200 px-6 py-6">
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <!-- Flag -->
-                        <div v-if="delegateCountry?.flagUrl"
-                            class="w-20 h-14 rounded-lg overflow-hidden border-2 border-mun-gray-200 shadow-sm">
-                            <img :src="delegateCountry.flagUrl" :alt="delegateCountry.name"
-                                class="w-full h-full object-cover" />
-                        </div>
-
-                        <!-- Country Info -->
-                        <div>
-                            <h1 class="text-2xl font-bold text-mun-gray-900">{{ delegateCountry?.name || 'Delegate' }}
-                            </h1>
-                            <p class="text-mun-gray-600">{{ committee?.name || 'Loading...' }}</p>
-                            <div class="flex items-center space-x-2 mt-1">
-                                <span v-if="delegateCountry?.isObserver"
-                                    class="px-2 py-0.5 text-xs font-medium rounded bg-mun-yellow-100 text-mun-yellow-700">
-                                    Observer
-                                </span>
-                                <span v-if="delegateCountry?.specialRole"
-                                    class="px-2 py-0.5 text-xs font-medium rounded bg-mun-purple-100 text-mun-purple-700">
-                                    {{ delegateCountry.specialRole }}
-                                </span>
-                                <span v-if="delegateCountry?.hasVetoRight"
-                                    class="px-2 py-0.5 text-xs font-medium rounded bg-mun-red-100 text-mun-red-700">
-                                    Veto Power
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Attendance Status -->
-                    <div class="text-right">
-                        <p class="text-sm text-mun-gray-600 mb-2">Your Status</p>
-                        <span :class="getAttendanceStatusClass(attendanceStatus)">
-                            {{ getAttendanceStatusLabel(attendanceStatus) }}
-                        </span>
-                        <p v-if="attendanceStatus === 'absent'" class="text-xs text-mun-red-600 mt-1">
-                            ⚠️ Mark attendance when roll call starts
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">{{ userCountry }}</h1>
+                        <p class="text-gray-500 text-sm mt-1">
+                            STATUS: <span :class="attendanceStatusClass">{{ attendanceStatus }}</span>
                         </p>
                     </div>
+                    <div class="flex items-center space-x-2">
+                        <div :class="[
+                            'px-3 py-1 rounded-full text-sm font-medium',
+                            sessionStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                        ]">
+                            {{ sessionStatus === 'active' ? 'Listening' : 'Session Inactive' }}
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Current Session Info -->
-            <div class="mun-card p-6">
-                <h2 class="text-lg font-semibold text-mun-gray-900 mb-4">Current Session</h2>
+            <!-- Content Grid -->
+            <div class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Left Column: Floor Actions -->
+                <div class="space-y-6">
+                    <!-- Floor Actions Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Floor Actions</h2>
 
-                <div v-if="currentSession">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                        <div>
-                            <p class="text-sm text-mun-gray-600">Session Number</p>
-                            <p class="text-lg font-semibold text-mun-gray-900">{{ currentSession.sessionNumber || 1 }}
+                        <!-- Attendance Warning -->
+                        <div v-if="!isMarkedPresent" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <p class="text-sm text-red-700">
+                                <ExclamationTriangleIcon class="w-4 h-4 inline mr-1" />
+                                Mark attendance to enable actions
                             </p>
                         </div>
-                        <div>
-                            <p class="text-sm text-mun-gray-600">Debate Mode</p>
-                            <p class="text-lg font-semibold text-mun-gray-900">{{ formatMode(currentSession.mode) }}</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-mun-gray-600">Status</p>
-                            <span :class="getSessionStatusClass(currentSession.status)">
-                                {{ currentSession.status }}
+
+                        <!-- Request to Speak -->
+                        <button @click="requestToSpeak" :disabled="!canRequestSpeak" :class="[
+                            'w-full mb-6 py-4 px-6 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-3',
+                            isInSpeakersList
+                                ? 'bg-green-50 border-2 border-green-200 text-green-700'
+                                : canRequestSpeak
+                                    ? 'bg-gray-100 border-2 border-gray-300 text-gray-700 hover:bg-gray-200 hover:border-gray-400'
+                                    : 'bg-gray-50 border-2 border-gray-200 text-gray-400 cursor-not-allowed'
+                        ]">
+                            <HandRaisedIcon class="w-6 h-6" />
+                            <span class="text-lg">
+                                {{ isInSpeakersList ? 'In Speakers List' : 'Request to Speak' }}
                             </span>
-                        </div>
-                        <div>
-                            <p class="text-sm text-mun-gray-600">Duration</p>
-                            <p class="text-lg font-semibold text-mun-gray-900">{{
-                                formatDuration(currentSession.startedAt) }}</p>
+                        </button>
+
+                        <!-- Procedural Actions -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <button @click="pointOfOrder" :disabled="!canTakeActions"
+                                class="py-3 px-4 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                Point of Order
+                            </button>
+                            <button @click="rightOfReply" :disabled="!canTakeActions"
+                                class="py-3 px-4 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                Right of Reply
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Quorum Status -->
-                    <div v-if="quorumInfo" class="p-3 rounded-lg border"
-                        :class="quorumInfo.hasQuorum ? 'bg-mun-green-50 border-mun-green-200' : 'bg-mun-red-50 border-mun-red-200'">
-                        <div class="flex items-center space-x-2">
-                            <CheckCircleIcon v-if="quorumInfo.hasQuorum" class="w-5 h-5 text-mun-green-600" />
-                            <XCircleIcon v-else class="w-5 h-5 text-mun-red-600" />
-                            <span :class="quorumInfo.hasQuorum ? 'text-mun-green-700' : 'text-mun-red-700'"
-                                class="text-sm font-medium">
-                                {{ quorumInfo.hasQuorum ? 'Quorum achieved' : 'No quorum' }}
-                            </span>
-                            <span class="text-sm text-mun-gray-600">
-                                ({{ quorumInfo.present }} / {{ quorumInfo.required }} voting)
-                            </span>
+                    <!-- Current Speaker Card -->
+                    <div class="bg-gray-800 text-white rounded-xl shadow-sm p-6">
+                        <div class="flex items-center space-x-3">
+                            <SpeakerWaveIcon class="w-6 h-6" />
+                            <h3 class="text-lg font-semibold">CURRENT SPEAKER</h3>
                         </div>
-                    </div>
-                </div>
-
-                <div v-else class="text-center py-8">
-                    <ClockIcon class="mx-auto h-12 w-12 text-mun-gray-300" />
-                    <h3 class="mt-4 text-lg font-medium text-mun-gray-900">No Active Session</h3>
-                    <p class="mt-2 text-mun-gray-600">Wait for the presidium to start a session</p>
-                </div>
-            </div>
-
-            <!-- Quick Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <!-- Speeches -->
-                <div class="mun-card p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-lg bg-mun-blue/10">
-                            <MicrophoneIcon class="w-6 h-6 text-mun-blue" />
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-mun-gray-600">Speeches</p>
-                            <p class="text-2xl font-bold text-mun-gray-900">{{ stats.speechesGiven }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Votes Cast -->
-                <div class="mun-card p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-lg bg-mun-green-500/10">
-                            <HandRaisedIcon class="w-6 h-6 text-mun-green-600" />
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-mun-gray-600">Votes Cast</p>
-                            <p class="text-2xl font-bold text-mun-gray-900">{{ stats.votesCast }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Documents -->
-                <div class="mun-card p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-lg bg-mun-yellow-500/10">
-                            <DocumentTextIcon class="w-6 h-6 text-mun-yellow-600" />
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-mun-gray-600">Documents</p>
-                            <p class="text-2xl font-bold text-mun-gray-900">{{ stats.documentsSubmitted }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Coalition Status -->
-                <div class="mun-card p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-lg bg-mun-purple-500/10">
-                            <UserGroupIcon class="w-6 h-6 text-mun-purple-600" />
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-mun-gray-600">Coalition</p>
-                            <p class="text-lg font-bold text-mun-gray-900">
-                                {{ userCoalition ? 'Member' : 'None' }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Active Voting -->
-                <div class="mun-card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-mun-gray-900">Active Voting</h3>
-                        <RouterLink to="/delegate/voting"
-                            class="text-mun-blue hover:text-mun-blue-600 text-sm font-medium">
-                            View All
-                        </RouterLink>
-                    </div>
-
-                    <div v-if="activeVotings.length > 0" class="space-y-3">
-                        <div v-for="voting in activeVotings" :key="voting._id"
-                            class="p-4 bg-mun-blue/5 border border-mun-blue/20 rounded-lg">
-                            <div class="flex items-center justify-between mb-2">
-                                <h4 class="font-semibold text-mun-gray-900">{{ voting.title }}</h4>
-                                <span class="flex h-2 w-2">
-                                    <span
-                                        class="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-mun-blue opacity-75"></span>
-                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-mun-blue"></span>
-                                </span>
+                        <div class="mt-4">
+                            <p class="text-3xl font-bold">{{ currentSpeaker || 'None' }}</p>
+                            <div v-if="currentSpeaker && speakerTimeRemaining" class="mt-2 text-sm text-gray-300">
+                                Time remaining: {{ formattedSpeakerTime }}
                             </div>
-                            <p class="text-sm text-mun-gray-600 mb-3">{{ voting.description }}</p>
-                            <RouterLink :to="`/delegate/voting`" class="btn-un-primary text-sm w-full text-center">
-                                Cast Your Vote
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div v-if="activeVoting" class="bg-red-50 border border-red-200 rounded-xl p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-semibold text-red-800">Active Voting</h3>
+                                <p class="text-sm text-red-600">{{ activeVoting.subject }}</p>
+                            </div>
+                            <RouterLink to="/delegate/voting"
+                                class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium">
+                                Vote Now
                             </RouterLink>
                         </div>
                     </div>
-
-                    <div v-else class="text-center py-8">
-                        <HandRaisedIcon class="mx-auto h-10 w-10 text-mun-gray-300" />
-                        <p class="mt-2 text-sm text-mun-gray-500">No active voting sessions</p>
-                    </div>
                 </div>
 
-                <!-- Recent Activity -->
-                <div class="mun-card p-6">
-                    <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">Recent Activity</h3>
+                <!-- Right Column: Session Info -->
+                <div class="space-y-6">
+                    <!-- Session Status -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Session Information</h2>
 
-                    <div v-if="recentActivity.length > 0" class="space-y-3">
-                        <div v-for="activity in recentActivity" :key="activity.id"
-                            class="flex items-start space-x-3 p-3 bg-mun-gray-50 rounded-lg">
-                            <div class="p-1.5 rounded-lg bg-mun-blue/10 flex-shrink-0">
-                                <ClockIcon class="w-4 h-4 text-mun-blue" />
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Current Mode</span>
+                                <span class="font-medium">{{ formatSessionMode(sessionMode) }}</span>
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm text-mun-gray-900">{{ activity.description }}</p>
-                                <p class="text-xs text-mun-gray-500 mt-1">{{ formatTime(activity.timestamp) }}</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Quorum Status</span>
+                                <span :class="[
+                                    'font-medium',
+                                    hasQuorum ? 'text-green-600' : 'text-red-600'
+                                ]">
+                                    {{ hasQuorum ? 'Achieved' : 'Not Met' }}
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Present Delegates</span>
+                                <span class="font-medium">{{ presentCount }}/{{ totalDelegates }}</span>
                             </div>
                         </div>
                     </div>
 
-                    <div v-else class="text-center py-8">
-                        <ClockIcon class="mx-auto h-10 w-10 text-mun-gray-300" />
-                        <p class="mt-2 text-sm text-mun-gray-500">No recent activity</p>
+                    <!-- Speaker Queue -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Speakers List</h2>
+
+                        <div v-if="speakersList.length === 0" class="text-center text-gray-500 py-4">
+                            No speakers in queue
+                        </div>
+                        <div v-else class="space-y-2">
+                            <div v-for="(speaker, index) in speakersList.slice(0, 5)" :key="speaker.country" :class="[
+                                'flex items-center justify-between p-3 rounded-lg',
+                                index === 0 ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
+                            ]">
+                                <span class="font-medium">{{ index + 1 }}. {{ speaker.country }}</span>
+                                <span v-if="index === 0" class="text-xs text-blue-600 font-medium">NEXT</span>
+                            </div>
+                            <div v-if="speakersList.length > 5" class="text-center text-sm text-gray-500 pt-2">
+                                +{{ speakersList.length - 5 }} more speakers
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coalition Status -->
+                    <div v-if="userCoalition" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Coalition Status</h2>
+
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Coalition</span>
+                                <span class="font-medium">{{ userCoalition.name }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Role</span>
+                                <span :class="[
+                                    'font-medium',
+                                    userCoalition.isLeader ? 'text-blue-600' : 'text-gray-900'
+                                ]">
+                                    {{ userCoalition.isLeader ? 'Leader' : 'Member' }}
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Members</span>
+                                <span class="font-medium">{{ userCoalition.memberCount }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Quick Action Buttons -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <RouterLink to="/delegate/documents" class="btn-un-primary text-center">
-                    <DocumentTextIcon class="w-5 h-5 mr-2 inline" />
-                    Submit Position Paper
-                </RouterLink>
-                <RouterLink to="/delegate/coalitions" class="btn-un-secondary text-center">
-                    <UserGroupIcon class="w-5 h-5 mr-2 inline" />
-                    {{ userCoalition ? 'View Coalition' : 'Join Coalition' }}
-                </RouterLink>
-                <RouterLink to="/delegate/voting" class="btn-un-secondary text-center">
-                    <HandRaisedIcon class="w-5 h-5 mr-2 inline" />
-                    View Voting
+        <!-- Right Sidebar: Diplomatic Channels -->
+        <div class="w-80 bg-white border-l border-gray-200 flex flex-col">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Diplomatic Channels</h2>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                <!-- Recent Messages -->
+                <div v-for="message in recentMessages" :key="message.id" class="p-4 bg-gray-50 rounded-lg">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-medium text-sm">{{ message.sender }}</span>
+                        <span class="text-xs text-gray-500">{{ message.time }}</span>
+                    </div>
+                    <p class="text-sm text-gray-700">{{ message.content }}</p>
+                </div>
+
+                <div v-if="recentMessages.length === 0" class="text-center text-gray-500 py-8">
+                    No recent messages
+                </div>
+            </div>
+
+            <!-- Message Composer -->
+            <div class="p-4 border-t border-gray-200">
+                <RouterLink to="/delegate/messaging"
+                    class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium text-center block">
+                    Open Diplomacy
                 </RouterLink>
             </div>
-        </template>
-
-        <!-- Attendance Modal -->
-        <AttendanceModal v-model="showAttendanceModal"
-            :session-id="wsStore.activeAttendanceSessionId || currentSession?._id" :country="delegateCountry"
-            @attendance-submitted="handleAttendanceSubmitted" />
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useWebSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
-import { apiMethods } from '@/utils/api'
-import AttendanceModal from '@/components/delegate/AttendanceModal.vue'
 
 // Icons
 import {
-    CheckCircleIcon,
-    XCircleIcon,
-    ClockIcon,
-    MicrophoneIcon,
-    HandRaisedIcon,
-    DocumentTextIcon,
-    UserGroupIcon
+    HandRaisedIcon, SpeakerWaveIcon, ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
 
+// Stores
 const router = useRouter()
 const authStore = useAuthStore()
-const wsStore = useWebSocketStore()
 const toast = useToast()
 
 // State
-const isLoading = ref(false)
-const showAttendanceModal = ref(false)
-const committee = ref(null)
-const delegateCountry = ref(null)
-const currentSession = ref(null)
-const attendanceStatus = ref('absent')
-const quorumInfo = ref(null)
-const userCoalition = ref(null)
-const activeVotings = ref([])
-const recentActivity = ref([])
+const userCountry = ref('Chile')
+const attendanceStatus = ref('NOT MARKED')
+const sessionStatus = ref('active')
+const sessionMode = ref('formal')
+const currentSpeaker = ref(null)
+const speakerTimeRemaining = ref(90)
+const isInSpeakersList = ref(false)
+const activeVoting = ref(null)
+const hasQuorum = ref(false)
+const presentCount = ref(25)
+const totalDelegates = ref(50)
 
-const stats = ref({
-    speechesGiven: 0,
-    votesCast: 0,
-    documentsSubmitted: 0
-})
+// Coalition data
+const userCoalition = ref(null)
+
+// Speakers list
+const speakersList = ref([
+    { country: 'United States', position: 1 },
+    { country: 'United Kingdom', position: 2 },
+    { country: 'France', position: 3 },
+])
+
+// Messages
+const recentMessages = ref([
+    {
+        id: 1,
+        sender: 'Chairperson',
+        content: 'Session will resume in 5 minutes.',
+        time: '09:01 AM'
+    },
+    {
+        id: 2,
+        sender: 'Anonymous',
+        content: 'Did anyone see the amendment from Russian Federation?',
+        time: '09:01 AM'
+    },
+    {
+        id: 3,
+        sender: 'Anonymous',
+        content: 'The coffee break needs to be longer!',
+        time: '09:01 AM'
+    }
+])
 
 // Computed
-const committeeId = computed(() => authStore.user?.committeeId?._id)
-const countryName = computed(() => authStore.user?.countryName)
+const isMarkedPresent = computed(() => attendanceStatus.value !== 'NOT MARKED')
+const canRequestSpeak = computed(() => isMarkedPresent.value && !isInSpeakersList.value)
+const canTakeActions = computed(() => isMarkedPresent.value)
+
+const attendanceStatusClass = computed(() => {
+    switch (attendanceStatus.value) {
+        case 'PRESENT_AND_VOTING':
+            return 'text-green-600 font-medium'
+        case 'PRESENT':
+            return 'text-blue-600 font-medium'
+        case 'NOT MARKED':
+        default:
+            return 'text-red-600 font-medium'
+    }
+})
+
+const formattedSpeakerTime = computed(() => {
+    const minutes = Math.floor(speakerTimeRemaining.value / 60)
+    const seconds = speakerTimeRemaining.value % 60
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
+})
 
 // Methods
-const loadDashboardData = async () => {
-    try {
-        isLoading.value = true
-
-        // Load committee info
-        const committeeResponse = await apiMethods.committees.getById(committeeId.value)
-        if (committeeResponse.data.success) {
-            committee.value = committeeResponse.data.committee
-
-            // Find delegate's country
-            delegateCountry.value = committee.value.countries?.find(
-                c => c.name === countryName.value
-            )
-        }
-
-        // Load current session
-        try {
-            const sessionsResponse = await apiMethods.sessions.getAll(committeeId.value, {
-                status: 'active',
-                limit: 1
-            })
-
-            if (sessionsResponse.data.success && sessionsResponse.data.sessions?.length > 0) {
-                currentSession.value = sessionsResponse.data.sessions[0]
-
-                // Load attendance for current session
-                try {
-                    const attendanceResponse = await apiMethods.sessions.getAttendance(currentSession.value._id)
-
-                    if (attendanceResponse.data.success && attendanceResponse.data.attendance) {
-                        const myAttendance = attendanceResponse.data.attendance.find(
-                            a => a.country === countryName.value
-                        )
-                        attendanceStatus.value = myAttendance?.status || 'absent'
-
-                        // Calculate quorum info
-                        const votingCount = attendanceResponse.data.attendance.filter(
-                            a => a.status === 'present_voting'
-                        ).length
-                        const totalVoting = committee.value.countries?.filter(
-                            c => !c.isObserver && !c.specialRole
-                        ).length || 0
-                        const required = Math.floor(totalVoting / 2) + 1
-
-                        quorumInfo.value = {
-                            present: votingCount,
-                            required: required,
-                            hasQuorum: votingCount >= required
-                        }
-                    }
-                } catch (err) {
-                    console.warn('No attendance data yet:', err)
-                }
-            }
-        } catch (err) {
-            console.warn('No active session:', err)
-        }
-
-        // Load active votings
-        try {
-            const votingsResponse = await apiMethods.voting.getAll({
-                committeeId: committeeId.value,
-                status: 'active'
-            })
-            if (votingsResponse.data.success) {
-                activeVotings.value = votingsResponse.data.votings || []
-            }
-        } catch (err) {
-            console.warn('Could not load votings:', err)
-        }
-
-        // Load coalitions
-        try {
-            const coalitionsResponse = await apiMethods.resolutions.getCoalitions(committeeId.value)
-            if (coalitionsResponse.data.success) {
-                userCoalition.value = coalitionsResponse.data.coalitions?.find(
-                    c => c.head === countryName.value || c.members?.includes(countryName.value)
-                )
-            }
-        } catch (err) {
-            console.warn('Could not load coalitions:', err)
-        }
-
-        // Mock activity
-        recentActivity.value = [
-            {
-                id: 1,
-                description: currentSession.value ? 'Session started' : 'Waiting for session',
-                timestamp: new Date().toISOString()
-            }
-        ]
-
-        // Mock stats (to be replaced with real API)
-        stats.value = {
-            speechesGiven: 0,
-            votesCast: 0,
-            documentsSubmitted: 0
-        }
-
-    } catch (error) {
-        console.error('Dashboard load error:', error)
-        toast.error('Failed to load dashboard data')
-    } finally {
-        isLoading.value = false
-    }
-}
-
-// Formatting helpers
-const formatMode = (mode) => {
+const formatSessionMode = (mode) => {
     const modeMap = {
         'formal': 'Formal Debate',
         'moderated': 'Moderated Caucus',
         'unmoderated': 'Unmoderated Caucus',
-        'informal': 'Informal Consultation',
-        'closed': 'Closed Session'
+        'informal': 'Informal Consultation'
     }
-    return modeMap[mode] || mode || 'Unknown'
+    return modeMap[mode] || 'Unknown Mode'
 }
 
-const formatDuration = (startDate) => {
-    if (!startDate) return '0m'
+const requestToSpeak = async () => {
+    if (!canRequestSpeak.value) return
 
     try {
-        const start = new Date(startDate)
-        const now = new Date()
-        const diffMs = now - start
-        const diffMins = Math.floor(diffMs / 60000)
-        const hours = Math.floor(diffMins / 60)
-        const minutes = diffMins % 60
-
-        if (hours > 0) {
-            return `${hours}h ${minutes}m`
-        }
-        return `${minutes}m`
-    } catch {
-        return '0m'
+        // API call would go here
+        isInSpeakersList.value = true
+        toast.success('Added to speakers list')
+    } catch (error) {
+        console.error('Failed to request to speak:', error)
+        toast.error('Failed to add to speakers list')
     }
 }
 
-const formatTime = (timestamp) => {
+const pointOfOrder = async () => {
+    if (!canTakeActions.value) return
+
     try {
-        return new Date(timestamp).toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit'
-        })
-    } catch {
-        return 'Unknown'
+        // API call would go here
+        toast.success('Point of order submitted')
+    } catch (error) {
+        toast.error('Failed to submit point of order')
     }
 }
 
-const getAttendanceStatusClass = (status) => {
-    const classes = {
-        'present_voting': 'px-3 py-1 text-sm font-medium rounded-lg bg-mun-green-100 text-mun-green-700',
-        'present': 'px-3 py-1 text-sm font-medium rounded-lg bg-mun-yellow-100 text-mun-yellow-700',
-        'absent': 'px-3 py-1 text-sm font-medium rounded-lg bg-mun-red-100 text-mun-red-700'
+const rightOfReply = async () => {
+    if (!canTakeActions.value) return
+
+    try {
+        // API call would go here
+        toast.success('Right of reply requested')
+    } catch (error) {
+        toast.error('Failed to request right of reply')
     }
-    return classes[status] || classes.absent
 }
 
-const getAttendanceStatusLabel = (status) => {
-    const labels = {
-        'present_voting': 'Present & Voting',
-        'present': 'Present',
-        'absent': 'Absent'
+// Load initial data
+const loadDashboardData = async () => {
+    try {
+        // Mock data - in real app would come from API
+        hasQuorum.value = presentCount.value >= Math.floor(totalDelegates.value / 2) + 1
+
+        // Check for active voting
+        // activeVoting.value = {
+        //     subject: 'Amendment to Resolution A/RES/123',
+        //     timeRemaining: 300
+        // }
+    } catch (error) {
+        console.error('Failed to load dashboard data:', error)
     }
-    return labels[status] || 'Absent'
-}
-
-const getSessionStatusClass = (status) => {
-    const classes = {
-        'active': 'px-2 py-1 text-sm font-medium rounded-lg bg-mun-green-100 text-mun-green-700',
-        'paused': 'px-2 py-1 text-sm font-medium rounded-lg bg-mun-yellow-100 text-mun-yellow-700',
-        'completed': 'px-2 py-1 text-sm font-medium rounded-lg bg-mun-gray-100 text-mun-gray-700'
-    }
-    return classes[status] || classes.completed
-}
-
-const handleAttendanceSubmitted = (status) => {
-    attendanceStatus.value = status
-    showAttendanceModal.value = false
-    wsStore.clearAttendanceState()
-
-    // Reload dashboard to get updated data
-    loadDashboardData()
 }
 
 // Lifecycle
 onMounted(() => {
     loadDashboardData()
-
-    // Connect WebSocket if not connected
-    if (!wsStore.isConnected && !wsStore.isConnecting) {
-        wsStore.connect()
-    }
-
-    // Join committee room
-    if (committeeId.value) {
-        wsStore.joinCommittee(committeeId.value)
-    }
-})
-
-onUnmounted(() => {
-    // Leave committee room on unmount
-    if (committeeId.value) {
-        wsStore.leaveCommittee(committeeId.value)
-    }
-})
-
-// Watch for attendance activation
-watch(() => wsStore.isAttendanceActive, (isActive) => {
-    if (isActive && wsStore.activeAttendanceSessionId.value) {
-        // Check if we're not already marked present
-        if (attendanceStatus.value === 'absent') {
-            showAttendanceModal.value = true
-        }
-    }
-})
-
-// Watch for session changes from WebSocket
-watch(() => wsStore.currentSessionMode, (newMode) => {
-    if (newMode && currentSession.value) {
-        currentSession.value.mode = newMode
-    }
-})
-
-// Watch for quorum changes
-watch(() => wsStore.quorumStatus, (status) => {
-    if (status) {
-        quorumInfo.value = status
-    }
 })
 </script>

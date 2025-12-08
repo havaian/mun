@@ -1,333 +1,217 @@
 <template>
-    <div class="min-h-screen bg-gradient-mun">
-        <!-- Universal Sidebar -->
-        <UniversalSidebar :sidebar-collapsed="appStore.sidebarCollapsed" user-role="presidium" :user="authStore.user"
-            :primary-navigation="primaryNavigation" :navigation-sections="navigationSections"
-            :quick-actions="quickActions" :current-status="currentStatus" :user-actions="userActions"
-            @toggle-sidebar="appStore.toggleSidebar" @quick-action="handleQuickAction" @logout="handleLogout" />
+    <div class="flex h-screen bg-gray-50">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col h-full">
+            <!-- Header -->
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex items-center gap-3 text-blue-600 font-bold text-xl mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <GlobeAltIcon class="w-5 h-5" />
+                    </div>
+                    <span>mun.uz</span>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">{{ committeeInfo?.name || 'UN General Assembly' }}</p>
+
+                <!-- User Info -->
+                <div class="flex items-center gap-3 px-3 py-3 bg-gray-50 rounded-lg border">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <UserIcon class="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="text-sm font-semibold text-gray-900 truncate">
+                            {{ authStore.user?.name || 'Chairperson' }}
+                        </p>
+                        <p class="text-xs text-gray-500">{{ authStore.user?.presidiumRole || 'Presidium' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+                <!-- Main Navigation -->
+                <div class="space-y-1">
+                    <RouterLink v-for="item in mainNavigation" :key="item.name" :to="item.to"
+                        :class="getNavLinkClass(item.name)">
+                        <div class="flex items-center gap-3">
+                            <component :is="item.icon" class="w-5 h-5" />
+                            <span class="font-medium">{{ item.label }}</span>
+                        </div>
+                        <span v-if="item.badge" :class="getBadgeClass(item.badgeType)">
+                            {{ item.badge }}
+                        </span>
+                    </RouterLink>
+                </div>
+
+                <!-- Presentation Section -->
+                <div class="pt-6 mt-6 border-t border-gray-100">
+                    <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                        PRESENTATION
+                    </p>
+                    <div class="space-y-1">
+                        <RouterLink v-for="item in presentationNavigation" :key="item.name" :to="item.to"
+                            :class="getNavLinkClass(item.name)">
+                            <div class="flex items-center gap-3">
+                                <component :is="item.icon" class="w-5 h-5" />
+                                <span class="font-medium">{{ item.label }}</span>
+                            </div>
+                        </RouterLink>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Logout -->
+            <div class="p-4 border-t border-gray-200">
+                <button @click="handleLogout"
+                    class="flex items-center gap-3 px-4 py-3 w-full text-red-600 hover:bg-red-50 rounded-xl transition-colors">
+                    <ArrowRightOnRectangleIcon class="w-5 h-5" />
+                    <span class="font-medium">Logout</span>
+                </button>
+            </div>
+        </aside>
 
         <!-- Main Content -->
-        <div :class="[
-            'transition-all duration-200 ease-in-out',
-            appStore.sidebarCollapsed ? 'ml-0 lg:ml-16' : 'ml-0 lg:ml-72'
-        ]">
-            <main class="min-h-screen bg-mun-gray-50">
-                <router-view />
-            </main>
-        </div>
-
-        <!-- Mobile overlay -->
-        <div v-if="!appStore.sidebarCollapsed" class="fixed inset-0 bg-black bg-opacity-25 z-40 lg:hidden"
-            @click="appStore.toggleSidebar"></div>
+        <main class="flex-1 overflow-hidden">
+            <RouterView />
+        </main>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useAppStore } from '@/stores/app'
 import { useToast } from '@/plugins/toast'
-import UniversalSidebar from '@/components/layout/UniversalSidebar.vue'
 
 // Icons
 import {
-    ChartBarIcon,
-    CalendarDaysIcon,
-    DocumentTextIcon,
-    HandRaisedIcon,
-    ClockIcon,
-    PlayIcon,
-    PauseIcon,
-    ClipboardDocumentListIcon,
-    ChatBubbleLeftRightIcon,
-    UserIcon,
-    CogIcon
+    GlobeAltIcon, UserIcon, ArrowRightOnRectangleIcon,
+    RectangleGroupIcon, UsersIcon, ShieldCheckIcon, DocumentTextIcon,
+    HandRaisedIcon, ChatBubbleLeftRightIcon, PresentationChartBarIcon
 } from '@heroicons/vue/24/outline'
 
 // Stores
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
-const appStore = useAppStore()
 const toast = useToast()
 
 // State
-const isLoading = ref(false)
-const currentSession = ref(null)
 const committeeInfo = ref(null)
-const sessionTimer = ref('')
+const currentSession = ref(null)
 const attendanceCount = ref(0)
 const pendingDocuments = ref(0)
 
 // Navigation Configuration
-const primaryNavigation = computed(() => [
+const mainNavigation = computed(() => [
     {
         name: 'PresidiumDashboard',
-        label: 'Dashboard',
+        label: 'Presidium Console',
         to: '/presidium',
-        icon: ChartBarIcon
-    }
-])
-
-const navigationSections = computed(() => [
-    {
-        title: 'Committee Management',
-        items: [
-            {
-                name: 'PresidiumSessions',
-                label: 'Session Management',
-                to: '/presidium/sessions',
-                icon: CalendarDaysIcon,
-                badge: currentSession.value?.status === 'active' ? 'LIVE' : null,
-                badgeType: 'live'
-            },
-            // {
-            //     name: 'PresidiumDocuments',
-            //     label: 'Document Review',
-            //     to: '/presidium/documents',
-            //     icon: DocumentTextIcon,
-            //     badge: pendingDocuments.value > 0 ? pendingDocuments.value : null,
-            //     badgeType: 'warning'
-            // },
-            {
-                name: 'PresidiumVoting',
-                label: 'Voting Management',
-                to: '/presidium/voting',
-                icon: HandRaisedIcon
-            },
-            {
-                name: 'PresidiumAttendance',
-                label: 'Attendance',
-                to: '/presidium/attendance',
-                icon: ClockIcon,
-                badge: attendanceCount.value > 0 ? attendanceCount.value : null,
-                badgeType: 'info'
-            },
-            {
-                name: 'PresidiumMessaing',
-                label: 'Messages',
-                to: '/presidium/messaging',
-                icon: ChatBubbleLeftRightIcon,
-                badge: null,
-                badgeType: 'info'
-            }
-        ]
-    }
-])
-
-const quickActions = computed(() => {
-    const actions = []
-
-    // Session control actions
-    if (!currentSession.value || currentSession.value.status !== 'active') {
-        actions.push({
-            name: 'start-session',
-            label: 'Start Session',
-            icon: PlayIcon,
-            type: 'success',
-            disabled: isLoading.value
-        })
-    } else {
-        actions.push({
-            name: 'pause-session',
-            label: 'Pause Session',
-            icon: PauseIcon,
-            type: 'warning',
-            disabled: isLoading.value
-        })
-    }
-
-    // Attendance action
-    actions.push({
-        name: 'take-attendance',
-        label: 'Take Attendance',
-        icon: ClipboardDocumentListIcon,
-        type: 'primary',
-        disabled: isLoading.value
-    })
-
-    return actions
-})
-
-const currentStatus = computed(() => ({
-    title: 'Session Status',
-    items: [
-        {
-            label: 'Current Session',
-            value: currentSession.value?.status === 'active' ? 'Active' : 'Inactive',
-            indicator: currentSession.value?.status === 'active' ? 'active' : 'inactive'
-        }
-    ],
-    details: currentSession.value ? [
-        {
-            key: 'mode',
-            label: 'Mode',
-            value: formatSessionMode(currentSession.value.currentMode)
-        },
-        {
-            key: 'timer',
-            label: 'Timer',
-            value: sessionTimer.value || 'N/A'
-        },
-        {
-            key: 'present',
-            label: 'Present',
-            value: attendanceCount.value || 0
-        },
-        {
-            key: 'pending',
-            label: 'Pending Docs',
-            value: pendingDocuments.value || 0
-        }
-    ] : [
-        {
-            key: 'committee',
-            label: 'Committee',
-            value: committeeInfo.value?.name || 'Loading...'
-        },
-        {
-            key: 'countries',
-            label: 'Countries',
-            value: committeeInfo.value?.countries?.length || 0
-        }
-    ]
-}))
-
-const userActions = computed(() => [
-    {
-        name: 'profile',
-        label: 'Profile Settings',
-        to: '/shared/profile',
-        icon: UserIcon
+        icon: RectangleGroupIcon
     },
     {
-        name: 'committee-settings',
-        label: 'Committee Settings',
-        to: '/presidium/committee-settings',
-        icon: CogIcon
+        name: 'PresidiumAttendance',
+        label: 'Roll Call',
+        to: '/presidium/attendance',
+        icon: UsersIcon,
+        badge: attendanceCount.value > 0 ? attendanceCount.value : null,
+        badgeType: 'info'
+    },
+    {
+        name: 'PresidiumCoalitions',
+        label: 'Coalitions',
+        to: '/presidium/coalitions',
+        icon: ShieldCheckIcon
+    },
+    {
+        name: 'PresidiumDocuments',
+        label: 'Documents',
+        to: '/presidium/documents',
+        icon: DocumentTextIcon,
+        badge: pendingDocuments.value > 0 ? pendingDocuments.value : null,
+        badgeType: 'warning'
+    },
+    {
+        name: 'PresidiumVoting',
+        label: 'Voting',
+        to: '/presidium/voting',
+        icon: HandRaisedIcon
+    },
+    {
+        name: 'PresidiumMessaging',
+        label: 'Diplomacy',
+        to: '/presidium/messaging',
+        icon: ChatBubbleLeftRightIcon
+    }
+])
+
+const presentationNavigation = computed(() => [
+    {
+        name: 'PresidiumPublicDisplay',
+        label: 'Public Display',
+        to: '/presidium/public-display',
+        icon: PresentationChartBarIcon
     }
 ])
 
 // Methods
-const formatSessionMode = (mode) => {
-    const modeMap = {
-        'formal': 'Formal Debate',
-        'moderated': 'Moderated Caucus',
-        'unmoderated': 'Unmoderated Caucus',
-        'informal': 'Informal Consultation',
-        'closed': 'Closed Session'
-    }
-    return modeMap[mode] || mode || 'Unknown'
+const getNavLinkClass = (routeName) => {
+    const baseClasses = 'flex items-center justify-between px-3 py-2.5 text-gray-700 rounded-xl transition-all duration-200 hover:bg-gray-50 hover:text-gray-900 group'
+    return route.name === routeName
+        ? `${baseClasses} bg-blue-50 text-blue-700 shadow-sm border border-blue-100`
+        : baseClasses
 }
 
-const handleQuickAction = async (actionName) => {
-    switch (actionName) {
-        case 'start-session':
-            await startSession()
-            break
-        case 'pause-session':
-            await pauseSession()
-            break
-        case 'take-attendance':
-            router.push('/presidium/attendance')
-            break
-        default:
-            console.warn('Unknown quick action:', actionName)
+const getBadgeClass = (type = 'default') => {
+    const baseClasses = 'ml-auto px-2 py-0.5 text-xs font-medium rounded-full'
+
+    const typeClasses = {
+        'info': 'bg-blue-100 text-blue-700',
+        'warning': 'bg-orange-100 text-orange-700',
+        'success': 'bg-green-100 text-green-700',
+        'danger': 'bg-red-100 text-red-700',
+        'live': 'bg-red-500 text-white animate-pulse',
+        'default': 'bg-gray-100 text-gray-700'
     }
-}
 
-const startSession = async () => {
-    if (isLoading.value) return
-
-    isLoading.value = true
-    try {
-        // Implementation would depend on your session API
-        // const response = await sessionAPI.start(committeeInfo.value.id)
-
-        // Mock implementation
-        currentSession.value = {
-            id: 'session_1',
-            status: 'active',
-            currentMode: 'formal',
-            startTime: new Date()
-        }
-
-        toast.success('Session started successfully')
-    } catch (error) {
-        console.error('Failed to start session:', error)
-        toast.error('Failed to start session')
-    } finally {
-        isLoading.value = false
-    }
-}
-
-const pauseSession = async () => {
-    if (isLoading.value) return
-
-    isLoading.value = true
-    try {
-        // Implementation would depend on your session API
-        // const response = await sessionAPI.pause(currentSession.value.id)
-
-        // Mock implementation
-        if (currentSession.value) {
-            currentSession.value.status = 'paused'
-        }
-
-        toast.success('Session paused')
-    } catch (error) {
-        console.error('Failed to pause session:', error)
-        toast.error('Failed to pause session')
-    } finally {
-        isLoading.value = false
-    }
+    return `${baseClasses} ${typeClasses[type] || typeClasses.default}`
 }
 
 const handleLogout = async () => {
     try {
         await authStore.logout()
         toast.success('Logged out successfully')
-        router.push('/auth/login')
+        router.push('/login')
     } catch (error) {
         console.error('Logout error:', error)
         toast.error('Failed to logout')
     }
 }
 
-const loadPresidiumData = async () => {
+// Load initial data
+const loadLayoutData = async () => {
     try {
-        // Load presidium-specific data
-        // This would typically come from your API
+        // Load committee info
         committeeInfo.value = {
-            name: 'General Assembly',
-            countries: Array.from({ length: 25 }, (_, i) => ({ id: i + 1, name: `Country ${i + 1}` }))
+            name: 'UN General Assembly'
         }
 
-        // Mock session data
+        // Load session status
         currentSession.value = {
-            id: 'session_1',
-            status: 'inactive',
-            currentMode: 'formal'
+            status: 'active',
+            mode: 'formal'
         }
 
+        // Load counts
+        attendanceCount.value = 0
+        pendingDocuments.value = 0
     } catch (error) {
-        console.error('Failed to load presidium data:', error)
-        toast.error('Failed to load presidium data')
+        console.error('Failed to load layout data:', error)
     }
 }
 
 // Lifecycle
-onMounted(async () => {
-    await loadPresidiumData()
-
-    // Set up data refresh interval
-    const refreshInterval = setInterval(async () => {
-        await loadPresidiumData()
-    }, 30000) // Refresh every 30 seconds
-
-    // Cleanup on unmount
-    onUnmounted(() => {
-        clearInterval(refreshInterval)
-    })
+onMounted(() => {
+    loadLayoutData()
 })
 </script>

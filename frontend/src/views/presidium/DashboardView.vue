@@ -1,424 +1,412 @@
 <template>
-    <div class="p-6 space-y-6">
-        <!-- Loading State -->
-        <div v-if="isLoading" class="flex items-center justify-center py-12">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-mun-blue"></div>
-        </div>
-
-        <!-- Main Content -->
-        <template v-else>
-            <!-- Header -->
+    <div class="h-screen flex flex-col bg-gray-50">
+        <!-- Header -->
+        <div class="bg-white border-b border-gray-200 px-6 py-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-mun-gray-900">Presidium Dashboard</h1>
-                    <p class="text-mun-gray-600">{{ userCommittee?.name || 'Loading...' }}</p>
+                    <h1 class="text-2xl font-bold text-gray-900">Presidium Console</h1>
+                    <p class="text-gray-600">Manage session flow, timers, and voting.</p>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <span class="px-3 py-1 text-sm font-medium rounded-lg bg-mun-blue/10 text-mun-blue">
-                        {{ authStore.user?.presidiumRole || 'Presidium Member' }}
-                    </span>
-                    <button @click="loadDashboardData" class="p-2 rounded-lg hover:bg-mun-gray-100 transition-colors">
-                        <ArrowPathIcon class="w-5 h-5 text-mun-gray-600" />
+                <div class="flex items-center space-x-4">
+                    <!-- Quorum Status -->
+                    <div class="bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
+                        <span class="text-xs text-gray-500 uppercase font-bold block">QUORUM</span>
+                        <span :class="[
+                            'font-mono text-lg font-bold',
+                            stats.hasQuorum ? 'text-green-600' : 'text-red-600'
+                        ]">
+                            {{ stats.presentCount }} / {{ stats.required }}
+                        </span>
+                    </div>
+                    <!-- Session Mode Badge -->
+                    <div class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md font-medium uppercase text-sm">
+                        {{ currentSessionMode }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content - Three Column Layout -->
+        <div class="flex-1 flex overflow-hidden">
+            <!-- Left Column: Timer & Session Controls -->
+            <div class="w-80 bg-white border-r border-gray-200 p-6 space-y-6">
+                <!-- Timer Section -->
+                <div class="text-center">
+                    <!-- Circular Timer -->
+                    <div class="relative w-48 h-48 mx-auto mb-6">
+                        <!-- Timer Circle -->
+                        <svg class="w-48 h-48 transform -rotate-90" viewBox="0 0 100 100">
+                            <!-- Background circle -->
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="4" />
+                            <!-- Progress circle -->
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="#3b82f6" stroke-width="4"
+                                stroke-linecap="round" :stroke-dasharray="timerCircumference"
+                                :stroke-dashoffset="timerDashOffset" class="transition-all duration-1000" />
+                        </svg>
+                        <!-- Timer Text -->
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <div class="text-3xl font-bold text-gray-900">{{ formattedTime }}</div>
+                            <div class="text-sm text-gray-500 uppercase tracking-wide">SPEAKER TIME</div>
+                        </div>
+                    </div>
+
+                    <!-- Timer Controls -->
+                    <div class="flex justify-center space-x-4">
+                        <button @click="toggleTimer" :class="[
+                            'w-12 h-12 rounded-full flex items-center justify-center transition-colors',
+                            timerState.isRunning ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'
+                        ]">
+                            <PauseIcon v-if="timerState.isRunning" class="w-6 h-6" />
+                            <PlayIcon v-else class="w-6 h-6" />
+                        </button>
+                        <button @click="resetTimer"
+                            class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                            <ArrowPathIcon class="w-6 h-6" />
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Session Controls -->
+                <div class="bg-gray-50 p-4 rounded-xl">
+                    <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
+                        <CommandLineIcon class="w-5 h-5 mr-2" />
+                        Session Controls
+                    </h3>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button @click="changeSessionMode('formal')" :class="[
+                            'p-3 text-sm font-medium rounded-lg border transition-colors',
+                            sessionMode === 'formal'
+                                ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                        ]">
+                            Formal Debate
+                        </button>
+                        <button @click="changeSessionMode('moderated')" :class="[
+                            'p-3 text-sm font-medium rounded-lg border transition-colors',
+                            sessionMode === 'moderated'
+                                ? 'bg-purple-50 border-purple-200 text-purple-700'
+                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                        ]">
+                            Mod. Caucus
+                        </button>
+                        <button @click="changeSessionMode('unmoderated')" :class="[
+                            'p-3 text-sm font-medium rounded-lg border transition-colors',
+                            sessionMode === 'unmoderated'
+                                ? 'bg-orange-50 border-orange-200 text-orange-700'
+                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                        ]">
+                            Unmod. Caucus
+                        </button>
+                        <button @click="startQuickVote" :class="[
+                            'p-3 text-sm font-medium rounded-lg border transition-colors',
+                            activeVoting
+                                ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
+                                : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
+                        ]">
+                            {{ activeVoting ? 'End Voting' : 'Quick Vote' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Column: Speakers List -->
+            <div class="flex-1 bg-white border-r border-gray-200 p-6 flex flex-col">
+                <div class="flex items-center mb-6">
+                    <MicrophoneIcon class="w-5 h-5 text-gray-600 mr-2" />
+                    <h3 class="font-semibold text-gray-800">Speakers List</h3>
+                </div>
+
+                <!-- Current Speaker -->
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200 text-center">
+                    <p class="text-xs text-gray-500 uppercase mb-1">CURRENT SPEAKER</p>
+                    <p class="text-2xl font-bold text-gray-700 mb-3">
+                        {{ currentSpeaker || 'None' }}
+                    </p>
+                    <button @click="nextSpeaker"
+                        class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                        :disabled="speakerList.length === 0">
+                        Next
+                    </button>
+                </div>
+
+                <!-- Speaker List -->
+                <div class="flex-1 overflow-y-auto space-y-2 mb-4">
+                    <div v-if="speakerList.length === 0" class="text-center text-gray-400 text-sm py-8">
+                        List is empty
+                    </div>
+                    <div v-for="(speaker, idx) in speakerList" :key="speaker.country"
+                        class="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg shadow-sm">
+                        <span class="font-medium text-gray-700">{{ idx + 1 }}. {{ speaker.country }}</span>
+                        <button @click="removeSpeaker(speaker.country)"
+                            class="text-red-400 hover:text-red-600 transition-colors">
+                            <XMarkIcon class="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Add Speaker -->
+                <div class="flex space-x-2">
+                    <select v-model="selectedDelegate"
+                        class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Select Delegate...</option>
+                        <option v-for="country in availableCountries" :key="country" :value="country">
+                            {{ country }}
+                        </option>
+                    </select>
+                    <button @click="addSpeaker" :disabled="!selectedDelegate"
+                        class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        Add
                     </button>
                 </div>
             </div>
 
-            <!-- Quick Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <!-- Present Count -->
-                <div class="mun-card p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-lg bg-mun-blue/10">
-                            <UsersIcon class="w-6 h-6 text-mun-blue" />
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-mun-gray-600">Present</p>
-                            <p class="text-2xl font-bold text-mun-gray-900">{{ stats.presentCount }}</p>
-                            <p class="text-xs text-mun-gray-500">of {{ stats.totalCountries }} countries</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quorum Status -->
-                <div class="mun-card p-6">
-                    <div class="flex items-center">
-                        <div :class="[
-                            'p-3 rounded-lg',
-                            stats.hasQuorum ? 'bg-mun-green-500/10' : 'bg-mun-red-500/10'
-                        ]">
-                            <CheckCircleIcon :class="[
-                                'w-6 h-6',
-                                stats.hasQuorum ? 'text-mun-green-500' : 'text-mun-red-500'
-                            ]" />
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-mun-gray-600">Quorum</p>
-                            <p class="text-2xl font-bold text-mun-gray-900">
-                                {{ stats.hasQuorum ? 'Yes' : 'No' }}
-                            </p>
-                            <p class="text-xs text-mun-gray-500">{{ stats.quorumCount }} needed</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pending Documents -->
-                <div class="mun-card p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-lg bg-mun-yellow-500/10">
-                            <DocumentTextIcon class="w-6 h-6 text-mun-yellow-600" />
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-mun-gray-600">Pending Review</p>
-                            <p class="text-2xl font-bold text-mun-gray-900">{{ stats.pendingDocuments }}</p>
-                            <p class="text-xs text-mun-gray-500">documents</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Active Votings -->
-                <div class="mun-card p-6">
-                    <div class="flex items-center">
-                        <div class="p-3 rounded-lg bg-mun-purple-500/10">
-                            <HandRaisedIcon class="w-6 h-6 text-mun-purple-600" />
-                        </div>
-                        <div class="ml-4">
-                            <p class="text-sm font-medium text-mun-gray-600">Active Votes</p>
-                            <p class="text-2xl font-bold text-mun-gray-900">{{ stats.activeVotings }}</p>
-                            <p class="text-xs text-mun-gray-500">in progress</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Current Session -->
-            <div class="mun-card p-6">
-                <h2 class="text-lg font-semibold text-mun-gray-900 mb-4">Current Session</h2>
-
-                <div v-if="currentSession" class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="font-medium text-mun-gray-900">
-                                Session {{ currentSession.sessionNumber || 1 }}
-                            </p>
-                            <p class="text-sm text-mun-gray-600">{{ formatSessionMode(currentSession.mode) }}</p>
-                        </div>
-                        <span :class="[
-                            'px-3 py-1 text-sm font-medium rounded-lg',
-                            currentSession.status === 'active' ? 'bg-mun-green-100 text-mun-green-700' :
-                                currentSession.status === 'paused' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
-                                    'bg-mun-gray-100 text-mun-gray-700'
-                        ]">
-                            {{ currentSession.status?.charAt(0).toUpperCase() + currentSession.status?.slice(1) }}
-                        </span>
+            <!-- Right Column: Voting & Information -->
+            <div class="w-80 bg-white p-6">
+                <!-- Active Voting -->
+                <div v-if="activeVoting" class="h-full flex flex-col">
+                    <div class="flex items-center mb-4">
+                        <CheckCircleIcon class="w-5 h-5 text-green-600 mr-2" />
+                        <h3 class="font-semibold text-green-600">Active Voting</h3>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-mun-gray-100">
-                        <RouterLink to="/presidium/sessions" class="btn-un-primary text-center">
-                            Manage Session
-                        </RouterLink>
-                        <RouterLink to="/presidium/attendance" class="btn-un-secondary text-center">
-                            Take Attendance
-                        </RouterLink>
-                        <RouterLink to="/presidium/voting" class="btn-un-secondary text-center">
-                            Start Voting
-                        </RouterLink>
-                    </div>
-                </div>
+                    <p class="text-sm text-gray-600 mb-6">{{ activeVoting.subject }}</p>
 
-                <div v-else class="text-center py-8">
-                    <ClockIcon class="mx-auto h-12 w-12 text-mun-gray-300" />
-                    <h3 class="mt-4 text-lg font-medium text-mun-gray-900">No Active Session</h3>
-                    <p class="mt-2 text-mun-gray-600">Start a new session to begin committee work</p>
-                    <RouterLink to="/presidium/sessions" class="mt-4 btn-un-primary inline-block">
-                        Start Session
-                    </RouterLink>
-                </div>
-            </div>
-
-            <!-- Quick Actions Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Recent Documents -->
-                <div class="mun-card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-mun-gray-900">Recent Documents</h3>
-                        <RouterLink to="/presidium/documents"
-                            class="text-mun-blue hover:text-mun-blue-600 text-sm font-medium">
-                            View All
-                        </RouterLink>
-                    </div>
-
-                    <div v-if="recentDocuments.length > 0" class="space-y-3">
-                        <div v-for="doc in recentDocuments" :key="doc.id"
-                            class="flex items-center justify-between p-3 bg-mun-gray-50 rounded-lg hover:bg-mun-gray-100 transition-colors cursor-pointer"
-                            @click="$router.push(`/presidium/documents`)">
-                            <div class="flex-1 min-w-0">
-                                <p class="font-medium text-mun-gray-900 truncate">{{ doc.title }}</p>
-                                <p class="text-sm text-mun-gray-600">{{ doc.country }}</p>
+                    <!-- Voting Results -->
+                    <div class="space-y-4 flex-1">
+                        <div v-for="(count, option) in votingResults" :key="option">
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="capitalize font-medium">{{ option }}</span>
+                                <span>{{ count }}</span>
                             </div>
-                            <span :class="[
-                                'px-2 py-1 rounded text-xs font-medium ml-3 flex-shrink-0',
-                                doc.status === 'pending' ? 'bg-mun-yellow-100 text-mun-yellow-700' :
-                                    doc.status === 'approved' ? 'bg-mun-green-100 text-mun-green-700' :
-                                        'bg-mun-red-100 text-mun-red-700'
-                            ]">
-                                {{ doc.status }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div v-else class="text-center py-8">
-                        <DocumentTextIcon class="mx-auto h-10 w-10 text-mun-gray-300" />
-                        <p class="mt-2 text-sm text-mun-gray-500">No recent documents</p>
-                    </div>
-                </div>
-
-                <!-- Recent Activity -->
-                <div class="mun-card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-mun-gray-900">Recent Activity</h3>
-                    </div>
-
-                    <div v-if="recentActivity.length > 0" class="space-y-3">
-                        <div v-for="activity in recentActivity" :key="activity.id"
-                            class="flex items-start space-x-3 p-3 bg-mun-gray-50 rounded-lg">
-                            <div class="p-1.5 rounded-lg bg-mun-blue/10 flex-shrink-0">
-                                <ClockIcon class="w-4 h-4 text-mun-blue" />
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm text-mun-gray-900">{{ activity.description }}</p>
-                                <p class="text-xs text-mun-gray-500 mt-1">{{ formatTime(activity.timestamp) }}</p>
+                            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div :class="[
+                                    'h-full transition-all duration-500',
+                                    option === 'for' ? 'bg-green-500' :
+                                        option === 'against' ? 'bg-red-500' : 'bg-yellow-500'
+                                ]" :style="{ width: `${getVotePercentage(count)}%` }" />
                             </div>
                         </div>
                     </div>
 
-                    <div v-else class="text-center py-8">
-                        <ClockIcon class="mx-auto h-10 w-10 text-mun-gray-300" />
-                        <p class="mt-2 text-sm text-mun-gray-500">No recent activity</p>
+                    <!-- Vote Count -->
+                    <div class="mt-4 pt-4 border-t border-gray-100 text-center">
+                        <p class="text-3xl font-bold text-gray-800">{{ totalVotes }}</p>
+                        <p class="text-xs text-gray-400 uppercase">Votes Cast</p>
                     </div>
                 </div>
+
+                <!-- No Active Voting -->
+                <div v-else class="h-full flex flex-col justify-center items-center text-gray-400">
+                    <DocumentTextIcon class="w-12 h-12 mb-4 opacity-50" />
+                    <p class="text-center mb-2">No active procedure or voting.</p>
+                    <p class="text-sm text-center">Select "Quick Vote" to initiate.</p>
+                </div>
             </div>
-        </template>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useWebSocketStore } from '@/stores/websocket'
 import { useToast } from '@/plugins/toast'
-import { apiMethods } from '@/utils/api'
 
 // Icons
 import {
-    UsersIcon,
-    CheckCircleIcon,
-    ClockIcon,
-    DocumentTextIcon,
-    HandRaisedIcon,
-    ArrowPathIcon
+    PlayIcon, PauseIcon, ArrowPathIcon, CommandLineIcon, MicrophoneIcon,
+    XMarkIcon, CheckCircleIcon, DocumentTextIcon
 } from '@heroicons/vue/24/outline'
 
+// Stores
 const router = useRouter()
 const authStore = useAuthStore()
-const wsStore = useWebSocketStore()
 const toast = useToast()
 
-// State
-const isLoading = ref(false)
-const userCommittee = ref(null)
-const currentSession = ref(null)
-
-const stats = reactive({
-    presentCount: 0,
-    totalCountries: 0,
-    hasQuorum: false,
-    quorumCount: 0,
-    pendingDocuments: 0,
-    activeVotings: 0
+// Timer State
+const timerState = ref({
+    totalTime: 90, // 1:30 in seconds
+    remainingTime: 90,
+    isRunning: false
 })
 
-const recentDocuments = ref([])
-const recentActivity = ref([])
+// Session State
+const sessionMode = ref('formal')
+const currentSpeaker = ref(null)
+const selectedDelegate = ref('')
+const activeVoting = ref(null)
+
+// Speaker List
+const speakerList = ref([
+    // Example data - would come from API
+])
+
+// Available Countries (would come from API)
+const availableCountries = ref([
+    'United States', 'United Kingdom', 'France', 'Germany', 'Japan', 'Brazil', 'India', 'Australia'
+])
+
+// Stats
+const stats = ref({
+    presentCount: 9,
+    required: 50,
+    hasQuorum: false
+})
+
+// Timer interval
+let timerInterval = null
 
 // Computed
-const committeeId = computed(() => authStore.user?.committeeId?._id)
+const currentSessionMode = computed(() => {
+    const modeMap = {
+        'formal': 'FORMAL',
+        'moderated': 'MOD. CAUCUS',
+        'unmoderated': 'UNMOD. CAUCUS',
+        'informal': 'INFORMAL'
+    }
+    return modeMap[sessionMode.value] || 'FORMAL'
+})
+
+const formattedTime = computed(() => {
+    const minutes = Math.floor(timerState.value.remainingTime / 60)
+    const seconds = timerState.value.remainingTime % 60
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+})
+
+const timerCircumference = computed(() => {
+    return 2 * Math.PI * 45 // radius = 45
+})
+
+const timerDashOffset = computed(() => {
+    const progress = timerState.value.remainingTime / timerState.value.totalTime
+    return timerCircumference.value * (1 - progress)
+})
+
+const votingResults = computed(() => {
+    if (!activeVoting.value) return {}
+    return activeVoting.value.results || { for: 0, against: 0, abstain: 0 }
+})
+
+const totalVotes = computed(() => {
+    return Object.values(votingResults.value).reduce((sum, count) => sum + count, 0)
+})
 
 // Methods
-const loadDashboardData = async () => {
-    try {
-        isLoading.value = true
+const toggleTimer = () => {
+    timerState.value.isRunning = !timerState.value.isRunning
 
-        // Get committee ID from auth store
-        const committeeId = authStore.user?.committeeId?._id
-
-        if (!committeeId) {
-            toast.error('No committee assigned to your account')
-            return
-        }
-
-        // Load committee info
-        const committeeResponse = await apiMethods.committees.getById(committeeId)
-        if (committeeResponse.data.success) {
-            userCommittee.value = committeeResponse.data.committee
-            stats.totalCountries = committeeResponse.data.committee.countries?.length || 0
-        }
-
-        // Load current session
-        try {
-            const sessionsResponse = await apiMethods.sessions.getAll(committeeId, {
-                status: 'active',
-                limit: 1
-            })
-            if (sessionsResponse.data.success && sessionsResponse.data.sessions?.length > 0) {
-                currentSession.value = sessionsResponse.data.sessions[0]
-
-                // Load attendance for current session
-                try {
-                    const attendanceResponse = await apiMethods.sessions.getAttendance(currentSession.value._id)
-                    if (attendanceResponse.data.success) {
-                        const attendance = attendanceResponse.data.attendance || []
-                        stats.presentCount = attendance.filter(a =>
-                            a.status === 'present_voting' || a.status === 'present'
-                        ).length
-
-                        const votingCount = attendance.filter(a => a.status === 'present_voting').length
-                        stats.quorumCount = Math.floor(stats.totalCountries / 2) + 1
-                        stats.hasQuorum = votingCount >= stats.quorumCount
-                    }
-                } catch (err) {
-                    console.warn('Could not load attendance:', err)
-                }
-            }
-        } catch (err) {
-            console.warn('No active session found')
-            currentSession.value = null
-        }
-
-        // Load pending documents count
-        try {
-            const docsResponse = await apiMethods.documents.getByCommitteeId(committeeId)
-            if (docsResponse.data.success) {
-                stats.pendingDocuments = docsResponse.data.total || docsResponse.data.documents?.length || 0
-                recentDocuments.value = docsResponse.data.documents?.slice(0, 3) || []
-            }
-        } catch (err) {
-            console.warn('Could not load documents:', err)
-        }
-
-        // Load active votings count
-        try {
-            const votingsResponse = await apiMethods.voting.loadCommitteeVotingDetails(committeeId)
-            if (votingsResponse.data.success) {
-                stats.activeVotings = votingsResponse.data.votings?.length || 0
-            }
-        } catch (err) {
-            console.warn('Could not load votings:', err)
-        }
-
-        // Mock recent activity (to be replaced with real API later)
-        recentActivity.value = [
-            {
-                id: 1,
-                description: currentSession.value ? 'Session started' : 'No active session',
-                timestamp: new Date().toISOString()
-            }
-        ]
-
-    } catch (error) {
-        console.error('Dashboard load error:', error)
-        toast.error('Failed to load dashboard data')
-    } finally {
-        isLoading.value = false
+    if (timerState.value.isRunning) {
+        startTimerInterval()
+    } else {
+        stopTimerInterval()
     }
 }
 
-const formatSessionMode = (mode) => {
-    const modeMap = {
-        'formal': 'Formal Debate',
-        'moderated': 'Moderated Caucus',
-        'unmoderated': 'Unmoderated Caucus',
-        'informal': 'Informal Consultation',
-        'closed': 'Closed Session'
-    }
-    return modeMap[mode] || mode || 'Unknown'
+const resetTimer = () => {
+    timerState.value.remainingTime = timerState.value.totalTime
+    timerState.value.isRunning = false
+    stopTimerInterval()
 }
 
-const formatTime = (timestamp) => {
-    try {
-        return new Date(timestamp).toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit'
+const startTimerInterval = () => {
+    if (timerInterval) clearInterval(timerInterval)
+
+    timerInterval = setInterval(() => {
+        if (timerState.value.remainingTime > 0) {
+            timerState.value.remainingTime--
+        } else {
+            timerState.value.isRunning = false
+            stopTimerInterval()
+            toast.info('Speaker time expired!')
+        }
+    }, 1000)
+}
+
+const stopTimerInterval = () => {
+    if (timerInterval) {
+        clearInterval(timerInterval)
+        timerInterval = null
+    }
+}
+
+const changeSessionMode = (mode) => {
+    sessionMode.value = mode
+
+    // Set default timer based on mode
+    switch (mode) {
+        case 'formal':
+            timerState.value.totalTime = 90
+            break
+        case 'moderated':
+            timerState.value.totalTime = 600
+            break
+        case 'unmoderated':
+            timerState.value.totalTime = 1200
+            break
+        default:
+            timerState.value.totalTime = 90
+    }
+
+    resetTimer()
+    toast.success(`Session mode changed to ${currentSessionMode.value}`)
+}
+
+const nextSpeaker = () => {
+    if (speakerList.value.length > 0) {
+        currentSpeaker.value = speakerList.value[0].country
+        speakerList.value.shift()
+        resetTimer()
+        toast.success(`Now speaking: ${currentSpeaker.value}`)
+    }
+}
+
+const addSpeaker = () => {
+    if (selectedDelegate.value && !speakerList.value.find(s => s.country === selectedDelegate.value)) {
+        speakerList.value.push({
+            country: selectedDelegate.value,
+            email: `${selectedDelegate.value.toLowerCase()}@example.com`
         })
-    } catch {
-        return 'Unknown'
+        selectedDelegate.value = ''
+        toast.success('Speaker added to list')
     }
+}
+
+const removeSpeaker = (country) => {
+    const index = speakerList.value.findIndex(s => s.country === country)
+    if (index !== -1) {
+        speakerList.value.splice(index, 1)
+        toast.success('Speaker removed from list')
+    }
+}
+
+const startQuickVote = () => {
+    if (activeVoting.value) {
+        // End current voting
+        activeVoting.value = null
+        toast.success('Voting ended')
+    } else {
+        // Start new voting
+        activeVoting.value = {
+            id: Date.now().toString(),
+            subject: 'Motion to move to Moderated Caucus',
+            results: { for: 0, against: 0, abstain: 0 }
+        }
+        toast.success('Quick vote started')
+    }
+}
+
+const getVotePercentage = (count) => {
+    return totalVotes.value > 0 ? (count / totalVotes.value) * 100 : 0
 }
 
 // Lifecycle
-onMounted(async () => {
-    await loadDashboardData()
-
-    // Connect WebSocket if not connected
-    if (!wsStore.isConnected) {
-        try {
-            await wsStore.connect()
-        } catch (error) {
-            console.error('Failed to connect WebSocket:', error)
-        }
-    }
-
-    // Join committee room
-    if (committeeId.value && wsStore.isConnected) {
-        wsStore.joinCommittee(committeeId.value)
-    }
-
-    // Join session room if there's an active session
-    if (currentSession.value?._id && wsStore.isConnected) {
-        wsStore.joinSession(currentSession.value._id)
-    }
+onMounted(() => {
+    // Load initial data
+    stats.value.hasQuorum = stats.value.presentCount >= Math.floor(stats.value.required / 2) + 1
 })
 
 onUnmounted(() => {
-    // Leave rooms on unmount
-    if (committeeId.value) {
-        wsStore.leaveCommittee(committeeId.value)
-    }
-    if (currentSession.value?._id) {
-        wsStore.leaveSession(currentSession.value._id)
-    }
+    stopTimerInterval()
 })
-
-// Watch for real-time updates
-watch(() => wsStore.activeVotings, (votings) => {
-    if (Array.isArray(votings)) {
-        stats.activeVotings = votings.filter(v => v.status === 'active').length
-    }
-}, { deep: true })
-
-// Watch for attendance updates
-watch(() => {
-    const sessionId = currentSession.value?._id
-    return sessionId ? wsStore.sessionUpdates?.[sessionId] : null
-}, (update) => {
-    if (update && currentSession.value) {
-        // Safely update session properties
-        if (update.newMode) {
-            currentSession.value.mode = update.newMode
-        } else if (update.mode) {
-            currentSession.value.mode = update.mode
-        }
-        
-        if (update.status) {
-            currentSession.value.status = update.status
-        }
-    }
-}, { deep: true })
-
-// Watch for voting updates
-watch(() => wsStore.activeVotings, (votings) => {
-    if (Array.isArray(votings)) {
-        stats.activeVotings = votings.filter(v => v.status === 'active').length
-    }
-}, { deep: true })
 </script>

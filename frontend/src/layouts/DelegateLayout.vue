@@ -1,408 +1,192 @@
 <template>
-    <div class="min-h-screen bg-gradient-mun">
-        <!-- Universal Sidebar -->
-        <UniversalSidebar :sidebar-collapsed="appStore.sidebarCollapsed" user-role="delegate" :user="authStore.user"
-            :primary-navigation="primaryNavigation" :navigation-sections="navigationSections"
-            :quick-actions="quickActions" :current-status="currentStatus" :user-actions="userActions"
-            @toggle-sidebar="appStore.toggleSidebar" @quick-action="handleQuickAction" @logout="handleLogout" />
-
-        <!-- Main Content -->
-        <div :class="[
-            'transition-all duration-200 ease-in-out',
-            appStore.sidebarCollapsed ? 'ml-0 lg:ml-16' : 'ml-0 lg:ml-72'
-        ]">
-            <main class="min-h-screen bg-mun-gray-50">
-                <router-view />
-            </main>
-        </div>
-
-        <!-- Mobile overlay -->
-        <div v-if="!appStore.sidebarCollapsed" class="fixed inset-0 bg-black bg-opacity-25 z-40 lg:hidden"
-            @click="appStore.toggleSidebar"></div>
-
-        <!-- Motion Modal -->
-        <div v-if="showMotionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg p-6 w-96 max-w-full mx-4">
-                <h3 class="text-lg font-semibold mb-4">Submit Motion</h3>
-
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Motion Type</label>
-                        <SleekSelect v-model="motionForm.type" :options="[
-                            { label: 'Moderated Caucus', value: 'moderated_caucus' },
-                            { label: 'Unmoderated Caucus', value: 'unmoderated_caucus' },
-                            { label: 'Previous Question', value: 'previous_question' },
-                            { label: 'Extend Debate Time', value: 'extend_debate' }
-                        ]" placeholder="Select motion type" container-class="w-full" />
+    <div class="flex h-screen bg-gray-50">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col h-full">
+            <!-- Header -->
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex items-center gap-3 text-blue-600 font-bold text-xl mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <GlobeAltIcon class="w-5 h-5" />
                     </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Justification</label>
-                        <textarea v-model="motionForm.justification" rows="3"
-                            class="w-full border border-gray-300 rounded-lg px-3 py-2"
-                            placeholder="Provide justification for your motion..."></textarea>
-                    </div>
+                    <span>mun.uz</span>
                 </div>
+                <p class="text-sm text-gray-500 mb-4">{{ committeeInfo?.name || 'UN General Assembly' }}</p>
 
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button @click="showMotionModal = false"
-                        class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                        Cancel
-                    </button>
-                    <button @click="submitMotion" :disabled="!motionForm.type || !motionForm.justification"
-                        class="px-4 py-2 bg-mun-blue-600 text-white rounded-lg hover:bg-mun-blue-700 transition-colors disabled:opacity-50">
-                        Submit Motion
-                    </button>
+                <!-- User Info -->
+                <div class="flex items-center gap-3 px-3 py-3 bg-gray-50 rounded-lg border">
+                    <div
+                        class="w-10 h-10 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center text-lg">
+                        {{ countryFlag || '🏳️' }}
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="text-sm font-semibold text-gray-900 truncate">
+                            {{ userCountry }}
+                        </p>
+                        <p class="text-xs text-gray-500">Delegate</p>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+                <div class="space-y-1">
+                    <RouterLink v-for="item in navigationItems" :key="item.name" :to="item.to"
+                        :class="getNavLinkClass(item.name)">
+                        <div class="flex items-center gap-3">
+                            <component :is="item.icon" class="w-5 h-5" />
+                            <span class="font-medium">{{ item.label }}</span>
+                        </div>
+                        <span v-if="item.badge" :class="getBadgeClass(item.badgeType)">
+                            {{ item.badge }}
+                        </span>
+                    </RouterLink>
+                </div>
+            </nav>
+
+            <!-- Logout -->
+            <div class="p-4 border-t border-gray-200">
+                <button @click="handleLogout"
+                    class="flex items-center gap-3 px-4 py-3 w-full text-red-600 hover:bg-red-50 rounded-xl transition-colors">
+                    <ArrowRightOnRectangleIcon class="w-5 h-5" />
+                    <span class="font-medium">Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-hidden">
+            <RouterView />
+        </main>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useAppStore } from '@/stores/app'
 import { useToast } from '@/plugins/toast'
-import UniversalSidebar from '@/components/layout/UniversalSidebar.vue'
 
 // Icons
 import {
-    ChartBarIcon,
-    DocumentTextIcon,
-    HandRaisedIcon,
-    ChatBubbleLeftRightIcon,
-    UserGroupIcon,
-    DocumentPlusIcon,
-    ExclamationTriangleIcon,
-    UserIcon
+    GlobeAltIcon, ArrowRightOnRectangleIcon,
+    RectangleGroupIcon, ShieldCheckIcon, DocumentTextIcon,
+    HandRaisedIcon, ChatBubbleLeftRightIcon
 } from '@heroicons/vue/24/outline'
 
 // Stores
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
-const appStore = useAppStore()
 const toast = useToast()
 
 // State
-const showMotionModal = ref(false)
-const isInSpeakersList = ref(false)
-const currentSession = ref(null)
 const committeeInfo = ref(null)
-const userCountry = ref(null)
+const userCountry = ref('Chile')
+const countryFlag = ref('🇨🇱')
 const activeVoting = ref(null)
-const currentSpeaker = ref('')
+const unreadMessages = ref(0)
 const userCoalition = ref(null)
 
-const delegateStats = ref({
-    speechesGiven: 0,
-    votesCast: 0,
-    documentsSubmitted: 0
-})
-
-const motionForm = ref({
-    type: '',
-    justification: ''
-})
-
 // Navigation Configuration
-const primaryNavigation = computed(() => [
+const navigationItems = computed(() => [
     {
         name: 'DelegateDashboard',
-        label: 'Dashboard',
+        label: 'Delegate Workspace',
         to: '/delegate',
-        icon: ChartBarIcon
-    }
-])
-
-const navigationSections = computed(() => [
+        icon: RectangleGroupIcon
+    },
     {
-        title: 'Committee Participation',
-        items: [
-            // {
-            //     name: 'DelegateDocuments',
-            //     label: 'Documents',
-            //     to: '/delegate/documents',
-            //     icon: DocumentTextIcon,
-            //     badge: pendingDocuments.value > 0 ? pendingDocuments.value : null,
-            //     badgeType: 'warning'
-            // },
-            {
-                name: 'DelegateVoting',
-                label: 'Voting',
-                to: '/delegate/voting',
-                icon: HandRaisedIcon,
-                badge: activeVoting.value ? 'LIVE' : null,
-                badgeType: 'danger'
-            },
-            {
-                name: 'DelegateMessaging',
-                label: 'Messages',
-                to: '/delegate/messaging',
-                icon: ChatBubbleLeftRightIcon,
-                badge: unreadMessages.value > 0 ? unreadMessages.value : null,
-                badgeType: 'info'
-            },
-            {
-                name: 'DelegateCoalitions',
-                label: 'Coalitions',
-                to: '/delegate/coalitions',
-                icon: UserGroupIcon,
-                badge: userCoalition.value ? 'ACTIVE' : null,
-                badgeType: 'success'
-            }
-        ]
-    }
-])
-
-const quickActions = computed(() => {
-    const actions = []
-
-    // Join Speakers List
-    actions.push({
-        name: 'join-speakers',
-        label: isInSpeakersList.value ? 'In Speakers List' : 'Join Speakers',
+        name: 'DelegateCoalitions',
+        label: 'Coalitions',
+        to: '/delegate/coalitions',
+        icon: ShieldCheckIcon,
+        badge: userCoalition.value ? 'ACTIVE' : null,
+        badgeType: 'success'
+    },
+    {
+        name: 'DelegateDocuments',
+        label: 'Documents',
+        to: '/delegate/documents',
+        icon: DocumentTextIcon
+    },
+    {
+        name: 'DelegateVoting',
+        label: 'Voting',
+        to: '/delegate/voting',
         icon: HandRaisedIcon,
-        type: isInSpeakersList.value ? 'success' : 'primary',
-        disabled: isInSpeakersList.value || !canJoinSpeakers.value
-    })
-
-    // Submit Motion
-    actions.push({
-        name: 'submit-motion',
-        label: 'Submit Motion',
-        icon: DocumentPlusIcon,
-        type: 'secondary',
-        disabled: !canSubmitMotion.value
-    })
-
-    // Active Voting Alert
-    if (activeVoting.value) {
-        actions.push({
-            name: 'vote-now',
-            label: 'Vote Now!',
-            icon: ExclamationTriangleIcon,
-            type: 'danger',
-            badge: 'LIVE'
-        })
-    }
-
-    // Coalition Management
-    actions.push({
-        name: 'manage-coalition',
-        label: userCoalition.value ? 'Manage Coalition' : 'Join Coalition',
-        icon: UserGroupIcon,
-        type: 'info',
-        disabled: !canManageCoalition.value
-    })
-
-    return actions
-})
-
-const currentStatus = computed(() => ({
-    title: 'Current Status',
-    items: [
-        {
-            label: 'Session Status',
-            value: isSessionActive.value ? 'Active' : 'Inactive',
-            indicator: isSessionActive.value ? 'active' : 'inactive'
-        },
-        ...(activeVoting.value ? [{
-            label: 'Active Voting',
-            value: 'LIVE',
-            indicator: 'active'
-        }] : []),
-        ...(userCoalition.value ? [{
-            label: 'Coalition',
-            value: userCoalition.value.status,
-            indicator: 'active'
-        }] : [])
-    ],
-    details: [
-        ...(currentSession.value ? [{
-            key: 'mode',
-            label: 'Mode',
-            value: formatSessionMode(currentSession.value.currentMode)
-        }] : []),
-        ...(currentSpeaker.value ? [{
-            key: 'speaker',
-            label: 'Speaker',
-            value: currentSpeaker.value
-        }] : []),
-        ...(activeVoting.value ? [{
-            key: 'voting',
-            label: 'Voting',
-            value: activeVoting.value.title
-        }] : []),
-        ...(userCoalition.value ? [
-            {
-                key: 'coalition-name',
-                label: 'Coalition',
-                value: userCoalition.value.name
-            },
-            {
-                key: 'coalition-members',
-                label: 'Members',
-                value: userCoalition.value.memberCount
-            }
-        ] : []),
-        {
-            key: 'speeches',
-            label: 'Speeches',
-            value: delegateStats.value.speechesGiven || 0
-        },
-        {
-            key: 'votes',
-            label: 'Votes Cast',
-            value: delegateStats.value.votesCast || 0
-        }
-    ]
-}))
-
-const userActions = computed(() => [
+        badge: activeVoting.value ? 'LIVE' : null,
+        badgeType: 'live'
+    },
     {
-        name: 'profile',
-        label: 'Profile Settings',
-        to: '/shared/profile',
-        icon: UserIcon
+        name: 'DelegateMessaging',
+        label: 'Diplomacy',
+        to: '/delegate/messaging',
+        icon: ChatBubbleLeftRightIcon,
+        badge: unreadMessages.value > 0 ? unreadMessages.value : null,
+        badgeType: 'info'
     }
 ])
-
-// Computed properties
-const pendingDocuments = computed(() => {
-    return 0 // This would come from your document store
-})
-
-const unreadMessages = computed(() => {
-    return 0 // This would come from your messaging store
-})
-
-const isSessionActive = computed(() => {
-    return currentSession.value?.status === 'active'
-})
-
-const canJoinSpeakers = computed(() => {
-    return isSessionActive.value && !isInSpeakersList.value
-})
-
-const canSubmitMotion = computed(() => {
-    return isSessionActive.value
-})
-
-const canManageCoalition = computed(() => {
-    return true // Always allow coalition management
-})
 
 // Methods
-const formatSessionMode = (mode) => {
-    const modeMap = {
-        'formal': 'Formal Debate',
-        'moderated': 'Moderated Caucus',
-        'unmoderated': 'Unmoderated Caucus',
-        'informal': 'Informal Consultation',
-        'closed': 'Closed Session'
-    }
-    return modeMap[mode] || mode || 'Unknown'
+const getNavLinkClass = (routeName) => {
+    const baseClasses = 'flex items-center justify-between px-3 py-2.5 text-gray-700 rounded-xl transition-all duration-200 hover:bg-gray-50 hover:text-gray-900 group'
+    return route.name === routeName
+        ? `${baseClasses} bg-blue-50 text-blue-700 shadow-sm border border-blue-100`
+        : baseClasses
 }
 
-const handleQuickAction = async (actionName) => {
-    switch (actionName) {
-        case 'join-speakers':
-            await joinSpeakersList()
-            break
-        case 'submit-motion':
-            openMotionModal()
-            break
-        case 'vote-now':
-            router.push('/delegate/voting')
-            break
-        case 'manage-coalition':
-            router.push('/delegate/coalitions')
-            break
-        default:
-            console.warn('Unknown quick action:', actionName)
+const getBadgeClass = (type = 'default') => {
+    const baseClasses = 'ml-auto px-2 py-0.5 text-xs font-medium rounded-full'
+
+    const typeClasses = {
+        'info': 'bg-blue-100 text-blue-700',
+        'warning': 'bg-orange-100 text-orange-700',
+        'success': 'bg-green-100 text-green-700',
+        'danger': 'bg-red-100 text-red-700',
+        'live': 'bg-red-500 text-white animate-pulse',
+        'default': 'bg-gray-100 text-gray-700'
     }
-}
 
-const joinSpeakersList = async () => {
-    if (!canJoinSpeakers.value) return
-
-    try {
-        // Implementation would depend on your speakers list API
-        isInSpeakersList.value = true
-        toast.success('Added to speakers list')
-    } catch (error) {
-        console.error('Failed to join speakers list:', error)
-        toast.error('Failed to join speakers list')
-    }
-}
-
-const openMotionModal = () => {
-    if (!canSubmitMotion.value) return
-    showMotionModal.value = true
-}
-
-const submitMotion = async () => {
-    if (!motionForm.value.type || !motionForm.value.justification) return
-
-    try {
-        // Implementation would depend on your motion API
-        toast.success('Motion submitted successfully')
-        showMotionModal.value = false
-        motionForm.value = { type: '', justification: '' }
-    } catch (error) {
-        console.error('Failed to submit motion:', error)
-        toast.error('Failed to submit motion')
-    }
+    return `${baseClasses} ${typeClasses[type] || typeClasses.default}`
 }
 
 const handleLogout = async () => {
     try {
         await authStore.logout()
         toast.success('Logged out successfully')
-        router.push('/auth/login')
+        router.push('/login')
     } catch (error) {
         console.error('Logout error:', error)
         toast.error('Failed to logout')
     }
 }
 
-const loadDelegateData = async () => {
+// Load initial data
+const loadLayoutData = async () => {
     try {
-        // Load delegate-specific data
-        userCountry.value = {}
+        // Load committee info
+        committeeInfo.value = {
+            name: 'UN General Assembly'
+        }
 
-        committeeInfo.value = {}
+        // Load user data from auth store
+        const user = authStore.user
+        if (user) {
+            userCountry.value = user.countryName || 'Chile'
+            countryFlag.value = user.countryFlag || '🇨🇱'
+        }
 
-        delegateStats.value = {}
-
-        // Mock session data
-        currentSession.value = {}
-
-        // Mock coalition data
-        userCoalition.value = {}
-
-        currentSpeaker.value = currentSession.value.currentSpeaker
-
+        // Load dynamic data
+        activeVoting.value = null // Would come from API
+        unreadMessages.value = 0  // Would come from API
+        userCoalition.value = null // Would come from API
     } catch (error) {
-        console.error('Failed to load delegate data:', error)
-        toast.error('Failed to load delegate data')
+        console.error('Failed to load layout data:', error)
     }
 }
 
 // Lifecycle
-onMounted(async () => {
-    await loadDelegateData()
-
-    // Set up data refresh interval
-    const refreshInterval = setInterval(async () => {
-        await loadDelegateData()
-    }, 30000) // Refresh every 30 seconds
-
-    // Cleanup on unmount
-    onUnmounted(() => {
-        clearInterval(refreshInterval)
-    })
+onMounted(() => {
+    loadLayoutData()
 })
 </script>
