@@ -327,7 +327,7 @@ router.post('/:id/timers/additional',
 
             // Emit to committee
             if (req.app.locals.io) {
-                const { emitToCommittee } = require('../websocket/utils');
+                const { emitToCommittee } = require('../websocket/socketManager');
                 emitToCommittee(req.app.locals.io, session.committeeId, 'additional-timer-added', {
                     sessionId: session._id,
                     timers: session.timers
@@ -378,7 +378,7 @@ router.put('/:id/timers/additional/:timerId/start',
 
             // Emit to committee
             if (req.app.locals.io) {
-                const { emitToCommittee } = require('../websocket/utils');
+                const { emitToCommittee } = require('../websocket/socketManager');
                 emitToCommittee(req.app.locals.io, session.committeeId, 'additional-timer-started', {
                     sessionId: session._id,
                     timerId,

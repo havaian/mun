@@ -1,6 +1,6 @@
 const { Session } = require('./model');
 const { Committee } = require('../committee/model');
-const { emitToCommittee } = require('../websocket/utils');
+const { emitToCommittee } = require('../websocket/socketManager');
 
 // Session Management Controllers
 
