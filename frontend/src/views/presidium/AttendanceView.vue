@@ -96,7 +96,7 @@
                                 <option value="absent">Absent</option>
                             </select>
                             <div class="relative">
-                                <SearchIcon
+                                <MagnifyingGlassIcon
                                     class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                                 <input v-model="searchQuery" type="text" placeholder="Search countries..."
                                     class="pl-10 pr-4 py-2 text-sm border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
@@ -178,7 +178,7 @@ import sessionApi from '@/utils/sessionApi'
 // Icons
 import {
     UsersIcon, PlayIcon, StopIcon, ArrowPathIcon, CheckIcon,
-    XMarkIcon, SearchIcon
+    XMarkIcon, MagnifyingGlassIcon
 } from '@heroicons/vue/24/outline'
 
 // Stores
@@ -278,7 +278,7 @@ const loadData = async () => {
 
 const loadActiveSession = async () => {
     try {
-        const response = await enhancedSessionApi.sessions.getByCommittee(committee.value._id, {
+        const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
             status: 'active',
             limit: 1
         })
@@ -298,7 +298,7 @@ const loadAttendanceData = async () => {
     if (!currentSession.value?._id) return
 
     try {
-        const response = await enhancedSessionApi.rollCall.getAttendance(currentSession.value._id)
+        const response = await sessionApi.rollCall.getAttendance(currentSession.value._id)
 
         if (response.data.success) {
             const sessionData = response.data.session
@@ -335,7 +335,7 @@ const toggleRollCall = async () => {
 
         if (rollCallActive.value) {
             // End roll call
-            const response = await enhancedSessionApi.rollCall.end(currentSession.value._id)
+            const response = await sessionApi.rollCall.end(currentSession.value._id)
             if (response.data.success) {
                 rollCallActive.value = false
                 quorumData.value = response.data.quorum
@@ -343,7 +343,7 @@ const toggleRollCall = async () => {
             }
         } else {
             // Start roll call
-            const response = await enhancedSessionApi.rollCall.start(currentSession.value._id, {
+            const response = await sessionApi.rollCall.start(currentSession.value._id, {
                 timeLimit: 10 // 10 minutes default
             })
             if (response.data.success) {
@@ -390,7 +390,7 @@ const updateAttendance = async (countryName, status) => {
     }
 
     try {
-        const response = await enhancedSessionApi.rollCall.markAttendance(currentSession.value._id, {
+        const response = await sessionApi.rollCall.markAttendance(currentSession.value._id, {
             country: countryName,
             status: status
         })

@@ -12,7 +12,7 @@
         </div>
         <div class="flex space-x-3">
           <div class="relative">
-            <SearchIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input v-model="searchQuery" type="text" placeholder="Find alliance..."
               class="pl-10 pr-4 py-2 w-80 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
@@ -140,7 +140,7 @@
 
         <!-- No Search Results -->
         <div v-else-if="searchQuery && filteredCoalitions.length === 0" class="text-center py-12">
-          <SearchIcon class="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400 mb-4" />
           <h3 class="text-lg font-medium text-gray-900 mb-2">No alliances found</h3>
           <p class="text-gray-600">Try adjusting your search terms.</p>
         </div>
@@ -246,7 +246,7 @@ import { apiMethods } from '@/utils/api'
 
 // Icons
 import {
-  ShieldCheckIcon, SearchIcon, TrashIcon, XMarkIcon,
+  ShieldCheckIcon, MagnifyingGlassIcon, TrashIcon, XMarkIcon,
   PlusIcon, CheckIcon
 } from '@heroicons/vue/24/outline'
 

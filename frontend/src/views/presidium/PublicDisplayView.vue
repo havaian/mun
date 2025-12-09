@@ -264,7 +264,7 @@ const loadData = async () => {
 
 const loadActiveSession = async () => {
     try {
-        const response = await enhancedSessionApi.sessions.getByCommittee(committee.value._id, {
+        const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
             status: 'active',
             limit: 1
         })
@@ -283,7 +283,7 @@ const loadSessionDetails = async () => {
 
     try {
         // Load session details
-        const sessionResponse = await enhancedSessionApi.sessions.getById(currentSession.value._id)
+        const sessionResponse = await sessionApi.sessions.getById(currentSession.value._id)
         if (sessionResponse.data.success) {
             const sessionData = sessionResponse.data.session
 
