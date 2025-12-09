@@ -23,7 +23,6 @@ const PresidiumCoalitions = () => import('@/views/presidium/CoalitionsView.vue')
 const PresidiumDashboard = () => import('@/views/presidium/DashboardView.vue')
 // const PresidiumDocuments = () => import('@/views/presidium/DocumentsView.vue')
 const PresidiumDiplomacy = () => import('@/views/presidium/DiplomacyView.vue')
-const PresidiumSessions = () => import('@/views/presidium/SessionsView.vue')
 const PresidiumVoting = () => import('@/views/presidium/VotingView.vue')
 
 // Delegate views
@@ -144,12 +143,6 @@ const routes = [
         name: 'PresidiumDashboard',
         component: PresidiumDashboard,
         meta: { title: 'Presidium Dashboard' }
-      },
-      {
-        path: 'sessions',
-        name: 'PresidiumSessions',
-        component: PresidiumSessions,
-        meta: { title: 'Session Management' }
       },
       // {
       //   path: 'documents',

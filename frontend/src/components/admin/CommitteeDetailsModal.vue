@@ -219,7 +219,7 @@
                             </div>
 
                             <!-- Document Deadlines -->
-                            <div v-if="committee.settings?.documentDeadlines" class="mt-6">
+                            <!-- <div v-if="committee.settings?.documentDeadlines" class="mt-6">
                                 <h4 class="font-medium text-mun-gray-900 mb-3">Document Deadlines</h4>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div v-if="committee.settings.documentDeadlines.positionPapers">
@@ -242,7 +242,7 @@
                                         </p>
                                     </div>
                                 </div>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
 

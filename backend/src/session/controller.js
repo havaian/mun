@@ -9,9 +9,12 @@ const createSession = async (req, res) => {
     try {
         const {
             committeeId,
-            title,
             sessionNumber,
-            sessionDuration = 7200 // default 2 hours
+            title,
+            mode = 'formal',
+            speechTime = 180,
+            questionsAllowed = false,
+            autoStart = false
         } = req.body;
 
         // Verify committee exists and user has access
@@ -69,18 +72,33 @@ const createSession = async (req, res) => {
             markedBy: req.user.userId
         }));
 
+        // Set up mode settings
+        const modeSettings = {
+            speechTime: speechTime,
+            questionsAllowed: questionsAllowed
+        };
+
+        if (mode === 'moderated') {
+            modeSettings.individualSpeechTime = speechTime;
+            modeSettings.topic = 'General Discussion';
+        }
+
         // Create session
         const session = new Session({
             committeeId,
             number: finalSessionNumber,
             title: title || `Session ${finalSessionNumber}`,
-            status: 'inactive',
+            status: autoStart ? 'active' : 'inactive',
+            startedAt: autoStart ? new Date() : null, // Set actual start time
             attendance,
-            // Initialize with session timer ready but not started
+            currentMode: mode,
+            modeSettings,
+            
+            // Initialize timers - no preset duration, just track time
             timers: {
                 session: {
-                    totalDuration: sessionDuration,
-                    remainingTime: sessionDuration,
+                    totalDuration: 0,
+                    remainingTime: 0,
                     isActive: false,
                     isPaused: false,
                     startedAt: null,
@@ -94,32 +112,40 @@ const createSession = async (req, res) => {
                     isPaused: false
                 },
                 speaker: {
-                    totalDuration: 90,
-                    remainingTime: 90,
+                    totalDuration: speechTime,
+                    remainingTime: speechTime,
                     isActive: false,
                     isPaused: false,
-                    canBeExtended: false
+                    canBeExtended: questionsAllowed
                 },
                 additional: []
-            },
-            currentMode: 'formal',
-            modeSettings: {
-                speechTime: 90,
-                questionsAllowed: false
             }
         });
+
+        if (autoStart) {
+            session.modeStartedAt = new Date();
+        }
 
         // Calculate initial quorum
         session.calculateQuorum();
 
         await session.save();
 
-        global.logger.info(`Session ${finalSessionNumber} created for committee ${committee.name}`);
+        // Emit WebSocket events if auto-started
+        if (autoStart && req.app.locals.io) {
+            emitToCommittee(req.app.locals.io, session.committeeId, 'session-started', {
+                sessionId: session._id,
+                sessionNumber: session.number,
+                startedAt: session.startedAt
+            });
+        }
+
+        global.logger.info(`Session ${finalSessionNumber} created for committee ${committee.name}${autoStart ? ' and started' : ''}`);
 
         res.status(201).json({
             success: true,
             session: session,
-            message: `Session ${finalSessionNumber} created successfully`
+            message: `Session ${finalSessionNumber} created${autoStart ? ' and started' : ''} successfully`
         });
 
     } catch (error) {
@@ -667,6 +693,105 @@ const getSessionTimers = async (req, res) => {
     }
 };
 
+// End session
+const endSession = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body; // optional reason for ending
+
+        const session = await Session.findById(id);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        if (session.status === 'completed') {
+            return res.status(400).json({ error: 'Session is already completed' });
+        }
+
+        if (session.status === 'inactive') {
+            return res.status(400).json({ error: 'Cannot end an inactive session' });
+        }
+
+        // End session
+        session.status = 'completed';
+        session.endedAt = new Date();
+
+        // Stop all active timers
+        if (session.timers.session.isActive) {
+            session.timers.session.isActive = false;
+            session.timers.session.remainingTime = 0;
+        }
+
+        if (session.timers.debate.isActive) {
+            session.timers.debate.isActive = false;
+            session.timers.debate.remainingTime = 0;
+        }
+
+        if (session.timers.speaker.isActive) {
+            session.timers.speaker.isActive = false;
+            session.timers.speaker.remainingTime = 0;
+        }
+
+        // Stop any additional timers
+        session.timers.additional.forEach(timer => {
+            if (timer.isActive) {
+                timer.isActive = false;
+                timer.remainingTime = 0;
+            }
+        });
+
+        // Clear current speaker
+        if (session.currentSpeaker) {
+            session.currentSpeaker = null;
+        }
+
+        // End current mode
+        if (session.currentMode && session.modeStartedAt) {
+            session.modeHistory.push({
+                mode: session.currentMode,
+                settings: { ...session.modeSettings },
+                startedAt: session.modeStartedAt,
+                endedAt: new Date(),
+                startedBy: req.user.userId
+            });
+        }
+
+        await session.save();
+
+        // Emit to committee
+        if (req.app.locals.io) {
+            emitToCommittee(req.app.locals.io, session.committeeId, 'session-ended', {
+                sessionId: session._id,
+                sessionNumber: session.number,
+                endedAt: session.endedAt,
+                duration: session.endedAt - session.startedAt,
+                reason: reason || 'Session completed'
+            });
+        }
+
+        // Calculate session duration
+        const duration = session.endedAt - session.startedAt;
+        const durationMinutes = Math.floor(duration / (1000 * 60));
+
+        global.logger.info(`Session ${session.number} ended after ${durationMinutes} minutes. Reason: ${reason || 'Normal completion'}`);
+
+        res.json({
+            success: true,
+            session: session,
+            duration: {
+                milliseconds: duration,
+                minutes: durationMinutes,
+                formatted: `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`
+            },
+            message: 'Session ended successfully'
+        });
+
+    } catch (error) {
+        global.logger.error('End session error:', error);
+        res.status(500).json({ error: 'Failed to end session' });
+    }
+};
+
 module.exports = {
     createSession,
     startSession,
@@ -681,5 +806,6 @@ module.exports = {
     moveToEndOfQueue,
     setCurrentSpeaker,
     getSession,
-    getSessionTimers
+    getSessionTimers,
+    endSession
 };

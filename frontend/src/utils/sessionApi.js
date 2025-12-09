@@ -10,6 +10,9 @@ export const enhancedSessionApi = {
         // Start session
         start: (sessionId) => apiMethods.put(`/sessions/${sessionId}/start`),
 
+        // End session
+        end: (id, data = {}) => api.put(`/sessions/${id}/end`, data),
+
         // Get session details
         getById: (sessionId) => apiMethods.get(`/sessions/${sessionId}`),
 

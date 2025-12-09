@@ -16,6 +16,11 @@
                         </button>
                     </div>
 
+                    <button @click="endCurrentSession"
+                        class="col-span-2 px-4 py-3 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                        End Session
+                    </button>
+
                     <!-- Quorum Status -->
                     <div class="bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm">
                         <span class="text-xs text-gray-500 uppercase font-bold block">QUORUM</span>
@@ -678,6 +683,25 @@ const createQuickSession = async () => {
         toast.error('Failed to start session')
     } finally {
         isLoading.value = false
+    }
+}
+
+const endCurrentSession = async () => {
+    if (!currentSession.value) return
+
+    try {
+        const response = await sessionApi.sessions.end(currentSession.value._id, {
+            reason: 'Session ended by presidium'
+        })
+
+        if (response.data.success) {
+            currentSession.value = null
+            await loadAllSessions() // Refresh session list
+            toast.success('Session ended successfully')
+        }
+    } catch (error) {
+        console.error('Failed to end session:', error)
+        toast.error('Failed to end session')
     }
 }
 

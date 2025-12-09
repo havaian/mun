@@ -86,6 +86,25 @@ router.get('/:id',
     controller.getSession
 );
 
+
+// End session (presidium only)
+router.put('/:id/end',
+    global.auth.token,
+    global.auth.presidium,
+    validateSessionId,
+    [
+        body('reason')
+            .optional()
+            .isString()
+            .withMessage('Reason must be a string')
+            .trim()
+            .isLength({ max: 200 })
+            .withMessage('Reason cannot exceed 200 characters')
+    ],
+    handleValidationErrors,
+    controller.endSession
+);
+
 // Get session timers
 router.get('/:id/timers',
     global.auth.token,
