@@ -163,13 +163,13 @@ const routes = [
         meta: { title: 'Attendance Tracking' }
       },
       {
-        path: 'messages',
+        path: 'messaging',
         name: 'PresidiumMessages',
         component: PresidiumDiplomacy,
         meta: { title: 'Messages' }
       },
       {
-        path: 'messages',
+        path: 'coalitions',
         name: 'PresidiumCoalitions',
         component: PresidiumCoalitions,
         meta: { title: 'Coalitions' }
@@ -202,7 +202,7 @@ const routes = [
         meta: { title: 'Coalitions' }
       },
       {
-        path: 'messages',
+        path: 'messaging',
         name: 'DelegateMessages',
         component: DelegateDiplomacy,
         meta: { title: 'Messages' }
