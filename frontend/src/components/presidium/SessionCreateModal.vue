@@ -1,5 +1,6 @@
 <template>
-    <ModalWrapper v-model="modelValue" title="Create New Session" size="md" variant="primary" :is-loading="isSubmitting"
+    <ModalWrapper :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)"
+        title="Create New Session" size="md" variant="primary" :is-loading="isSubmitting"
         primary-text="Create & Start Session" cancel-text="Cancel" @primary-action="handleSubmit" @close="closeModal">
 
         <template #icon>
