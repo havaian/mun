@@ -158,7 +158,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
-import enhancedSessionApi from '@/utils/enhancedSessionApi'
+import sessionApi from '@/utils/sessionApi'
 
 // Icons
 import {
