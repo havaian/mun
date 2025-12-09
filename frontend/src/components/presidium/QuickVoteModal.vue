@@ -1,8 +1,8 @@
 <template>
-    <ModalWrapper v-model="modelValue" title="Start Quick Vote" subtitle="Create a new voting session for the committee"
-        :icon="HandRaisedIcon" size="lg" :has-unsaved-changes="hasUnsavedChanges"
-        :is-primary-disabled="!isValid || isSubmitting" primary-text="Start Voting" @primary-action="handleSubmit"
-        @close="closeModal">
+    <ModalWrapper :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)"
+        title="Start Quick Vote" subtitle="Create a new voting session for the committee" :icon="HandRaisedIcon"
+        size="lg" :has-unsaved-changes="hasUnsavedChanges" :is-primary-disabled="!isValid || isSubmitting"
+        primary-text="Start Voting" @primary-action="handleSubmit" @close="closeModal">
 
         <template #content>
             <form @submit.prevent="handleSubmit" class="space-y-6">
@@ -219,6 +219,7 @@ watch(() => props.modelValue, (newVal) => {
     }
 })
 </script>
+
 <style scoped>
 /* No custom styles needed - ModalWrapper handles everything */
 </style>
