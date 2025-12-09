@@ -24,6 +24,7 @@ const PresidiumDashboard = () => import('@/views/presidium/DashboardView.vue')
 // const PresidiumDocuments = () => import('@/views/presidium/DocumentsView.vue')
 const PresidiumDiplomacy = () => import('@/views/presidium/DiplomacyView.vue')
 const PresidiumVoting = () => import('@/views/presidium/VotingView.vue')
+const PresidiumPublicDisplay = () => import('@/views/presidium/PublicDisplayView.vue')
 
 // Delegate views
 const DelegateCoalitions = () => import('@/views/delegate/CoalitionsView.vue')
@@ -173,6 +174,12 @@ const routes = [
         name: 'PresidiumCoalitions',
         component: PresidiumCoalitions,
         meta: { title: 'Coalitions' }
+      },
+      {
+        path: 'public-display',
+        name: 'PresidiumPublicDisplay',
+        component: PresidiumPublicDisplay,
+        meta: { title: 'Public Display' }
       }
     ]
   },
