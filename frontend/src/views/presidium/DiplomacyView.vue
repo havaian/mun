@@ -11,7 +11,7 @@
 
         <!-- Search -->
         <div class="relative">
-          <SearchIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <MagnifyingGlassIcon class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input v-model="searchQuery" type="text" placeholder="Search delegates..."
             class="w-full pl-10 pr-4 py-2 text-sm border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
         </div>
@@ -240,7 +240,7 @@ import { apiMethods } from '@/utils/api'
 
 // Icons
 import {
-  ChatBubbleLeftRightIcon, SearchIcon, PlusIcon,
+  ChatBubbleLeftRightIcon, MagnifyingGlassIcon, PlusIcon,
   UserIcon, PaperAirplaneIcon
 } from '@heroicons/vue/24/outline'
 
