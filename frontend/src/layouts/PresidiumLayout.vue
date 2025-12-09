@@ -123,14 +123,14 @@ const mainNavigation = computed(() => [
         to: '/presidium/coalitions',
         icon: ShieldCheckIcon
     },
-    {
-        name: 'PresidiumDocuments',
-        label: 'Documents',
-        to: '/presidium/documents',
-        icon: DocumentTextIcon,
-        badge: pendingDocuments.value > 0 ? pendingDocuments.value : null,
-        badgeType: 'warning'
-    },
+    // {
+    //     name: 'PresidiumDocuments',
+    //     label: 'Documents',
+    //     to: '/presidium/documents',
+    //     icon: DocumentTextIcon,
+    //     badge: pendingDocuments.value > 0 ? pendingDocuments.value : null,
+    //     badgeType: 'warning'
+    // },
     {
         name: 'PresidiumVoting',
         label: 'Voting',

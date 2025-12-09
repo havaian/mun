@@ -103,12 +103,12 @@ const navigationItems = computed(() => [
         badge: userCoalition.value ? 'ACTIVE' : null,
         badgeType: 'success'
     },
-    {
-        name: 'DelegateDocuments',
-        label: 'Documents',
-        to: '/delegate/documents',
-        icon: DocumentTextIcon
-    },
+    // {
+    //     name: 'DelegateDocuments',
+    //     label: 'Documents',
+    //     to: '/delegate/documents',
+    //     icon: DocumentTextIcon
+    // },
     {
         name: 'DelegateVoting',
         label: 'Voting',

@@ -1,230 +1,168 @@
 <template>
-    <div class="p-6 space-y-6">
+    <div class="h-screen flex flex-col bg-gray-50">
         <!-- Header -->
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-2xl font-bold text-mun-gray-900">Attendance Management</h1>
-                <p class="text-mun-gray-600">{{ committee?.name || 'Loading...' }}</p>
-            </div>
-            <div class="flex items-center space-x-3">
-                <button @click="loadAttendance" class="p-2 rounded-lg hover:bg-mun-gray-100 transition-colors"
-                    :disabled="isLoading">
-                    <ArrowPathIcon class="w-5 h-5 text-mun-gray-600" :class="{ 'animate-spin': isLoading }" />
-                </button>
-            </div>
-        </div>
-
-        <!-- No Active Session Warning -->
-        <div v-if="!currentSession" class="mun-card p-6">
-            <div class="flex items-center space-x-3 text-mun-yellow-700">
-                <ExclamationTriangleIcon class="w-6 h-6 flex-shrink-0" />
+        <div class="bg-white border-b border-gray-200 px-6 py-4">
+            <div class="flex items-center justify-between">
                 <div>
-                    <h3 class="font-semibold">No Active Session</h3>
-                    <p class="text-sm">You need an active session to take attendance.</p>
+                    <div class="flex items-center gap-3 text-blue-600 mb-2">
+                        <UsersIcon class="w-6 h-6" />
+                        <h1 class="text-2xl font-bold text-gray-900">Official Roll Call</h1>
+                    </div>
+                    <p class="text-gray-600">Manage delegate attendance and quorum.</p>
+                </div>
+                <div class="flex space-x-3">
+                    <button @click="resetRollCall" :disabled="isLoading"
+                        class="flex items-center px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        <ArrowPathIcon class="w-4 h-4 mr-2" />
+                        Reset
+                    </button>
+                    <button @click="toggleRollCall" :disabled="isLoading" :class="[
+                        'flex items-center px-6 py-2 rounded-lg transition-colors',
+                        rollCallActive ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'
+                    ]">
+                        <PlayIcon v-if="!rollCallActive" class="w-4 h-4 mr-2" />
+                        <StopIcon v-else class="w-4 h-4 mr-2" />
+                        {{ rollCallActive ? 'End Roll Call' : 'Start Roll Call' }}
+                    </button>
                 </div>
             </div>
-            <RouterLink to="/presidium/sessions" class="mt-4 btn-un-primary inline-block">
-                Go to Sessions
-            </RouterLink>
         </div>
 
-        <template v-else>
-            <!-- Quorum Status Card -->
-            <div class="mun-card p-6">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
-                        <div :class="[
-                            'p-4 rounded-xl',
-                            hasQuorum ? 'bg-mun-green-100' : 'bg-mun-red-100'
-                        ]">
-                            <CheckCircleIcon v-if="hasQuorum" class="w-8 h-8 text-mun-green-600" />
-                            <XCircleIcon v-else class="w-8 h-8 text-mun-red-600" />
-                        </div>
-                        <div>
-                            <h3 class="text-2xl font-bold text-mun-gray-900">
-                                {{ hasQuorum ? 'Quorum Achieved' : 'No Quorum' }}
-                            </h3>
-                            <p class="text-mun-gray-600">
-                                {{ votingCount }} / {{ quorumRequired }} delegates voting
-                            </p>
-                        </div>
+        <!-- Quorum Status Cards -->
+        <div class="bg-white border-b border-gray-200 px-6 py-6">
+            <div class="grid grid-cols-4 gap-6">
+                <!-- Quorum Status -->
+                <div class="text-center">
+                    <div class="text-sm text-gray-500 uppercase mb-2">QUORUM STATUS</div>
+                    <div :class="[
+                        'text-2xl font-bold mb-1',
+                        quorumData.hasQuorum ? 'text-green-600' : 'text-red-600'
+                    ]">
+                        {{ quorumData.hasQuorum ? 'QUORUM' : 'NO QUORUM' }}
                     </div>
+                    <div class="text-sm text-gray-500">
+                        Required: {{ quorumData.required }} / Present: {{ quorumData.presentVoting }}
+                    </div>
+                </div>
 
-                    <!-- Stats -->
-                    <div class="grid grid-cols-3 gap-6 text-center">
-                        <div>
-                            <p class="text-3xl font-bold text-mun-green-600">{{ presentVotingCount }}</p>
-                            <p class="text-sm text-mun-gray-600">Present & Voting</p>
-                        </div>
-                        <div>
-                            <p class="text-3xl font-bold text-mun-yellow-600">{{ presentCount }}</p>
-                            <p class="text-sm text-mun-gray-600">Present</p>
-                        </div>
-                        <div>
-                            <p class="text-3xl font-bold text-mun-red-600">{{ absentCount }}</p>
-                            <p class="text-sm text-mun-gray-600">Absent</p>
-                        </div>
+                <!-- Present -->
+                <div class="text-center">
+                    <div class="text-sm text-gray-500 uppercase mb-2">PRESENT</div>
+                    <div class="flex items-center justify-center mb-1">
+                        <CheckIcon class="w-6 h-6 text-blue-600 mr-2" />
+                        <span class="text-3xl font-bold text-gray-900">{{ attendanceCounts.present }}</span>
                     </div>
+                    <div class="text-sm text-gray-500">Non-voting attendance</div>
+                </div>
+
+                <!-- Present & Voting -->
+                <div class="text-center">
+                    <div class="text-sm text-gray-500 uppercase mb-2">PRESENT & VOTING</div>
+                    <div class="flex items-center justify-center mb-1">
+                        <div class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center mr-2">
+                            <CheckIcon class="w-4 h-4 text-white" />
+                        </div>
+                        <span class="text-3xl font-bold text-green-600">{{ attendanceCounts.presentVoting }}</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Eligible to vote</div>
+                </div>
+
+                <!-- Absent -->
+                <div class="text-center">
+                    <div class="text-sm text-gray-500 uppercase mb-2">ABSENT</div>
+                    <div class="flex items-center justify-center mb-1">
+                        <XMarkIcon class="w-6 h-6 text-red-600 mr-2" />
+                        <span class="text-3xl font-bold text-red-600">{{ attendanceCounts.absent }}</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Not participating</div>
                 </div>
             </div>
+        </div>
 
-            <!-- Bulk Actions -->
-            <div class="mun-card p-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <span class="text-sm font-medium text-mun-gray-700">
-                            {{ selectedCountries.length }} selected
-                        </span>
-                        <button v-if="selectedCountries.length > 0" @click="selectedCountries = []"
-                            class="text-sm text-mun-blue hover:text-mun-blue-700">
-                            Clear selection
-                        </button>
-                    </div>
-
-                    <div class="flex items-center space-x-2">
-                        <button @click="bulkMarkAll('present_voting')"
-                            class="px-4 py-2 text-sm font-medium rounded-lg bg-mun-green-100 text-mun-green-700 hover:bg-mun-green-200 transition-colors"
-                            :disabled="isUpdating">
-                            Mark All Present & Voting
-                        </button>
-                        <button @click="bulkMarkAll('present')"
-                            class="px-4 py-2 text-sm font-medium rounded-lg bg-mun-yellow-100 text-mun-yellow-700 hover:bg-mun-yellow-200 transition-colors"
-                            :disabled="isUpdating">
-                            Mark All Present
-                        </button>
-                        <button @click="bulkMarkAll('absent')"
-                            class="px-4 py-2 text-sm font-medium rounded-lg bg-mun-red-100 text-mun-red-700 hover:bg-mun-red-200 transition-colors"
-                            :disabled="isUpdating">
-                            Mark All Absent
-                        </button>
-                        <button v-if="selectedCountries.length > 0" @click="bulkMarkSelected('present_voting')"
-                            class="px-4 py-2 text-sm font-medium rounded-lg bg-mun-blue text-white hover:bg-mun-blue-600 transition-colors"
-                            :disabled="isUpdating">
-                            Mark Selected
-                        </button>
+        <!-- Member States List -->
+        <div class="flex-1 overflow-hidden">
+            <div class="h-full flex flex-col">
+                <!-- List Header -->
+                <div class="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-semibold text-gray-900">
+                            Member States ({{ countries.length }})
+                        </h3>
+                        <div class="flex items-center space-x-4">
+                            <select v-model="statusFilter" class="text-sm border-gray-300 rounded-lg">
+                                <option value="all">All Countries</option>
+                                <option value="present_voting">Present & Voting</option>
+                                <option value="present">Present</option>
+                                <option value="absent">Absent</option>
+                            </select>
+                            <div class="relative">
+                                <SearchIcon
+                                    class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input v-model="searchQuery" type="text" placeholder="Search countries..."
+                                    class="pl-10 pr-4 py-2 text-sm border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Filter & Search -->
-            <div class="mun-card p-4">
-                <div class="flex items-center space-x-4">
-                    <div class="flex-1">
-                        <input v-model="searchQuery" type="text" placeholder="Search countries..."
-                            class="w-full px-4 py-2 border border-mun-gray-300 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-transparent" />
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <button v-for="filter in statusFilters" :key="filter.value"
-                            @click="currentFilter = filter.value" :class="[
-                                'px-4 py-2 text-sm font-medium rounded-lg transition-colors',
-                                currentFilter === filter.value
-                                    ? 'bg-mun-blue text-white'
-                                    : 'bg-mun-gray-100 text-mun-gray-700 hover:bg-mun-gray-200'
-                            ]">
-                            {{ filter.label }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Countries List -->
-            <div class="mun-card p-6">
-                <div v-if="isLoading" class="flex items-center justify-center py-12">
-                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-mun-blue"></div>
-                </div>
-
-                <div v-else-if="filteredCountries.length === 0" class="text-center py-12">
-                    <UsersIcon class="mx-auto h-12 w-12 text-mun-gray-300" />
-                    <h3 class="mt-4 text-lg font-medium text-mun-gray-900">No countries found</h3>
-                    <p class="mt-2 text-mun-gray-600">Try adjusting your filters or search query</p>
-                </div>
-
-                <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div v-for="country in filteredCountries" :key="country.name" :class="[
-                        'p-4 border-2 rounded-lg transition-all cursor-pointer',
-                        selectedCountries.includes(country.name)
-                            ? 'border-mun-blue bg-mun-blue/5'
-                            : 'border-mun-gray-200 hover:border-mun-gray-300'
-                    ]" @click="toggleSelection(country.name)">
-                        <div class="flex items-start justify-between mb-3">
-                            <div class="flex items-center space-x-3 flex-1 min-w-0">
-                                <!-- Checkbox -->
-                                <input type="checkbox" :checked="selectedCountries.includes(country.name)"
-                                    class="w-4 h-4 text-mun-blue border-mun-gray-300 rounded focus:ring-mun-blue"
-                                    @click.stop="toggleSelection(country.name)" />
-
-                                <!-- Country Info -->
-                                <div class="flex items-center space-x-2 flex-1 min-w-0">
-                                    <img v-if="country.flagUrl" :src="country.flagUrl" :alt="country.name"
-                                        class="w-8 h-6 object-cover rounded border border-mun-gray-200"
-                                        @error="(e) => e.target.style.display = 'none'" />
-                                    <div class="flex-1 min-w-0">
-                                        <h4 class="font-semibold text-mun-gray-900 truncate">{{ country.name }}</h4>
-                                        <p v-if="country.specialRole" class="text-xs text-mun-gray-500">
-                                            {{ country.specialRole }}
-                                        </p>
+                <!-- Countries List -->
+                <div class="flex-1 overflow-y-auto">
+                    <div class="divide-y divide-gray-200">
+                        <div v-for="country in filteredCountries" :key="country.name"
+                            class="flex items-center justify-between px-6 py-4 hover:bg-gray-50">
+                            <!-- Country Info -->
+                            <div class="flex items-center space-x-4">
+                                <img :src="country.flagUrl" :alt="country.name"
+                                    class="w-8 h-6 rounded border border-gray-200 object-cover" />
+                                <div>
+                                    <div class="font-medium text-gray-900">{{ country.name }}</div>
+                                    <div class="text-sm text-gray-500">
+                                        Status: <span :class="getStatusColor(country.attendanceStatus)">
+                                            {{ getStatusLabel(country.attendanceStatus) }}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Current Status Badge -->
-                            <span :class="getStatusBadgeClass(country.status)">
-                                {{ getStatusLabel(country.status) }}
-                            </span>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="grid grid-cols-3 gap-2">
-                            <button @click.stop="markAttendance(country.name, 'present_voting')"
-                                :disabled="isUpdating || !country.canVote" :class="[
-                                    'px-3 py-2 text-xs font-medium rounded-lg transition-colors',
-                                    country.status === 'present_voting'
-                                        ? 'bg-mun-green-600 text-white'
-                                        : 'bg-mun-green-100 text-mun-green-700 hover:bg-mun-green-200',
-                                    !country.canVote && 'opacity-50 cursor-not-allowed'
+                            <!-- Action Buttons -->
+                            <div class="flex space-x-2">
+                                <button @click="updateAttendance(country.name, 'present')" :class="[
+                                    'px-3 py-1.5 text-sm rounded-lg transition-colors',
+                                    country.attendanceStatus === 'present'
+                                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 ]">
-                                Present & Voting
-                            </button>
-                            <button @click.stop="markAttendance(country.name, 'present')" :disabled="isUpdating" :class="[
-                                'px-3 py-2 text-xs font-medium rounded-lg transition-colors',
-                                country.status === 'present'
-                                    ? 'bg-mun-yellow-600 text-white'
-                                    : 'bg-mun-yellow-100 text-mun-yellow-700 hover:bg-mun-yellow-200'
-                            ]">
-                                Present
-                            </button>
-                            <button @click.stop="markAttendance(country.name, 'absent')" :disabled="isUpdating" :class="[
-                                'px-3 py-2 text-xs font-medium rounded-lg transition-colors',
-                                country.status === 'absent'
-                                    ? 'bg-mun-red-600 text-white'
-                                    : 'bg-mun-red-100 text-mun-red-700 hover:bg-mun-red-200'
-                            ]">
-                                Absent
-                            </button>
+                                    Present
+                                </button>
+                                <button @click="updateAttendance(country.name, 'present_voting')" :class="[
+                                    'px-3 py-1.5 text-sm rounded-lg transition-colors',
+                                    country.attendanceStatus === 'present_voting'
+                                        ? 'bg-green-100 text-green-700 border border-green-200'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ]">
+                                    Present & Voting
+                                </button>
+                                <button @click="updateAttendance(country.name, 'absent')" :class="[
+                                    'px-3 py-1.5 text-sm rounded-lg transition-colors',
+                                    country.attendanceStatus === 'absent'
+                                        ? 'bg-red-100 text-red-700 border border-red-200'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ]">
+                                    Absent
+                                </button>
+                            </div>
                         </div>
+                    </div>
 
-                        <!-- Marked Info -->
-                        <div v-if="country.markedAt" class="mt-2 pt-2 border-t border-mun-gray-100">
-                            <p class="text-xs text-mun-gray-500">
-                                Marked {{ formatTime(country.markedAt) }}
-                                <span v-if="country.markedBy === 'presidium'" class="text-mun-blue">(by
-                                    presidium)</span>
-                            </p>
-                        </div>
+                    <!-- Empty State -->
+                    <div v-if="filteredCountries.length === 0" class="text-center py-12">
+                        <UsersIcon class="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No countries found</h3>
+                        <p class="text-gray-600">Try adjusting your search or filter criteria.</p>
                     </div>
                 </div>
             </div>
-
-            <!-- Save Changes Button -->
-            <div v-if="hasChanges" class="fixed bottom-6 right-6 z-40">
-                <button @click="saveAttendance"
-                    class="px-6 py-3 bg-mun-blue text-white rounded-xl shadow-lg hover:bg-mun-blue-600 transition-colors flex items-center space-x-2"
-                    :disabled="isUpdating">
-                    <span v-if="isUpdating">Saving...</span>
-                    <span v-else>Save Attendance</span>
-                </button>
-            </div>
-        </template>
+        </div>
     </div>
 </template>
 
@@ -233,279 +171,299 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
+import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
+import enhancedSessionApi from '@/utils/enhancedSessionApi'
 
 // Icons
 import {
-    CheckCircleIcon,
-    XCircleIcon,
-    ArrowPathIcon,
-    UsersIcon,
-    ExclamationTriangleIcon
+    UsersIcon, PlayIcon, StopIcon, ArrowPathIcon, CheckIcon,
+    XMarkIcon, SearchIcon
 } from '@heroicons/vue/24/outline'
 
+// Stores
 const router = useRouter()
 const authStore = useAuthStore()
 const toast = useToast()
 
 // State
 const isLoading = ref(false)
-const isUpdating = ref(false)
-const committee = ref(null)
-const currentSession = ref(null)
+const rollCallActive = ref(false)
 const countries = ref([])
-const selectedCountries = ref([])
-const searchQuery = ref('')
-const currentFilter = ref('all')
-const hasChanges = ref(false)
+const attendanceData = ref([])
+const quorumData = ref({
+    hasQuorum: false,
+    required: 0,
+    presentVoting: 0
+})
 
-const statusFilters = [
-    { label: 'All', value: 'all' },
-    { label: 'Present & Voting', value: 'present_voting' },
-    { label: 'Present', value: 'present' },
-    { label: 'Absent', value: 'absent' }
-]
+// Filters
+const statusFilter = ref('all')
+const searchQuery = ref('')
+
+// Current session
+const currentSession = ref(null)
+const committee = ref(null)
 
 // Computed
-const committeeId = computed(() => authStore.user?.committeeId?._id)
+const attendanceCounts = computed(() => {
+    const counts = {
+        present: 0,
+        presentVoting: 0,
+        absent: 0
+    }
+
+    countries.value.forEach(country => {
+        const status = country.attendanceStatus || 'absent'
+        if (status === 'present') {
+            counts.present++
+        } else if (status === 'present_voting') {
+            counts.presentVoting++
+        } else {
+            counts.absent++
+        }
+    })
+
+    return counts
+})
 
 const filteredCountries = computed(() => {
     let filtered = countries.value
 
-    // Filter by status
-    if (currentFilter.value !== 'all') {
-        filtered = filtered.filter(c => c.status === currentFilter.value)
-    }
-
-    // Filter by search
-    if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase()
-        filtered = filtered.filter(c =>
-            c.name.toLowerCase().includes(query)
+    // Apply status filter
+    if (statusFilter.value !== 'all') {
+        filtered = filtered.filter(country =>
+            (country.attendanceStatus || 'absent') === statusFilter.value
         )
     }
 
-    return filtered
+    // Apply search filter
+    if (searchQuery.value.trim()) {
+        const query = searchQuery.value.toLowerCase().trim()
+        filtered = filtered.filter(country =>
+            country.name.toLowerCase().includes(query)
+        )
+    }
+
+    return filtered.sort((a, b) => a.name.localeCompare(b.name))
 })
-
-const presentVotingCount = computed(() =>
-    countries.value.filter(c => c.status === 'present_voting').length
-)
-
-const presentCount = computed(() =>
-    countries.value.filter(c => c.status === 'present').length
-)
-
-const absentCount = computed(() =>
-    countries.value.filter(c => c.status === 'absent').length
-)
-
-const votingCount = computed(() => presentVotingCount.value)
-
-const quorumRequired = computed(() => {
-    const totalVotingCountries = countries.value.filter(c => c.canVote).length
-    return Math.floor(totalVotingCountries / 2) + 1
-})
-
-const hasQuorum = computed(() => votingCount.value >= quorumRequired.value)
 
 // Methods
-const loadAttendance = async () => {
+const loadData = async () => {
     try {
         isLoading.value = true
 
-        // Load committee
-        const committeeResponse = await apiMethods.committees.getById(committeeId.value)
-        if (committeeResponse.data.success) {
-            committee.value = committeeResponse.data.committee
-
-            // Initialize countries from committee
-            countries.value = (committee.value.countries || []).map(country => ({
-                name: country.name,
-                flagUrl: country.flagUrl,
-                canVote: !country.isObserver && !country.specialRole,
-                specialRole: country.specialRole || null,
-                status: 'absent',
-                markedAt: null,
-                markedBy: null
-            }))
+        // Get committee from auth context
+        committee.value = authStore.user?.committeeId
+        if (!committee.value) {
+            throw new Error('No committee assigned')
         }
 
-        // Load active session
-        const sessionsResponse = await apiMethods.sessions.getAll(committeeId.value, {
-            status: 'active',
-            limit: 1
-        })
+        // Set countries from committee
+        countries.value = committee.value.countries.map(country => ({
+            ...country,
+            attendanceStatus: 'absent' // Default status
+        }))
 
-        if (sessionsResponse.data.success && sessionsResponse.data.sessions?.length > 0) {
-            currentSession.value = sessionsResponse.data.sessions[0]
-
-            // Load attendance for current session
-            try {
-                const attendanceResponse = await apiMethods.sessions.getAttendance(currentSession.value._id)
-
-                if (attendanceResponse.data.success && attendanceResponse.data.attendance) {
-                    // Update countries with attendance data
-                    attendanceResponse.data.attendance.forEach(record => {
-                        const country = countries.value.find(c => c.name === record.country)
-                        if (country) {
-                            country.status = record.status || 'absent'
-                            country.markedAt = record.markedAt
-                            country.markedBy = record.markedBy
-                        }
-                    })
-                }
-            } catch (err) {
-                console.warn('No attendance data yet:', err)
-            }
-        } else {
-            currentSession.value = null
-        }
-
-        hasChanges.value = false
+        // Load active session and attendance data
+        await loadActiveSession()
 
     } catch (error) {
-        console.error('Load attendance error:', error)
+        console.error('Failed to load attendance data:', error)
         toast.error('Failed to load attendance data')
     } finally {
         isLoading.value = false
     }
 }
 
-const markAttendance = (countryName, status) => {
-    const country = countries.value.find(c => c.name === countryName)
-    if (!country) return
+const loadActiveSession = async () => {
+    try {
+        const response = await enhancedSessionApi.sessions.getByCommittee(committee.value._id, {
+            status: 'active',
+            limit: 1
+        })
 
-    // Don't allow voting status for observers
-    if (status === 'present_voting' && !country.canVote) {
-        toast.warning('Observers cannot have voting status')
-        return
-    }
+        if (response.data.success && response.data.sessions?.length > 0) {
+            currentSession.value = response.data.sessions[0]
 
-    country.status = status
-    country.markedAt = new Date().toISOString()
-    country.markedBy = 'presidium'
-    hasChanges.value = true
-}
-
-const bulkMarkAll = (status) => {
-    countries.value.forEach(country => {
-        // Skip voting status for observers
-        if (status === 'present_voting' && !country.canVote) {
-            country.status = 'present'
-        } else {
-            country.status = status
+            // Load session attendance data
+            await loadAttendanceData()
         }
-        country.markedAt = new Date().toISOString()
-        country.markedBy = 'presidium'
-    })
-    hasChanges.value = true
-    toast.success(`All countries marked as ${getStatusLabel(status)}`)
+    } catch (error) {
+        console.error('Failed to load active session:', error)
+    }
 }
 
-const bulkMarkSelected = (status) => {
-    if (selectedCountries.value.length === 0) {
-        toast.warning('No countries selected')
-        return
-    }
+const loadAttendanceData = async () => {
+    if (!currentSession.value?._id) return
 
-    selectedCountries.value.forEach(countryName => {
-        const country = countries.value.find(c => c.name === countryName)
-        if (country) {
-            if (status === 'present_voting' && !country.canVote) {
-                country.status = 'present'
-            } else {
-                country.status = status
+    try {
+        const response = await enhancedSessionApi.rollCall.getAttendance(currentSession.value._id)
+
+        if (response.data.success) {
+            const sessionData = response.data.session
+            rollCallActive.value = sessionData.rollCall?.isActive || false
+            quorumData.value = sessionData.rollCall?.quorum || {
+                hasQuorum: false,
+                required: 0,
+                presentVoting: 0
             }
-            country.markedAt = new Date().toISOString()
-            country.markedBy = 'presidium'
+
+            // Update country attendance status from session data
+            if (sessionData.rollCall?.entries) {
+                sessionData.rollCall.entries.forEach(entry => {
+                    const countryIndex = countries.value.findIndex(c => c.name === entry.country)
+                    if (countryIndex !== -1) {
+                        countries.value[countryIndex].attendanceStatus = entry.status
+                    }
+                })
+            }
         }
-    })
-
-    hasChanges.value = true
-    selectedCountries.value = []
-    toast.success(`${selectedCountries.value.length} countries updated`)
-}
-
-const toggleSelection = (countryName) => {
-    const index = selectedCountries.value.indexOf(countryName)
-    if (index > -1) {
-        selectedCountries.value.splice(index, 1)
-    } else {
-        selectedCountries.value.push(countryName)
+    } catch (error) {
+        console.error('Failed to load attendance data:', error)
     }
 }
 
-const saveAttendance = async () => {
-    if (!currentSession.value) {
-        toast.error('No active session')
+const toggleRollCall = async () => {
+    if (!currentSession.value?._id) {
+        toast.error('No active session found')
         return
     }
 
     try {
-        isUpdating.value = true
+        isLoading.value = true
 
-        const attendanceData = {
-            attendance: countries.value.map(country => ({
-                country: country.name,
-                status: country.status,
-                markedBy: 'presidium',
-                markedAt: new Date().toISOString()
-            }))
+        if (rollCallActive.value) {
+            // End roll call
+            const response = await enhancedSessionApi.rollCall.end(currentSession.value._id)
+            if (response.data.success) {
+                rollCallActive.value = false
+                quorumData.value = response.data.quorum
+                toast.success('Roll call ended')
+            }
+        } else {
+            // Start roll call
+            const response = await enhancedSessionApi.rollCall.start(currentSession.value._id, {
+                timeLimit: 10 // 10 minutes default
+            })
+            if (response.data.success) {
+                rollCallActive.value = true
+                toast.success('Roll call started')
+            }
         }
-
-        const response = await apiMethods.sessions.updateAttendance(
-            currentSession.value._id,
-            attendanceData
-        )
-
-        if (response.data.success) {
-            toast.success('Attendance saved successfully')
-            hasChanges.value = false
-            await loadAttendance()
-        }
-
     } catch (error) {
-        console.error('Save attendance error:', error)
-        toast.error('Failed to save attendance')
+        console.error('Failed to toggle roll call:', error)
+        toast.error('Failed to toggle roll call')
     } finally {
-        isUpdating.value = false
+        isLoading.value = false
     }
 }
 
-// Formatting helpers
+const resetRollCall = async () => {
+    try {
+        isLoading.value = true
+
+        // Reset all attendance to absent
+        countries.value.forEach(country => {
+            country.attendanceStatus = 'absent'
+        })
+
+        quorumData.value = {
+            hasQuorum: false,
+            required: Math.floor(countries.value.length / 2) + 1,
+            presentVoting: 0
+        }
+
+        toast.success('Roll call reset')
+    } catch (error) {
+        console.error('Failed to reset roll call:', error)
+        toast.error('Failed to reset roll call')
+    } finally {
+        isLoading.value = false
+    }
+}
+
+const updateAttendance = async (countryName, status) => {
+    if (!currentSession.value?._id) {
+        toast.error('No active session found')
+        return
+    }
+
+    try {
+        const response = await enhancedSessionApi.rollCall.markAttendance(currentSession.value._id, {
+            country: countryName,
+            status: status
+        })
+
+        if (response.data.success) {
+            // Update local state
+            const countryIndex = countries.value.findIndex(c => c.name === countryName)
+            if (countryIndex !== -1) {
+                countries.value[countryIndex].attendanceStatus = status
+            }
+
+            // Update quorum data
+            quorumData.value = response.data.quorum
+
+            toast.success(`${countryName} marked as ${getStatusLabel(status)}`)
+        }
+    } catch (error) {
+        console.error('Failed to update attendance:', error)
+        toast.error('Failed to update attendance')
+    }
+}
+
+// Utility methods
 const getStatusLabel = (status) => {
     const labels = {
         'present_voting': 'Present & Voting',
         'present': 'Present',
         'absent': 'Absent'
     }
-    return labels[status] || status
+    return labels[status] || 'Absent'
 }
 
-const getStatusBadgeClass = (status) => {
-    const classes = {
-        'present_voting': 'px-2 py-1 text-xs font-medium rounded-lg bg-mun-green-100 text-mun-green-700',
-        'present': 'px-2 py-1 text-xs font-medium rounded-lg bg-mun-yellow-100 text-mun-yellow-700',
-        'absent': 'px-2 py-1 text-xs font-medium rounded-lg bg-mun-red-100 text-mun-red-700'
+const getStatusColor = (status) => {
+    const colors = {
+        'present_voting': 'text-green-600 font-medium',
+        'present': 'text-blue-600 font-medium',
+        'absent': 'text-red-600 font-medium'
     }
-    return classes[status] || classes.absent
+    return colors[status] || 'text-red-600 font-medium'
 }
 
-const formatTime = (timestamp) => {
-    if (!timestamp) return ''
-    try {
-        return new Date(timestamp).toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit'
-        })
-    } catch {
-        return ''
-    }
+// WebSocket listeners
+const setupWebSocketListeners = () => {
+    wsService.on('roll-call-started', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            rollCallActive.value = true
+        }
+    })
+
+    wsService.on('roll-call-ended', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            rollCallActive.value = false
+            quorumData.value = data.quorum
+        }
+    })
+
+    wsService.on('attendance-updated', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            quorumData.value = data.quorum
+        }
+    })
 }
+
+// Watchers
+watch(attendanceCounts, (newCounts) => {
+    quorumData.value.presentVoting = newCounts.presentVoting
+    quorumData.value.required = Math.floor(countries.value.length / 2) + 1
+    quorumData.value.hasQuorum = newCounts.presentVoting >= quorumData.value.required
+}, { deep: true })
 
 // Lifecycle
-onMounted(() => {
-    loadAttendance()
+onMounted(async () => {
+    await loadData()
+    setupWebSocketListeners()
 })
 </script>

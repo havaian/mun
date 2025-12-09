@@ -433,7 +433,7 @@ export const apiMethods = {
         create: (data) => api.post('/voting', data),
         castVote: (id, vote) => api.post(`/voting/${id}/vote`, vote),
         getResults: (id) => api.get(`/voting/${id}/results`), // NOT USED
-        endVoting: (id) => api.post(`/voting/${id}/end`),
+        endVoting: (id) => api.put(`/voting/${id}/complete`),
         getEligibleVoters: (id) => api.get(`/voting/${id}/eligible-voters`),
         getRollCallOrder: (id) => api.get(`/voting/${id}/roll-call-order`),
         setCurrentVoter: (id, voterData) => api.put(`/voting/${id}/current-voter`, voterData),
@@ -444,7 +444,6 @@ export const apiMethods = {
 
         // ❌ MISSING - 5 routes need implementation  
         getResults: (id) => api.get(`/voting/${id}/results`), // TODO: No dedicated results endpoint // NOT USED
-        endVoting: (id) => api.post(`/voting/${id}/end`), // MISMATCH: Backend has PUT /voting/:id/complete not POST /voting/:id/end
         setCurrentVoter: (id, voterData) => api.put(`/voting/${id}/current-voter`, voterData), // TODO: No route exists for manually setting current voter
         getSkippedCountries: (id) => api.get(`/voting/${id}/skipped-countries`), // TODO: Data included in getRollCallOrder, but no dedicated endpoint // NOT USED
         useVeto: (id, vetoData) => api.post(`/voting/${id}/veto`, vetoData), // TODO: Veto handled within castVote, but no separate veto endpoint
@@ -506,42 +505,59 @@ export const apiMethods = {
         // Attendance management
         updateAttendance: (id, attendanceData) => api.put(`/sessions/${id}/attendance`, attendanceData),
         getAttendance: (id) => api.get(`/sessions/${id}/attendance`), // NOT USED
-        getQuorum: (id) => api.get(`/sessions/${id}/quorum`) // NOT USED
+        getQuorum: (id) => api.get(`/sessions/${id}/quorum`), // NOT USED
+
+        // Roll call management
+        startRollCall: (sessionId, data = {}) => api.post(`/sessions/${sessionId}/roll-call/start`, data),
+        endRollCall: (sessionId) => api.post(`/sessions/${sessionId}/roll-call/end`),
+        
+        // Session timer management
+        startSessionTimer: (sessionId, data) => api.post(`/sessions/${sessionId}/timers/session/start`, data),
+        startDebateTimer: (sessionId, data) => api.post(`/sessions/${sessionId}/timers/debate/start`, data),
+        startSpeakerTimer: (sessionId, data) => api.post(`/sessions/${sessionId}/timers/speaker/start`, data),
+        toggleTimer: (sessionId, data) => api.put(`/sessions/${sessionId}/timers/toggle`, data),
+        adjustTimer: (sessionId, data) => api.put(`/sessions/${sessionId}/timers/adjust`, data),
+        
+        // Additional timer management
+        addAdditionalTimer: (sessionId, data) => api.post(`/sessions/${sessionId}/timers/additional`, data),
+        startAdditionalTimer: (sessionId, timerId) => api.put(`/sessions/${sessionId}/timers/additional/${timerId}/start`),
+        
+        // Session management
+        startSession: (sessionId) => api.put(`/sessions/${sessionId}/start`),
+        
+        // Speaker management (fix routes)
+        addToSpeakerList: (id, speakerData) => api.post(`/sessions/${id}/speaker-list/add`, speakerData),
+        removeFromSpeakerList: (id, data) => api.put(`/sessions/${id}/speaker-list/remove`, data),
+        moveToEndOfQueue: (id, speakerData) => api.put(`/sessions/${id}/speakers/move-to-end`, speakerData),
+        setCurrentSpeaker: (id, speakerData) => api.put(`/sessions/${id}/speakers/current`, speakerData),
+        getSpeakers: (sessionId) => api.get(`/sessions/${sessionId}/speakers`),
     },
 
-    // 🚨 ARCHITECTURAL MISMATCH - Timer Management (0/12 methods working) - Complete mismatch
     timers: {
-        // ❌ ALL ROUTES MISSING - Frontend expects session-centric, backend uses individual timer entities
-        getAll: (sessionId) => api.get(`/timers/${sessionId}`), // MISMATCH: Backend has GET /timers/session/:sessionId/active // NOT USED
-
-        // Session timer
-        updateSessionTimer: (sessionId, timerData) => api.put(`/timers/${sessionId}/session`, timerData), // TODO: Route doesn't exist // NOT USED
-
-        // Speaker timer
-        updateSpeakerTimer: (sessionId, timerData) => api.put(`/timers/${sessionId}/speaker`, timerData), // TODO: Route doesn't exist // NOT USED
-
-        // Additional timers
-        createAdditionalTimer: (sessionId, timerData) => api.post(`/timers/${sessionId}/additional`, timerData), // TODO: Route doesn't exist
-        updateAdditionalTimer: (sessionId, timerId, timerData) => api.put(`/timers/${sessionId}/additional/${timerId}`, timerData), // TODO: Route doesn't exist
-        deleteAdditionalTimer: (sessionId, timerId) => api.delete(`/timers/${sessionId}/additional/${timerId}`), // TODO: Route doesn't exist
-
-        // Timer operations - ALL MISSING
-        startTimer: (sessionId, type, data = {}) => api.post(`/timers/${sessionId}/${type}/start`, data), // TODO: Backend uses PUT /timers/:id/start
-        pauseTimer: (sessionId, type) => api.post(`/timers/${sessionId}/${type}/pause`), // TODO: Backend uses PUT /timers/:id/pause
-        resumeTimer: (sessionId, type) => api.post(`/timers/${sessionId}/${type}/resume`), // TODO: Backend uses PUT /timers/:id/resume
-        stopTimer: (sessionId, type) => api.post(`/timers/${sessionId}/${type}/stop`), // TODO: Backend uses PUT /timers/:id/complete
-        extendTimer: (sessionId, type, extensionData) => api.put(`/timers/${sessionId}/${type}/extend`, extensionData), // TODO: Backend uses PUT /timers/:id/extend
-        transferSpeakerTime: (sessionId, transferData) => api.post(`/timers/${sessionId}/speaker/transfer`, transferData), // TODO: Route doesn't exist // NOT USED
-
-        // Settings and history
-        updateSettings: (sessionId, settings) => api.put(`/timers/${sessionId}/settings`, settings), // TODO: Route doesn't exist // NOT USED
-        getHistory: (sessionId) => api.get(`/timers/${sessionId}/history`) // TODO: Route doesn't exist // NOT USED
+        // Get active timers for session
+        getActiveTimers: (sessionId) => api.get(`/timers/session/${sessionId}/active`),
+        
+        // Individual timer operations
+        startTimer: (timerId) => api.put(`/timers/${timerId}/start`),
+        pauseTimer: (timerId) => api.put(`/timers/${timerId}/pause`),
+        resumeTimer: (timerId) => api.put(`/timers/${timerId}/resume`),
+        extendTimer: (timerId, extensionData) => api.put(`/timers/${timerId}/extend`, extensionData),
+        completeTimer: (timerId) => api.put(`/timers/${timerId}/complete`),
+        cancelTimer: (timerId, cancelData) => api.delete(`/timers/${timerId}`, { data: cancelData }),
+        
+        // Quick timer creation
+        createQuickSpeakerTimer: (data) => api.post('/timers/speaker/quick', data),
+        createTimer: (data) => api.post('/timers', data),
+        
+        // Get timer details
+        getTimer: (timerId) => api.get(`/timers/${timerId}`),
+        getCommitteeTimers: (committeeId, params = {}) => api.get(`/timers/committee/${committeeId}`, { params })
     },
 
     // ✅ WORKING - Statistics (5/9 methods working) ⚠️ 1 parameter mismatch, ❌ 3 admin routes missing
     statistics: {
         getCommitteeStats: (committeeId) => api.get(`/statistics/committee/${committeeId}`), // NOT USED
-        getDelegateStats: (committeeId, delegateEmail) => api.get(`/statistics/committee/${committeeId}/delegate/${delegateEmail}`), // MISMATCH: Backend uses /statistics/delegate/:email?committeeId=... // NOT USED
+        getDelegateStats: (delegateEmail, committeeId) => api.get(`/statistics/delegate/${delegateEmail}`, { params: { committeeId }}), // MISMATCH: Backend uses /statistics/delegate/:email?committeeId=... // NOT USED
         getLeaderboard: (committeeId, params = {}) => api.get(`/statistics/committee/${committeeId}/rankings`, { params }), // ✅ IMPLEMENTED (backend calls it "rankings") // NOT USED
         getParticipationAnalytics: (committeeId, params = {}) => api.get(`/statistics/committee/${committeeId}/analytics/participation`, { params }), // NOT USED
         exportCommitteeCSV: (committeeId) => api.get(`/statistics/committee/${committeeId}/export`, { // NOT USED
@@ -603,7 +619,20 @@ export const apiMethods = {
         getQuestions: (sessionId, params = {}) => api.get(`/questions/${sessionId}`, { params }), // MISMATCH: Backend uses /procedure/questions/session/:sessionId // NOT USED
         getQuestion: (id) => api.get(`/questions/${id}`), // MISMATCH: Backend uses /procedure/questions/:id (implied) // NOT USED
         answerQuestion: (id, answerData) => api.put(`/questions/${id}/answer`, answerData), // MISMATCH: Backend uses /procedure/questions/:id/answer // NOT USED
-        updateQuestionPriority: (id, priorityData) => api.put(`/questions/${id}/priority`, priorityData) // TODO: No priority update route exists // NOT USED
+        updateQuestionPriority: (id, priorityData) => api.put(`/questions/${id}/priority`, priorityData), // TODO: No priority update route exists // NOT USED
+        
+        submitMotion: (data) => api.post('/procedure/motions', data),
+        getMotions: (sessionId, params = {}) => api.get(`/procedure/motions/session/${sessionId}`, { params }),
+        getMotion: (id) => api.get(`/procedure/motions/${id}`),
+        reviewMotion: (id, reviewData) => api.put(`/procedure/motions/${id}/review`, reviewData),
+        supportMotion: (id) => api.post(`/procedure/motions/${id}/support`),
+        submitPresidiumMotion: (data) => api.post('/procedure/motions/presidium', data),
+        getMotionQueue: (sessionId) => api.get(`/procedure/motions/session/${sessionId}/queue`),
+        
+        // Questions
+        submitQuestion: (data) => api.post('/procedure/questions', data),
+        getQuestions: (sessionId, params = {}) => api.get(`/procedure/questions/session/${sessionId}`, { params }),
+        answerQuestion: (id, answerData) => api.put(`/procedure/questions/${id}/answer`, answerData),
     },
 
     // 🚨 CRITICAL - User Management (0/7 methods working) - Entire module missing
