@@ -409,7 +409,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
-import { apiMethods } from '@/utils/api'
+import sessionApi from '@/utils/sessionApi'
 
 // Icons
 import {
@@ -540,6 +540,9 @@ const loadDashboardData = async () => {
         // Load active session
         await loadActiveSession()
 
+        // Load all sessions for the previous sessions section
+        await loadAllSessions()
+
         // Setup WebSocket listeners
         setupWebSocketListeners()
 
@@ -551,9 +554,27 @@ const loadDashboardData = async () => {
     }
 }
 
+const loadAllSessions = async () => {
+    if (!committee.value?._id) return
+    
+    try {
+        const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
+            page: 1,
+            limit: 20,
+            sort: '-number' // Latest sessions first
+        })
+
+        if (response.data.success) {
+            allSessions.value = response.data.sessions || []
+        }
+    } catch (error) {
+        console.error('Failed to load all sessions:', error)
+    }
+}
+
 const loadActiveSession = async () => {
     try {
-        const response = await apiMethods.sessions.getAll(committee.value._id, {
+        const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
             status: 'active',
             limit: 1
         })
@@ -572,7 +593,7 @@ const loadSessionDetails = async () => {
 
     try {
         // Load session details
-        const sessionResponse = await apiMethods.sessions.getById(currentSession.value._id)
+        const sessionResponse = await sessionApi.sessions.getById(currentSession.value._id)
         if (sessionResponse.data.success) {
             const sessionData = sessionResponse.data.session
             currentSession.value = sessionData
@@ -587,14 +608,14 @@ const loadSessionDetails = async () => {
         }
 
         // Load active timers
-        const timerResponse = await apiMethods.timers.getActiveTimers(currentSession.value._id)
+        const timerResponse = await sessionApi.timers.getActiveTimers(currentSession.value._id)
         if (timerResponse.data.success) {
             timers.value = timerResponse.data.timers || []
             activeTimer.value = timers.value.find(t => t.status === 'running') || timers.value[0] || null
         }
 
         // Load active voting
-        const votingResponse = await apiMethods.voting.getByCommitteeId(committee.value._id)
+        const votingResponse = await sessionApi.voting.getByCommitteeId(committee.value._id)
         if (votingResponse.data.success) {
             const activeVotingData = votingResponse.data.voting?.find(v => v.status === 'active')
             if (activeVotingData) {
@@ -644,7 +665,7 @@ const createQuickSession = async () => {
             }
         }
 
-        const response = await apiMethods.sessions.create(sessionData)
+        const response = await sessionApi.sessions.create(sessionData)
 
         if (response.data.success) {
             currentSession.value = response.data.session
@@ -662,7 +683,7 @@ const createQuickSession = async () => {
 
 const resumeSession = async (sessionId) => {
     try {
-        const response = await apiMethods.sessions.updateStatus(sessionId, { status: 'active' })
+        const response = await sessionApi.sessions.updateStatus(sessionId, { status: 'active' })
 
         if (response.data.success) {
             currentSession.value = response.data.session
@@ -742,7 +763,7 @@ const toggleTimer = async () => {
 
     try {
         const action = activeTimer.value.isActive && !activeTimer.value.isPaused ? 'pause' : 'resume'
-        const response = await apiMethods.timers[`${action}Timer`](activeTimer.value._id)
+        const response = await sessionApi.timers[`${action}Timer`](activeTimer.value._id)
 
         if (response.data.success) {
             activeTimer.value = response.data.timer
@@ -758,7 +779,7 @@ const resetTimer = async () => {
     if (!activeTimer.value) return
 
     try {
-        const response = await apiMethods.timers.completeTimer(activeTimer.value._id)
+        const response = await sessionApi.timers.completeTimer(activeTimer.value._id)
         if (response.data.success) {
             activeTimer.value = null
             toast.success('Timer reset')
@@ -776,7 +797,7 @@ const startSpeakerTimer = async () => {
     }
 
     try {
-        const response = await apiMethods.timers.createQuickSpeakerTimer({
+        const response = await sessionApi.timers.createQuickSpeakerTimer({
             committeeId: committee.value._id,
             sessionId: currentSession.value._id,
             speakerCountry: currentSpeaker.value.country,
@@ -798,7 +819,7 @@ const startSessionTimer = async () => {
     if (!currentSession.value) return
 
     try {
-        const response = await apiMethods.sessions.startSessionTimer(currentSession.value._id, {
+        const response = await sessionApi.sessions.startSessionTimer(currentSession.value._id, {
             duration: 3600 // 1 hour default
         })
 
@@ -817,7 +838,7 @@ const changeMode = async (newMode) => {
     if (!currentSession.value || currentSession.value.currentMode === newMode) return
 
     try {
-        const response = await apiMethods.sessions.changeMode(currentSession.value._id, {
+        const response = await sessionApi.sessions.changeMode(currentSession.value._id, {
             mode: newMode,
             reason: `Mode changed by ${authStore.user?.name || 'presidium'}`
         })
@@ -837,7 +858,7 @@ const startRollCall = async () => {
     if (!currentSession.value) return
 
     try {
-        const response = await apiMethods.sessions.startRollCall(currentSession.value._id, {
+        const response = await sessionApi.sessions.startRollCall(currentSession.value._id, {
             timeLimit: 10 // 10 minutes default
         })
 
@@ -855,7 +876,7 @@ const endRollCall = async () => {
     if (!currentSession.value) return
 
     try {
-        const response = await apiMethods.sessions.endRollCall(currentSession.value._id)
+        const response = await sessionApi.sessions.endRollCall(currentSession.value._id)
 
         if (response.data.success) {
             rollCallStatus.value = 'completed'
@@ -876,7 +897,7 @@ const addSpeaker = async () => {
         const country = availableCountries.value.find(c => c.name === selectedCountry.value)
         if (!country) return
 
-        const response = await apiMethods.sessions.addToSpeakerList(currentSession.value._id, {
+        const response = await sessionApi.sessions.addToSpeakerList(currentSession.value._id, {
             country: country.name,
             email: country.email
         })
@@ -896,7 +917,7 @@ const removeSpeaker = async (countryName) => {
     if (!currentSession.value) return
 
     try {
-        const response = await apiMethods.sessions.removeFromSpeakerList(currentSession.value._id, {
+        const response = await sessionApi.sessions.removeFromSpeakerList(currentSession.value._id, {
             country: countryName
         })
 
@@ -916,7 +937,7 @@ const nextSpeaker = async () => {
     try {
         const nextSpeakerData = speakerQueue.value[0]
 
-        const response = await apiMethods.sessions.setCurrentSpeaker(currentSession.value._id, {
+        const response = await sessionApi.sessions.setCurrentSpeaker(currentSession.value._id, {
             country: nextSpeakerData.country,
             email: nextSpeakerData.email
         })
@@ -945,7 +966,7 @@ const endVoting = async () => {
     if (!activeVoting.value) return
 
     try {
-        const response = await apiMethods.voting.endVoting(activeVoting.value._id)
+        const response = await sessionApi.voting.endVoting(activeVoting.value._id)
         if (response.data.success) {
             activeVoting.value = null
             votingResults.value = {}

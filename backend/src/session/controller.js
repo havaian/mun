@@ -628,8 +628,8 @@ const getSession = async (req, res) => {
         const { id } = req.params;
 
         const session = await Session.findById(id)
-            .populate('modeHistory.startedBy', 'presidiumRole username')
-            .populate('attendance.markedBy', 'presidiumRole username');
+            .populate('modeHistory.startedBy', 'presidiumRole')
+            .populate('attendance.markedBy', 'presidiumRole');
 
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
