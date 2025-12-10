@@ -112,8 +112,8 @@
                             class="flex items-center justify-between px-6 py-4 hover:bg-gray-50">
                             <!-- Country Info -->
                             <div class="flex items-center space-x-4">
-                                <img :src="country.flagUrl" :alt="country.name"
-                                    class="w-8 h-6 rounded border border-gray-200 object-cover" />
+                                <CountryFlag :country-name="country.name" :country-code="country.code" size="medium"
+                                        variant="bordered" />
                                 <div>
                                     <div class="font-medium text-gray-900">{{ country.name }}</div>
                                     <div class="text-sm text-gray-500">
@@ -174,6 +174,7 @@ import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
 import sessionApi from '@/utils/sessionApi'
+import CountryFlag from '@/components/shared/CountryFlag.vue'
 
 // Icons
 import {
