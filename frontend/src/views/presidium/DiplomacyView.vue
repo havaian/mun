@@ -66,7 +66,7 @@
               @click="openDirectMessage(delegate)"
               class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-gray-100 transition-colors">
               <div class="relative">
-                <img :src="delegate.flagUrl" :alt="delegate.countryName"
+                <CountryFlag :country-name="delegate.name" :country-code="delegate.code" size="medium" variant="bordered" />
                   class="w-8 h-6 rounded border border-gray-200 object-cover" />
                 <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
               </div>
@@ -315,7 +315,7 @@ const allDelegates = computed(() => {
     .map(country => ({
       email: country.email,
       countryName: country.name,
-      flagUrl: country.flagUrl
+      code: country.code
     }))
 })
 
@@ -377,7 +377,7 @@ const loadOnlineDelegates = async () => {
       ?.map(country => ({
         email: country.email,
         countryName: country.name,
-        flagUrl: country.flagUrl,
+        code: country.code,
         isOnline: Math.random() > 0.3 // Random online status for demo
       }))
       ?.filter(delegate => delegate.isOnline) || []
@@ -483,7 +483,7 @@ const getUnreadDMCount = (email) => {
 
 const getCountryFlag = (countryName) => {
   const country = committee.value?.countries?.find(c => c.name === countryName)
-  return country?.flagUrl || '/api/countries/flags/default'
+  return country?.code || ''
 }
 
 const formatMessageTime = (timestamp) => {
