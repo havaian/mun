@@ -265,6 +265,7 @@ const isLoading = ref(false)
 const activeVote = ref(null)
 const votingHistory = ref([])
 const currentSession = ref(null)
+const committeeId = ref(null)
 const committee = ref(null)
 const showCreateVoteModal = ref(false)
 
@@ -273,9 +274,9 @@ const loadData = async () => {
   try {
     isLoading.value = true
 
-    // Get committee from auth context
-    committee.value = authStore.user?.committeeId
-    if (!committee.value) {
+    // Get committee ID from auth context
+    committeeId.value = authStore.user?.committeeId
+    if (!committeeId.value) {
       throw new Error('No committee assigned')
     }
 
@@ -283,7 +284,7 @@ const loadData = async () => {
     await loadCurrentSession()
 
     // Load voting data
-    await loadVotingData()
+    await loadVotingData(committeeId.value)
 
   } catch (error) {
     console.error('Failed to load voting data:', error)
@@ -295,7 +296,8 @@ const loadData = async () => {
 
 const loadCurrentSession = async () => {
   try {
-    const response = await apiMethods.sessions.getAll(committee.value._id, {
+    // Use the ID directly
+    const response = await apiMethods.sessions.getAll(committeeId.value, { 
       status: 'active',
       limit: 1
     })
@@ -308,9 +310,9 @@ const loadCurrentSession = async () => {
   }
 }
 
-const loadVotingData = async () => {
+const loadVotingData = async (id) => {
   try {
-    const response = await apiMethods.voting.getByCommitteeId(committee.value._id)
+    const response = await apiMethods.voting.getByCommitteeId(id)
 
     if (response.data.success) {
       const allVotes = response.data.voting || []
