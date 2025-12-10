@@ -243,7 +243,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
-import CountryFlag from '@/components/CountryFlag.vue'
+import CountryFlag from '@/components/shared/CountryFlag.vue'
 
 // Icons
 import {
