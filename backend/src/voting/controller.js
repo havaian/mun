@@ -26,24 +26,22 @@ const createVoting = async (req, res) => {
             return res.status(404).json({ error: 'Committee not found' });
         }
 
-        console.log(committee)
-
         const session = await Session.findById(sessionId);
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
         }
 
         // Check if session has quorum
-        if (!session.rollCall.quorum.hasQuorum) {
+        if (!session.quorum.hasQuorum) {
             return res.status(400).json({
                 error: 'Cannot start voting without quorum',
-                required: session.rollCall.quorum.required,
-                present: session.rollCall.quorum.presentVoting
+                required: session.quorum.required,
+                present: session.quorum.presentVoting
             });
-        }
+        }   
 
         // Get eligible voters from session roll call
-        const eligibleVoters = session.rollCall.entries
+        const eligibleVoters = session.attendance
             .filter(entry => entry.status === 'present_and_voting')
             .map(entry => {
                 const countryData = committee.countries.find(c => c.name === entry.country);
