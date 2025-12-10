@@ -429,13 +429,23 @@ const selectChannel = (channel) => {
 }
 
 const sendMessage = async () => {
-  if (!newMessage.value.trim() || !selectedChannel.value) return
+  console.log('sendMessage called with:', {
+    message: newMessage.value,
+    channel: selectedChannel.value
+  })
+
+  if (!newMessage.value.trim() || !selectedChannel.value) {
+    console.log('Validation failed - empty message or no channel')
+    return
+  }
 
   try {
     isSending.value = true
+    console.log('Starting to send message...')
 
     // For public channels, we need to implement public messaging
     if (selectedChannel.value.type === 'public') {
+      console.log('Sending to public channel (simulated)')
       // For now, just add to local state as placeholder
       const newMsg = {
         _id: Date.now().toString(),
@@ -449,14 +459,19 @@ const sendMessage = async () => {
       messages.value.push(newMsg)
       newMessage.value = ''
       scrollToBottom()
+      console.log('Public message added locally')
       return
     }
 
     // For DM channels, send to conversation
     if (selectedChannel.value.conversationId) {
+      console.log('Sending to conversation:', selectedChannel.value.conversationId)
+      
       const response = await apiMethods.messages.sendMessage(selectedChannel.value.conversationId, {
         content: newMessage.value.trim()
       })
+
+      console.log('API response:', response)
 
       if (response.data.success) {
         // Message will be added via WebSocket, but add locally for immediate feedback
@@ -472,13 +487,17 @@ const sendMessage = async () => {
         messages.value.push(newMsg)
         newMessage.value = ''
         scrollToBottom()
+        console.log('DM message sent successfully')
       }
+    } else {
+      console.log('No conversationId for DM channel')
     }
   } catch (error) {
-    console.error('Failed to send message:', error)
+    console.error('Send message error details:', error)
     toast.error('Failed to send message')
   } finally {
     isSending.value = false
+    console.log('Send message completed')
   }
 }
 
