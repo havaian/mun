@@ -725,7 +725,7 @@ const resumeSession = async (sessionId) => {
 
 const viewSessionDetails = (session) => {
     // For now, just show basic info - could expand to modal or navigation
-    toast.info(`Session ${session.sessionNumber}: ${formatSessionMode(session.currentMode)} - ${session.status}`)
+    toast.log(`Session ${session.sessionNumber}: ${formatSessionMode(session.currentMode)} - ${session.status}`)
 }
 
 // Formatting utility methods
@@ -1071,7 +1071,7 @@ const setupWebSocketListeners = () => {
     wsService.on('timer-completed', (data) => {
         if (data.timerId === activeTimer.value?._id) {
             activeTimer.value = null
-            toast.info('Timer completed!')
+            toast.log('Timer completed!')
         }
     })
 

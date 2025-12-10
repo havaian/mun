@@ -450,7 +450,7 @@ const generateQRCodes = async () => {
         const committees = Array.isArray(committeesResponse?.data) ? committeesResponse.data : committeesResponse?.data?.committees || []
 
         if (committees.length === 0) {
-            toast.info('No active committees found')
+            toast.log('No active committees found')
             return
         }
 

@@ -76,7 +76,7 @@ class WebSocketService {
 
             if (this.reconnectAttempts >= this.maxReconnectAttempts) {
                 console.error('Max reconnection attempts reached')
-                this.toast?.error('Failed to connect to real-time updates')
+                this.toast.error('Failed to connect to real-time updates')
             }
         })
 
@@ -84,7 +84,7 @@ class WebSocketService {
         this.socket.on('unauthorized', (error) => {
             console.error('WebSocket unauthorized:', error)
             this.disconnect()
-            this.toast?.error('WebSocket authentication failed')
+            this.toast.error('WebSocket authentication failed')
         })
 
         // Critical events
@@ -102,19 +102,19 @@ class WebSocketService {
         this.socket.on('session-started', (data) => {
             console.log('🎬 Session started:', data)
             this.emit('session-started', data)
-            this.toast?.success('Session has started')
+            this.toast.success('Session has started')
         })
 
         this.socket.on('session-ended', (data) => {
             console.log('🛑 Session ended:', data)
             this.emit('session-ended', data)
-            this.toast?.info('Session has ended')
+            this.toast.log('Session has ended')
         })
 
         this.socket.on('session-mode-changed', (data) => {
             console.log('🔄 Session mode changed:', data)
             this.emit('session-mode-changed', data)
-            this.toast?.info(`Debate mode changed to ${data.newMode}`)
+            this.toast.log(`Debate mode changed to ${data.newMode}`)
         })
 
         // Attendance events
@@ -133,9 +133,9 @@ class WebSocketService {
             this.emit('quorum-status-changed', data)
 
             if (data.hasQuorum) {
-                this.toast?.success('Quorum achieved!')
+                this.toast.success('Quorum achieved!')
             } else {
-                this.toast?.warning('Quorum lost')
+                this.toast.warn('Quorum lost')
             }
         })
 
@@ -143,7 +143,7 @@ class WebSocketService {
         this.socket.on('voting-started', (data) => {
             console.log('🗳️ Voting started:', data)
             this.emit('voting-started', data)
-            this.toast?.info(`Voting started: ${data.subject}`)
+            this.toast.log(`Voting started: ${data.subject}`)
         })
 
         this.socket.on('voting-completed', (data) => {
@@ -151,7 +151,7 @@ class WebSocketService {
             this.emit('voting-completed', data)
 
             const result = data.passed ? 'passed' : 'failed'
-            this.toast?.info(`Voting ${result}`)
+            this.toast.log(`Voting ${result}`)
         })
 
         this.socket.on('vote-cast', (data) => {
@@ -171,7 +171,7 @@ class WebSocketService {
 
             // If it's your turn
             if (data.country === this.authStore?.user?.countryName) {
-                this.toast?.info('It\'s your turn to vote!', {
+                this.toast.log('It\'s your turn to vote!', {
                     duration: 0 // Don't auto-dismiss
                 })
             }
@@ -190,7 +190,7 @@ class WebSocketService {
             this.emit('document-submitted', data)
 
             if (this.authStore?.user?.role === 'presidium') {
-                this.toast?.info(`New ${data.documentType} submitted by ${data.author}`)
+                this.toast.log(`New ${data.documentType} submitted by ${data.author}`)
             }
         })
 
@@ -205,7 +205,7 @@ class WebSocketService {
             this.emit('resolution-submitted', data)
 
             if (this.authStore?.user?.role === 'presidium') {
-                this.toast?.info(`New resolution submitted: ${data.title}`)
+                this.toast.log(`New resolution submitted: ${data.title}`)
             }
         })
 
@@ -221,7 +221,7 @@ class WebSocketService {
             this.emit('procedural-motion-submitted', data)
 
             if (this.authStore?.user?.role === 'presidium') {
-                this.toast?.info(`New procedural motion: ${data.motionType}`)
+                this.toast.log(`New procedural motion: ${data.motionType}`)
             }
         })
 
@@ -236,13 +236,13 @@ class WebSocketService {
         this.socket.on('coalition-invitation', (data) => {
             console.log('📨 Coalition invitation:', data)
             this.emit('coalition-invitation', data)
-            this.toast?.info(`You've been invited to join ${data.coalitionName}`)
+            this.toast.log(`You've been invited to join ${data.coalitionName}`)
         })
 
         this.socket.on('coauthor-invitation', (data) => {
             console.log('📨 Coauthor invitation:', data)
             this.emit('coauthor-invitation', data)
-            this.toast?.info(`You've been invited as a coauthor`)
+            this.toast.log(`You've been invited as a coauthor`)
         })
 
         // Messages
@@ -254,7 +254,7 @@ class WebSocketService {
         this.socket.on('official-message', (data) => {
             console.log('📢 Official message:', data)
             this.emit('official-message', data)
-            this.toast?.info(data.subject)
+            this.toast.log(data.subject)
         })
 
         // Document review results
@@ -263,9 +263,9 @@ class WebSocketService {
             this.emit('document-review-completed', data)
 
             if (data.decision === 'approved') {
-                this.toast?.success('Your document has been approved!')
+                this.toast.success('Your document has been approved!')
             } else if (data.decision === 'rejected') {
-                this.toast?.error('Your document has been rejected')
+                this.toast.error('Your document has been rejected')
             }
         })
 
@@ -280,14 +280,14 @@ class WebSocketService {
             this.emit('voting-reminder', data)
 
             if (!data.hasVoted) {
-                this.toast?.warning(`Reminder: Vote on ${data.subject}`)
+                this.toast.warn(`Reminder: Vote on ${data.subject}`)
             }
         })
 
         this.socket.on('voting-call', (data) => {
             console.log('📢 Voting call - your turn:', data)
             this.emit('voting-call', data)
-            this.toast?.info('It\'s your turn to vote!', {
+            this.toast.log('It\'s your turn to vote!', {
                 duration: 0 // Don't auto-dismiss
             })
         })

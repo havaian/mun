@@ -498,7 +498,7 @@ const loadDraft = () => {
                 editor.value.commands.setContent(draftData.content)
             }
 
-            toast.info('Draft loaded from local storage')
+            toast.log('Draft loaded from local storage')
         }
     } catch (error) {
         console.error('Load draft error:', error)
