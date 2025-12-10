@@ -248,6 +248,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
+import sessionApi from '@/utils/api'
 import QuickVoteModal from '@/components/presidium/QuickVoteModal.vue'
 
 // Icons
@@ -265,7 +266,6 @@ const isLoading = ref(false)
 const activeVote = ref(null)
 const votingHistory = ref([])
 const currentSession = ref(null)
-const committeeId = ref(null)
 const committee = ref(null)
 const showCreateVoteModal = ref(false)
 
@@ -274,9 +274,9 @@ const loadData = async () => {
   try {
     isLoading.value = true
 
-    // Get committee ID from auth context
-    committeeId.value = authStore.user?.committeeId
-    if (!committeeId.value) {
+    // Get committee from auth context
+    committee.value = authStore.user?.committeeId
+    if (!committee.value) {
       throw new Error('No committee assigned')
     }
 
@@ -284,7 +284,7 @@ const loadData = async () => {
     await loadCurrentSession()
 
     // Load voting data
-    await loadVotingData(committeeId.value)
+    await loadVotingData()
 
   } catch (error) {
     console.error('Failed to load voting data:', error)
@@ -296,8 +296,7 @@ const loadData = async () => {
 
 const loadCurrentSession = async () => {
   try {
-    // Use the ID directly
-    const response = await apiMethods.sessions.getAll(committeeId.value, { 
+    const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
       status: 'active',
       limit: 1
     })
@@ -310,9 +309,10 @@ const loadCurrentSession = async () => {
   }
 }
 
-const loadVotingData = async (id) => {
+const loadVotingData = async () => {
   try {
-    const response = await apiMethods.voting.getByCommitteeId(id)
+    console.log(committee.value)
+    const response = await apiMethods.voting.getByCommitteeId(committee.value._id)
 
     if (response.data.success) {
       const allVotes = response.data.voting || []
