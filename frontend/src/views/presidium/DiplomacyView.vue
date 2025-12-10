@@ -151,10 +151,10 @@
             <div v-for="message in currentMessages" :key="message._id" class="flex gap-4">
               <!-- Avatar -->
               <div class="flex-shrink-0">
-                <img v-if="message.senderCountry" :src="getCountryFlag(message.senderCountry)"
+                <img v-if="message.senderCountry && message.senderRole != 'presidium'" :src="getCountryFlag(message.senderCountry)"
                   :alt="message.senderCountry" class="w-10 h-8 rounded border border-gray-200 object-cover" />
                 <div v-else class="w-10 h-8 bg-blue-100 rounded flex items-center justify-center">
-                  <UserIcon class="w-5 h-5 text-blue-600" />
+                  <Crown class="w-5 h-5 text-blue-600" />
                 </div>
               </div>
 
@@ -166,7 +166,7 @@
                   </span>
                   <span v-if="message.senderRole === 'presidium'"
                     class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                    Presidium
+                    👑 Presidium
                   </span>
                   <span class="text-sm text-gray-500">
                     {{ formatMessageTime(message.timestamp) }}
@@ -174,13 +174,6 @@
                 </div>
                 <div class="text-gray-900 break-words">
                   {{ message.content }}
-                </div>
-
-                <!-- Message actions for presidium -->
-                <div v-if="authStore.user?.role === 'presidium'" class="flex gap-2 mt-2 text-xs">
-                  <button @click="deleteMessage(message._id)" class="text-red-600 hover:text-red-700 transition-colors">
-                    Delete
-                  </button>
                 </div>
               </div>
             </div>
@@ -255,7 +248,8 @@ import {
   Globe, 
   ShieldAlert, 
   Ghost, 
-  MessageSquare
+  MessageSquare,
+  Crown
 } from 'lucide-vue-next'
 
 // Stores
@@ -505,19 +499,6 @@ const sendMessage = async () => {
     toast.error('Failed to send message')
   } finally {
     isSending.value = false
-  }
-}
-
-const deleteMessage = async (messageId) => {
-  if (!confirm('Are you sure you want to delete this message?')) return
-
-  try {
-    await apiMethods.messages.deleteMessage(messageId)
-    messages.value = messages.value.filter(m => m._id !== messageId)
-    toast.success('Message deleted')
-  } catch (error) {
-    console.error('Failed to delete message:', error)
-    toast.error('Failed to delete message')
   }
 }
 
