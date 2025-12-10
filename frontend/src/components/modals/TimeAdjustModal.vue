@@ -133,7 +133,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ClockIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
-import ModalWrapper from '@/components/ui/ModalWrapper.vue'
 
 const props = defineProps({
     modelValue: {

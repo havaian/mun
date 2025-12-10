@@ -62,7 +62,6 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { CalendarDaysIcon } from '@heroicons/vue/24/outline'
-import ModalWrapper from '@/components/ui/ModalWrapper.vue'
 import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
 

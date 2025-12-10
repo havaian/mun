@@ -269,7 +269,6 @@ import {
     InformationCircleIcon,
     PencilIcon
 } from '@heroicons/vue/24/outline'
-import ModalWrapper from '@/components/ui/ModalWrapper.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 
 const router = useRouter()

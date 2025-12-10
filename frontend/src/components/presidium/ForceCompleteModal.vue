@@ -61,7 +61,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
-import ModalWrapper from '@/components/shared/ModalWrapper.vue'
 
 const props = defineProps({
     modelValue: {

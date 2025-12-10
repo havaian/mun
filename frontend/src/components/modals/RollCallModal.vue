@@ -92,7 +92,6 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { ClipboardDocumentListIcon } from '@heroicons/vue/24/outline'
-import ModalWrapper from '@/components/ui/ModalWrapper.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps({
