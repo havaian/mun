@@ -149,7 +149,7 @@ const requireSameCommittee = (req, res, next) => {
     }
 
     // For presidium and delegates, check if they belong to the same committee
-    const requestedCommitteeId = req.params.committeeId || req.params.id;
+    const requestedCommitteeId = req.params.committeeId || req.params.id || req.body.committeeId;
     const userCommitteeId = req.user.committeeId?.toString();
 
     if (!userCommitteeId) {
