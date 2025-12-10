@@ -42,7 +42,7 @@ const createVoting = async (req, res) => {
 
         // Get eligible voters from session roll call
         const eligibleVoters = session.rollCall.entries
-            .filter(entry => entry.status === 'present_voting')
+            .filter(entry => entry.status === 'present_and_voting')
             .map(entry => {
                 const countryData = committee.countries.find(c => c.name === entry.country);
                 return {

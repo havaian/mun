@@ -67,7 +67,7 @@ const eligibleVoterSchema = new mongoose.Schema({
 
     attendanceStatus: {
         type: String,
-        enum: ['present_voting', 'present', 'absent'],
+        enum: ['present_and_voting', 'present', 'absent'],
         required: true
     }
 }, { _id: false });
@@ -250,7 +250,7 @@ votingSchema.index({ startedAt: -1 });
 // Methods for voting management
 votingSchema.methods.calculateMajorityThreshold = function() {
     const presentVoters = this.eligibleVoters.filter(v => 
-        v.attendanceStatus === 'present_voting' && v.canVote
+        v.attendanceStatus === 'present_and_voting' && v.canVote
     ).length;
 
     switch (this.majorityRequired) {
@@ -297,7 +297,7 @@ votingSchema.methods.calculateResults = function() {
         abstentions,
         totalVotes,
         presentVoters: this.eligibleVoters.filter(v => 
-            v.attendanceStatus === 'present_voting' && v.canVote
+            v.attendanceStatus === 'present_and_voting' && v.canVote
         ).length,
         passed,
         vetoUsed,
@@ -312,7 +312,7 @@ votingSchema.methods.canVote = function(email) {
     if (!voter) return false;
     
     return voter.canVote && 
-           voter.attendanceStatus === 'present_voting' && 
+           voter.attendanceStatus === 'present_and_voting' && 
            !this.votes.find(v => v.email === email);
 };
 

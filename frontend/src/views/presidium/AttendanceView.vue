@@ -91,7 +91,7 @@
                         <div class="flex items-center space-x-4">
                             <select v-model="statusFilter" class="text-sm border-gray-300 rounded-lg">
                                 <option value="all">All Countries</option>
-                                <option value="present_voting">Present & Voting</option>
+                                <option value="present_and_voting">Present & Voting</option>
                                 <option value="present">Present</option>
                                 <option value="absent">Absent</option>
                             </select>
@@ -134,9 +134,9 @@
                                 ]">
                                     Present
                                 </button>
-                                <button @click="updateAttendance(country.name, 'present_voting')" :class="[
+                                <button @click="updateAttendance(country.name, 'present_and_voting')" :class="[
                                     'px-3 py-1.5 text-sm rounded-lg transition-colors',
-                                    country.attendanceStatus === 'present_voting'
+                                    country.attendanceStatus === 'present_and_voting'
                                         ? 'bg-green-100 text-green-700 border border-green-200'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 ]">
@@ -219,7 +219,7 @@ const attendanceCounts = computed(() => {
         const status = country.attendanceStatus || 'absent'
         if (status === 'present') {
             counts.present++
-        } else if (status === 'present_voting') {
+        } else if (status === 'present_and_voting') {
             counts.presentVoting++
         } else {
             counts.absent++
@@ -422,7 +422,7 @@ const updateAttendance = async (countryName, status) => {
 // Utility methods
 const getStatusLabel = (status) => {
     const labels = {
-        'present_voting': 'Present & Voting',
+        'present_and_voting': 'Present & Voting',
         'present': 'Present',
         'absent': 'Absent'
     }
@@ -431,7 +431,7 @@ const getStatusLabel = (status) => {
 
 const getStatusColor = (status) => {
     const colors = {
-        'present_voting': 'text-green-600 font-medium',
+        'present_and_voting': 'text-green-600 font-medium',
         'present': 'text-blue-600 font-medium',
         'absent': 'text-red-600 font-medium'
     }

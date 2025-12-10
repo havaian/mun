@@ -49,10 +49,10 @@
                         <!-- Status Options -->
                         <div class="space-y-3">
                             <!-- Present & Voting (only for voting countries) -->
-                            <button v-if="canVote" @click="selectStatus('present_voting')" :disabled="isSubmitting"
+                            <button v-if="canVote" @click="selectStatus('present_and_voting')" :disabled="isSubmitting"
                                 :class="[
                                     'w-full p-4 rounded-lg border-2 transition-all text-left',
-                                    selectedStatus === 'present_voting'
+                                    selectedStatus === 'present_and_voting'
                                         ? 'border-mun-green-500 bg-mun-green-50'
                                         : 'border-mun-gray-200 hover:border-mun-green-300 hover:bg-mun-green-50/50'
                                 ]">
@@ -60,11 +60,11 @@
                                     <div class="flex items-center space-x-3">
                                         <div :class="[
                                             'w-5 h-5 rounded-full border-2 flex items-center justify-center',
-                                            selectedStatus === 'present_voting'
+                                            selectedStatus === 'present_and_voting'
                                                 ? 'border-mun-green-500 bg-mun-green-500'
                                                 : 'border-mun-gray-300'
                                         ]">
-                                            <CheckIcon v-if="selectedStatus === 'present_voting'"
+                                            <CheckIcon v-if="selectedStatus === 'present_and_voting'"
                                                 class="w-3 h-3 text-white" />
                                         </div>
                                         <div>
@@ -189,7 +189,7 @@ const selectStatus = (status) => {
 
 const getStatusLabel = (status) => {
     const labels = {
-        'present_voting': 'Present and Voting',
+        'present_and_voting': 'Present and Voting',
         'present': 'Present'
     }
     return labels[status] || status
@@ -197,7 +197,7 @@ const getStatusLabel = (status) => {
 
 const getStatusDescription = (status) => {
     const descriptions = {
-        'present_voting': 'You will be counted for quorum and can participate in all votes',
+        'present_and_voting': 'You will be counted for quorum and can participate in all votes',
         'present': 'You can participate in debates but cannot vote'
     }
     return descriptions[status] || ''
@@ -205,7 +205,7 @@ const getStatusDescription = (status) => {
 
 const getPreviewClass = (status) => {
     const classes = {
-        'present_voting': 'bg-mun-green-50 border-mun-green-200',
+        'present_and_voting': 'bg-mun-green-50 border-mun-green-200',
         'present': 'bg-mun-yellow-50 border-mun-yellow-200'
     }
     return classes[status] || 'bg-mun-gray-50 border-mun-gray-200'
@@ -213,7 +213,7 @@ const getPreviewClass = (status) => {
 
 const getPreviewTextClass = (status) => {
     const classes = {
-        'present_voting': 'text-mun-green-700',
+        'present_and_voting': 'text-mun-green-700',
         'present': 'text-mun-yellow-700'
     }
     return classes[status] || 'text-mun-gray-600'
@@ -267,7 +267,7 @@ watch(() => props.modelValue, (newVal) => {
         isVisible.value = true
         // Pre-select based on voting rights
         if (canVote.value) {
-            selectedStatus.value = 'present_voting'
+            selectedStatus.value = 'present_and_voting'
         } else {
             selectedStatus.value = 'present'
         }

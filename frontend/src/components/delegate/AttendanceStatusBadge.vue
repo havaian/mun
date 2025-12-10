@@ -5,7 +5,7 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <div :class="getIconContainerClass(status)">
-                        <CheckCircleIcon v-if="status === 'present_voting'" class="w-6 h-6" />
+                        <CheckCircleIcon v-if="status === 'present_and_voting'" class="w-6 h-6" />
                         <ClockIcon v-else-if="status === 'present'" class="w-6 h-6" />
                         <XCircleIcon v-else class="w-6 h-6" />
                     </div>
@@ -43,7 +43,7 @@
             </div>
 
             <!-- Info for present & voting -->
-            <div v-else-if="status === 'present_voting'"
+            <div v-else-if="status === 'present_and_voting'"
                 class="mt-3 p-3 bg-mun-green-50 rounded-lg border border-mun-green-200">
                 <p class="text-sm text-mun-green-700 flex items-start">
                     <CheckCircleIcon class="w-4 h-4 mr-2 flex-shrink-0 mt-0.5" />
@@ -71,7 +71,7 @@
         <!-- Inline variant -->
         <div v-else-if="variant === 'inline'" class="flex items-center space-x-2">
             <div :class="getIconContainerClass(status, true)">
-                <CheckCircleIcon v-if="status === 'present_voting'" class="w-4 h-4" />
+                <CheckCircleIcon v-if="status === 'present_and_voting'" class="w-4 h-4" />
                 <ClockIcon v-else-if="status === 'present'" class="w-4 h-4" />
                 <XCircleIcon v-else class="w-4 h-4" />
             </div>
@@ -94,7 +94,7 @@ const props = defineProps({
     status: {
         type: String,
         required: true,
-        validator: (value) => ['present_voting', 'present', 'absent'].includes(value)
+        validator: (value) => ['present_and_voting', 'present', 'absent'].includes(value)
     },
     variant: {
         type: String,
@@ -121,7 +121,7 @@ defineEmits(['request-change'])
 // Methods
 const getStatusLabel = (status) => {
     const labels = {
-        'present_voting': 'Present & Voting',
+        'present_and_voting': 'Present & Voting',
         'present': 'Present',
         'absent': 'Absent'
     }
@@ -131,7 +131,7 @@ const getStatusLabel = (status) => {
 const getIconContainerClass = (status, small = false) => {
     const baseClasses = small ? 'p-1 rounded' : 'p-2 rounded-lg'
     const statusClasses = {
-        'present_voting': 'bg-mun-green-100 text-mun-green-600',
+        'present_and_voting': 'bg-mun-green-100 text-mun-green-600',
         'present': 'bg-mun-yellow-100 text-mun-yellow-600',
         'absent': 'bg-mun-red-100 text-mun-red-600'
     }
@@ -140,7 +140,7 @@ const getIconContainerClass = (status, small = false) => {
 
 const getBadgeClass = (status) => {
     const statusClasses = {
-        'present_voting': 'px-3 py-1 text-sm font-medium rounded-lg bg-mun-green-100 text-mun-green-700',
+        'present_and_voting': 'px-3 py-1 text-sm font-medium rounded-lg bg-mun-green-100 text-mun-green-700',
         'present': 'px-3 py-1 text-sm font-medium rounded-lg bg-mun-yellow-100 text-mun-yellow-700',
         'absent': 'px-3 py-1 text-sm font-medium rounded-lg bg-mun-red-100 text-mun-red-700'
     }
