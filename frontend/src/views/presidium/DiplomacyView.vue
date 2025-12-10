@@ -35,7 +35,10 @@
                 'w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold',
                 channel.color
               ]">
-                {{ channel.icon }}
+                <Globe v-if="channel.icon === 'Globe'" :size="20" class="text-white" />
+                <ShieldAlert v-else-if="channel.icon === 'ShieldAlert'" :size="20" class="text-white" />
+                <Ghost v-else-if="channel.icon === 'Ghost'" :size="20" class="text-white" />
+                <span v-else>{{ channel.icon }}</span>
               </div>
               <div class="flex-1">
                 <div class="font-medium">{{ channel.name }}</div>
@@ -101,7 +104,10 @@
               'w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold',
               selectedChannel.color
             ]">
-              {{ selectedChannel.icon }}
+              <Globe v-if="selectedChannel.icon === 'Globe'" :size="24" class="text-white" />
+              <ShieldAlert v-else-if="selectedChannel.icon === 'ShieldAlert'" :size="24" class="text-white" />
+              <Ghost v-else-if="selectedChannel.icon === 'Ghost'" :size="24" class="text-white" />
+              <MessageSquare v-else :size="24" class="text-white" />
             </div>
             <div>
               <h2 class="text-lg font-bold text-gray-900">{{ selectedChannel.name }}</h2>
@@ -244,6 +250,13 @@ import {
   UserIcon, PaperAirplaneIcon
 } from '@heroicons/vue/24/outline'
 
+import { 
+  Globe, 
+  ShieldAlert, 
+  Ghost, 
+  MessageSquare
+} from 'lucide-vue'
+
 // Stores
 const router = useRouter()
 const authStore = useAuthStore()
@@ -270,7 +283,7 @@ const publicChannels = [
     id: 'general',
     name: 'General Assembly',
     description: 'Global floor discussion',
-    icon: '🌍',
+    icon: 'Globe',
     color: 'bg-blue-500 text-white',
     type: 'public',
     unreadCount: 0
@@ -279,7 +292,7 @@ const publicChannels = [
     id: 'announcements',
     name: 'Announcements',
     description: 'Official Presidium updates',
-    icon: '📢',
+    icon: 'ShieldAlert',
     color: 'bg-yellow-500 text-white',
     type: 'public',
     unreadCount: 0
@@ -288,7 +301,7 @@ const publicChannels = [
     id: 'gossip',
     name: 'Gossip Box',
     description: 'Anonymous chatter',
-    icon: '🗣️',
+    icon: 'Ghost',
     color: 'bg-pink-500 text-white',
     type: 'public',
     unreadCount: 0
@@ -444,12 +457,11 @@ const deleteMessage = async (messageId) => {
 }
 
 const openDirectMessage = (delegate) => {
-  // Create/select DM channel
   const dmChannel = {
     id: `dm-${delegate.email}`,
     name: delegate.countryName,
     description: 'Direct Message',
-    icon: '💬',
+    icon: 'MessageSquare',
     color: 'bg-gray-500 text-white',
     type: 'dm',
     recipient: delegate
