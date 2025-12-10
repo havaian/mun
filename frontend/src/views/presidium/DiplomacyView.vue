@@ -149,75 +149,47 @@
             </div>
 
             <!-- Message Items -->
-            <div v-for="message in currentMessages" :key="message._id" class="flex gap-4">
-              <!-- Avatar -->
-              <div class="flex-shrink-0">
-                <!-- Announcements channel - show announcement icon -->
-                <div v-if="selectedChannel.id === 'announcements'"
-                  class="w-10 h-8 bg-yellow-100 rounded flex items-center justify-center">
-                  <ShieldAlert class="w-5 h-5 text-yellow-600" />
+            <div v-for="message in currentMessages" :key="message._id" class="mb-4">
+              <!-- General Assembly - Right-aligned blue speech bubbles for Chairperson -->
+              <div v-if="selectedChannel.id === 'general'" class="flex flex-col items-end">
+                <div class="flex items-center gap-2 mb-1 mr-2">
+                  <span class="text-sm text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
+                  <span class="font-medium text-gray-700">
+                    {{ message.senderCountry.includes('Presidium') ? 'Chairperson' : message.senderCountry }}
+                  </span>
                 </div>
-                <!-- Gossip channel - show ghost icon -->
-                <div v-else-if="selectedChannel.id === 'gossip'"
-                  class="w-10 h-8 bg-pink-100 rounded flex items-center justify-center">
-                  <Ghost class="w-5 h-5 text-pink-600" />
-                </div>
-                <!-- General Assembly - show country flag or crown for presidium -->
-                <div v-else-if="message.senderCountry && !message.senderCountry.includes('Presidium')"
-                  class="w-10 h-8 bg-gray-100 rounded flex items-center justify-center">
-                  <img :src="getCountryFlag(message.senderCountry)" :alt="message.senderCountry"
-                    class="w-8 h-6 rounded border border-gray-200 object-cover" />
-                </div>
-                <div v-else class="w-10 h-8 bg-blue-100 rounded flex items-center justify-center">
-                  <Crown class="w-5 h-5 text-blue-600" />
+                <div class="bg-blue-600 text-white rounded-2xl rounded-br-md px-4 py-2 max-w-xs shadow-sm">
+                  {{ message.content }}
                 </div>
               </div>
 
-              <!-- Message Content -->
-              <div class="flex-1">
-                <!-- Announcement message styling -->
-                <div v-if="selectedChannel.id === 'announcements'"
-                  class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-2">
-                  <div class="flex items-center gap-2 mb-1">
-                    <ShieldAlert class="w-4 h-4 text-yellow-600" />
-                    <span class="font-semibold text-gray-900">Chairperson:</span>
-                    <span class="text-sm text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
+              <!-- Announcements - Yellow notification style -->
+              <div v-else-if="selectedChannel.id === 'announcements'" class="flex justify-center mb-3">
+                <div class="bg-yellow-50 border border-yellow-200 rounded-full px-4 py-3 flex items-center gap-2 shadow-sm">
+                  <div class="w-5 h-5 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <ShieldAlert class="w-3 h-3 text-yellow-600" />
                   </div>
-                  <div class="text-gray-900 font-medium">
-                    {{ message.content }}
-                  </div>
+                  <span class="font-medium text-yellow-800">Chairperson:</span>
+                  <span class="text-yellow-700">{{ message.content }}</span>
                 </div>
+              </div>
 
-                <!-- Gossip message styling -->
-                <div v-else-if="selectedChannel.id === 'gossip'"
-                  class="bg-pink-50 border border-pink-200 rounded-lg p-3 mb-2">
-                  <div class="flex items-center gap-2 mb-1">
-                    <Ghost class="w-4 h-4 text-pink-600" />
-                    <span class="font-semibold text-pink-600">Anonymous</span>
-                    <span class="text-sm text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
+              <!-- Gossip Box - Pink anonymous messages -->
+              <div v-else-if="selectedChannel.id === 'gossip'" class="mb-3">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="w-4 h-4 bg-pink-100 rounded-full flex items-center justify-center">
+                    <Ghost class="w-3 h-3 text-pink-600" />
                   </div>
-                  <div class="text-gray-900">
-                    {{ message.content }}
-                  </div>
+                  <span class="font-medium text-pink-600">Anonymous</span>
+                  <span class="text-sm text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
                 </div>
-
-                <!-- General Assembly message styling -->
-                <div v-else>
-                  <div class="flex items-baseline gap-2 mb-1">
-                    <span class="font-semibold text-gray-900">
-                      {{ message.senderCountry.includes('Presidium') ? 'Chairperson' : message.senderCountry }}
-                    </span>
-                    <span class="text-sm text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
-                  </div>
-                  <div class="bg-blue-600 text-white rounded-lg px-4 py-2 max-w-md ml-auto">
-                    {{ message.content }}
-                  </div>
+                <div class="bg-pink-50 border border-pink-200 rounded-2xl px-4 py-3 shadow-sm max-w-md">
+                  <div class="text-pink-800">{{ message.content }}</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Message Input -->
           <!-- Message Input -->
           <div class="bg-white border-t border-gray-200 p-4">
             <!-- Show input for General Assembly and Gossip Box -->
