@@ -26,6 +26,8 @@ const createVoting = async (req, res) => {
             return res.status(404).json({ error: 'Committee not found' });
         }
 
+        console.log(committee)
+
         const session = await Session.findById(sessionId);
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
