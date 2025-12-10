@@ -189,16 +189,18 @@
               Color Theme
             </label>
             <div class="grid grid-cols-6 gap-3">
-              <button v-for="color in colorOptions" :key="color.name" type="button"
-                @click="newCoalition.color = color.name" :class="[
-                  'w-12 h-12 rounded-lg border-2 transition-all',
-                  color.class,
-                  newCoalition.color === color.name
-                    ? 'border-gray-800 ring-2 ring-gray-300'
-                    : 'border-gray-200 hover:border-gray-300'
-                ]">
-                <CheckIcon v-if="newCoalition.color === color.name" class="w-6 h-6 text-white mx-auto" />
-              </button>
+              <div class="flex w-full justify-center">
+                <button v-for="color in colorOptions" :key="color.name" type="button"
+                  @click="newCoalition.color = color.name" :class="[
+                    'w-12 h-12 rounded-lg border-2 transition-all',
+                    color.class,
+                    newCoalition.color === color.name
+                      ? 'border-gray-800 ring-2 ring-gray-300'
+                      : 'border-gray-200 hover:border-gray-300'
+                  ]">
+                  <CheckIcon v-if="newCoalition.color === color.name" class="w-6 h-6 text-white mx-auto" />
+                </button>
+              </div>
             </div>
           </div>
 
