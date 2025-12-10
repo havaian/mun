@@ -11,7 +11,7 @@ export const enhancedSessionApi = {
         start: (sessionId) => apiMethods.put(`/sessions/${sessionId}/start`),
 
         // End session
-        end: (id, data = {}) => api.put(`/sessions/${id}/end`, data),
+        end: (id, data = {}) => apiMethods.put(`/sessions/${id}/end`, data),
 
         // Get session details
         getById: (sessionId) => apiMethods.get(`/sessions/${sessionId}`),
@@ -97,6 +97,7 @@ export const updateApiMethods = () => {
         getTimers: enhancedSessionApi.sessions.getTimers,
         getAll: enhancedSessionApi.sessions.getByCommittee,
         getStatistics: enhancedSessionApi.sessions.getStatistics,
+        end: enhancedSessionApi.sessions.end,
 
         // Roll call methods
         startRollCall: enhancedSessionApi.rollCall.start,
@@ -126,6 +127,7 @@ export const updateApiMethods = () => {
 }
 
 // Auto-update on import
-updateApiMethods()
+const updatedApiMethods = updateApiMethods()
 
-export default enhancedSessionApi
+export default updatedApiMethods
+export { enhancedSessionApi }
