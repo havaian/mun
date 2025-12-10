@@ -414,6 +414,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
+import { apiMethods } from '@/utils/api'
 import sessionApi from '@/utils/sessionApi'
 
 // Icons
@@ -613,14 +614,14 @@ const loadSessionDetails = async () => {
         }
 
         // Load active timers
-        const timerResponse = await sessionApi.timers.getActiveTimers(currentSession.value._id)
+        const timerResponse = await apiMethods.timers.getActiveTimers(currentSession.value._id)
         if (timerResponse.data.success) {
             timers.value = timerResponse.data.timers || []
             activeTimer.value = timers.value.find(t => t.status === 'running') || timers.value[0] || null
         }
 
         // Load active voting
-        const votingResponse = await sessionApi.voting.getByCommitteeId(committee.value._id)
+        const votingResponse = await apiMethods.voting.getByCommitteeId(committee.value._id)
         if (votingResponse.data.success) {
             const activeVotingData = votingResponse.data.voting?.find(v => v.status === 'active')
             if (activeVotingData) {
@@ -707,7 +708,7 @@ const endCurrentSession = async () => {
 
 const resumeSession = async (sessionId) => {
     try {
-        const response = await sessionApi.sessions.updateStatus(sessionId, { status: 'active' })
+        const response = await apiMethods.sessions.updateStatus(sessionId, { status: 'active' })
 
         if (response.data.success) {
             currentSession.value = response.data.session
@@ -787,7 +788,8 @@ const toggleTimer = async () => {
 
     try {
         const action = activeTimer.value.isActive && !activeTimer.value.isPaused ? 'pause' : 'resume'
-        const response = await sessionApi.timers[`${action}Timer`](activeTimer.value._id)
+        
+        const response = await apiMethods.timers[`${action}Timer`](activeTimer.value._id)
 
         if (response.data.success) {
             activeTimer.value = response.data.timer
@@ -803,7 +805,7 @@ const resetTimer = async () => {
     if (!activeTimer.value) return
 
     try {
-        const response = await sessionApi.timers.completeTimer(activeTimer.value._id)
+        const response = await apiMethods.timers.completeTimer(activeTimer.value._id)
         if (response.data.success) {
             activeTimer.value = null
             toast.success('Timer reset')
@@ -821,7 +823,7 @@ const startSpeakerTimer = async () => {
     }
 
     try {
-        const response = await sessionApi.timers.createQuickSpeakerTimer({
+        const response = await apiMethods.timers.createQuickSpeakerTimer({
             committeeId: committee.value._id,
             sessionId: currentSession.value._id,
             speakerCountry: currentSpeaker.value.country,
@@ -843,7 +845,7 @@ const startSessionTimer = async () => {
     if (!currentSession.value) return
 
     try {
-        const response = await sessionApi.sessions.startSessionTimer(currentSession.value._id, {
+        const response = await apiMethods.sessions.startSessionTimer(currentSession.value._id, {
             duration: 3600 // 1 hour default
         })
 
@@ -921,7 +923,7 @@ const addSpeaker = async () => {
         const country = availableCountries.value.find(c => c.name === selectedCountry.value)
         if (!country) return
 
-        const response = await sessionApi.sessions.addToSpeakerList(currentSession.value._id, {
+        const response = await apiMethods.sessions.addToSpeakerList(currentSession.value._id, {
             country: country.name,
             email: country.email
         })
@@ -941,7 +943,7 @@ const removeSpeaker = async (countryName) => {
     if (!currentSession.value) return
 
     try {
-        const response = await sessionApi.sessions.removeFromSpeakerList(currentSession.value._id, {
+        const response = await apiMethods.sessions.removeFromSpeakerList(currentSession.value._id, {
             country: countryName
         })
 
@@ -961,7 +963,7 @@ const nextSpeaker = async () => {
     try {
         const nextSpeakerData = speakerQueue.value[0]
 
-        const response = await sessionApi.sessions.setCurrentSpeaker(currentSession.value._id, {
+        const response = await apiMethods.sessions.setCurrentSpeaker(currentSession.value._id, {
             country: nextSpeakerData.country,
             email: nextSpeakerData.email
         })
@@ -990,7 +992,7 @@ const endVoting = async () => {
     if (!activeVoting.value) return
 
     try {
-        const response = await sessionApi.voting.endVoting(activeVoting.value._id)
+        const response = await apiMethods.voting.endVoting(activeVoting.value._id)
         if (response.data.success) {
             activeVoting.value = null
             votingResults.value = {}
