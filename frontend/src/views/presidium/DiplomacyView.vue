@@ -370,9 +370,19 @@ const loadMessages = async () => {
   try {
     if (!selectedChannel.value) return
 
-    // For public channels, we'll simulate with empty messages for now
+    // For public channels, get or create committee conversation
     if (selectedChannel.value.type === 'public') {
-      messages.value = []
+      const response = await apiMethods.messages.getCommitteeConversation(
+        committee.value._id || committee.value,
+        selectedChannel.value.id
+      )
+
+      if (response.data.success) {
+        // Store the conversation ID for sending messages
+        selectedChannel.value.conversationId = response.data.conversation._id
+        messages.value = response.data.conversation.messages || []
+        scrollToBottom()
+      }
       return
     }
 
