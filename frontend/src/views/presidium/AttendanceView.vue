@@ -174,6 +174,7 @@ import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
 import sessionApi from '@/utils/sessionApi'
+import { updatedApiMethods } from '@/utils/sessionApi'
 import CountryFlag from '@/components/shared/CountryFlag.vue'
 
 // Icons
@@ -299,14 +300,15 @@ const loadAttendanceData = async () => {
     if (!currentSession.value?._id) return
 
     try {
-        const response = await sessionApi.rollCall.getAttendance(currentSession.value._id)
+        // Get session details instead of attendance endpoint
+        const response = await sessionApi.sessions.getById(currentSession.value._id)
 
         if (response.data.success) {
             const sessionData = response.data.session
             rollCallActive.value = sessionData.rollCall?.isActive || false
             quorumData.value = sessionData.rollCall?.quorum || {
                 hasQuorum: false,
-                required: 0,
+                required: Math.floor(countries.value.length / 2) + 1,
                 presentVoting: 0
             }
 
@@ -393,7 +395,8 @@ const updateAttendance = async (countryName, status) => {
     try {
         const response = await sessionApi.rollCall.markAttendance(currentSession.value._id, {
             country: countryName,
-            status: status
+            status: status,
+            email: countries.value.find(c => c.name === countryName)?.email
         })
 
         if (response.data.success) {
@@ -403,8 +406,10 @@ const updateAttendance = async (countryName, status) => {
                 countries.value[countryIndex].attendanceStatus = status
             }
 
-            // Update quorum data
-            quorumData.value = response.data.quorum
+            // Update quorum data from response
+            if (response.data.quorum) {
+                quorumData.value = response.data.quorum
+            }
 
             toast.success(`${countryName} marked as ${getStatusLabel(status)}`)
         }
