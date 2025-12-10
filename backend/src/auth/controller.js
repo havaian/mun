@@ -298,7 +298,6 @@ const bindEmail = async (req, res) => {
 
         // Bind email and deactivate login link
         user.email = email.toLowerCase();
-        user.isActive = false; // Link can no longer be used for first-time registration
         user.lastLogin = new Date();
         user.lastActivity = new Date();
 
