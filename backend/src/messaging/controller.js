@@ -622,7 +622,7 @@ const getOrCreateCommitteeConversation = async (req, res) => {
                     if (committee.presidium[role] && committee.presidium[role].email) {
                         participants.push({
                             email: committee.presidium[role].email,
-                            country: committee.presidium[role].country || role,
+                            country: committee.presidium[role],
                             role: 'admin'
                         });
                     }
@@ -719,7 +719,7 @@ const sendCommitteeMessage = async (req, res) => {
                     if (committee.presidium[role] && committee.presidium[role].email) {
                         participants.push({
                             email: committee.presidium[role].email,
-                            country: committee.presidium[role].country || role,
+                            country: committee.presidium[role].country || committee.presidium[role].countryName || `Presidium (${role})`,
                             role: 'admin',
                             isActive: true
                         });
