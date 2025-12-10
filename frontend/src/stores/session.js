@@ -333,7 +333,7 @@ export const useSessionStore = defineStore('session', () => {
     // Timer Management (integrates with timer store/API)
     const startSessionTimer = async (sessionId, duration) => {
         try {
-            const response = await apiMethods.timers.startTimer(sessionId, 'session', { duration })
+            const response = await apiMethods.timers.startSessionTimer(sessionId, 'session', { duration })
 
             if (response.data.success) {
                 timers.session.startedAt = new Date()
@@ -350,7 +350,7 @@ export const useSessionStore = defineStore('session', () => {
 
     const startSpeakerTimer = async (sessionId, speakerEmail, duration = 120) => {
         try {
-            const response = await apiMethods.timers.startTimer(sessionId, 'speaker', {
+            const response = await apiMethods.timers.startSessionTimer(sessionId, 'speaker', {
                 speakerEmail,
                 duration
             })

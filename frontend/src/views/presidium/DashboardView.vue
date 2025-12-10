@@ -416,6 +416,7 @@ import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
 import sessionApi from '@/utils/sessionApi'
+import { updatedSessionApi } from '@/utils/sessionApi'
 
 // Icons
 import {
@@ -564,7 +565,7 @@ const loadAllSessions = async () => {
     if (!committee.value?._id) return
     
     try {
-        const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
+        const response = await updatedSessionApi.sessions.getByCommittee(committee.value._id, {
             page: 1,
             limit: 20,
             sort: '-number' // Latest sessions first
@@ -580,7 +581,7 @@ const loadAllSessions = async () => {
 
 const loadActiveSession = async () => {
     try {
-        const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
+        const response = await updatedSessionApi.sessions.getByCommittee(committee.value._id, {
             status: 'active',
             limit: 1
         })
@@ -599,7 +600,7 @@ const loadSessionDetails = async () => {
 
     try {
         // Load session details
-        const sessionResponse = await sessionApi.sessions.getById(currentSession.value._id)
+        const sessionResponse = await updatedSessionApi.sessions.getById(currentSession.value._id)
         if (sessionResponse.data.success) {
             const sessionData = sessionResponse.data.session
             currentSession.value = sessionData
@@ -671,7 +672,7 @@ const createQuickSession = async () => {
             }
         }
 
-        const response = await sessionApi.sessions.create(sessionData)
+        const response = await updatedSessionApi.sessions.create(sessionData)
 
         if (response.data.success) {
             currentSession.value = response.data.session
@@ -691,7 +692,7 @@ const endCurrentSession = async () => {
     if (!currentSession.value) return
 
     try {
-        const response = await sessionApi.sessions.end(currentSession.value._id, {
+        const response = await updatedSessionApi.sessions.end(currentSession.value._id, {
             reason: 'Session ended by presidium'
         })
 
@@ -818,7 +819,7 @@ const resetTimer = async () => {
 
 const startSpeakerTimer = async () => {
     if (!currentSession.value || !currentSpeaker.value) {
-        toast.warning('Please set a current speaker first')
+        toast.warn('Please set a current speaker first')
         return
     }
 
@@ -864,7 +865,7 @@ const changeMode = async (newMode) => {
     if (!currentSession.value || currentSession.value.currentMode === newMode) return
 
     try {
-        const response = await sessionApi.sessions.changeMode(currentSession.value._id, {
+        const response = await apiMethods.sessions.changeMode(currentSession.value._id, {
             mode: newMode,
             reason: `Mode changed by ${authStore.user?.name || 'presidium'}`
         })
@@ -884,7 +885,7 @@ const startRollCall = async () => {
     if (!currentSession.value) return
 
     try {
-        const response = await sessionApi.sessions.startRollCall(currentSession.value._id, {
+        const response = await apiMethods.sessions.startRollCall(currentSession.value._id, {
             timeLimit: 10 // 10 minutes default
         })
 
@@ -902,7 +903,7 @@ const endRollCall = async () => {
     if (!currentSession.value) return
 
     try {
-        const response = await sessionApi.sessions.endRollCall(currentSession.value._id)
+        const response = await updatedSessionApi.sessions.endRollCall(currentSession.value._id)
 
         if (response.data.success) {
             rollCallStatus.value = 'completed'
