@@ -152,9 +152,22 @@
             <div v-for="message in currentMessages" :key="message._id" class="flex gap-4">
               <!-- Avatar -->
               <div class="flex-shrink-0">
-                <img v-if="message.senderCountry && !message.senderCountry.includes('Presidium')"
-                  :src="getCountryFlag(message.senderCountry)" :alt="message.senderCountry"
-                  class="w-10 h-8 rounded border border-gray-200 object-cover" />
+                <!-- Announcements channel - show announcement icon -->
+                <div v-if="selectedChannel.id === 'announcements'"
+                  class="w-10 h-8 bg-yellow-100 rounded flex items-center justify-center">
+                  <ShieldAlert class="w-5 h-5 text-yellow-600" />
+                </div>
+                <!-- Gossip channel - show ghost icon -->
+                <div v-else-if="selectedChannel.id === 'gossip'"
+                  class="w-10 h-8 bg-pink-100 rounded flex items-center justify-center">
+                  <Ghost class="w-5 h-5 text-pink-600" />
+                </div>
+                <!-- General Assembly - show country flag or crown for presidium -->
+                <div v-else-if="message.senderCountry && !message.senderCountry.includes('Presidium')"
+                  class="w-10 h-8 bg-gray-100 rounded flex items-center justify-center">
+                  <img :src="getCountryFlag(message.senderCountry)" :alt="message.senderCountry"
+                    class="w-8 h-6 rounded border border-gray-200 object-cover" />
+                </div>
                 <div v-else class="w-10 h-8 bg-blue-100 rounded flex items-center justify-center">
                   <Crown class="w-5 h-5 text-blue-600" />
                 </div>
@@ -162,36 +175,66 @@
 
               <!-- Message Content -->
               <div class="flex-1">
-                <div class="flex items-baseline gap-2 mb-1">
-                  <span class="font-semibold text-gray-900">
-                    {{ message.senderCountry || message.senderName || 'Anonymous' }}
-                  </span>
-                  <span v-if="message.senderCountry && message.senderCountry.includes('Presidium')"
-                    class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                    👑 Presidium
-                  </span>
-                  <span class="text-sm text-gray-500">
-                    {{ formatMessageTime(message.timestamp) }}
-                  </span>
+                <!-- Announcement message styling -->
+                <div v-if="selectedChannel.id === 'announcements'"
+                  class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-2">
+                  <div class="flex items-center gap-2 mb-1">
+                    <ShieldAlert class="w-4 h-4 text-yellow-600" />
+                    <span class="font-semibold text-gray-900">Chairperson:</span>
+                    <span class="text-sm text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
+                  </div>
+                  <div class="text-gray-900 font-medium">
+                    {{ message.content }}
+                  </div>
                 </div>
-                <div class="text-gray-900 break-words">
-                  {{ message.content }}
+
+                <!-- Gossip message styling -->
+                <div v-else-if="selectedChannel.id === 'gossip'"
+                  class="bg-pink-50 border border-pink-200 rounded-lg p-3 mb-2">
+                  <div class="flex items-center gap-2 mb-1">
+                    <Ghost class="w-4 h-4 text-pink-600" />
+                    <span class="font-semibold text-pink-600">Anonymous</span>
+                    <span class="text-sm text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
+                  </div>
+                  <div class="text-gray-900">
+                    {{ message.content }}
+                  </div>
+                </div>
+
+                <!-- General Assembly message styling -->
+                <div v-else>
+                  <div class="flex items-baseline gap-2 mb-1">
+                    <span class="font-semibold text-gray-900">
+                      {{ message.senderCountry.includes('Presidium') ? 'Chairperson' : message.senderCountry }}
+                    </span>
+                    <span class="text-sm text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
+                  </div>
+                  <div class="bg-blue-600 text-white rounded-lg px-4 py-2 max-w-md ml-auto">
+                    {{ message.content }}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Message Input -->
+          <!-- Message Input -->
           <div class="bg-white border-t border-gray-200 p-4">
-            <form @submit.prevent="sendMessage" class="flex gap-3">
-              <input v-model="newMessage" type="text" :placeholder="`Message ${selectedChannel.name}...`"
-                class="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            <!-- Show input for General Assembly and Gossip Box -->
+            <form v-if="selectedChannel.id !== 'announcements' || authStore.user?.role === 'presidium'"
+              @submit.prevent="sendMessage" class="flex gap-3">
+              <input v-model="newMessage" type="text" :placeholder="getInputPlaceholder()" :class="getInputClass()"
                 :disabled="isSending" />
-              <button type="submit" :disabled="!newMessage.trim() || isSending"
-                class="w-12 h-12 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors">
-                <PaperAirplaneIcon class="w-5 h-5" />
+              <button type="submit" :disabled="!newMessage.trim() || isSending" :class="getButtonClass()">
+                <PaperAirplaneIcon v-if="selectedChannel.id !== 'gossip'" class="w-5 h-5" />
+                <Ghost v-else class="w-5 h-5" />
               </button>
             </form>
+
+            <!-- Read-only message for non-presidium users in announcements -->
+            <div v-else class="text-center text-gray-500 py-3">
+              Only presidium members can post announcements
+            </div>
           </div>
         </div>
       </div>
@@ -289,7 +332,7 @@ const publicChannels = [
   {
     id: 'announcements',
     name: 'Announcements',
-    description: 'Official Presidium updates',
+    description: 'Read-only for delegates',
     icon: 'ShieldAlert',
     color: 'bg-yellow-500 text-white',
     type: 'public',
@@ -298,7 +341,7 @@ const publicChannels = [
   {
     id: 'gossip',
     name: 'Gossip Box',
-    description: 'Anonymous chatter',
+    description: 'Anonymous public messages',
     icon: 'Ghost',
     color: 'bg-pink-500 text-white',
     type: 'public',
@@ -501,6 +544,49 @@ const sendMessage = async () => {
     toast.error('Failed to send message')
   } finally {
     isSending.value = false
+  }
+}
+
+const getInputPlaceholder = () => {
+  if (!selectedChannel.value) return 'Type a message...'
+
+  switch (selectedChannel.value.id) {
+    case 'announcements':
+      return 'Message Official...'
+    case 'gossip':
+      return 'Type anonymous rumor...'
+    default:
+      return `Message ${selectedChannel.value.name}...`
+  }
+}
+
+const getInputClass = () => {
+  const base = "flex-1 px-4 py-3 border rounded-full focus:ring-2 focus:border-transparent"
+
+  if (!selectedChannel.value) return `${base} border-gray-300 focus:ring-blue-500`
+
+  switch (selectedChannel.value.id) {
+    case 'announcements':
+      return `${base} border-yellow-300 focus:ring-yellow-500`
+    case 'gossip':
+      return `${base} border-pink-300 focus:ring-pink-500`
+    default:
+      return `${base} border-gray-300 focus:ring-blue-500`
+  }
+}
+
+const getButtonClass = () => {
+  const base = "w-12 h-12 text-white rounded-full hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+
+  if (!selectedChannel.value) return `${base} bg-blue-600`
+
+  switch (selectedChannel.value.id) {
+    case 'announcements':
+      return `${base} bg-yellow-600`
+    case 'gossip':
+      return `${base} bg-pink-600`
+    default:
+      return `${base} bg-blue-600`
   }
 }
 
