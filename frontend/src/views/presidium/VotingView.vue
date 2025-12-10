@@ -351,13 +351,13 @@ const loadVotingData = async () => {
     const response = await apiMethods.voting.getByCommitteeId(committee.value._id)
 
     if (response.data.success) {
-      const allVotes = response.data.voting || []
+      const allVotes = response.data.votings || []
 
       // Separate pending, active, and completed votes
       pendingVote.value = allVotes.find(v => v.status === 'pending') || null
       activeVote.value = allVotes.find(v => v.status === 'active') || null
       votingHistory.value = allVotes
-        .filter(v => v.status === 'completed')
+        .filter(v => ['completed', 'cancelled'].includes(v.status)) // Include cancelled votings
         .sort((a, b) => new Date(b.completedAt || b.createdAt) - new Date(a.completedAt || a.createdAt))
     }
   } catch (error) {
