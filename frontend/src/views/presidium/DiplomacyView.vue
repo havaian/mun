@@ -158,7 +158,7 @@
                     {{ message.senderCountry.includes('Presidium') ? 'Chairperson' : message.senderCountry }}
                   </span>
                 </div>
-                <div class="bg-blue-600 text-white rounded-2xl rounded-br-md px-4 py-2 max-w-xs shadow-sm">
+                <div class="bg-blue-600 text-white rounded-2xl rounded-br-xl px-4 py-2 max-w-xs shadow-sm">
                   {{ message.content }}
                 </div>
               </div>
@@ -183,7 +183,7 @@
                   <span class="font-medium text-pink-600">Anonymous</span>
                   <span class="text-sm text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
                 </div>
-                <div class="bg-pink-50 border border-pink-200 rounded-2xl px-4 py-3 shadow-sm max-w-md">
+                <div class="bg-pink-50 border border-pink-200 rounded-2xl rounded-bl-xl px-4 py-3 shadow-sm max-w-md">
                   <div class="text-pink-800">{{ message.content }}</div>
                 </div>
               </div>
