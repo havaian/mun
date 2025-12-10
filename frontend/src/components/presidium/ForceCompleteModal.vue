@@ -59,7 +59,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
