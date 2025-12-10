@@ -26,6 +26,42 @@
 
         <!-- Active Vote Section -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+
+
+          <!-- Pending Vote -->
+          <div v-if="pendingVote && !activeVote" class="space-y-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="flex items-center space-x-3 mb-2">
+                  <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+                  <span class="text-sm font-medium text-orange-600 uppercase">Pending Vote</span>
+                  <span :class="[
+                    'text-xs px-2 py-1 rounded-full',
+                    getVoteTypeColor(pendingVote.votingType)
+                  ]">
+                    {{ getVoteTypeLabel(pendingVote.votingType) }}
+                  </span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900">{{ pendingVote.title }}</h3>
+                <p v-if="pendingVote.description" class="text-gray-600 mt-1">{{ pendingVote.description }}</p>
+              </div>
+              <button @click="startVote(pendingVote._id)"
+                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                Start Vote
+              </button>
+            </div>
+
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div class="flex items-center">
+                <ClockIcon class="w-5 h-5 text-orange-500 mr-3" />
+                <div>
+                  <div class="text-sm font-medium text-orange-800">Vote Ready to Start</div>
+                  <div class="text-xs text-orange-600">Click "Start Vote" to begin the voting process</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Active Vote -->
           <div v-if="activeVote" class="space-y-6">
             <!-- Vote Header -->
@@ -54,7 +90,7 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               <!-- For Votes -->
               <div class="bg-green-50 p-4 rounded-lg border border-green-200">
-                <div class="text-center">
+                <div class="grid h-full justify-center items-center text-center">
                   <div class="text-2xl font-bold text-green-700">{{ activeVote.results?.for || 0 }}</div>
                   <div class="text-sm text-green-600 uppercase">For</div>
                 </div>
@@ -62,7 +98,7 @@
 
               <!-- Against Votes -->
               <div class="bg-red-50 p-4 rounded-lg border border-red-200">
-                <div class="text-center">
+                <div class="grid h-full justify-center items-center text-center">
                   <div class="text-2xl font-bold text-red-700">{{ activeVote.results?.against || 0 }}</div>
                   <div class="text-sm text-red-600 uppercase">Against</div>
                 </div>
@@ -70,7 +106,7 @@
 
               <!-- Abstentions -->
               <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                <div class="text-center">
+                <div class="grid h-full justify-center items-center text-center">
                   <div class="text-2xl font-bold text-yellow-700">{{ activeVote.results?.abstain || 0 }}</div>
                   <div class="text-sm text-yellow-600 uppercase">Abstain</div>
                 </div>
@@ -78,7 +114,7 @@
 
               <!-- Total Progress -->
               <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <div class="text-center">
+                <div class="grid h-full justify-center items-center text-center">
                   <div class="text-2xl font-bold text-blue-700">{{ getTotalVotes(activeVote) }}</div>
                   <div class="text-sm text-blue-600 uppercase">Total Votes</div>
                   <div class="text-xs text-blue-500 mt-1">
@@ -268,6 +304,7 @@ const votingHistory = ref([])
 const currentSession = ref(null)
 const committee = ref(null)
 const showCreateVoteModal = ref(false)
+const pendingVote = ref(null)
 
 // Methods
 const loadData = async () => {
@@ -316,7 +353,8 @@ const loadVotingData = async () => {
     if (response.data.success) {
       const allVotes = response.data.voting || []
 
-      // Separate active and completed votes
+      // Separate pending, active, and completed votes
+      pendingVote.value = allVotes.find(v => v.status === 'pending') || null
       activeVote.value = allVotes.find(v => v.status === 'active') || null
       votingHistory.value = allVotes
         .filter(v => v.status === 'completed')
@@ -324,6 +362,20 @@ const loadVotingData = async () => {
     }
   } catch (error) {
     console.error('Failed to load voting data:', error)
+  }
+}
+
+const startVote = async (voteId) => {
+  try {
+    const response = await apiMethods.voting.startVoting(voteId)
+
+    if (response.data.success) {
+      await loadVotingData()
+      toast.success('Vote started successfully')
+    }
+  } catch (error) {
+    console.error('Failed to start vote:', error)
+    toast.error('Failed to start vote')
   }
 }
 
@@ -344,9 +396,9 @@ const endVote = async (voteId) => {
 }
 
 const handleVotingCreated = (voting) => {
-  activeVote.value = voting
+  pendingVote.value = voting
   showCreateVoteModal.value = false
-  toast.success('Voting started successfully')
+  toast.success('Vote created successfully - ready to start')
 }
 
 // Utility methods
@@ -420,8 +472,15 @@ const formatTimeRemaining = (vote) => {
 
 // WebSocket listeners
 const setupWebSocketListeners = () => {
-  wsService.on('voting-started', (data) => {
+  wsService.on('voting-created', (data) => {
     if (data.committeeId === committee.value?._id) {
+      pendingVote.value = data.voting
+    }
+  })
+
+  wsService.on('voting-started', (data) => {
+    if (data.votingId === pendingVote.value?._id) {
+      pendingVote.value = null
       activeVote.value = data.voting
     }
   })
