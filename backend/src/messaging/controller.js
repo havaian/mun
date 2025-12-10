@@ -234,9 +234,13 @@ const editMessage = async (req, res) => {
 
         global.logger.info(`Message edited in conversation ${id} by ${req.user.countryName}`);
 
+        
         res.json({
             success: true,
-            message: formatMessageResponse(message)
+            conversation: {
+                ...formatConversationResponse(conversation, req.user.email),
+                messages: conversation.messages.map(message => formatMessageResponse(message))
+            }
         });
 
     } catch (error) {
