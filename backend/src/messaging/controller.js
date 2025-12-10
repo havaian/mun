@@ -652,7 +652,7 @@ const getOrCreateCommitteeConversation = async (req, res) => {
             if (!isParticipant) {
                 conversation.participants.push({
                     email: req.user.email,
-                    country: req.user.countryName,
+                    country: req.user.countryName || `Presidium (${req.user.presidiumRole || 'member'})`,
                     role: req.user.role === 'presidium' ? 'admin' : 'member'
                 });
                 await conversation.save();
@@ -732,7 +732,7 @@ const sendCommitteeMessage = async (req, res) => {
             if (!currentUserExists) {
                 participants.push({
                     email: req.user.email,
-                    country: req.user.countryName,
+                    country: req.user.countryName || `Presidium (${req.user.presidiumRole || 'member'})`,
                     role: req.user.role === 'presidium' ? 'admin' : 'member',
                     isActive: true
                 });
@@ -762,7 +762,7 @@ const sendCommitteeMessage = async (req, res) => {
             if (!isParticipant) {
                 conversation.participants.push({
                     email: req.user.email,
-                    country: req.user.countryName,
+                    country: req.user.countryName || `Presidium (${req.user.presidiumRole || 'member'})`,
                     role: req.user.role === 'presidium' ? 'admin' : 'member',
                     isActive: true
                 });
