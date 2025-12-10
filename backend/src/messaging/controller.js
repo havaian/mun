@@ -234,13 +234,9 @@ const editMessage = async (req, res) => {
 
         global.logger.info(`Message edited in conversation ${id} by ${req.user.countryName}`);
 
-        
         res.json({
             success: true,
-            conversation: {
-                ...formatConversationResponse(conversation, req.user.email),
-                messages: conversation.messages.map(message => formatMessageResponse(message))
-            }
+            message: formatMessageResponse(message)
         });
 
     } catch (error) {
@@ -662,10 +658,13 @@ const getOrCreateCommitteeConversation = async (req, res) => {
                 await conversation.save();
             }
         }
-
+        
         res.json({
             success: true,
-            conversation: formatConversationResponse(conversation, req.user.email)
+            conversation: {
+                ...formatConversationResponse(conversation, req.user.email),
+                messages: conversation.messages.map(message => formatMessageResponse(message))
+            }
         });
 
     } catch (error) {
