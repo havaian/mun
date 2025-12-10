@@ -478,7 +478,13 @@ export const apiMethods = {
 
         // Mark messages as read
         markAsRead: (conversationId, messageIds = []) =>
-            api.post(`/messages/${conversationId}/read`, { messageIds })
+            api.post(`/messages/${conversationId}/read`, { messageIds }),
+
+        getCommitteeConversation: (committeeId, channelType) =>
+            api.get(`/messages/committee/${committeeId}/channel/${channelType}`),
+
+        sendCommitteeMessage: (committeeId, channelType, data) =>
+            api.post(`/messages/committee/${committeeId}/channel/${channelType}`, data),
     },
 
     // ⚠️ MISMATCH - File upload helper (general upload route missing) // NOT USED

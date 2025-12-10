@@ -129,6 +129,28 @@ router.get('/committee/:committeeId',
     controller.getUserConversations
 );
 
+
+
+// Committee-wide/public channel routes
+router.get('/committee/:committeeId/channel/:channelType',
+    global.auth.token,
+    param('committeeId').isMongoId().withMessage('Valid committee ID is required'),
+    param('channelType').isIn(['general', 'announcements', 'gossip']).withMessage('Invalid channel type'),
+    handleValidationErrors,
+    global.auth.sameCommittee,
+    controller.getOrCreateCommitteeConversation
+);
+
+router.post('/committee/:committeeId/channel/:channelType',
+    global.auth.token,
+    param('committeeId').isMongoId().withMessage('Valid committee ID is required'),
+    param('channelType').isIn(['general', 'announcements', 'gossip']).withMessage('Invalid channel type'),
+    validateMessage,
+    handleValidationErrors,
+    global.auth.sameCommittee,
+    controller.sendCommitteeMessage
+);
+
 // Get single conversation
 router.get('/:id',
     global.auth.token,

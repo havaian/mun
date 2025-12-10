@@ -429,52 +429,47 @@ const selectChannel = (channel) => {
 }
 
 const sendMessage = async () => {
-  console.log('sendMessage called with:', {
-    message: newMessage.value,
-    channel: selectedChannel.value
-  })
-
   if (!newMessage.value.trim() || !selectedChannel.value) {
-    console.log('Validation failed - empty message or no channel')
     return
   }
 
   try {
     isSending.value = true
-    console.log('Starting to send message...')
 
-    // For public channels, we need to implement public messaging
+    // For public channels, use committee messaging API
     if (selectedChannel.value.type === 'public') {
-      console.log('Sending to public channel (simulated)')
-      // For now, just add to local state as placeholder
-      const newMsg = {
-        _id: Date.now().toString(),
-        senderName: authStore.user?.name || authStore.user?.countryName,
-        senderRole: authStore.user?.role,
-        senderCountry: authStore.user?.countryName,
-        content: newMessage.value.trim(),
-        timestamp: new Date().toISOString()
-      }
+      const response = await apiMethods.messages.sendCommitteeMessage(
+        committee.value._id || committee.value,
+        selectedChannel.value.id,
+        {
+          content: newMessage.value.trim()
+        }
+      )
 
-      messages.value.push(newMsg)
-      newMessage.value = ''
-      scrollToBottom()
-      console.log('Public message added locally')
+      if (response.data.success) {
+        const newMsg = {
+          _id: response.data.message._id,
+          senderName: authStore.user?.name || authStore.user?.countryName,
+          senderRole: authStore.user?.role,
+          senderCountry: response.data.message.senderCountry,
+          content: response.data.message.content,
+          timestamp: response.data.message.timestamp
+        }
+
+        messages.value.push(newMsg)
+        newMessage.value = ''
+        scrollToBottom()
+      }
       return
     }
 
     // For DM channels, send to conversation
     if (selectedChannel.value.conversationId) {
-      console.log('Sending to conversation:', selectedChannel.value.conversationId)
-      
       const response = await apiMethods.messages.sendMessage(selectedChannel.value.conversationId, {
         content: newMessage.value.trim()
       })
 
-      console.log('API response:', response)
-
       if (response.data.success) {
-        // Message will be added via WebSocket, but add locally for immediate feedback
         const newMsg = {
           _id: response.data.message._id,
           senderName: authStore.user?.name || authStore.user?.countryName,
@@ -487,17 +482,13 @@ const sendMessage = async () => {
         messages.value.push(newMsg)
         newMessage.value = ''
         scrollToBottom()
-        console.log('DM message sent successfully')
       }
-    } else {
-      console.log('No conversationId for DM channel')
     }
   } catch (error) {
-    console.error('Send message error details:', error)
+    console.error('Failed to send message:', error)
     toast.error('Failed to send message')
   } finally {
     isSending.value = false
-    console.log('Send message completed')
   }
 }
 

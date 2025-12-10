@@ -577,6 +577,176 @@ const formatMessageResponse = (message) => {
     };
 };
 
+// Get or create committee-wide conversation
+const getOrCreateCommitteeConversation = async (req, res) => {
+    try {
+        const { committeeId, channelType } = req.params;
+
+        const committee = await Committee.findById(committeeId);
+        if (!committee) {
+            return res.status(404).json({ error: 'Committee not found' });
+        }
+
+        if (req.user.committeeId.toString() !== committeeId) {
+            return res.status(403).json({ error: 'Access denied to this committee' });
+        }
+
+        const channelConfig = {
+            'general': { title: 'General Assembly', description: 'Global floor discussion' },
+            'announcements': { title: 'Announcements', description: 'Official Presidium updates' },
+            'gossip': { title: 'Gossip Box', description: 'Anonymous chatter' }
+        };
+
+        const config = channelConfig[channelType];
+        if (!config) {
+            return res.status(400).json({ error: 'Invalid channel type' });
+        }
+
+        let conversation = await Conversation.findOne({
+            committeeId,
+            conversationType: 'committee_wide',
+            title: config.title
+        });
+
+        if (!conversation) {
+            const participants = committee.countries
+                .filter(country => country.email && country.isActive)
+                .map(country => ({
+                    email: country.email,
+                    country: country.name,
+                    role: 'member'
+                }));
+
+            if (committee.presidium) {
+                ['chairperson', 'viceChairperson', 'rapporteur'].forEach(role => {
+                    if (committee.presidium[role] && committee.presidium[role].email) {
+                        participants.push({
+                            email: committee.presidium[role].email,
+                            country: committee.presidium[role].country || role,
+                            role: 'admin'
+                        });
+                    }
+                });
+            }
+
+            conversation = new Conversation({
+                committeeId,
+                conversationType: 'committee_wide',
+                title: config.title,
+                description: config.description,
+                participants,
+                settings: {
+                    allowNewMembers: true,
+                    maxParticipants: 200,
+                    isAnonymous: channelType === 'gossip'
+                },
+                createdBy: req.user.email
+            });
+
+            await conversation.save();
+        } else {
+            const isParticipant = conversation.participants.find(p => 
+                p.email === req.user.email && p.isActive
+            );
+
+            if (!isParticipant) {
+                conversation.participants.push({
+                    email: req.user.email,
+                    country: req.user.countryName,
+                    role: req.user.role === 'presidium' ? 'admin' : 'member'
+                });
+                await conversation.save();
+            }
+        }
+
+        res.json({
+            success: true,
+            conversation: formatConversationResponse(conversation, req.user.email)
+        });
+
+    } catch (error) {
+        global.logger.error('Get/create committee conversation error:', error);
+        res.status(500).json({ error: 'Failed to get committee conversation' });
+    }
+};
+
+// Send message to committee-wide conversation
+const sendCommitteeMessage = async (req, res) => {
+    try {
+        const { committeeId, channelType } = req.params;
+        const { content } = req.body;
+
+        const channelConfig = {
+            'general': 'General Assembly',
+            'announcements': 'Announcements', 
+            'gossip': 'Gossip Box'
+        };
+
+        const title = channelConfig[channelType];
+        if (!title) {
+            return res.status(400).json({ error: 'Invalid channel type' });
+        }
+
+        const conversation = await Conversation.findOne({
+            committeeId,
+            conversationType: 'committee_wide',
+            title
+        });
+
+        if (!conversation) {
+            return res.status(404).json({ error: 'Committee conversation not found' });
+        }
+
+        if (!conversation.canUserAccess(req.user.email)) {
+            return res.status(403).json({ error: 'Access denied to this conversation' });
+        }
+
+        if (channelType === 'announcements' && req.user.role !== 'presidium') {
+            return res.status(403).json({ error: 'Only presidium can post announcements' });
+        }
+
+        let senderCountry = req.user.countryName;
+        let messageType = 'text';
+
+        if (channelType === 'gossip') {
+            senderCountry = 'Anonymous';
+        } else if (channelType === 'announcements') {
+            messageType = 'announcement';
+        }
+
+        const message = conversation.addMessage(
+            req.user.email,
+            senderCountry,
+            content,
+            messageType
+        );
+
+        await conversation.save();
+
+        if (req.app.locals.io) {
+            req.app.locals.io.to(`committee-${committeeId}`).emit('committee-message-received', {
+                conversationId: conversation._id,
+                messageId: message._id,
+                channelType,
+                senderCountry,
+                content: message.content,
+                timestamp: message.timestamp,
+                messageType: message.messageType
+            });
+        }
+
+        res.status(201).json({
+            success: true,
+            message: formatMessageResponse(message),
+            conversationId: conversation._id
+        });
+
+    } catch (error) {
+        global.logger.error('Send committee message error:', error);
+        res.status(500).json({ error: error.message || 'Failed to send message' });
+    }
+};
+
 module.exports = {
     createBilateralConversation,
     createGroupConversation,
@@ -586,5 +756,7 @@ module.exports = {
     getUserConversations,
     getConversation,
     addParticipant,
-    leaveConversation
+    leaveConversation,
+    getOrCreateCommitteeConversation,
+    sendCommitteeMessage
 };
