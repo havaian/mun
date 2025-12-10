@@ -49,13 +49,46 @@ const generateDelegateLinks = async (req, res) => {
             });
         }
 
-        // Ensure all countries have login tokens
+        // Ensure all countries have login tokens AND User records
         let needsUpdate = false;
+        const userUpdates = [];
+
         for (let country of committee.countries) {
             if (!country.loginToken) {
                 country.loginToken = crypto.randomBytes(32).toString('hex');
                 needsUpdate = true;
             }
+
+            // Check if User record exists for this country
+            const existingUser = await User.findOne({
+                committeeId: committeeId,
+                role: 'delegate',
+                countryName: country.name
+            });
+
+            if (!existingUser) {
+                // Create User record for delegate
+                const delegateUser = new User({
+                    role: 'delegate',
+                    countryName: country.name,
+                    committeeId: committeeId,
+                    loginToken: country.loginToken,
+                    isActive: true,
+                    specialRole: country.specialRole || null
+                });
+
+                userUpdates.push(delegateUser.save());
+            } else if (!existingUser.loginToken || existingUser.loginToken !== country.loginToken) {
+                // Update existing user's login token
+                existingUser.loginToken = country.loginToken;
+                existingUser.isActive = true;
+                userUpdates.push(existingUser.save());
+            }
+        }
+
+        // Execute all user updates
+        if (userUpdates.length > 0) {
+            await Promise.all(userUpdates);
         }
 
         // Update committee if needed
@@ -232,13 +265,46 @@ const generateCompleteLinks = async (req, res) => {
             });
         }
 
-        // Ensure all countries have login tokens
+        // Ensure all countries have login tokens AND User records
         let needsCommitteeUpdate = false;
+        const userUpdates = [];
+
         for (let country of committee.countries) {
             if (!country.loginToken) {
                 country.loginToken = crypto.randomBytes(32).toString('hex');
                 needsCommitteeUpdate = true;
             }
+
+            // Check if User record exists for this country
+            const existingUser = await User.findOne({
+                committeeId: committeeId,
+                role: 'delegate',
+                countryName: country.name
+            });
+
+            if (!existingUser) {
+                // Create User record for delegate
+                const delegateUser = new User({
+                    role: 'delegate',
+                    countryName: country.name,
+                    committeeId: committeeId,
+                    loginToken: country.loginToken,
+                    isActive: true,
+                    specialRole: country.specialRole || null
+                });
+
+                userUpdates.push(delegateUser.save());
+            } else if (!existingUser.loginToken || existingUser.loginToken !== country.loginToken) {
+                // Update existing user's login token
+                existingUser.loginToken = country.loginToken;
+                existingUser.isActive = true;
+                userUpdates.push(existingUser.save());
+            }
+        }
+
+        // Execute all user updates
+        if (userUpdates.length > 0) {
+            await Promise.all(userUpdates);
         }
 
         if (needsCommitteeUpdate) {
@@ -254,11 +320,11 @@ const generateCompleteLinks = async (req, res) => {
         }).select('presidiumRole loginToken isActive').lean();
 
         // Ensure presidium members have login tokens
-        const updates = [];
+        const presidiumUpdates = [];
         for (let member of presidiumMembers) {
             if (!member.loginToken) {
                 member.loginToken = crypto.randomBytes(32).toString('hex');
-                updates.push(
+                presidiumUpdates.push(
                     User.findByIdAndUpdate(member._id, {
                         loginToken: member.loginToken,
                         isActive: true
@@ -267,8 +333,8 @@ const generateCompleteLinks = async (req, res) => {
             }
         }
 
-        if (updates.length > 0) {
-            await Promise.all(updates);
+        if (presidiumUpdates.length > 0) {
+            await Promise.all(presidiumUpdates);
         }
 
         const baseUrl = process.env.PROJECT_URL || 'https://mun.uz';
