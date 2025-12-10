@@ -244,7 +244,6 @@ const votingSchema = new mongoose.Schema({
 votingSchema.index({ committeeId: 1, status: 1 });
 votingSchema.index({ sessionId: 1 });
 votingSchema.index({ subjectType: 1, subjectId: 1 });
-votingSchema.index({ 'eligibleVoters.email': 1 });
 votingSchema.index({ startedAt: -1 });
 
 // Methods for voting management
