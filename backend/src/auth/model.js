@@ -30,7 +30,6 @@ const userSchema = new mongoose.Schema({
         unique: true,
         lowercase: true,
         trim: true,
-        required: function () { return this.role === 'delegate'; }
     },
 
     // Login token for initial access (presidium AND delegates) - replaces qrToken
@@ -64,8 +63,7 @@ const userSchema = new mongoose.Schema({
     specialRole: {
         type: String,
         enum: ['observer', 'special', null],
-        default: null,
-        required: function () { return this.role === 'delegate'; }
+        default: null
     },
 
     // Presidium role specification
