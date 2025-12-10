@@ -433,6 +433,7 @@ export const apiMethods = {
         create: (data) => api.post('/voting', data),
         castVote: (id, vote) => api.post(`/voting/${id}/vote`, vote),
         getResults: (id) => api.get(`/voting/${id}/results`), // NOT USED
+        startVoting: (id) => api.put(`/voting/${id}/start`),
         endVoting: (id) => api.put(`/voting/${id}/complete`),
         getEligibleVoters: (id) => api.get(`/voting/${id}/eligible-voters`),
         getRollCallOrder: (id) => api.get(`/voting/${id}/roll-call-order`),
