@@ -248,7 +248,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
-import sessionApi from '@/utils/api'
+import sessionApi from '@/utils/sessionApi'
 import QuickVoteModal from '@/components/presidium/QuickVoteModal.vue'
 
 // Icons
@@ -311,7 +311,6 @@ const loadCurrentSession = async () => {
 
 const loadVotingData = async () => {
   try {
-    console.log(committee.value)
     const response = await apiMethods.voting.getByCommitteeId(committee.value._id)
 
     if (response.data.success) {
