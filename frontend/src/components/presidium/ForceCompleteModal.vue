@@ -1,7 +1,7 @@
 <template>
     <ModalWrapper :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)"
         title="Force Complete Voting" subtitle="Not all eligible voters have cast their votes"
-        :icon="ExclamationTriangleIcon" size="md" :is-primary-disabled="isSubmitting" primary-text="Force Complete"
+        :icon="ExclamationTriangleIcon" size="md" :is-primary-disabled="!confirmed || isSubmitting" primary-text="Force Complete"
         secondary-text="Cancel" primary-variant="danger" @primary-action="handleForceComplete"
         @secondary-action="$emit('update:modelValue', false)">
 
