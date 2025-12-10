@@ -710,7 +710,8 @@ const sendCommitteeMessage = async (req, res) => {
                 .map(country => ({
                     email: country.email,
                     country: country.name,
-                    role: 'member'
+                    role: 'member',
+                    isActive: true
                 }));
 
             if (committee.presidium) {
@@ -719,9 +720,21 @@ const sendCommitteeMessage = async (req, res) => {
                         participants.push({
                             email: committee.presidium[role].email,
                             country: committee.presidium[role].country || role,
-                            role: 'admin'
+                            role: 'admin',
+                            isActive: true
                         });
                     }
+                });
+            }
+
+            // Ensure current user is always included
+            const currentUserExists = participants.find(p => p.email === req.user.email);
+            if (!currentUserExists) {
+                participants.push({
+                    email: req.user.email,
+                    country: req.user.countryName,
+                    role: req.user.role === 'presidium' ? 'admin' : 'member',
+                    isActive: true
                 });
             }
 
@@ -750,7 +763,8 @@ const sendCommitteeMessage = async (req, res) => {
                 conversation.participants.push({
                     email: req.user.email,
                     country: req.user.countryName,
-                    role: req.user.role === 'presidium' ? 'admin' : 'member'
+                    role: req.user.role === 'presidium' ? 'admin' : 'member',
+                    isActive: true
                 });
                 await conversation.save();
             }
