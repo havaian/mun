@@ -46,11 +46,10 @@
                     </label>
                     <select v-model="form.subjectType"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="motion">Motion</option>
+                        <option value="procedural_motion">Procedural Motion</option>
                         <option value="resolution">Resolution</option>
                         <option value="amendment">Amendment</option>
-                        <option value="procedure">Procedural Question</option>
-                        <option value="other">Other</option>
+                        <option value="question">Question</option>
                     </select>
                 </div>
 
@@ -75,7 +74,7 @@
                     <input v-model.number="form.timeLimit" type="number" min="1" max="60"
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="10" />
-                    <p class="text-sm text-gray-500 mt-1">Leave blank for no time limit</p>
+                    <p class="text-sm text-gray-500 mt-1">Leave blank for no time limit (1-60 minutes)</p>
                 </div>
 
                 <!-- Options for different voting types -->
@@ -126,7 +125,7 @@ const form = reactive({
     votingType: 'simple',
     title: '',
     description: '',
-    subjectType: 'motion',
+    subjectType: 'procedural_motion',
     majorityRequired: 'simple',
     timeLimit: 10
 })
@@ -140,7 +139,7 @@ const hasUnsavedChanges = computed(() => {
     return form.title.trim() !== '' ||
         form.description.trim() !== '' ||
         form.votingType !== 'simple' ||
-        form.subjectType !== 'motion' ||
+        form.subjectType !== 'procedural_motion' ||
         form.majorityRequired !== 'simple' ||
         form.timeLimit !== 10
 })
@@ -157,7 +156,7 @@ const resetForm = () => {
     form.votingType = 'simple'
     form.title = ''
     form.description = ''
-    form.subjectType = 'motion'
+    form.subjectType = 'procedural_motion'
     form.majorityRequired = 'simple'
     form.timeLimit = 10
 }
@@ -176,11 +175,17 @@ const handleSubmit = async () => {
             sessionId: props.session._id,
             votingType: form.votingType,
             subjectType: form.subjectType,
+            subjectId: props.session._id,
             title: form.title.trim(),
             description: form.description.trim() || null,
-            fullText: form.title.trim(), // Use title as full text for quick votes
+            fullText: form.description.trim() || form.title.trim().repeat(2),
             majorityRequired: form.majorityRequired,
-            timeLimit: form.timeLimit || null
+            timeLimit: form.timeLimit ? form.timeLimit * 60 : null
+        }
+
+        // Ensure fullText is at least 10 characters
+        if (votingData.fullText.length < 10) {
+            votingData.fullText = `${votingData.title} - Quick vote initiated by presidium`
         }
 
         const response = await apiMethods.voting.create(votingData)
