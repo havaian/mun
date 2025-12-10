@@ -774,7 +774,7 @@ const sendCommitteeMessage = async (req, res) => {
             return res.status(403).json({ error: 'Only presidium can post announcements' });
         }
 
-        let senderCountry = req.user.countryName;
+        let senderCountry = req.user.countryName || `Presidium (${req.user.presidiumRole || 'member'})`;
         let messageType = 'text';
 
         if (channelType === 'gossip') {
