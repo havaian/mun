@@ -189,8 +189,8 @@
               Color Theme
             </label>
             <div class="grid grid-cols-6 gap-3">
-              <div class="flex w-full justify-center">
-                <button v-for="color in colorOptions" :key="color.name" type="button"
+              <div v-for="color in colorOptions" :key="color.name" class="flex w-full justify-center">
+                <button type="button"
                   @click="newCoalition.color = color.name" :class="[
                     'w-12 h-12 rounded-lg border-2 transition-all',
                     color.class,
