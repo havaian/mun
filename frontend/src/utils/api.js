@@ -454,31 +454,31 @@ export const apiMethods = {
     messages: {
         // Get messages for committee
         getCommitteeConversations: (committeeId, params = {}) =>
-            api.get(`/api/messages/committee/${committeeId}`, { params }),
+            api.get(`/messages/committee/${committeeId}`, { params }),
 
         // Get specific conversation with messages  
         getConversation: (conversationId, params = {}) =>
-            api.get(`/api/messages/${conversationId}`, { params }),
+            api.get(`/messages/${conversationId}`, { params }),
 
         // Send message to conversation
         sendMessage: (conversationId, data) =>
-            api.post(`/api/messages/${conversationId}/messages`, data),
+            api.post(`/messages/${conversationId}/messages`, data),
 
         // Create bilateral conversation
         createBilateral: (data) =>
-            api.post('/api/messages/bilateral', data),
+            api.post('/messages/bilateral', data),
 
         // Create group conversation  
         createGroup: (data) =>
-            api.post('/api/messages/group', data),
+            api.post('/messages/group', data),
 
         // Delete message
         deleteMessage: (conversationId, messageId) =>
-            api.delete(`/api/messages/${conversationId}/messages/${messageId}`),
+            api.delete(`/messages/${conversationId}/messages/${messageId}`),
 
         // Mark messages as read
         markAsRead: (conversationId, messageIds = []) =>
-            api.post(`/api/messages/${conversationId}/read`, { messageIds })
+            api.post(`/messages/${conversationId}/read`, { messageIds })
     },
 
     // ⚠️ MISMATCH - File upload helper (general upload route missing) // NOT USED
