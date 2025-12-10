@@ -565,7 +565,7 @@ const loadAllSessions = async () => {
     if (!committee.value?._id) return
     
     try {
-        const response = await updatedSessionApi.sessions.getByCommittee(committee.value._id, {
+        const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
             page: 1,
             limit: 20,
             sort: '-number' // Latest sessions first
@@ -581,7 +581,7 @@ const loadAllSessions = async () => {
 
 const loadActiveSession = async () => {
     try {
-        const response = await updatedSessionApi.sessions.getByCommittee(committee.value._id, {
+        const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
             status: 'active',
             limit: 1
         })
