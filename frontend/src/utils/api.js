@@ -451,19 +451,34 @@ export const apiMethods = {
         useVeto: (id, vetoData) => api.post(`/voting/${id}/veto`, vetoData), // TODO: Veto handled within castVote, but no separate veto endpoint
     },
 
-    // 🚨 CRITICAL MISMATCH - Messages (0/10 methods working) - Architectural differences
     messages: {
-        // ❌ MISSING - Frontend expects simple messaging, backend uses conversation-based system
-        getAll: (params = {}) => api.get('/messages', { params }), // MISMATCH: Backend uses conversation-based system // NOT USED
-        send: (data) => api.post('/messages', data), // MISMATCH: Backend requires conversation creation first // NOT USED
-        markAsRead: (id) => api.put(`/messages/${id}/read`), // MISMATCH: Different read mechanism // NOT USED
+        // Get messages for committee
+        getCommitteeConversations: (committeeId, params = {}) =>
+            api.get(`/api/messages/committee/${committeeId}`, { params }),
 
-        getCommitteeMessages: (committeeId, params = {}) => api.get(`/messages/committee/${committeeId}`, { params }), // ✅ IMPLEMENTED // NOT USED
-        sendToCommittee: (data) => api.post('/messages/committee', data), // TODO: Missing route - backend uses conversation system // NOT USED
-        sendDiplomaticNote: (data) => api.post('/messages/diplomatic', data), // TODO: Missing route - no diplomatic note system // NOT USED
-        getDiplomaticNotes: (params = {}) => api.get('/messages/diplomatic', { params }), // TODO: Missing route - no diplomatic note system // NOT USED
-        markAllAsRead: (committeeId) => api.put(`/messages/committee/${committeeId}/read-all`), // TODO: Missing route // NOT USED
-        deleteMessage: (id) => api.delete(`/messages/${id}`), // TODO: Backend only has conversation management // NOT USED
+        // Get specific conversation with messages  
+        getConversation: (conversationId, params = {}) =>
+            api.get(`/api/messages/${conversationId}`, { params }),
+
+        // Send message to conversation
+        sendMessage: (conversationId, data) =>
+            api.post(`/api/messages/${conversationId}/messages`, data),
+
+        // Create bilateral conversation
+        createBilateral: (data) =>
+            api.post('/api/messages/bilateral', data),
+
+        // Create group conversation  
+        createGroup: (data) =>
+            api.post('/api/messages/group', data),
+
+        // Delete message
+        deleteMessage: (conversationId, messageId) =>
+            api.delete(`/api/messages/${conversationId}/messages/${messageId}`),
+
+        // Mark messages as read
+        markAsRead: (conversationId, messageIds = []) =>
+            api.post(`/api/messages/${conversationId}/read`, { messageIds })
     },
 
     // ⚠️ MISMATCH - File upload helper (general upload route missing) // NOT USED
@@ -512,21 +527,21 @@ export const apiMethods = {
         // Roll call management
         startRollCall: (sessionId, data = {}) => api.post(`/sessions/${sessionId}/roll-call/start`, data),
         endRollCall: (sessionId) => api.post(`/sessions/${sessionId}/roll-call/end`),
-        
+
         // Session timer management
         startSessionTimer: (sessionId, data) => api.post(`/sessions/${sessionId}/timers/session/start`, data),
         startDebateTimer: (sessionId, data) => api.post(`/sessions/${sessionId}/timers/debate/start`, data),
         startSpeakerTimer: (sessionId, data) => api.post(`/sessions/${sessionId}/timers/speaker/start`, data),
         toggleTimer: (sessionId, data) => api.put(`/sessions/${sessionId}/timers/toggle`, data),
         adjustTimer: (sessionId, data) => api.put(`/sessions/${sessionId}/timers/adjust`, data),
-        
+
         // Additional timer management
         addAdditionalTimer: (sessionId, data) => api.post(`/sessions/${sessionId}/timers/additional`, data),
         startAdditionalTimer: (sessionId, timerId) => api.put(`/sessions/${sessionId}/timers/additional/${timerId}/start`),
-        
+
         // Session management
         startSession: (sessionId) => api.put(`/sessions/${sessionId}/start`),
-        
+
         // Speaker management (fix routes)
         addToSpeakerList: (id, speakerData) => api.post(`/sessions/${id}/speaker-list/add`, speakerData),
         removeFromSpeakerList: (id, data) => api.put(`/sessions/${id}/speaker-list/remove`, data),
@@ -538,7 +553,7 @@ export const apiMethods = {
     timers: {
         // Get active timers for session
         getActiveTimers: (sessionId) => api.get(`/timers/session/${sessionId}/active`),
-        
+
         // Individual timer operations
         startTimer: (timerId) => api.put(`/timers/${timerId}/start`),
         pauseTimer: (timerId) => api.put(`/timers/${timerId}/pause`),
@@ -546,11 +561,11 @@ export const apiMethods = {
         extendTimer: (timerId, extensionData) => api.put(`/timers/${timerId}/extend`, extensionData),
         completeTimer: (timerId) => api.put(`/timers/${timerId}/complete`),
         cancelTimer: (timerId, cancelData) => api.delete(`/timers/${timerId}`, { data: cancelData }),
-        
+
         // Quick timer creation
         createQuickSpeakerTimer: (data) => api.post('/timers/speaker/quick', data),
         createTimer: (data) => api.post('/timers', data),
-        
+
         // Get timer details
         getTimer: (timerId) => api.get(`/timers/${timerId}`),
         getCommitteeTimers: (committeeId, params = {}) => api.get(`/timers/committee/${committeeId}`, { params })
@@ -559,7 +574,7 @@ export const apiMethods = {
     // ✅ WORKING - Statistics (5/9 methods working) ⚠️ 1 parameter mismatch, ❌ 3 admin routes missing
     statistics: {
         getCommitteeStats: (committeeId) => api.get(`/statistics/committee/${committeeId}`), // NOT USED
-        getDelegateStats: (delegateEmail, committeeId) => api.get(`/statistics/delegate/${delegateEmail}`, { params: { committeeId }}), // MISMATCH: Backend uses /statistics/delegate/:email?committeeId=... // NOT USED
+        getDelegateStats: (delegateEmail, committeeId) => api.get(`/statistics/delegate/${delegateEmail}`, { params: { committeeId } }), // MISMATCH: Backend uses /statistics/delegate/:email?committeeId=... // NOT USED
         getLeaderboard: (committeeId, params = {}) => api.get(`/statistics/committee/${committeeId}/rankings`, { params }), // ✅ IMPLEMENTED (backend calls it "rankings") // NOT USED
         getParticipationAnalytics: (committeeId, params = {}) => api.get(`/statistics/committee/${committeeId}/analytics/participation`, { params }), // NOT USED
         exportCommitteeCSV: (committeeId) => api.get(`/statistics/committee/${committeeId}/export`, { // NOT USED
@@ -622,7 +637,7 @@ export const apiMethods = {
         getQuestion: (id) => api.get(`/questions/${id}`), // MISMATCH: Backend uses /procedure/questions/:id (implied) // NOT USED
         answerQuestion: (id, answerData) => api.put(`/questions/${id}/answer`, answerData), // MISMATCH: Backend uses /procedure/questions/:id/answer // NOT USED
         updateQuestionPriority: (id, priorityData) => api.put(`/questions/${id}/priority`, priorityData), // TODO: No priority update route exists // NOT USED
-        
+
         submitMotion: (data) => api.post('/procedure/motions', data),
         getMotions: (sessionId, params = {}) => api.get(`/procedure/motions/session/${sessionId}`, { params }),
         getMotion: (id) => api.get(`/procedure/motions/${id}`),
@@ -630,7 +645,7 @@ export const apiMethods = {
         supportMotion: (id) => api.post(`/procedure/motions/${id}/support`),
         submitPresidiumMotion: (data) => api.post('/procedure/motions/presidium', data),
         getMotionQueue: (sessionId) => api.get(`/procedure/motions/session/${sessionId}/queue`),
-        
+
         // Questions
         submitQuestion: (data) => api.post('/procedure/questions', data),
         getQuestions: (sessionId, params = {}) => api.get(`/procedure/questions/session/${sessionId}`, { params }),

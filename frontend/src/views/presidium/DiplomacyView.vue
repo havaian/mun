@@ -243,6 +243,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
+import ModalWrapper from '@/components/ModalWrapper.vue'
+import CountryFlag from '@/components/CountryFlag.vue'
 
 // Icons
 import {
@@ -276,6 +278,7 @@ const messagesContainer = ref(null)
 const showCreateDMModal = ref(false)
 const selectedDMDelegate = ref(null)
 const initialDMMessage = ref('')
+const conversations = ref([])
 
 // Public channels configuration
 const publicChannels = [
@@ -344,18 +347,19 @@ const currentMessages = computed(() => {
 // Methods
 const loadData = async () => {
   try {
-    // Get committee from auth context
-    committee.value = authStore.user?.committeeId
+    committee.value = authStore.user?.committee || authStore.user?.committeeId
     if (!committee.value) {
       throw new Error('No committee assigned')
     }
 
-    // Set default channel
-    selectChannel(publicChannels[0])
-
-    // Load initial messages and online delegates
-    await loadMessages()
+    // Load conversations instead of messages
+    await loadConversations()
     await loadOnlineDelegates()
+
+    // Set default to first public channel (simulate with empty state)
+    if (publicChannels.length > 0) {
+      selectChannel(publicChannels[0])
+    }
 
   } catch (error) {
     console.error('Failed to load messaging data:', error)
@@ -367,14 +371,22 @@ const loadMessages = async () => {
   try {
     if (!selectedChannel.value) return
 
-    const response = await apiMethods.messages.getCommitteeMessages(committee.value._id, {
-      channelId: selectedChannel.value.id,
-      limit: 50
-    })
+    // For public channels, we'll simulate with empty messages for now
+    if (selectedChannel.value.type === 'public') {
+      messages.value = []
+      return
+    }
 
-    if (response.data.success) {
-      messages.value = response.data.messages || []
-      scrollToBottom()
+    // For DM channels, load the actual conversation
+    if (selectedChannel.value.type === 'dm' && selectedChannel.value.conversationId) {
+      const response = await apiMethods.messages.getConversation(selectedChannel.value.conversationId, {
+        limit: 50
+      })
+
+      if (response.data.success) {
+        messages.value = response.data.conversation.messages || []
+        scrollToBottom()
+      }
     }
   } catch (error) {
     console.error('Failed to load messages:', error)
@@ -399,6 +411,18 @@ const loadOnlineDelegates = async () => {
   }
 }
 
+const loadConversations = async () => {
+  try {
+    const response = await apiMethods.messages.getCommitteeConversations(committee.value._id || committee.value)
+    
+    if (response.data.success) {
+      conversations.value = response.data.conversations || []
+    }
+  } catch (error) {
+    console.error('Failed to load conversations:', error)
+  }
+}
+
 const selectChannel = (channel) => {
   selectedChannel.value = channel
   messages.value = [] // Clear previous messages
@@ -411,29 +435,45 @@ const sendMessage = async () => {
   try {
     isSending.value = true
 
-    const messageData = {
-      channelId: selectedChannel.value.id,
-      channelType: selectedChannel.value.type,
-      content: newMessage.value.trim(),
-      committeeId: committee.value._id
-    }
-
-    const response = await apiMethods.messages.sendToCommittee(messageData)
-
-    if (response.data.success) {
-      // Add message to local state immediately for better UX
+    // For public channels, we need to implement public messaging
+    if (selectedChannel.value.type === 'public') {
+      // For now, just add to local state as placeholder
       const newMsg = {
-        _id: Date.now().toString(), // Temporary ID
-        ...messageData,
-        senderName: authStore.user?.name,
+        _id: Date.now().toString(),
+        senderName: authStore.user?.name || authStore.user?.countryName,
         senderRole: authStore.user?.role,
         senderCountry: authStore.user?.countryName,
+        content: newMessage.value.trim(),
         timestamp: new Date().toISOString()
       }
 
       messages.value.push(newMsg)
       newMessage.value = ''
       scrollToBottom()
+      return
+    }
+
+    // For DM channels, send to conversation
+    if (selectedChannel.value.conversationId) {
+      const response = await apiMethods.messages.sendMessage(selectedChannel.value.conversationId, {
+        content: newMessage.value.trim()
+      })
+
+      if (response.data.success) {
+        // Message will be added via WebSocket, but add locally for immediate feedback
+        const newMsg = {
+          _id: response.data.message._id,
+          senderName: authStore.user?.name || authStore.user?.countryName,
+          senderRole: authStore.user?.role,
+          senderCountry: authStore.user?.countryName,
+          content: newMessage.value.trim(),
+          timestamp: new Date().toISOString()
+        }
+
+        messages.value.push(newMsg)
+        newMessage.value = ''
+        scrollToBottom()
+      }
     }
   } catch (error) {
     console.error('Failed to send message:', error)
@@ -456,18 +496,56 @@ const deleteMessage = async (messageId) => {
   }
 }
 
-const openDirectMessage = (delegate) => {
-  const dmChannel = {
-    id: `dm-${delegate.email}`,
-    name: delegate.countryName,
-    description: 'Direct Message',
-    icon: 'MessageSquare',
-    color: 'bg-gray-500 text-white',
-    type: 'dm',
-    recipient: delegate
-  }
+const openDirectMessage = async (delegate) => {
+  try {
+    // Check if bilateral conversation already exists
+    const existingConversation = conversations.value.find(conv => 
+      conv.conversationType === 'bilateral' && 
+      conv.participants.some(p => p.email === delegate.email)
+    )
 
-  selectChannel(dmChannel)
+    if (existingConversation) {
+      // Use existing conversation
+      const dmChannel = {
+        id: existingConversation._id,
+        conversationId: existingConversation._id,
+        name: delegate.countryName,
+        description: 'Direct Message',
+        icon: 'MessageSquare',
+        color: 'bg-gray-500 text-white',
+        type: 'dm',
+        recipient: delegate
+      }
+      selectChannel(dmChannel)
+    } else {
+      // Create new bilateral conversation
+      const response = await apiMethods.messages.createBilateral({
+        committeeId: committee.value._id || committee.value,
+        targetEmail: delegate.email,
+        targetCountry: delegate.countryName
+      })
+
+      if (response.data.success) {
+        const conversation = response.data.conversation
+        conversations.value.push(conversation)
+
+        const dmChannel = {
+          id: conversation._id,
+          conversationId: conversation._id,
+          name: delegate.countryName,
+          description: 'Direct Message',
+          icon: 'MessageSquare',
+          color: 'bg-gray-500 text-white',
+          type: 'dm',
+          recipient: delegate
+        }
+        selectChannel(dmChannel)
+      }
+    }
+  } catch (error) {
+    console.error('Failed to open direct message:', error)
+    toast.error('Failed to start conversation')
+  }
 }
 
 const startDirectMessage = () => {
@@ -512,27 +590,23 @@ const scrollToBottom = () => {
 
 // WebSocket listeners
 const setupWebSocketListeners = () => {
-  wsService.on('new-message', (data) => {
-    if (data.committeeId === committee.value?._id) {
-      messages.value.push(data.message)
+  wsService.on('message-received', (data) => {
+    if (selectedChannel.value?.conversationId === data.conversationId) {
+      const newMessage = {
+        _id: data.messageId,
+        senderName: data.senderCountry,
+        senderCountry: data.senderCountry,
+        content: data.content,
+        timestamp: data.timestamp
+      }
+      messages.value.push(newMessage)
       scrollToBottom()
     }
   })
 
-  wsService.on('message-deleted', (data) => {
-    messages.value = messages.value.filter(m => m._id !== data.messageId)
-  })
-
-  wsService.on('user-online', (data) => {
-    if (data.committeeId === committee.value?._id) {
-      loadOnlineDelegates()
-    }
-  })
-
-  wsService.on('user-offline', (data) => {
-    if (data.committeeId === committee.value?._id) {
-      loadOnlineDelegates()
-    }
+  wsService.on('conversation-created', (data) => {
+    // Refresh conversations list
+    loadConversations()
   })
 }
 
