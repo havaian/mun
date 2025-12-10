@@ -69,8 +69,9 @@
               @click="openDirectMessage(delegate)"
               class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-gray-100 transition-colors">
               <div class="relative">
-                <CountryFlag :country-name="delegate.name" :country-code="delegate.code" size="medium" variant="bordered" />
-                  class="w-8 h-6 rounded border border-gray-200 object-cover" />
+                <CountryFlag :country-name="delegate.name" :country-code="delegate.code" size="medium"
+                  variant="bordered" />
+                class="w-8 h-6 rounded border border-gray-200 object-cover" />
                 <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
               </div>
               <div class="flex-1">
@@ -151,8 +152,9 @@
             <div v-for="message in currentMessages" :key="message._id" class="flex gap-4">
               <!-- Avatar -->
               <div class="flex-shrink-0">
-                <img v-if="message.senderCountry && message.senderRole != 'presidium'" :src="getCountryFlag(message.senderCountry)"
-                  :alt="message.senderCountry" class="w-10 h-8 rounded border border-gray-200 object-cover" />
+                <img v-if="message.senderCountry && !message.senderCountry.includes('Presidium')"
+                  :src="getCountryFlag(message.senderCountry)" :alt="message.senderCountry"
+                  class="w-10 h-8 rounded border border-gray-200 object-cover" />
                 <div v-else class="w-10 h-8 bg-blue-100 rounded flex items-center justify-center">
                   <Crown class="w-5 h-5 text-blue-600" />
                 </div>
@@ -164,7 +166,7 @@
                   <span class="font-semibold text-gray-900">
                     {{ message.senderCountry || message.senderName || 'Anonymous' }}
                   </span>
-                  <span v-if="message.senderRole === 'presidium'"
+                  <span v-if="message.senderCountry && message.senderCountry.includes('Presidium')"
                     class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
                     👑 Presidium
                   </span>
@@ -244,10 +246,10 @@ import {
   UserIcon, PaperAirplaneIcon
 } from '@heroicons/vue/24/outline'
 
-import { 
-  Globe, 
-  ShieldAlert, 
-  Ghost, 
+import {
+  Globe,
+  ShieldAlert,
+  Ghost,
   MessageSquare,
   Crown
 } from 'lucide-vue-next'
@@ -330,12 +332,12 @@ const allDelegates = computed(() => {
 
 const currentMessages = computed(() => {
   if (!selectedChannel.value) return []
-  
+
   // For public channels, show all loaded messages since they're already filtered by channel
   if (selectedChannel.value.type === 'public') {
     return messages.value
   }
-  
+
   // For DM channels, filter by conversation/channel
   return messages.value.filter(msg =>
     msg.channelId === selectedChannel.value.id ||
@@ -423,7 +425,7 @@ const loadOnlineDelegates = async () => {
 const loadConversations = async () => {
   try {
     const response = await apiMethods.messages.getCommitteeConversations(committee.value._id || committee.value)
-    
+
     if (response.data.success) {
       conversations.value = response.data.conversations || []
     }
@@ -505,8 +507,8 @@ const sendMessage = async () => {
 const openDirectMessage = async (delegate) => {
   try {
     // Check if bilateral conversation already exists
-    const existingConversation = conversations.value.find(conv => 
-      conv.conversationType === 'bilateral' && 
+    const existingConversation = conversations.value.find(conv =>
+      conv.conversationType === 'bilateral' &&
       conv.participants.some(p => p.email === delegate.email)
     )
 
