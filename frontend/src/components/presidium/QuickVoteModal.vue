@@ -94,17 +94,6 @@
                         positions.
                     </p>
                 </div>
-
-                <!-- Actions -->
-                <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
-                    <button type="button" @click="closeModal" class="btn-un-secondary" :disabled="isSubmitting">
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn-un-primary" :disabled="isSubmitting">
-                        <span v-if="isSubmitting">Creating Vote...</span>
-                        <span v-else>Start Voting</span>
-                    </button>
-                </div>
             </form>
         </template>
     </ModalWrapper>
