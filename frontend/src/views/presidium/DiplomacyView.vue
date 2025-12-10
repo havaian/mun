@@ -243,7 +243,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
-import ModalWrapper from '@/components/ModalWrapper.vue'
 import CountryFlag from '@/components/CountryFlag.vue'
 
 // Icons
