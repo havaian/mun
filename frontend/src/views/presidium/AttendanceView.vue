@@ -306,18 +306,24 @@ const loadAttendanceData = async () => {
         if (response.data.success) {
             const sessionData = response.data.session
             rollCallActive.value = sessionData.rollCall?.isActive || false
-            quorumData.value = sessionData.rollCall?.quorum || {
-                hasQuorum: false,
-                required: Math.floor(countries.value.length / 2) + 1,
-                presentVoting: 0
+            
+            // Update quorum data from session
+            if (sessionData.quorum) {
+                quorumData.value = sessionData.quorum
+            } else {
+                quorumData.value = {
+                    hasQuorum: false,
+                    required: Math.floor(countries.value.length / 2) + 1,
+                    presentVoting: 0
+                }
             }
 
-            // Update country attendance status from session data
-            if (sessionData.rollCall?.entries) {
-                sessionData.rollCall.entries.forEach(entry => {
-                    const countryIndex = countries.value.findIndex(c => c.name === entry.country)
+            // Update country attendance status from session attendance data
+            if (sessionData.attendance && sessionData.attendance.length > 0) {
+                sessionData.attendance.forEach(attendanceRecord => {
+                    const countryIndex = countries.value.findIndex(c => c.name === attendanceRecord.country)
                     if (countryIndex !== -1) {
-                        countries.value[countryIndex].attendanceStatus = entry.status
+                        countries.value[countryIndex].attendanceStatus = attendanceRecord.status
                     }
                 })
             }
