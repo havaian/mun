@@ -676,29 +676,84 @@ const sendCommitteeMessage = async (req, res) => {
         const { committeeId, channelType } = req.params;
         const { content } = req.body;
 
+        const committee = await Committee.findById(committeeId);
+        if (!committee) {
+            return res.status(404).json({ error: 'Committee not found' });
+        }
+
+        if (req.user.committeeId.toString() !== committeeId) {
+            return res.status(403).json({ error: 'Access denied to this committee' });
+        }
+
         const channelConfig = {
-            'general': 'General Assembly',
-            'announcements': 'Announcements', 
-            'gossip': 'Gossip Box'
+            'general': { title: 'General Assembly', description: 'Global floor discussion' },
+            'announcements': { title: 'Announcements', description: 'Official Presidium updates' },
+            'gossip': { title: 'Gossip Box', description: 'Anonymous chatter' }
         };
 
-        const title = channelConfig[channelType];
-        if (!title) {
+        const config = channelConfig[channelType];
+        if (!config) {
             return res.status(400).json({ error: 'Invalid channel type' });
         }
 
-        const conversation = await Conversation.findOne({
+        // Find or create conversation
+        let conversation = await Conversation.findOne({
             committeeId,
             conversationType: 'committee_wide',
-            title
+            title: config.title
         });
 
         if (!conversation) {
-            return res.status(404).json({ error: 'Committee conversation not found' });
-        }
+            // Create the conversation if it doesn't exist
+            const participants = committee.countries
+                .filter(country => country.email && country.isActive)
+                .map(country => ({
+                    email: country.email,
+                    country: country.name,
+                    role: 'member'
+                }));
 
-        if (!conversation.canUserAccess(req.user.email)) {
-            return res.status(403).json({ error: 'Access denied to this conversation' });
+            if (committee.presidium) {
+                ['chairperson', 'viceChairperson', 'rapporteur'].forEach(role => {
+                    if (committee.presidium[role] && committee.presidium[role].email) {
+                        participants.push({
+                            email: committee.presidium[role].email,
+                            country: committee.presidium[role].country || role,
+                            role: 'admin'
+                        });
+                    }
+                });
+            }
+
+            conversation = new Conversation({
+                committeeId,
+                conversationType: 'committee_wide',
+                title: config.title,
+                description: config.description,
+                participants,
+                settings: {
+                    allowNewMembers: true,
+                    maxParticipants: 200,
+                    isAnonymous: channelType === 'gossip'
+                },
+                createdBy: req.user.email
+            });
+
+            await conversation.save();
+        } else {
+            // Ensure current user is a participant
+            const isParticipant = conversation.participants.find(p => 
+                p.email === req.user.email && p.isActive
+            );
+
+            if (!isParticipant) {
+                conversation.participants.push({
+                    email: req.user.email,
+                    country: req.user.countryName,
+                    role: req.user.role === 'presidium' ? 'admin' : 'member'
+                });
+                await conversation.save();
+            }
         }
 
         if (channelType === 'announcements' && req.user.role !== 'presidium') {

@@ -129,11 +129,6 @@ router.get('/committee/:committeeId',
     controller.getUserConversations
 );
 
-router.all('/committee/:committeeId/channel/:channelType', (req, res, next) => {
-    console.log('Route hit:', req.method, req.path, req.params);
-    next();
-});
-
 // Committee-wide/public channel routes
 router.get('/committee/:committeeId/channel/:channelType',
     global.auth.token,
