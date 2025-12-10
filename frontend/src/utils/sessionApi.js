@@ -130,4 +130,3 @@ export const updateApiMethods = () => {
 const updatedApiMethods = updateApiMethods()
 
 export default updatedApiMethods
-export { enhancedSessionApi }
