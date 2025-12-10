@@ -255,7 +255,7 @@ import {
   ShieldAlert, 
   Ghost, 
   MessageSquare
-} from 'lucide-vue'
+} from 'lucide-vue-next'
 
 // Stores
 const router = useRouter()
