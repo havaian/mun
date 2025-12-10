@@ -165,9 +165,9 @@ const routes = [
       },
       {
         path: 'messaging',
-        name: 'PresidiumMessages',
+        name: 'PresidiumMessaging',
         component: PresidiumDiplomacy,
-        meta: { title: 'Messages' }
+        meta: { title: 'Diplomacy' }
       },
       {
         path: 'coalitions',
@@ -210,9 +210,9 @@ const routes = [
       },
       {
         path: 'messaging',
-        name: 'DelegateMessages',
+        name: 'DelegateMessaging',
         component: DelegateDiplomacy,
-        meta: { title: 'Messages' }
+        meta: { title: 'Diplomacy' }
       },
       {
         path: 'voting',
