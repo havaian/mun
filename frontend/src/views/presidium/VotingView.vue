@@ -274,6 +274,10 @@
 
     <!-- Create Vote Modal (reuse QuickVoteModal) -->
     <QuickVoteModal v-model="showCreateVoteModal" :session="currentSession" @voting-created="handleVotingCreated" />
+
+    <ForceCompleteModal v-model="showForceCompleteModal" :remaining-voters="forceCompleteData.remainingVoters || 0"
+      :total-votes="forceCompleteData.totalVotes || 0" :eligible-voters="forceCompleteData.eligibleVoters || 0"
+      @force-complete="handleForceComplete" />
   </div>
 </template>
 
@@ -286,6 +290,7 @@ import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
 import sessionApi from '@/utils/sessionApi'
 import QuickVoteModal from '@/components/presidium/QuickVoteModal.vue'
+import ForceCompleteModal from '@/components/presidium/ForceCompleteModal.vue'
 
 // Icons
 import {
@@ -305,6 +310,8 @@ const currentSession = ref(null)
 const committee = ref(null)
 const showCreateVoteModal = ref(false)
 const pendingVote = ref(null)
+const showForceCompleteModal = ref(false)
+const forceCompleteData = ref({})
 
 // Methods
 const loadData = async () => {
@@ -379,19 +386,33 @@ const startVote = async (voteId) => {
   }
 }
 
-const endVote = async (voteId) => {
-  if (!confirm('Are you sure you want to end this vote?')) return
+const endVote = async (voteId, forceComplete = false) => {
+  if (!forceComplete && !confirm('Are you sure you want to end this vote?')) return
 
   try {
-    const response = await apiMethods.voting.endVoting(voteId)
+    const requestData = forceComplete ? { forceComplete: true } : {}
+    const response = await apiMethods.voting.completeVoting(voteId, requestData)
 
     if (response.data.success) {
       await loadVotingData()
       toast.success('Vote ended successfully')
+      showForceCompleteModal.value = false
     }
   } catch (error) {
     console.error('Failed to end vote:', error)
-    toast.error('Failed to end vote')
+
+    // Check if it's the "not all voters voted" error
+    if (error.response?.status === 400 && error.response?.data?.remainingVoters) {
+      forceCompleteData.value = {
+        voteId,
+        remainingVoters: error.response.data.remainingVoters,
+        totalVotes: getTotalVotes(activeVote.value),
+        eligibleVoters: activeVote.value.eligibleVoters || 0
+      }
+      showForceCompleteModal.value = true
+    } else {
+      toast.error('Failed to end vote')
+    }
   }
 }
 
@@ -399,6 +420,10 @@ const handleVotingCreated = (voting) => {
   pendingVote.value = voting
   showCreateVoteModal.value = false
   toast.success('Vote created successfully - ready to start')
+}
+
+const handleForceComplete = async () => {
+  await endVote(forceCompleteData.value.voteId, true)
 }
 
 // Utility methods
