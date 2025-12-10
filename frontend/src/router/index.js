@@ -38,6 +38,12 @@ const ProfileView = () => import('@/views/shared/ProfileView.vue')
 const NotFoundView = () => import('@/views/NotFoundView.vue')
 
 const routes = [
+  // '/login' redirect to '/auth/login'
+  {
+    path: '/login',
+    redirect: { name: 'Login' } // Redirects to the named route 'Login', i.e '/auth/login'
+  },
+  
   // Authentication routes
   {
     path: '/auth',
