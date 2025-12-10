@@ -127,6 +127,6 @@ export const updateApiMethods = () => {
 }
 
 // Auto-update on import
-const updatedApiMethods = updateApiMethods()
+updateApiMethods()
 
-export default updatedApiMethods
+export default enhancedSessionApi
