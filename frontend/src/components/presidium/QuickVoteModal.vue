@@ -103,6 +103,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { HandRaisedIcon } from '@heroicons/vue/24/outline'
 import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
+import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps({
     modelValue: {
@@ -117,6 +118,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'voting-created'])
 const toast = useToast()
+const authStore = useAuthStore()
 
 // State
 const isSubmitting = ref(false)
@@ -171,7 +173,7 @@ const handleSubmit = async () => {
         isSubmitting.value = true
 
         const votingData = {
-            committeeId: props.session.committeeId,
+            committeeId: authStore.user.committeeId._id,
             sessionId: props.session._id,
             votingType: form.votingType,
             subjectType: form.subjectType,
