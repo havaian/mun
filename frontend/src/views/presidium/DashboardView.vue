@@ -16,8 +16,8 @@
                         </button>
                     </div>
 
-                    <button @click="endCurrentSession"
-                        class="col-span-2 px-4 py-3 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    <button @click="endCurrentSession" v-if="currentSession"
+                        class="px-4 py-3 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                         End Session
                     </button>
 
@@ -43,7 +43,7 @@
             </div>
         </div>
 
-        <!-- No Session / Session Management State -->
+        <!-- No Session State -->
         <div v-if="!currentSession" class="flex-1 overflow-y-auto p-6">
             <div class="max-w-6xl mx-auto space-y-8">
 
@@ -90,7 +90,7 @@
                     </div>
                 </div>
 
-                <!-- Presentation Control (Available without active session) -->
+                <!-- Presentation Control -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <div class="flex items-center justify-between mb-6">
                         <h3 class="text-lg font-semibold text-gray-900 flex items-center">
@@ -150,39 +150,12 @@
                                     <div>Duration: {{ formatSessionDuration(session.startedAt, session.endedAt) }}</div>
                                 </div>
                             </div>
-                            <div class="flex space-x-2">
-                                <button v-if="session.status === 'paused'" @click="resumeSession(session._id)"
-                                    class="p-2 rounded-lg bg-green-100 text-green-600 hover:bg-green-200 transition-colors">
-                                    <PlayIcon class="w-4 h-4" />
-                                </button>
-                                <button @click="viewSessionDetails(session)"
-                                    class="p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
-                                    <EyeIcon class="w-4 h-4" />
-                                </button>
-                            </div>
                         </div>
                     </div>
 
                     <div v-else class="text-center py-8">
                         <ClockIcon class="mx-auto h-12 w-12 text-gray-400 mb-4" />
                         <p class="text-gray-600">No previous sessions found</p>
-                    </div>
-                </div>
-
-                <!-- Committee Quick Stats -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-                        <div class="text-2xl font-bold text-blue-600 mb-2">{{ committee?.countries?.length || 0 }}</div>
-                        <div class="text-sm text-gray-600">Member States</div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-                        <div class="text-2xl font-bold text-green-600 mb-2">{{ totalCompletedSessions }}</div>
-                        <div class="text-sm text-gray-600">Completed Sessions</div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-                        <div class="text-2xl font-bold text-purple-600 mb-2">{{ committee?.presidium?.length || 0 }}
-                        </div>
-                        <div class="text-sm text-gray-600">Presidium Members</div>
                     </div>
                 </div>
             </div>
@@ -201,7 +174,7 @@
                             <!-- Background circle -->
                             <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="4" />
                             <!-- Progress circle -->
-                            <circle cx="50" cy="50" r="45" fill="none" :stroke="timerColor" stroke-width="4"
+                            <circle cx="50" cy="50" r="45" fill="none" :stroke="currentTimerColor" stroke-width="4"
                                 stroke-linecap="round" :stroke-dasharray="timerCircumference"
                                 :stroke-dashoffset="timerDashOffset" class="transition-all duration-1000" />
                         </svg>
@@ -216,15 +189,21 @@
                     <div class="flex justify-center space-x-4 mb-4">
                         <button @click="toggleTimer" :class="[
                             'w-12 h-12 rounded-full flex items-center justify-center transition-colors',
-                            activeTimer?.isActive && !activeTimer?.isPaused ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'
-                        ]" :disabled="!activeTimer">
-                            <PauseIcon v-if="activeTimer?.isActive && !activeTimer?.isPaused" class="w-6 h-6" />
+                            activeSessionTimer?.isActive && !activeSessionTimer?.isPaused ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'
+                        ]" :disabled="!activeSessionTimer">
+                            <PauseIcon v-if="activeSessionTimer?.isActive && !activeSessionTimer?.isPaused"
+                                class="w-6 h-6" />
                             <PlayIcon v-else class="w-6 h-6" />
                         </button>
-                        <button @click="resetTimer"
-                            class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors"
-                            :disabled="!activeTimer">
-                            <ArrowPathIcon class="w-6 h-6" />
+                        <button @click="adjustTimer(-30)"
+                            class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors text-sm font-bold"
+                            :disabled="!activeSessionTimer">
+                            -30s
+                        </button>
+                        <button @click="adjustTimer(30)"
+                            class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors text-sm font-bold"
+                            :disabled="!activeSessionTimer">
+                            +30s
                         </button>
                     </div>
 
@@ -232,13 +211,13 @@
                     <div class="grid grid-cols-2 gap-2 text-sm">
                         <button @click="startSpeakerTimer" :class="[
                             'px-3 py-2 rounded-lg border transition-colors',
-                            activeTimer?.timerType === 'speaker' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 hover:bg-gray-50'
-                        ]">
+                            activeTimerType === 'speaker' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 hover:bg-gray-50'
+                        ]" :disabled="!currentSpeaker">
                             Speaker Timer
                         </button>
                         <button @click="startSessionTimer" :class="[
                             'px-3 py-2 rounded-lg border transition-colors',
-                            activeTimer?.timerType === 'session' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 hover:bg-gray-50'
+                            activeTimerType === 'session' ? 'bg-purple-50 border-purple-200 text-purple-700' : 'bg-white border-gray-200 hover:bg-gray-50'
                         ]">
                             Session Timer
                         </button>
@@ -505,8 +484,9 @@ const toast = useToast()
 // State
 const committee = ref(null)
 const currentSession = ref(null)
-const activeTimer = ref(null)
-const timers = ref([])
+const sessionTimers = ref({}) // Store all session timers
+const activeSessionTimer = ref(null) // Currently active/displayed timer
+const activeTimerType = ref(null) // 'session', 'speaker', 'debate'
 const speakerQueue = ref([])
 const currentSpeaker = ref(null)
 const selectedCountry = ref('')
@@ -516,15 +496,15 @@ const votingResults = ref({})
 const quorum = ref({ hasQuorum: false, presentVoting: 0, required: 0 })
 const rollCallStatus = ref('inactive')
 const isLoading = ref(false)
-const allSessions = ref([]) // All sessions for this committee
-const publicDisplayMode = ref('session') // Track current public display mode
+const allSessions = ref([])
+const publicDisplayMode = ref('session')
 
 // Modals
 const showCreateSessionModal = ref(false)
 const showQuickVoteModal = ref(false)
 
-// WebSocket listeners
-let timerUpdateInterval = null
+// Timer sync interval
+let timerSyncInterval = null
 
 // Computed
 const formattedMode = computed(() => {
@@ -548,26 +528,34 @@ const modeColor = computed(() => {
 })
 
 const formattedTimer = computed(() => {
-    if (!activeTimer.value) return '00:00'
+    if (!activeSessionTimer.value) return '00:00'
 
-    const time = activeTimer.value.remainingTime || 0
+    const time = Math.max(0, activeSessionTimer.value.remainingTime || 0)
     const minutes = Math.floor(time / 60)
     const seconds = time % 60
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 })
 
 const currentTimerName = computed(() => {
-    if (!activeTimer.value) return 'NO TIMER'
-    return activeTimer.value.name || activeTimer.value.timerType?.toUpperCase() || 'TIMER'
+    if (!activeSessionTimer.value || !activeTimerType.value) return 'NO TIMER'
+
+    const names = {
+        'session': 'SESSION',
+        'speaker': currentSpeaker.value?.country ? `${currentSpeaker.value.country}` : 'SPEAKER',
+        'debate': 'DEBATE'
+    }
+    return names[activeTimerType.value] || 'TIMER'
 })
 
-const timerColor = computed(() => {
-    if (!activeTimer.value) return '#e5e7eb'
+const currentTimerColor = computed(() => {
+    if (!activeSessionTimer.value) return '#e5e7eb'
 
-    const progress = activeTimer.value.progressPercentage || 0
-    if (progress > 75) return '#ef4444' // red
-    if (progress > 50) return '#f97316' // orange
-    return '#3b82f6' // blue
+    const time = activeSessionTimer.value.remainingTime || 0
+
+    // Color coding based on technical specs: Green > 30s, Yellow 10-30s, Red < 10s
+    if (time > 30) return '#22c55e' // green
+    if (time > 10) return '#eab308' // yellow  
+    return '#ef4444' // red
 })
 
 const timerCircumference = computed(() => {
@@ -575,9 +563,11 @@ const timerCircumference = computed(() => {
 })
 
 const timerDashOffset = computed(() => {
-    if (!activeTimer.value) return timerCircumference.value
+    if (!activeSessionTimer.value) return timerCircumference.value
 
-    const progress = (activeTimer.value.progressPercentage || 0) / 100
+    const progress = activeSessionTimer.value.totalDuration > 0
+        ? (activeSessionTimer.value.totalDuration - activeSessionTimer.value.remainingTime) / activeSessionTimer.value.totalDuration
+        : 0
     return timerCircumference.value * (1 - progress)
 })
 
@@ -602,24 +592,15 @@ const totalCompletedSessions = computed(() => {
 const loadDashboardData = async () => {
     try {
         isLoading.value = true
-
-        // Get committee from auth context
         committee.value = authStore.user?.committeeId
 
         if (!committee.value) {
             throw new Error('No committee assigned to user')
         }
 
-        // Load available countries from committee
         availableCountries.value = committee.value.countries || []
-
-        // Load active session
         await loadActiveSession()
-
-        // Load all sessions for the previous sessions section
         await loadAllSessions()
-
-        // Setup WebSocket listeners
         setupWebSocketListeners()
 
     } catch (error) {
@@ -637,7 +618,7 @@ const loadAllSessions = async () => {
         const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
             page: 1,
             limit: 20,
-            sort: '-number' // Latest sessions first
+            sort: '-number'
         })
 
         if (response.data.success) {
@@ -674,6 +655,26 @@ const loadSessionDetails = async () => {
             const sessionData = sessionResponse.data.session
             currentSession.value = sessionData
 
+            // Load timers from session
+            if (sessionData.timers) {
+                sessionTimers.value = sessionData.timers
+
+                // Find active timer (priority: speaker > debate > session)
+                if (sessionData.timers.speaker?.isActive) {
+                    activeSessionTimer.value = sessionData.timers.speaker
+                    activeTimerType.value = 'speaker'
+                } else if (sessionData.timers.debate?.isActive) {
+                    activeSessionTimer.value = sessionData.timers.debate
+                    activeTimerType.value = 'debate'
+                } else if (sessionData.timers.session?.isActive) {
+                    activeSessionTimer.value = sessionData.timers.session
+                    activeTimerType.value = 'session'
+                } else {
+                    activeSessionTimer.value = null
+                    activeTimerType.value = null
+                }
+            }
+
             // Update speaker data
             speakerQueue.value = sessionData.speakerList?.queue || []
             currentSpeaker.value = sessionData.speakerList?.current || null
@@ -681,13 +682,6 @@ const loadSessionDetails = async () => {
             // Update roll call status
             rollCallStatus.value = sessionData.rollCall?.isActive ? 'active' : 'inactive'
             quorum.value = sessionData.rollCall?.quorum || { hasQuorum: false, presentVoting: 0, required: 0 }
-        }
-
-        // Load active timers
-        const timerResponse = await apiMethods.timers.getActiveTimers(currentSession.value._id)
-        if (timerResponse.data.success) {
-            timers.value = timerResponse.data.timers || []
-            activeTimer.value = timers.value.find(t => t.status === 'running') || timers.value[0] || null
         }
 
         // Load active voting
@@ -702,6 +696,9 @@ const loadSessionDetails = async () => {
 
         // Join session WebSocket room
         wsService.joinSession(currentSession.value._id)
+
+        // Start timer sync
+        startTimerSync()
 
     } catch (error) {
         console.error('Failed to load session details:', error)
@@ -767,7 +764,8 @@ const endCurrentSession = async () => {
 
         if (response.data.success) {
             currentSession.value = null
-            await loadAllSessions() // Refresh session list
+            stopTimerSync()
+            await loadAllSessions()
             toast.success('Session ended successfully')
         }
     } catch (error) {
@@ -776,141 +774,7 @@ const endCurrentSession = async () => {
     }
 }
 
-const resumeSession = async (sessionId) => {
-    try {
-        const response = await apiMethods.sessions.updateStatus(sessionId, { status: 'active' })
-
-        if (response.data.success) {
-            currentSession.value = response.data.session
-            await loadSessionDetails()
-            await loadAllSessions()
-            toast.success('Session resumed successfully')
-        }
-    } catch (error) {
-        console.error('Failed to resume session:', error)
-        toast.error('Failed to resume session')
-    }
-}
-
-const viewSessionDetails = (session) => {
-    // For now, just show basic info - could expand to modal or navigation
-    toast.log(`Session ${session.sessionNumber}: ${formatSessionMode(session.currentMode)} - ${session.status}`)
-}
-
-// Formatting utility methods
-const formatSessionMode = (mode) => {
-    const modes = {
-        'formal': 'Formal Debate',
-        'moderated': 'Moderated Caucus',
-        'unmoderated': 'Unmoderated Caucus',
-        'informal': 'Informal Consultation'
-    }
-    return modes[mode] || mode || 'Unknown'
-}
-
-const formatSessionDate = (dateString) => {
-    if (!dateString) return 'N/A'
-    try {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        })
-    } catch {
-        return 'Invalid date'
-    }
-}
-
-const formatSessionDuration = (startDate, endDate = null) => {
-    if (!startDate) return '0m'
-
-    try {
-        const start = new Date(startDate)
-        const end = endDate ? new Date(endDate) : new Date()
-        const diffMs = end - start
-        const diffMins = Math.floor(diffMs / 60000)
-        const hours = Math.floor(diffMins / 60)
-        const minutes = diffMins % 60
-
-        if (hours > 0) {
-            return `${hours}h ${minutes}m`
-        }
-        return `${minutes}m`
-    } catch {
-        return '0m'
-    }
-}
-
-const getSessionStatusClass = (status) => {
-    const classes = {
-        'active': 'text-xs px-2 py-1 rounded-full bg-green-100 text-green-700',
-        'paused': 'text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700',
-        'completed': 'text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700',
-        'draft': 'text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700'
-    }
-    return classes[status] || classes.draft
-}
-
-// Timer Management
-const toggleTimer = async () => {
-    if (!activeTimer.value) return
-
-    try {
-        const action = activeTimer.value.isActive && !activeTimer.value.isPaused ? 'pause' : 'resume'
-
-        const response = await apiMethods.timers[`${action}Timer`](activeTimer.value._id)
-
-        if (response.data.success) {
-            activeTimer.value = response.data.timer
-            toast.success(`Timer ${action}d`)
-        }
-    } catch (error) {
-        console.error('Failed to toggle timer:', error)
-        toast.error('Failed to toggle timer')
-    }
-}
-
-const resetTimer = async () => {
-    if (!activeTimer.value) return
-
-    try {
-        const response = await apiMethods.timers.completeTimer(activeTimer.value._id)
-        if (response.data.success) {
-            activeTimer.value = null
-            toast.success('Timer reset')
-        }
-    } catch (error) {
-        console.error('Failed to reset timer:', error)
-        toast.error('Failed to reset timer')
-    }
-}
-
-const startSpeakerTimer = async () => {
-    if (!currentSession.value || !currentSpeaker.value) {
-        toast.warn('Please set a current speaker first')
-        return
-    }
-
-    try {
-        const response = await apiMethods.timers.createQuickSpeakerTimer({
-            committeeId: committee.value._id,
-            sessionId: currentSession.value._id,
-            speakerCountry: currentSpeaker.value.country,
-            speakerEmail: currentSpeaker.value.email,
-            duration: committee.value.settings?.speechSettings?.defaultSpeechTime || 180
-        })
-
-        if (response.data.success) {
-            activeTimer.value = response.data.timer
-            toast.success('Speaker timer started')
-        }
-    } catch (error) {
-        console.error('Failed to start speaker timer:', error)
-        toast.error('Failed to start speaker timer')
-    }
-}
-
+// Timer Management - Fixed Implementation
 const startSessionTimer = async () => {
     if (!currentSession.value) return
 
@@ -926,6 +790,101 @@ const startSessionTimer = async () => {
     } catch (error) {
         console.error('Failed to start session timer:', error)
         toast.error('Failed to start session timer')
+    }
+}
+
+const startSpeakerTimer = async () => {
+    if (!currentSession.value || !currentSpeaker.value) {
+        toast.warn('Please set a current speaker first')
+        return
+    }
+
+    try {
+        const defaultDuration = committee.value.settings?.speechSettings?.defaultSpeechTime || 120
+
+        const response = await apiMethods.sessions.startSpeakerTimer(currentSession.value._id, {
+            duration: defaultDuration,
+            country: currentSpeaker.value.country,
+            canBeExtended: true
+        })
+
+        if (response.data.success) {
+            await loadSessionDetails()
+            toast.success('Speaker timer started')
+        }
+    } catch (error) {
+        console.error('Failed to start speaker timer:', error)
+        toast.error('Failed to start speaker timer')
+    }
+}
+
+const toggleTimer = async () => {
+    if (!activeSessionTimer.value || !activeTimerType.value || !currentSession.value) return
+
+    try {
+        const action = activeSessionTimer.value.isActive && !activeSessionTimer.value.isPaused ? 'pause' : 'resume'
+
+        const response = await apiMethods.sessions.toggleTimer(currentSession.value._id, {
+            timerType: activeTimerType.value,
+            action: action
+        })
+
+        if (response.data.success) {
+            await loadSessionDetails()
+            toast.success(`Timer ${action}d`)
+        }
+    } catch (error) {
+        console.error('Failed to toggle timer:', error)
+        toast.error('Failed to toggle timer')
+    }
+}
+
+const adjustTimer = async (seconds) => {
+    if (!activeSessionTimer.value || !activeTimerType.value || !currentSession.value) return
+
+    try {
+        const response = await apiMethods.sessions.adjustTimer(currentSession.value._id, {
+            timerType: activeTimerType.value,
+            adjustment: seconds
+        })
+
+        if (response.data.success) {
+            await loadSessionDetails()
+            toast.success(`Timer adjusted by ${seconds > 0 ? '+' : ''}${seconds}s`)
+        }
+    } catch (error) {
+        console.error('Failed to adjust timer:', error)
+        toast.error('Failed to adjust timer')
+    }
+}
+
+// Timer Sync - Local countdown for smooth display
+const startTimerSync = () => {
+    stopTimerSync()
+
+    timerSyncInterval = setInterval(() => {
+        if (activeSessionTimer.value?.isActive && !activeSessionTimer.value?.isPaused) {
+            if (activeSessionTimer.value.remainingTime > 0) {
+                activeSessionTimer.value.remainingTime--
+
+                // Visual/audio alerts based on technical specs
+                const time = activeSessionTimer.value.remainingTime
+                if (time === 30) {
+                    toast.warn('30 seconds remaining!')
+                } else if (time === 10) {
+                    toast.error('10 seconds remaining!')
+                } else if (time === 0) {
+                    toast.error('Timer expired!')
+                }
+            }
+        }
+    }, 1000)
+}
+
+const stopTimerSync = () => {
+    if (timerSyncInterval) {
+        clearInterval(timerSyncInterval)
+        timerSyncInterval = null
     }
 }
 
@@ -955,7 +914,7 @@ const startRollCall = async () => {
 
     try {
         const response = await apiMethods.sessions.startRollCall(currentSession.value._id, {
-            timeLimit: 10 // 10 minutes default
+            timeLimit: 10
         })
 
         if (response.data.success) {
@@ -1079,7 +1038,6 @@ const setDisplayMode = async (mode) => {
     if (publicDisplayMode.value === mode) return
 
     try {
-        // Send WebSocket event to change public display mode
         wsService.emit('set-public-display-mode', {
             committeeId: committee.value._id,
             mode: mode
@@ -1088,7 +1046,6 @@ const setDisplayMode = async (mode) => {
         publicDisplayMode.value = mode
         toast.success(`Public display switched to ${mode === 'session' ? 'Session View' : 'Gossip Box'}`)
 
-        // Optional: Call API to persist the setting
         const response = await apiMethods.committees.setDisplayMode(committee.value._id, { mode })
         if (!response.data.success) {
             console.warn('Failed to persist display mode setting')
@@ -1111,6 +1068,61 @@ const getVoteBarColor = (option) => {
         abstain: 'bg-yellow-500'
     }
     return colors[option] || 'bg-gray-500'
+}
+
+// Formatting utility methods
+const formatSessionMode = (mode) => {
+    const modes = {
+        'formal': 'Formal Debate',
+        'moderated': 'Moderated Caucus',
+        'unmoderated': 'Unmoderated Caucus',
+        'informal': 'Informal Consultation'
+    }
+    return modes[mode] || mode || 'Unknown'
+}
+
+const formatSessionDate = (dateString) => {
+    if (!dateString) return 'N/A'
+    try {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+    } catch {
+        return 'Invalid date'
+    }
+}
+
+const formatSessionDuration = (startDate, endDate = null) => {
+    if (!startDate) return '0m'
+
+    try {
+        const start = new Date(startDate)
+        const end = endDate ? new Date(endDate) : new Date()
+        const diffMs = end - start
+        const diffMins = Math.floor(diffMs / 60000)
+        const hours = Math.floor(diffMins / 60)
+        const minutes = diffMins % 60
+
+        if (hours > 0) {
+            return `${hours}h ${minutes}m`
+        }
+        return `${minutes}m`
+    } catch {
+        return '0m'
+    }
+}
+
+const getSessionStatusClass = (status) => {
+    const classes = {
+        'active': 'text-xs px-2 py-1 rounded-full bg-green-100 text-green-700',
+        'paused': 'text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700',
+        'completed': 'text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700',
+        'draft': 'text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700'
+    }
+    return classes[status] || classes.draft
 }
 
 // Event Handlers
@@ -1150,29 +1162,35 @@ const setupWebSocketListeners = () => {
         }
     })
 
-    // Timer events
-    wsService.on('timer-started', (data) => {
+    // Timer events - Enhanced
+    wsService.on('session-timer-started', (data) => {
         if (data.sessionId === currentSession.value?._id) {
-            activeTimer.value = data.timer
+            loadSessionDetails()
         }
     })
 
-    wsService.on('timer-paused', (data) => {
-        if (data.timerId === activeTimer.value?._id) {
-            activeTimer.value = { ...activeTimer.value, isPaused: true }
+    wsService.on('speaker-timer-started', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            loadSessionDetails()
         }
     })
 
-    wsService.on('timer-resumed', (data) => {
-        if (data.timerId === activeTimer.value?._id) {
-            activeTimer.value = { ...activeTimer.value, isPaused: false }
+    wsService.on('timer-toggled', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            loadSessionDetails()
+        }
+    })
+
+    wsService.on('timer-adjusted', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            loadSessionDetails()
         }
     })
 
     wsService.on('timer-completed', (data) => {
-        if (data.timerId === activeTimer.value?._id) {
-            activeTimer.value = null
-            toast.log('Timer completed!')
+        if (data.sessionId === currentSession.value?._id) {
+            toast.error('Timer expired!')
+            loadSessionDetails()
         }
     })
 
@@ -1231,39 +1249,21 @@ const setupWebSocketListeners = () => {
     })
 }
 
-const startTimerSync = () => {
-    if (timerUpdateInterval) {
-        clearInterval(timerUpdateInterval)
-    }
-
-    timerUpdateInterval = setInterval(() => {
-        if (activeTimer.value?.isActive && !activeTimer.value?.isPaused) {
-            // Update remaining time locally for smooth display
-            if (activeTimer.value.remainingTime > 0) {
-                activeTimer.value.remainingTime--
-                activeTimer.value.progressPercentage =
-                    ((activeTimer.value.totalDuration - activeTimer.value.remainingTime) / activeTimer.value.totalDuration) * 100
-            }
-        }
-    }, 1000)
-}
-
 // Lifecycle
 onMounted(async () => {
     await loadDashboardData()
-    startTimerSync()
 })
 
 onUnmounted(() => {
-    if (timerUpdateInterval) {
-        clearInterval(timerUpdateInterval)
-    }
+    stopTimerSync()
 })
 
-// Watch for active timer changes
-watch(activeTimer, (newTimer) => {
-    if (newTimer?.isActive && !newTimer?.isPaused) {
+// Watch for active timer changes to restart sync
+watch([activeSessionTimer, activeTimerType], () => {
+    if (activeSessionTimer.value?.isActive) {
         startTimerSync()
+    } else {
+        stopTimerSync()
     }
 }, { deep: true })
 </script>
