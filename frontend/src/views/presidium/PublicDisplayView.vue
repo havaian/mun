@@ -771,8 +771,6 @@ onUnmounted(() => {
 .gossip-lock {
     width: 24px;
     height: 24px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
