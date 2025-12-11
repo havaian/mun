@@ -297,22 +297,19 @@ const bindEmail = async (req, res) => {
             });
         }
 
-        // Start transaction to update both user and committee
-        const session = await mongoose.startSession();
-        session.startTransaction();
+        // Bind email and generate session (without transaction)
+        user.email = email.toLowerCase();
+        user.lastLogin = new Date();
+        user.lastActivity = new Date();
 
-        try {
-            // Bind email and deactivate login link
-            user.email = email.toLowerCase();
-            user.lastLogin = new Date();
-            user.lastActivity = new Date();
+        // Generate session
+        const sessionToken = user.generateSessionId();
+        await user.save();
 
-            // Generate session
-            const sessionToken = user.generateSessionId();
-            await user.save({ session });
-
-            // Update committee countries array with the email
-            if (user.role === 'delegate' && user.countryName) {
+        // Update committee countries array with the email (best effort, no transaction)
+        // If this fails, user is still created successfully
+        if (user.role === 'delegate' && user.countryName) {
+            try {
                 await Committee.updateOne(
                     {
                         _id: user.committeeId._id,
@@ -324,68 +321,62 @@ const bindEmail = async (req, res) => {
                             'countries.$.registeredAt': new Date(),
                             'countries.$.lastActivity': new Date()
                         }
-                    },
-                    { session }
+                    }
                 );
+            } catch (committeeUpdateError) {
+                // Log error but don't fail the whole operation
+                global.logger.warn('Committee countries update failed (non-critical):', committeeUpdateError);
             }
+        }
 
-            await session.commitTransaction();
+        // Create active session
+        await createActiveSession(user._id, sessionToken, req);
 
-            // Create active session
-            await createActiveSession(user._id, sessionToken, req);
+        // Generate JWT with role-specific data and dynamic expiration
+        const tokenData = {
+            userId: user._id,
+            role: user.role,
+            email: user.email,
+            committeeId: user.committeeId,
+            sessionId: sessionToken
+        };
 
-            // Generate JWT with role-specific data and dynamic expiration
-            const tokenData = {
-                userId: user._id,
+        // Add role-specific data
+        if (user.role === 'delegate') {
+            tokenData.countryName = user.countryName;
+            tokenData.specialRole = user.specialRole;
+        } else if (user.role === 'presidium') {
+            tokenData.presidiumRole = user.presidiumRole;
+        }
+
+        const token_jwt = await generateToken(tokenData, user);
+        const expiration = await calculateTokenExpiration(user);
+
+        const userType = user.role === 'delegate' ?
+            user.countryName :
+            `${user.presidiumRole} (Presidium)`;
+
+        global.logger.info(`Email bound and login successful: ${userType} - ${email}, token expires: ${typeof expiration === 'string' ? expiration : new Date(Date.now() + expiration * 1000).toISOString()}`);
+
+        res.json({
+            success: true,
+            token: token_jwt,
+            user: {
+                id: user._id,
                 role: user.role,
                 email: user.email,
                 committeeId: user.committeeId,
-                sessionId: sessionToken
-            };
-
-            // Add role-specific data
-            if (user.role === 'delegate') {
-                tokenData.countryName = user.countryName;
-                tokenData.specialRole = user.specialRole;
-            } else if (user.role === 'presidium') {
-                tokenData.presidiumRole = user.presidiumRole;
-            }
-
-            const token_jwt = await generateToken(tokenData, user);
-            const expiration = await calculateTokenExpiration(user);
-
-            const userType = user.role === 'delegate' ?
-                user.countryName :
-                `${user.presidiumRole} (Presidium)`;
-
-            global.logger.info(`Email bound and login successful: ${userType} - ${email}, token expires: ${typeof expiration === 'string' ? expiration : new Date(Date.now() + expiration * 1000).toISOString()}`);
-
-            res.json({
-                success: true,
-                token: token_jwt,
-                user: {
-                    id: user._id,
-                    role: user.role,
-                    email: user.email,
-                    committeeId: user.committeeId,
-                    ...(user.role === 'delegate' && {
-                        countryName: user.countryName,
-                        specialRole: user.specialRole
-                    }),
-                    ...(user.role === 'presidium' && {
-                        presidiumRole: user.presidiumRole
-                    })
-                },
-                message: `Welcome, ${userType}!`,
-                expiresIn: expiration
-            });
-
-        } catch (error) {
-            await session.abortTransaction();
-            throw error;
-        } finally {
-            session.endSession();
-        }
+                ...(user.role === 'delegate' && {
+                    countryName: user.countryName,
+                    specialRole: user.specialRole
+                }),
+                ...(user.role === 'presidium' && {
+                    presidiumRole: user.presidiumRole
+                })
+            },
+            message: `Welcome, ${userType}!`,
+            expiresIn: expiration
+        });
 
     } catch (error) {
         global.logger.error('Email binding error:', error);
