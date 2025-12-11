@@ -121,12 +121,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Footer -->
-        <div class="display-footer">
-            <p>This app was developed by another user. It may be inaccurate or unsafe. <a href="#">Report legal
-                    issue</a></p>
-        </div>
     </div>
 </template>
 
