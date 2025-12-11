@@ -480,42 +480,73 @@ const startTimerSync = () => {
 
 // WebSocket listeners
 const setupWebSocketListeners = () => {
-    // Display mode control events
-    wsService.on('public-display-mode-changed', (data) => {
-        if (data.committeeId === committee.value?._id) {
-            displayMode.value = data.mode
-        }
-    })
+    console.log('🎧 Setting up WebSocket listeners for public display')
+
+    // Join multiple room types for maximum compatibility
+    if (committee.value?._id) {
+        wsService.emit('join-committee-room', { committeeId: committee.value._id })
+        wsService.emit('join-room', `committee-${committee.value._id}`)
+        wsService.emit('join-room', `public-display-${committee.value._id}`)
+        wsService.emit('join-room', committee.value._id)
+        
+        console.log(`📡 Joined multiple rooms for committee: ${committee.value._id}`)
+    }
+
+    // Display mode control events - ENHANCED WITH MORE EVENT TYPES
+    const displayModeEvents = [
+        'public-display-mode-changed',
+        'display-mode-changed',
+        'display-toggle',
+        'committee-display-mode-changed',
+        'set-public-display-mode',
+        'display-mode-change',
+        'public-display-toggle',
+        `committee-${committee.value?._id}-display-mode`
+    ];
+
+    displayModeEvents.forEach(eventName => {
+        wsService.on(eventName, (data) => {
+            console.log(`📡 Received ${eventName}:`, data)
+            if (data.committeeId === committee.value?._id) {
+                displayMode.value = data.mode
+                console.log(`✅ Display mode updated to: ${data.mode}`)
+            }
+        });
+    });
 
     // Session events
     wsService.on('session-mode-changed', (data) => {
+        console.log('📡 Received session-mode-changed:', data)
         if (data.sessionId === currentSession.value?._id) {
             currentMode.value = data.mode
         }
     })
 
     // Timer events
-    wsService.on('timer-started', (data) => {
-        if (data.sessionId === currentSession.value?._id) {
-            activeTimer.value = data.timer
-            startTimerSync()
-        }
-    })
+    const timerEvents = [
+        'timer-started', 'timer-paused', 'timer-resumed', 
+        'timer-completed', 'timer-expired', 'timer-updated'
+    ];
 
-    wsService.on('timer-completed', (data) => {
-        if (data.timerId === activeTimer.value?._id) {
-            activeTimer.value = null
-        }
-    })
+    timerEvents.forEach(eventName => {
+        wsService.on(eventName, (data) => {
+            console.log(`📡 Received ${eventName}:`, data)
+            if (data.sessionId === currentSession.value?._id) {
+                loadSessionDetails()
+            }
+        });
+    });
 
-    // Speaker events
+    // Speaker events  
     wsService.on('speaker-list-updated', (data) => {
+        console.log('📡 Received speaker-list-updated:', data)
         if (data.sessionId === currentSession.value?._id) {
             speakerQueue.value = data.speakerList
         }
     })
 
     wsService.on('current-speaker-changed', (data) => {
+        console.log('📡 Received current-speaker-changed:', data)
         if (data.sessionId === currentSession.value?._id) {
             currentSpeaker.value = data.speaker
         }
@@ -523,12 +554,14 @@ const setupWebSocketListeners = () => {
 
     // Voting events
     wsService.on('voting-started', (data) => {
+        console.log('📡 Received voting-started:', data)
         if (data.committeeId === committee.value?._id) {
             activeVoting.value = data.voting
         }
     })
 
     wsService.on('voting-ended', (data) => {
+        console.log('📡 Received voting-ended:', data)
         if (data.votingId === activeVoting.value?._id) {
             activeVoting.value = null
         }
@@ -563,6 +596,8 @@ const setupWebSocketListeners = () => {
             gossipMessages.value = gossipMessages.value.filter(msg => msg._id !== data.messageId)
         }
     })
+
+    console.log('✅ All WebSocket listeners set up for public display')
 }
 
 // Lifecycle

@@ -925,20 +925,21 @@ const changeMode = async (newMode) => {
     if (!currentSession.value || currentSession.value.currentMode === newMode) return
 
     try {
-        // Use correct API with all required fields that backend expects
+        // Use correct API with properly formatted startedBy
         const response = await apiMethods.sessions.changeMode(currentSession.value._id, {
             mode: newMode,
             reason: `Mode changed to ${newMode} by presidium`,
-            // Provide required modeSettings based on backend validation
             modeSettings: {
                 topic: `${newMode.charAt(0).toUpperCase() + newMode.slice(1)} debate session`,
                 totalTime: newMode === 'moderated' ? 600 : newMode === 'unmoderated' ? 900 : 0,
                 speechTime: newMode === 'moderated' ? 120 : newMode === 'formal' ? 180 : 60,
                 allowQuestions: newMode === 'moderated' || newMode === 'formal'
             },
+            // Fix: Format startedBy to match schema
             startedBy: {
-                email: authStore.user?.email,
-                name: authStore.user?.name || 'Presidium Member'
+                email: authStore.user?.email || 'presidium@mun.uz',
+                name: authStore.user?.name || 'Presidium Member',
+                userId: authStore.user?._id || null
             }
         })
 
@@ -949,14 +950,9 @@ const changeMode = async (newMode) => {
     } catch (error) {
         console.error('Failed to change mode:', error)
 
-        // Detailed error handling for 500 errors
         if (error.response?.status === 500) {
             console.error('Server error details:', error.response.data)
-            toast.error('Server error changing mode. Please check session status.')
-        } else if (error.response?.status === 400) {
-            const errorDetails = error.response.data?.details || []
-            const validationErrors = errorDetails.map(err => err.msg).join(', ')
-            toast.error(`Validation error: ${validationErrors}`)
+            toast.error('Server error changing mode. Check logs for details.')
         } else {
             toast.error('Failed to change session mode')
         }

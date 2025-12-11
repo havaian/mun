@@ -113,8 +113,29 @@ export const useWebSocketStore = defineStore('websocket', () => {
 
     // Room management
     const joinCommittee = (committeeId) => {
-        wsService.joinCommittee(committeeId)
-    }
+        if (!wsService || !committeeId) return;
+        
+        console.log(`🏛️ Joining committee room: ${committeeId}`);
+        
+        // Join multiple room formats for compatibility
+        wsService.emit('join-committee-room', { committeeId });
+        wsService.emit('join-room', `committee-${committeeId}`);
+        wsService.emit('join-room', `public-display-${committeeId}`);
+        wsService.emit('join-room', committeeId);
+        
+        // Store current committee for reconnection
+        currentCommitteeId = committeeId;
+    };
+
+    const joinPublicDisplayRoom = (committeeId) => {
+        if (!wsService || !committeeId) return;
+        
+        console.log(`📺 Joining public display room: ${committeeId}`);
+        
+        wsService.emit('join-public-display', { committeeId });
+        wsService.emit('join-room', `public-display-${committeeId}`);
+        wsService.emit('join-room', `display-${committeeId}`);
+    };
 
     const leaveCommittee = (committeeId) => {
         wsService.leaveCommittee(committeeId)
@@ -160,6 +181,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
         connect,
         disconnect,
         joinCommittee,
+        joinPublicDisplayRoom,
         leaveCommittee,
         joinSession,
         leaveSession,

@@ -317,8 +317,38 @@ const emitToRoom = (io, roomName, event, data) => {
 };
 
 // Emit to committee
-const emitToCommittee = (io, committeeId, event, data) => {
-    emitToRoom(io, `committee-${committeeId}`, event, data);
+const emitToCommittee = (io, committeeId, eventName, data) => {
+    if (!io || !committeeId) {
+        console.error('Missing io or committeeId in emitToCommittee');
+        return;
+    }
+
+    const roomName = `committee-${committeeId}`;
+    
+    // Log for debugging
+    console.log(`📡 Emitting ${eventName} to room: ${roomName}`);
+    console.log(`📊 Room ${roomName} has ${io.sockets.adapter.rooms.get(roomName)?.size || 0} clients`);
+    
+    // Emit to committee room
+    io.to(roomName).emit(eventName, {
+        ...data,
+        timestamp: new Date(),
+        source: 'server'
+    });
+
+    // Also emit to public display room for that committee
+    io.to(`public-display-${committeeId}`).emit(eventName, {
+        ...data,
+        timestamp: new Date(),
+        source: 'server'
+    });
+
+    // Emit to general committee room as well (fallback)
+    io.to(committeeId).emit(eventName, {
+        ...data,
+        timestamp: new Date(),
+        source: 'server'
+    });
 };
 
 // Emit to presidium

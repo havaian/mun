@@ -133,7 +133,7 @@ const sessionSchema = new mongoose.Schema({
         settings: mongoose.Schema.Types.Mixed,
         startedAt: Date,
         endedAt: Date,
-        startedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+        startedBy: mongoose.Schema.Types.Mixed
     }],
 
     // Roll Call System
@@ -500,7 +500,7 @@ sessionSchema.methods.setCurrentSpeaker = function (country) {
 };
 
 // Debate Mode Management
-sessionSchema.methods.changeMode = function (newMode, settings = {}, changedBy) {
+sessionSchema.methods.changeMode = function (newMode, settings = {}, changedBy = null) {
     // Provide default settings if not provided
     const defaultSettings = {
         topic: `${newMode.charAt(0).toUpperCase() + newMode.slice(1)} debate session`,
@@ -512,6 +512,17 @@ sessionSchema.methods.changeMode = function (newMode, settings = {}, changedBy) 
     // Merge provided settings with defaults
     const finalSettings = { ...defaultSettings, ...settings };
 
+    // Fix: Ensure changedBy is properly formatted
+    const startedByInfo = changedBy ? {
+        email: changedBy.email || `${changedBy.role}@presidium.mun.uz`,
+        name: changedBy.name || 'Presidium Member',
+        userId: changedBy.userId || null
+    } : {
+        email: 'system@mun.uz',
+        name: 'System',
+        userId: null
+    };
+
     // Record current mode in history
     if (this.currentMode && this.modeStartedAt) {
         this.modeHistory.push({
@@ -519,7 +530,7 @@ sessionSchema.methods.changeMode = function (newMode, settings = {}, changedBy) 
             settings: { ...this.modeSettings },
             startedAt: this.modeStartedAt,
             endedAt: new Date(),
-            startedBy: changedBy
+            startedBy: startedByInfo  // Now properly formatted
         });
     }
 
@@ -530,15 +541,19 @@ sessionSchema.methods.changeMode = function (newMode, settings = {}, changedBy) 
     // Mode-specific initialization
     if (newMode === 'moderated') {
         // Initialize speaker queue for moderated caucus
-        this.initializeSpeakerQueues();
+        if (typeof this.initializeSpeakerQueues === 'function') {
+            this.initializeSpeakerQueues();
+        }
 
         // Start debate timer if totalTime is provided
         if (finalSettings.totalTime && finalSettings.totalTime > 0) {
-            this.startDebateTimer(
-                finalSettings.totalTime,
-                'moderated',
-                `Moderated Caucus: ${finalSettings.topic || 'General Discussion'}`
-            );
+            if (typeof this.startDebateTimer === 'function') {
+                this.startDebateTimer(
+                    finalSettings.totalTime,
+                    'moderated',
+                    `Moderated Caucus: ${finalSettings.topic || 'General Discussion'}`
+                );
+            }
         }
     }
 
