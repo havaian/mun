@@ -1,6 +1,9 @@
 const Session = require('./model')
-const { Committee } = require('../committee/model')
+const Committee = require('../committee/model')
 
+/**
+ * Helper to save session with partial validation
+ */
 const saveSession = (session) => session.save({ validateModifiedOnly: true })
 
 /**
@@ -10,7 +13,6 @@ exports.createSession = async (req, res) => {
     try {
         const { committeeId, initialMode, speechTime, questionsAllowed, autoStart } = req.body
 
-        // Validate committee exists
         const committee = await Committee.findById(committeeId)
         if (!committee) {
             return res.status(404).json({
@@ -19,7 +21,6 @@ exports.createSession = async (req, res) => {
             })
         }
 
-        // Check for existing active session
         const existingActive = await Session.findOne({
             committeeId,
             status: 'active'
@@ -32,11 +33,9 @@ exports.createSession = async (req, res) => {
             })
         }
 
-        // Get next session number
         const lastSession = await Session.findOne({ committeeId }).sort('-sessionNumber')
         const nextSessionNumber = lastSession ? lastSession.sessionNumber + 1 : 1
 
-        // Create session
         const session = new Session({
             committeeId,
             sessionNumber: nextSessionNumber,
@@ -49,11 +48,9 @@ exports.createSession = async (req, res) => {
             createdBy: req.user?._id
         })
 
-        // Initialize timers
         session.initializeTimers(session.currentMode)
         await saveSession(session)
 
-        // Emit WebSocket event
         if (req.io) {
             req.io.to(`committee-${committeeId}`).emit('session-created', {
                 session: session.toObject(),
@@ -76,7 +73,7 @@ exports.createSession = async (req, res) => {
 }
 
 /**
- * Start session (change status to active)
+ * Start session
  */
 exports.startSession = async (req, res) => {
     try {
@@ -94,7 +91,6 @@ exports.startSession = async (req, res) => {
         session.startedAt = new Date()
         await saveSession(session)
 
-        // Emit WebSocket event
         if (req.io) {
             req.io.to(`committee-${session.committeeId}`).emit('session-started', {
                 sessionId: session._id.toString(),
@@ -134,7 +130,6 @@ exports.endSession = async (req, res) => {
         session.status = 'completed'
         session.endedAt = new Date()
 
-        // Stop all active timers
         if (session.timers) {
             ['session', 'speaker', 'debate', 'qa'].forEach(timerType => {
                 if (session.timers[timerType]) {
@@ -153,7 +148,6 @@ exports.endSession = async (req, res) => {
 
         await saveSession(session)
 
-        // Emit WebSocket event
         if (req.io) {
             req.io.to(`committee-${session.committeeId}`).emit('session-ended', {
                 sessionId: session._id.toString(),
@@ -192,7 +186,6 @@ exports.getSession = async (req, res) => {
             })
         }
 
-        // Get real-time timer states
         const sessionObj = session.toObject()
         sessionObj.timers = session.getAllTimerStates()
 
@@ -266,13 +259,10 @@ exports.changeMode = async (req, res) => {
 
         session.currentMode = mode
         session.modeSettings = settings || {}
-
-        // Reinitialize timers for new mode
         session.initializeTimers(mode)
 
         await saveSession(session)
 
-        // Emit WebSocket event
         if (req.io) {
             req.io.to(`session-${id}`).emit('mode-changed', {
                 sessionId: id,
@@ -329,7 +319,6 @@ exports.startRollCall = async (req, res) => {
 
         await saveSession(session)
 
-        // Emit WebSocket event
         if (req.io) {
             req.io.to(`session-${id}`).emit('roll-call-started', {
                 sessionId: id,
@@ -359,7 +348,7 @@ exports.startRollCall = async (req, res) => {
 }
 
 /**
- * End roll call and initialize speaker lists
+ * End roll call
  */
 exports.endRollCall = async (req, res) => {
     try {
@@ -384,7 +373,6 @@ exports.endRollCall = async (req, res) => {
         session.rollCall.isActive = false
         session.rollCall.endedAt = new Date()
 
-        // Initialize speaker lists based on responses
         const allCountries = session.committeeId.countries || []
         const presentCountries = session.rollCall.responses
             .filter(r => r.status === 'present' || r.status === 'present-voting')
@@ -409,12 +397,10 @@ exports.endRollCall = async (req, res) => {
             }))
         }
 
-        // Calculate quorum
         session.calculateQuorum()
 
         await saveSession(session)
 
-        // Emit WebSocket event
         if (req.io) {
             req.io.to(`session-${id}`).emit('roll-call-ended', {
                 sessionId: id,
@@ -469,7 +455,6 @@ exports.markAttendance = async (req, res) => {
             })
         }
 
-        // Check if already responded
         const existing = session.rollCall.responses.find(r => r.country === country)
         if (existing) {
             return res.status(400).json({
@@ -478,7 +463,6 @@ exports.markAttendance = async (req, res) => {
             })
         }
 
-        // Add response
         session.rollCall.responses.push({
             country,
             status,
@@ -487,7 +471,6 @@ exports.markAttendance = async (req, res) => {
 
         await saveSession(session)
 
-        // Emit WebSocket event
         if (req.io) {
             req.io.to(`session-${id}`).emit('attendance-updated', {
                 sessionId: id,
@@ -543,12 +526,11 @@ exports.startSessionTimer = async (req, res) => {
         timer.isPaused = false
         timer.startedAt = new Date()
         timer.pausedAt = null
-        timer.accumulatedPause = 0
+        timer.accumulatedPause = 0 // SECONDS
         timer.purpose = purpose || ''
 
         await saveSession(session)
 
-        // Emit WebSocket event
         if (req.io) {
             req.io.to(`session-${id}`).emit('timer-started', {
                 sessionId: id,
@@ -599,12 +581,11 @@ exports.startDebateTimer = async (req, res) => {
         timer.isPaused = false
         timer.startedAt = new Date()
         timer.pausedAt = null
-        timer.accumulatedPause = 0
+        timer.accumulatedPause = 0 // SECONDS
         timer.remainingTime = timer.totalDuration
 
         await saveSession(session)
 
-        // Emit WebSocket event
         if (req.io) {
             req.io.to(`session-${id}`).emit('timer-started', {
                 sessionId: id,
@@ -636,7 +617,7 @@ exports.startDebateTimer = async (req, res) => {
 }
 
 /**
- * Toggle timer (start/pause/resume)
+ * Toggle timer (start/pause/resume) - FIXED pause calculation
  */
 exports.toggleTimer = async (req, res) => {
     try {
@@ -673,15 +654,17 @@ exports.toggleTimer = async (req, res) => {
             timer.isPaused = false
             timer.startedAt = now
             timer.pausedAt = null
-            timer.accumulatedPause = 0
+            timer.accumulatedPause = 0 // SECONDS
             timer.remainingTime = timer.totalDuration
         } else if (timer.isPaused) {
-            // Resume timer
+            // Resume timer - ADD pause duration to accumulated
             timer.isPaused = false
 
-            // Calculate pause duration
-            const pauseDuration = Math.floor((now - new Date(timer.pausedAt)) / 1000)
-            timer.accumulatedPause += pauseDuration
+            // CRITICAL FIX: Calculate pause duration in SECONDS
+            const pauseDurationMs = now - new Date(timer.pausedAt)
+            const pauseDurationSeconds = Math.floor(pauseDurationMs / 1000)
+            timer.accumulatedPause += pauseDurationSeconds // Add to accumulated SECONDS
+
             timer.pausedAt = null
         } else {
             // Pause timer
@@ -694,7 +677,6 @@ exports.toggleTimer = async (req, res) => {
 
         await saveSession(session)
 
-        // Emit WebSocket event
         if (req.io) {
             req.io.to(`session-${id}`).emit('timer-toggled', {
                 sessionId: id,
@@ -762,7 +744,8 @@ exports.adjustTimer = async (req, res) => {
         if (timer.isActive && !timer.isPaused) {
             // Timer is running - adjust startedAt to match new duration
             const elapsedFromNewDuration = timer.totalDuration - newTime
-            timer.startedAt = new Date(now - (elapsedFromNewDuration * 1000) + (timer.accumulatedPause * 1000))
+            const newStartTime = now.getTime() - (elapsedFromNewDuration * 1000) + (timer.accumulatedPause * 1000)
+            timer.startedAt = new Date(newStartTime)
         } else {
             // Timer is paused or inactive - directly set remaining time
             timer.remainingTime = newTime
@@ -772,7 +755,6 @@ exports.adjustTimer = async (req, res) => {
 
         await saveSession(session)
 
-        // Emit WebSocket event
         if (req.io) {
             req.io.to(`session-${id}`).emit('timer-adjusted', {
                 sessionId: id,
@@ -833,13 +815,12 @@ exports.addAdditionalTimer = async (req, res) => {
             isPaused: false,
             startedAt: null,
             pausedAt: null,
-            accumulatedPause: 0
+            accumulatedPause: 0 // SECONDS
         }
 
         session.timers.additional.push(newTimer)
         await saveSession(session)
 
-        // Emit WebSocket event
         if (req.io) {
             req.io.to(`session-${id}`).emit('additional-timer-created', {
                 sessionId: id,
@@ -884,7 +865,6 @@ exports.setCurrentSpeaker = async (req, res) => {
             })
         }
 
-        // Verify speaker is in present list
         const speaker = session.speakerLists?.present?.find(s => s.country === country)
         if (!speaker) {
             return res.status(400).json({
@@ -893,18 +873,15 @@ exports.setCurrentSpeaker = async (req, res) => {
             })
         }
 
-        // Mark previous speaker as spoken
         if (session.currentSpeaker?.country) {
             session.markSpeakerAsSpoken(session.currentSpeaker.country)
         }
 
-        // Set new current speaker
         session.currentSpeaker = {
             country,
             startedAt: new Date()
         }
 
-        // Start speaker timer based on mode
         const mode = session.currentMode
         if (mode === 'formal' || mode === 'moderated' || mode === 'informal') {
             const speakerTimer = session.timers.speaker
@@ -914,13 +891,12 @@ exports.setCurrentSpeaker = async (req, res) => {
             speakerTimer.isPaused = false
             speakerTimer.startedAt = new Date()
             speakerTimer.pausedAt = null
-            speakerTimer.accumulatedPause = 0
+            speakerTimer.accumulatedPause = 0 // SECONDS
             speakerTimer.remainingTime = speakerTimer.totalDuration
         }
 
         await saveSession(session)
 
-        // Emit WebSocket event
         if (req.io) {
             req.io.to(`session-${id}`).emit('current-speaker-set', {
                 sessionId: id,
@@ -956,7 +932,7 @@ exports.setCurrentSpeaker = async (req, res) => {
 }
 
 /**
- * Move speaker to end (alias for moveSpeakerToEnd)
+ * Move speaker to end
  */
 exports.moveToEnd = async (req, res) => {
     try {
@@ -971,11 +947,9 @@ exports.moveToEnd = async (req, res) => {
             })
         }
 
-        // Move speaker to end
         session.moveSpeakerToEnd(country)
         await saveSession(session)
 
-        // Emit WebSocket event
         if (req.io) {
             req.io.to(`session-${id}`).emit('speaker-moved', {
                 sessionId: id,

@@ -88,37 +88,41 @@
                 </div>
 
                 <!-- Presentation Control -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                            <PresentationChartLineIcon class="w-5 h-5 mr-2" />
-                            Presentation Control
-                        </h3>
-                        <span class="text-sm text-gray-500">Controls public display mode</span>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+                <div class="display-mode-controls">
+                    <h3 class="text-lg font-semibold mb-3">Public Display Mode</h3>
+                    <div class="flex gap-2">
                         <button @click="setDisplayMode('session')" :class="[
-                            'p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center space-y-3 hover:shadow-md',
+                            'flex-1 px-4 py-3 rounded-lg font-medium transition-all',
                             publicDisplayMode === 'session'
-                                ? 'bg-blue-50 border-blue-300 text-blue-700 shadow-sm'
-                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                                ? 'bg-blue-600 text-white shadow-lg'
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                         ]">
-                            <ComputerDesktopIcon class="w-8 h-8" />
-                            <span class="font-medium">Session View</span>
-                            <span class="text-xs text-center">Timers, speakers, voting</span>
+                            <svg class="inline-block w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <circle cx="12" cy="12" r="10" stroke-width="2" />
+                                <path d="M12 6v6l4 4" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                            Session View
                         </button>
+
                         <button @click="setDisplayMode('gossip')" :class="[
-                            'p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center space-y-3 hover:shadow-md',
+                            'flex-1 px-4 py-3 rounded-lg font-medium transition-all',
                             publicDisplayMode === 'gossip'
-                                ? 'bg-purple-50 border-purple-300 text-purple-700 shadow-sm'
-                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                                ? 'bg-purple-600 text-white shadow-lg'
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                         ]">
-                            <ChatBubbleOvalLeftEllipsisIcon class="w-8 h-8" />
-                            <span class="font-medium">Gossip Box</span>
-                            <span class="text-xs text-center">Anonymous messages</span>
+                            <svg class="inline-block w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path
+                                    d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Gossip Box
                         </button>
                     </div>
+                    <p class="text-sm text-gray-400 mt-2">
+                        Current: <span class="font-semibold text-white">{{ publicDisplayMode === 'session' ? 'Session View' : 'Gossip Box' }}</span>
+                    </p>
                 </div>
 
                 <!-- Previous Sessions -->
@@ -213,7 +217,7 @@
                         ]">
                             <div class="text-xs text-gray-500 uppercase">
                                 {{ currentSession?.currentMode === 'moderated' || currentSession?.currentMode ===
-                                'unmoderated' ? 'Debate' : 'Session' }}
+                                    'unmoderated' ? 'Debate' : 'Session' }}
                             </div>
                             <div class="text-lg font-bold font-mono">
                                 {{ formatTimerDisplay(sessionTimers.session) }}
@@ -1355,19 +1359,32 @@ const endVoting = async () => {
 
 // Display Mode
 const setDisplayMode = async (mode) => {
-    if (!committee.value?._id) {
-        console.error('Committee not loaded')
+    if (!['session', 'gossip'].includes(mode)) {
+        console.error('Invalid display mode:', mode)
         return
     }
-    
+
+    if (!committee.value?._id) {
+        console.error('Cannot set display mode: Committee not loaded')
+        toast.error('Committee not loaded')
+        return
+    }
+
+    console.log('🎮 Setting display mode to:', mode)
     publicDisplayMode.value = mode
-    
+
+    console.log('📡 Emitting set-public-display-mode:', {
+        committeeId: committee.value._id,
+        mode: mode
+    })
+
     wsService.emit('set-public-display-mode', {
         committeeId: committee.value._id,
         mode: mode
     })
-    
-    toast.success(`Display: ${mode === 'session' ? 'Session View' : 'Gossip Box'}`)
+
+    const modeLabel = mode === 'session' ? 'Session View' : 'Gossip Box'
+    toast.success(`Public display: ${modeLabel}`)
 }
 
 // Utility Methods
@@ -1479,8 +1496,11 @@ const setupWebSocketListeners = () => {
 
     // Display mode
     wsService.on('public-display-mode-changed', (data) => {
+        console.log('🎬 Display mode changed:', data)
         if (data.committeeId === committee.value?._id) {
             publicDisplayMode.value = data.mode
+            const modeLabel = data.mode === 'session' ? 'Session View' : 'Gossip Box'
+            toast.info(`Display switched to ${modeLabel}`)
         }
     })
 

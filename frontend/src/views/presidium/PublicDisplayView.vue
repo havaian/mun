@@ -1,637 +1,736 @@
 <template>
-    <div class="h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 text-white overflow-hidden">
+    <div class="public-display-container">
         <!-- Session View -->
-        <div v-if="displayMode === 'session'" class="h-full flex flex-col">
+        <div v-if="displayMode === 'session'" class="session-view">
             <!-- Header -->
-            <div class="bg-black/40 backdrop-blur-sm px-8 py-6 border-b border-white/20">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-4xl font-bold mb-1">{{ committee?.name || 'MUN Committee' }}</h1>
-                        <p class="text-xl text-blue-200">
-                            Session {{ currentSession?.sessionNumber || 'N/A' }} - {{ formattedMode }}
-                        </p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-6xl font-bold font-mono">{{ formattedTimer }}</p>
-                        <p class="text-lg text-gray-300 uppercase tracking-wide">{{ currentTimerName }}</p>
-                    </div>
+            <div class="session-header">
+                <div class="committee-info">
+                    <h1 class="committee-name">{{ committeeName }}</h1>
+                    <p class="session-topic">{{ sessionTopic || 'Global Sustainability Goals' }}</p>
                 </div>
+                <div class="mode-badge">{{ currentMode?.toUpperCase() || 'FORMAL' }}</div>
             </div>
 
-            <!-- Main Content -->
-            <div class="flex-1 grid grid-cols-3 gap-6 p-8">
-                <!-- Left Column: Current Speaker -->
-                <div class="col-span-1 space-y-6">
-                    <!-- Current Speaker -->
-                    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 shadow-2xl">
-                        <h2 class="text-2xl font-bold mb-4 text-center">Current Speaker</h2>
-                        <div class="text-center">
-                            <div v-if="currentSpeaker" class="space-y-4">
-                                <div
-                                    class="w-32 h-32 mx-auto bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-xl">
-                                    <MicrophoneIcon class="w-16 h-16 text-white" />
-                                </div>
-                                <h3 class="text-3xl font-bold">{{ currentSpeaker.country }}</h3>
-                                <p class="text-lg text-gray-300">
-                                    Speaking time: {{ formatDuration(getSpeakerDuration()) }}
-                                </p>
-                            </div>
-                            <div v-else class="py-12">
-                                <UserIcon class="w-24 h-24 mx-auto text-gray-400 opacity-50 mb-4" />
-                                <p class="text-2xl text-gray-400">No active speaker</p>
-                            </div>
+            <!-- Main Content Grid -->
+            <div class="content-grid">
+                <!-- Left Column - Timer & Speaker -->
+                <div class="left-column">
+                    <!-- Timer Card -->
+                    <div class="timer-card">
+                        <div class="timer-label">
+                            <svg class="timer-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                                <path d="M12 6v6l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                            <span>{{ timerLabel }}</span>
                         </div>
+                        <div class="timer-display">{{ formattedTime }}</div>
                     </div>
 
-                    <!-- Quorum Status -->
-                    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-                        <h3 class="text-xl font-bold mb-3">Quorum Status</h3>
-                        <div class="flex items-center justify-between">
-                            <div class="text-center flex-1">
-                                <p class="text-4xl font-bold"
-                                    :class="quorum.hasQuorum ? 'text-green-400' : 'text-red-400'">
-                                    {{ quorum.present || 0 }}
-                                </p>
-                                <p class="text-sm text-gray-300">Present</p>
-                            </div>
-                            <div class="text-2xl text-gray-400">/</div>
-                            <div class="text-center flex-1">
-                                <p class="text-4xl font-bold">{{ quorum.required || 0 }}</p>
-                                <p class="text-sm text-gray-300">Required</p>
-                            </div>
+                    <!-- Current Speaker Card -->
+                    <div class="speaker-card">
+                        <div class="speaker-icon">
+                            <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" stroke="currentColor"
+                                    stroke-width="2" />
+                                <circle cx="11" cy="7" r="4" stroke="currentColor" stroke-width="2" />
+                            </svg>
                         </div>
-                        <div class="mt-4 text-center">
-                            <span :class="[
-                                'px-4 py-2 rounded-full font-bold text-sm',
-                                quorum.hasQuorum ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
-                            ]">
-                                {{ quorum.hasQuorum ? '✓ QUORUM REACHED' : '✗ NO QUORUM' }}
-                            </span>
-                        </div>
+                        <div class="speaker-label">CURRENT SPEAKER</div>
+                        <div class="speaker-name">{{ currentSpeakerName || 'Floor Open' }}</div>
                     </div>
                 </div>
 
-                <!-- Middle Column: Speakers Queue -->
-                <div
-                    class="col-span-1 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 overflow-hidden flex flex-col">
-                    <h2 class="text-2xl font-bold mb-4">Speakers Queue</h2>
-                    <div class="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-                        <div v-if="speakerLists.present.length === 0" class="text-center py-12">
-                            <UsersIcon class="w-16 h-16 mx-auto text-gray-400 opacity-50 mb-3" />
-                            <p class="text-gray-400">No speakers in queue</p>
-                        </div>
-                        <div v-for="(speaker, idx) in speakerLists.present" :key="speaker.country" :class="[
-                            'p-4 rounded-lg transition-all duration-300',
-                            currentSpeaker?.country === speaker.country
-                                ? 'bg-gradient-to-r from-blue-500/40 to-purple-500/40 border-2 border-white/40 shadow-lg scale-105'
-                                : 'bg-white/5 border border-white/10',
-                            speaker.hasSpoken ? 'opacity-60' : ''
-                        ]">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-2xl font-bold text-blue-300">{{ speaker.position }}.</span>
-                                    <span class="text-lg font-medium">{{ speaker.country }}</span>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <span v-if="speaker.hasSpoken"
-                                        class="text-xs bg-green-500/30 text-green-200 px-2 py-1 rounded">
-                                        ✓ Spoke
-                                    </span>
-                                    <span v-if="speaker.hasMovedToEnd"
-                                        class="text-xs bg-yellow-500/30 text-yellow-200 px-2 py-1 rounded">
-                                        ↓ Moved
-                                    </span>
-                                </div>
+                <!-- Right Column - Speakers Queue -->
+                <div class="right-column">
+                    <div class="queue-card">
+                        <h3 class="queue-title">Speakers Queue</h3>
+                        <div v-if="speakerQueue.length > 0" class="queue-list">
+                            <div v-for="(speaker, index) in speakerQueue.slice(0, 10)" :key="index" class="queue-item">
+                                <div class="queue-position">{{ index + 1 }}</div>
+                                <div class="queue-country">{{ speaker.country }}</div>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Right Column: Active Voting or Info -->
-                <div class="col-span-1">
-                    <!-- Active Voting -->
-                    <div v-if="activeVoting"
-                        class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 h-full flex flex-col">
-                        <div class="flex items-center justify-between mb-4">
-                            <h2 class="text-2xl font-bold">Active Voting</h2>
-                            <span class="px-3 py-1 bg-green-500/30 text-green-200 rounded-full text-sm font-bold">
-                                LIVE
-                            </span>
+                        <div v-else class="queue-empty">
+                            <p>No speakers queued.</p>
                         </div>
-
-                        <h3 class="text-xl mb-6">{{ activeVoting.title }}</h3>
-
-                        <!-- Voting Results -->
-                        <div class="flex-1 space-y-6">
-                            <div v-for="(count, option) in votingResults" :key="option">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="text-lg font-medium capitalize">{{ option }}</span>
-                                    <span class="text-2xl font-bold">{{ count }}</span>
-                                </div>
-                                <div class="h-4 bg-white/10 rounded-full overflow-hidden">
-                                    <div :class="[
-                                        'h-full transition-all duration-500',
-                                        getVoteBarColor(option)
-                                    ]" :style="{ width: `${getVotePercentage(count)}%` }">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Vote Progress -->
-                        <div class="mt-6 pt-6 border-t border-white/20">
-                            <div class="text-center mb-3">
-                                <p class="text-4xl font-bold">{{ totalVotes }}</p>
-                                <p class="text-sm text-gray-300">votes cast</p>
-                            </div>
-                            <div class="flex justify-between text-sm text-gray-300 mb-2">
-                                <span>Progress</span>
-                                <span>{{ totalVotes }} / {{ activeVoting.eligibleVoters?.length || 0 }}</span>
-                            </div>
-                            <div class="w-full bg-white/10 rounded-full h-3">
-                                <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-500"
-                                    :style="{ width: `${votingProgress}%` }"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Committee Info (No Voting) -->
-                    <div v-else
-                        class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 h-full flex flex-col justify-center items-center">
-                        <DocumentTextIcon class="w-24 h-24 text-white/30 mb-6" />
-                        <h2 class="text-2xl font-bold mb-3">{{ committee?.name }}</h2>
-                        <p class="text-gray-300 text-center">No active voting session</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer: Timer Tiles -->
-            <div class="bg-black/40 backdrop-blur-sm px-8 py-4 border-t border-white/20">
-                <div class="flex items-center justify-center space-x-4">
-                    <!-- Session/Debate Timer -->
-                    <div class="bg-white/10 rounded-lg px-6 py-3 border border-white/20">
-                        <p class="text-xs text-gray-300 uppercase text-center">
-                            {{ currentSession?.currentMode === 'moderated' || currentSession?.currentMode ===
-                                'unmoderated' ? 'Debate' : 'Session' }}
-                        </p>
-                        <p class="text-2xl font-mono font-bold text-center">
-                            {{ formatTimerDisplay(sessionTimers.session) }}
-                        </p>
-                    </div>
-
-                    <!-- Speaker Timer -->
-                    <div v-if="hasSpeakerTimer" class="bg-white/10 rounded-lg px-6 py-3 border border-white/20">
-                        <p class="text-xs text-gray-300 uppercase text-center">Presentation</p>
-                        <p class="text-2xl font-mono font-bold text-center">
-                            {{ formatTimerDisplay(sessionTimers.speaker) }}
-                        </p>
-                    </div>
-
-                    <!-- Q&A Timer -->
-                    <div v-if="hasQATimer" class="bg-white/10 rounded-lg px-6 py-3 border border-white/20">
-                        <p class="text-xs text-gray-300 uppercase text-center">Q&A</p>
-                        <p class="text-2xl font-mono font-bold text-center">
-                            {{ formatTimerDisplay(sessionTimers.qa) }}
-                        </p>
-                    </div>
-
-                    <!-- Additional Timers -->
-                    <div v-for="timer in sessionTimers.additional" :key="timer._id"
-                        class="bg-white/10 rounded-lg px-6 py-3 border border-white/20">
-                        <p class="text-xs text-gray-300 uppercase text-center truncate">{{ timer.name }}</p>
-                        <p class="text-2xl font-mono font-bold text-center">
-                            {{ formatTimerDisplay(timer) }}
-                        </p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Gossip Box View -->
-        <div v-else class="h-full flex items-center justify-center p-12">
-            <div
-                class="max-w-4xl w-full bg-white/10 backdrop-blur-xl rounded-3xl p-12 border border-white/20 shadow-2xl">
-                <div class="text-center mb-8">
-                    <ChatBubbleOvalLeftEllipsisIcon class="w-24 h-24 mx-auto text-white/80 mb-6" />
-                    <h1 class="text-5xl font-bold mb-3">Gossip Box</h1>
-                    <p class="text-2xl text-gray-300">Anonymous messages from delegates</p>
+        <div v-else class="gossip-view">
+            <!-- Header -->
+            <div class="gossip-header">
+                <div class="gossip-badge">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path
+                            d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    GOSSIP BOX
                 </div>
+                <h1 class="gossip-title">{{ committeeName }}</h1>
+            </div>
 
-                <div class="space-y-6 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar">
-                    <div v-if="gossipMessages.length === 0" class="text-center py-16">
-                        <p class="text-2xl text-gray-400">No messages yet...</p>
-                        <p class="text-lg text-gray-500 mt-2">Waiting for delegates to share their thoughts</p>
-                    </div>
-
-                    <div v-for="message in gossipMessages" :key="message._id"
-                        class="bg-white/5 rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all">
-                        <p class="text-xl leading-relaxed mb-3">{{ message.content }}</p>
-                        <div class="flex items-center justify-between text-sm text-gray-400">
-                            <span>Posted {{ formatMessageTime(message.createdAt) }}</span>
-                            <span>👁️ {{ message.views || 0 }} views</span>
+            <!-- Gossip Messages -->
+            <div class="gossip-content">
+                <div v-if="gossipMessages.length > 0" class="gossip-grid">
+                    <div v-for="(message, index) in gossipMessages" :key="message._id || index" class="gossip-card"
+                        :style="{ animationDelay: `${index * 0.1}s` }">
+                        <div class="gossip-lock">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="5" y="11" width="14" height="10" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
                         </div>
+                        <p class="gossip-text">{{ message.content }}</p>
+                        <div class="gossip-time">{{ formatTime(message.createdAt) }}</div>
                     </div>
+                </div>
+                <div v-else class="gossip-empty">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor"
+                            stroke-width="2" />
+                    </svg>
+                    <p>No gossip messages yet</p>
                 </div>
             </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="display-footer">
+            <p>This app was developed by another user. It may be inaccurate or unsafe. <a href="#">Report legal
+                    issue</a></p>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { wsService } from '@/plugins/websocket'
-import { apiMethods } from '@/utils/api'
-import {
-    MicrophoneIcon, UserIcon, UsersIcon, DocumentTextIcon,
-    ChatBubbleOvalLeftEllipsisIcon
-} from '@heroicons/vue/24/outline'
+import apiMethods from '@/utils/api'
+import wsService from '@/services/websocket'
 
-// Props
 const route = useRoute()
 
-// State
-const committee = ref(null)
+// Refs
+const committeeName = ref('UN General Assembly')
+const sessionTopic = ref('')
+const currentMode = ref('formal')
+const displayMode = ref('session') // 'session' or 'gossip'
 const currentSession = ref(null)
-const sessionTimers = ref({
-    session: null,
-    speaker: null,
-    debate: null,
-    qa: null,
-    additional: []
-})
-const activeTimer = ref(null)
+const timers = ref({})
 const activeTimerType = ref('session')
-const speakerLists = ref({ present: [], absent: [] })
 const currentSpeaker = ref(null)
-const activeVoting = ref(null)
-const votingResults = ref({})
-const quorum = ref({ hasQuorum: false, present: 0, required: 0 })
-const displayMode = ref('session')
+const speakerQueue = ref([])
 const gossipMessages = ref([])
-
-let displayUpdateInterval = null
-
-// Helper: Calculate real-time remaining
-const getRealTimeRemaining = (timer) => {
-    if (!timer) return 0
-    if (!timer.isActive) return timer.remainingTime || timer.totalDuration || 0
-    if (timer.isPaused) return timer.remainingTime || 0
-
-    const startedAt = new Date(timer.startedAt)
-    const now = new Date()
-    const elapsed = Math.floor((now - startedAt) / 1000)
-    const pauseTime = timer.accumulatedPause || 0
-    const actualElapsed = elapsed - pauseTime
-    const remaining = Math.max(0, timer.totalDuration - actualElapsed)
-
-    return remaining
-}
+const displayUpdateInterval = ref(null)
 
 // Computed
-const formattedMode = computed(() => {
-    const modes = {
-        'formal': 'FORMAL DEBATE',
-        'moderated': 'MODERATED CAUCUS',
-        'unmoderated': 'UNMODERATED CAUCUS',
-        'informal': 'INFORMAL CONSULTATION'
+const timerLabel = computed(() => {
+    const labels = {
+        session: 'SESSION TIME',
+        debate: 'DEBATE TIME',
+        speaker: 'SPEAKER TIME',
+        qa: 'Q&A TIME'
     }
-    return modes[currentSession.value?.currentMode] || 'FORMAL DEBATE'
+    return labels[activeTimerType.value] || 'TIMER'
 })
 
-const formattedTimer = computed(() => {
-    if (!activeTimer.value) return '00:00'
-
-    const time = getRealTimeRemaining(activeTimer.value)
-    const minutes = Math.floor(time / 60)
-    const seconds = time % 60
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+const activeTimer = computed(() => {
+    return timers.value[activeTimerType.value]
 })
 
-const currentTimerName = computed(() => {
-    if (!activeTimer.value) return 'NO TIMER'
-
-    if (activeTimerType.value === 'speaker') {
-        return activeTimer.value.country || 'SPEAKER'
-    } else if (activeTimerType.value === 'debate') {
-        return 'DEBATE'
-    } else if (activeTimerType.value === 'session') {
-        return 'SESSION'
-    } else if (activeTimerType.value === 'qa') {
-        return 'Q&A'
-    } else if (activeTimerType.value === 'additional') {
-        return activeTimer.value.name || 'TIMER'
-    }
-
-    return 'TIMER'
+const currentSpeakerName = computed(() => {
+    if (!currentSpeaker.value?.country) return 'Floor Open'
+    return currentSpeaker.value.country
 })
 
-const hasSpeakerTimer = computed(() => {
-    const mode = currentSession.value?.currentMode
-    return mode === 'formal' || mode === 'moderated' || mode === 'informal'
-})
+const formattedTime = computed(() => {
+    const timer = activeTimer.value
+    if (!timer) return '00:00'
 
-const hasQATimer = computed(() => {
-    const mode = currentSession.value?.currentMode
-    return mode === 'formal' || mode === 'informal'
-})
+    const remaining = getRealTimeRemaining(timer)
+    const minutes = Math.floor(remaining / 60)
+    const seconds = Math.floor(remaining % 60)
 
-const totalVotes = computed(() => {
-    return Object.values(votingResults.value).reduce((sum, count) => sum + count, 0)
-})
-
-const votingProgress = computed(() => {
-    if (!activeVoting.value || !activeVoting.value.eligibleVoters) return 0
-    return Math.round((totalVotes.value / activeVoting.value.eligibleVoters.length) * 100)
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 })
 
 // Methods
-const formatTimerDisplay = (timer) => {
-    if (!timer) return '--:--'
+const getRealTimeRemaining = (timer) => {
+    if (!timer) return 0
+    if (!timer.isActive) return timer.totalDuration || 0
+    if (timer.isPaused) return timer.remainingTime || 0
 
-    const time = getRealTimeRemaining(timer)
-    const minutes = Math.floor(time / 60)
-    const seconds = time % 60
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+    const now = Date.now()
+    const startTime = new Date(timer.startedAt).getTime()
+    const elapsed = Math.floor((now - startTime) / 1000)
+    const pauseDuration = timer.accumulatedPause || 0
+    const actualElapsed = elapsed - pauseDuration
+
+    return Math.max(0, (timer.totalDuration || 0) - actualElapsed)
 }
 
-const formatDuration = (seconds) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-}
-
-const getSpeakerDuration = () => {
-    if (!currentSpeaker.value?.startedAt) return 0
-    const elapsed = Math.floor((Date.now() - new Date(currentSpeaker.value.startedAt)) / 1000)
-    return elapsed
-}
-
-const getVotePercentage = (count) => {
-    return totalVotes.value > 0 ? (count / totalVotes.value) * 100 : 0
-}
-
-const getVoteBarColor = (option) => {
-    const colors = {
-        for: 'bg-green-500',
-        against: 'bg-red-500',
-        abstain: 'bg-yellow-500'
-    }
-    return colors[option] || 'bg-gray-500'
-}
-
-const formatMessageTime = (timestamp) => {
-    const now = new Date()
-    const then = new Date(timestamp)
-    const diffMs = now - then
-    const diffMins = Math.floor(diffMs / 60000)
-
-    if (diffMins < 1) return 'just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    const diffHours = Math.floor(diffMins / 60)
-    if (diffHours < 24) return `${diffHours}h ago`
-    return then.toLocaleDateString()
-}
-
-const updateVotingResults = (voting) => {
-    if (!voting?.votes) {
-        votingResults.value = { for: 0, against: 0, abstain: 0 }
-        return
-    }
-
-    const results = { for: 0, against: 0, abstain: 0 }
-    voting.votes.forEach(vote => {
-        if (vote.vote && results.hasOwnProperty(vote.vote)) {
-            results[vote.vote]++
-        }
+const formatTime = (timestamp) => {
+    if (!timestamp) return ''
+    const date = new Date(timestamp)
+    return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
     })
-
-    votingResults.value = results
 }
 
-// Data Loading
 const loadPublicData = async () => {
     try {
-        const committeeId = route.params.committeeId
+        const committeeId = route.params.committeeId || route.query.committeeId
 
-        // Load committee
+        if (!committeeId) {
+            console.error('No committee ID provided')
+            return
+        }
+
+        // Load committee info
         const committeeResponse = await apiMethods.committees.getById(committeeId)
-        if (committeeResponse.data.success) {
-            committee.value = committeeResponse.data.committee
+        if (committeeResponse.data?.committee) {
+            committeeName.value = committeeResponse.data.committee.name
         }
 
         // Load active session
-        const sessionResponse = await apiMethods.sessions.getAll(committeeId, {
+        const sessionsResponse = await apiMethods.sessions.getAll(committeeId, {
             status: 'active',
             limit: 1
         })
 
-        if (sessionResponse.data.success && sessionResponse.data.sessions?.length > 0) {
-            currentSession.value = sessionResponse.data.sessions[0]
-            await loadSessionDetails()
+        if (sessionsResponse.data?.sessions?.length > 0) {
+            const session = sessionsResponse.data.sessions[0]
+            currentSession.value = session
+            currentMode.value = session.currentMode
+            sessionTopic.value = session.modeSettings?.topic || ''
+
+            // Load full session details for timers
+            const sessionDetail = await apiMethods.sessions.getById(session._id)
+            if (sessionDetail.data?.session) {
+                timers.value = sessionDetail.data.session.timers || {}
+                currentSpeaker.value = sessionDetail.data.session.currentSpeaker
+
+                // Build speaker queue
+                const present = sessionDetail.data.session.speakerLists?.present || []
+                speakerQueue.value = present.filter(s => !s.hasSpoken)
+            }
         }
 
         // Load gossip messages
-        await loadGossipMessages()
+        const gossipResponse = await apiMethods.gossip.getMessages(committeeId, {
+            limit: 20,
+            isAnonymous: true
+        })
 
-        // Setup WebSocket
-        setupWebSocketListeners()
+        if (gossipResponse.data?.messages) {
+            gossipMessages.value = gossipResponse.data.messages
+        }
 
     } catch (error) {
         console.error('Failed to load public data:', error)
     }
 }
 
-const loadSessionDetails = async () => {
-    if (!currentSession.value?._id) return
-
-    try {
-        const response = await apiMethods.sessions.getById(currentSession.value._id)
-        if (response.data.success) {
-            const sessionData = response.data.session
-            currentSession.value = sessionData
-
-            // Load timers
-            if (sessionData.timers) {
-                sessionTimers.value = sessionData.timers
-
-                // Set active timer
-                if (sessionData.timers.speaker?.isActive) {
-                    activeTimer.value = sessionData.timers.speaker
-                    activeTimerType.value = 'speaker'
-                } else if (sessionData.timers.debate?.isActive) {
-                    activeTimer.value = sessionData.timers.debate
-                    activeTimerType.value = 'debate'
-                } else if (sessionData.timers.session?.isActive) {
-                    activeTimer.value = sessionData.timers.session
-                    activeTimerType.value = 'session'
-                } else if (sessionData.timers.qa?.isActive) {
-                    activeTimer.value = sessionData.timers.qa
-                    activeTimerType.value = 'qa'
-                } else {
-                    activeTimer.value = sessionData.timers.session
-                    activeTimerType.value = 'session'
-                }
-            }
-
-            speakerLists.value = sessionData.speakerLists || { present: [], absent: [] }
-            currentSpeaker.value = sessionData.currentSpeaker || null
-            quorum.value = sessionData.quorum || { hasQuorum: false, present: 0, required: 0 }
-        }
-
-        // Load active voting
-        const votingResponse = await apiMethods.voting.getByCommitteeId(committee.value._id)
-        if (votingResponse.data.success) {
-            const activeVotingData = votingResponse.data.voting?.find(v => v.status === 'active')
-            if (activeVotingData) {
-                activeVoting.value = activeVotingData
-                updateVotingResults(activeVotingData)
-            }
-        }
-
-    } catch (error) {
-        console.error('Failed to load session details:', error)
-    }
-}
-
-const loadGossipMessages = async () => {
-    if (!committee.value?._id) return
-
-    try {
-        const response = await apiMethods.gossip.getAll(committee.value._id)
-        if (response.data.success) {
-            gossipMessages.value = response.data.messages || []
-        }
-    } catch (error) {
-        console.error('Failed to load gossip messages:', error)
-    }
-}
-
-// WebSocket
 const setupWebSocketListeners = () => {
-    console.log('🎧 Setting up public display WebSocket listeners')
+    const committeeId = route.params.committeeId || route.query.committeeId
 
-    if (committee.value?._id) {
-        wsService.emit('join-committee-room', {
-            committeeId: committee.value._id
-        })
-    }
+    if (!committeeId) return
 
-    // Timer state sync
-    wsService.on('timer-state-sync', (data) => {
-        if (data.sessionId === currentSession.value?._id) {
-            sessionTimers.value = data.timers
+    // Join committee room
+    wsService.emit('join-committee-room', { committeeId })
 
-            // Update active timer
-            if (activeTimerType.value === 'additional') {
-                activeTimer.value = data.timers.additional?.find(t => t._id === activeTimerId.value)
-            } else if (activeTimerType.value && data.timers[activeTimerType.value]) {
-                activeTimer.value = data.timers[activeTimerType.value]
-            }
-        }
-    })
-
-    // Display mode
+    // Listen for display mode changes
     wsService.on('public-display-mode-changed', (data) => {
-        console.log('📺 Display mode changed:', data)
-        if (data.committeeId === committee.value?._id) {
+        if (data.committeeId === committeeId) {
             displayMode.value = data.mode
         }
     })
 
-    // Speakers
+    // Listen for timer updates
+    wsService.on('timer-toggled', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            updateTimer(data.timerType, data.timer)
+        }
+    })
+
+    wsService.on('timer-adjusted', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            updateTimer(data.timerType, data.timer)
+        }
+    })
+
+    // Listen for speaker changes
     wsService.on('current-speaker-set', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             currentSpeaker.value = data.currentSpeaker
-            speakerLists.value = data.speakerLists
-            if (data.speakerTimer) {
-                sessionTimers.value.speaker = data.speakerTimer
-                activeTimer.value = data.speakerTimer
-                activeTimerType.value = 'speaker'
+            if (data.speakerLists?.present) {
+                speakerQueue.value = data.speakerLists.present.filter(s => !s.hasSpoken)
             }
         }
     })
 
     wsService.on('speaker-moved', (data) => {
+        if (data.sessionId === currentSession.value?._id && data.speakerLists?.present) {
+            speakerQueue.value = data.speakerLists.present.filter(s => !s.hasSpoken)
+        }
+    })
+
+    // Listen for mode changes
+    wsService.on('mode-changed', (data) => {
         if (data.sessionId === currentSession.value?._id) {
-            speakerLists.value = data.speakerLists
+            currentMode.value = data.mode
+            if (data.timers) {
+                timers.value = data.timers
+            }
         }
     })
 
-    // Roll call
-    wsService.on('roll-call-ended', (data) => {
-        if (data.sessionId === currentSession.value?._id) {
-            speakerLists.value = data.speakerLists
-            quorum.value = data.quorum
-        }
-    })
-
-    // Voting
-    wsService.on('voting-started', (data) => {
-        if (data.committeeId === committee.value?._id) {
-            activeVoting.value = data.voting
-            updateVotingResults(data.voting)
-        }
-    })
-
-    wsService.on('vote-cast', (data) => {
-        if (data.votingId === activeVoting.value?._id) {
-            updateVotingResults(data.voting)
-        }
-    })
-
-    wsService.on('voting-ended', (data) => {
-        if (data.votingId === activeVoting.value?._id) {
-            activeVoting.value = null
-            votingResults.value = {}
-        }
-    })
-
-    // Gossip
-    wsService.on('gossip-message-posted', (data) => {
-        if (data.committeeId === committee.value?._id) {
+    // Listen for gossip messages
+    wsService.on('gossip-message-created', (data) => {
+        if (data.committeeId === committeeId) {
             gossipMessages.value.unshift(data.message)
+            if (gossipMessages.value.length > 20) {
+                gossipMessages.value = gossipMessages.value.slice(0, 20)
+            }
         }
     })
+}
 
-    console.log('✅ Public display WebSocket listeners ready')
+const updateTimer = (timerType, timerData) => {
+    if (timerType && timers.value) {
+        timers.value[timerType] = timerData
+    }
 }
 
 // Lifecycle
 onMounted(async () => {
     await loadPublicData()
+    setupWebSocketListeners()
 
-    // Update display every second
-    displayUpdateInterval = setInterval(() => {
+    // Update display every second for smooth countdown
+    displayUpdateInterval.value = setInterval(() => {
+        // Trigger reactivity
         if (activeTimer.value?.isActive && !activeTimer.value?.isPaused) {
-            activeTimer.value = { ...activeTimer.value }
+            timers.value = { ...timers.value }
         }
     }, 1000)
 })
 
 onUnmounted(() => {
-    if (displayUpdateInterval) {
-        clearInterval(displayUpdateInterval)
+    if (displayUpdateInterval.value) {
+        clearInterval(displayUpdateInterval.value)
     }
 })
 </script>
 
 <style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
+.public-display-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
+/* ==================== SESSION VIEW ==================== */
+.session-view {
+    flex: 1;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: white;
+    padding: 2rem;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
+.session-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 3rem;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
+.committee-info h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: white;
+}
+
+.committee-info p {
+    font-size: 1rem;
+    color: #94a3b8;
+    margin: 0;
+}
+
+.mode-badge {
+    background: #3b82f6;
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    letter-spacing: 0.05em;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 2rem;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.left-column {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.timer-card {
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+    border-radius: 1.5rem;
+    padding: 3rem;
+    text-align: center;
+}
+
+.timer-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: #94a3b8;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+}
+
+.timer-icon {
+    color: #94a3b8;
+}
+
+.timer-display {
+    font-size: 8rem;
+    font-weight: 700;
+    line-height: 1;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+    letter-spacing: -0.05em;
+    color: white;
+}
+
+.speaker-card {
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+    border-radius: 1.5rem;
+    padding: 3rem;
+    text-align: center;
+}
+
+.speaker-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(148, 163, 184, 0.1);
+    border-radius: 50%;
+    color: #94a3b8;
+}
+
+.speaker-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: #94a3b8;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+}
+
+.speaker-name {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white;
+}
+
+.right-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.queue-card {
+    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.queue-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 1.5rem 0;
+    color: white;
+}
+
+.queue-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.queue-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: rgba(148, 163, 184, 0.05);
+    transition: background 0.2s;
+}
+
+.queue-item:hover {
+    background: rgba(148, 163, 184, 0.1);
+}
+
+.queue-position {
+    width: 32px;
+    height: 32px;
+    background: rgba(59, 130, 246, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: #3b82f6;
+    flex-shrink: 0;
+}
+
+.queue-country {
+    font-size: 1rem;
+    color: white;
+    font-weight: 500;
+}
+
+.queue-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-style: italic;
+}
+
+/* ==================== GOSSIP VIEW ==================== */
+.gossip-view {
+    flex: 1;
+    background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+    color: white;
+    padding: 2rem;
+}
+
+.gossip-header {
+    max-width: 1200px;
+    margin: 0 auto 3rem;
+}
+
+.gossip-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+}
+
+.gossip-title {
+    font-size: 3rem;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+    text-align: center;
+}
+
+.gossip-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.gossip-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.gossip-card {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    transition: all 0.3s;
+    animation: fadeInUp 0.5s ease-out forwards;
+    opacity: 0;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.gossip-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.gossip-lock {
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+.gossip-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: white;
+    margin: 0 0 1rem 0;
+    min-height: 60px;
+}
+
+.gossip-time {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.gossip-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.gossip-empty svg {
+    margin-bottom: 1rem;
+    stroke: rgba(255, 255, 255, 0.4);
+}
+
+.gossip-empty p {
+    font-size: 1.25rem;
+    font-style: italic;
+}
+
+/* ==================== FOOTER ==================== */
+.display-footer {
+    background: #0f172a;
+    padding: 1rem;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.display-footer a {
+    color: #3b82f6;
+    text-decoration: none;
+}
+
+.display-footer a:hover {
+    text-decoration: underline;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 1200px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .right-column {
+        max-height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+
+    .session-view,
+    .gossip-view {
+        padding: 1rem;
+    }
+
+    .session-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .committee-info h1 {
+        font-size: 1.5rem;
+    }
+
+    .gossip-title {
+        font-size: 2rem;
+    }
+
+    .timer-display {
+        font-size: 4rem;
+    }
+
+    .speaker-name {
+        font-size: 1.5rem;
+    }
+
+    .gossip-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .queue-card {
+        max-height: 300px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .timer-card,
+    .speaker-card,
+    .queue-card {
+        padding: 1.5rem;
+    }
+
+    .timer-display {
+        font-size: 3rem;
+    }
+
+    .speaker-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .gossip-title {
+        font-size: 1.5rem;
+    }
 }
 </style>

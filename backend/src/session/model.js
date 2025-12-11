@@ -1,86 +1,25 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
-// Timer Schema with timestamp fields
 const timerSchema = new mongoose.Schema({
-    totalDuration: {
-        type: Number,
-        default: 0,
-        min: 0
-    },
-    remainingTime: {
-        type: Number,
-        default: 0,
-        min: 0
-    },
-    isActive: {
-        type: Boolean,
-        default: false
-    },
-    isPaused: {
-        type: Boolean,
-        default: false
-    },
-    startedAt: {
-        type: Date,
-        default: null
-    },
-    pausedAt: {
-        type: Date,
-        default: null
-    },
-    accumulatedPause: {
-        type: Number,
-        default: 0
-    },
-    country: {
-        type: String,
-        default: ''
-    },
-    topic: {
-        type: String,
-        default: ''
-    },
-    purpose: {
-        type: String,
-        default: ''
-    },
-    name: {
-        type: String,
-        default: ''
-    }
-}, { _id: false })
+    totalDuration: { type: Number, default: 0 },
+    remainingTime: { type: Number, default: 0 },
+    isActive: { type: Boolean, default: false },
+    isPaused: { type: Boolean, default: false },
+    startedAt: { type: Date, default: null },
+    pausedAt: { type: Date, default: null },
+    accumulatedPause: { type: Number, default: 0 }, // SECONDS of pause, NOT timestamp
+    country: { type: String, default: '' },
+    topic: { type: String, default: '' },
+    purpose: { type: String, default: '' },
+    name: { type: String, default: '' },
+    debateType: { type: String, default: '' }
+}, { _id: false });
 
-// Speaker Schema
-const speakerSchema = new mongoose.Schema({
-    country: {
-        type: String,
-        required: true
-    },
-    position: {
-        type: Number,
-        required: true
-    },
-    hasSpoken: {
-        type: Boolean,
-        default: false
-    },
-    hasMovedToEnd: {
-        type: Boolean,
-        default: false
-    },
-    arrivedLate: {
-        type: Boolean,
-        default: false
-    }
-}, { _id: false })
-
-// Main Session Schema
 const sessionSchema = new mongoose.Schema({
     committeeId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Committee',
-        required: true,
-        index: true
+        required: true
     },
     sessionNumber: {
         type: Number,
@@ -88,9 +27,8 @@ const sessionSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['draft', 'active', 'paused', 'completed'],
-        default: 'draft',
-        index: true
+        enum: ['inactive', 'active', 'paused', 'completed'],
+        default: 'inactive'
     },
     currentMode: {
         type: String,
@@ -98,14 +36,11 @@ const sessionSchema = new mongoose.Schema({
         default: 'formal'
     },
     modeSettings: {
-        speechTime: Number,
-        totalTime: Number,
-        topic: String,
-        questionsAllowed: Boolean,
-        allowPassToNext: Boolean
+        speechTime: { type: Number, default: 180 },
+        totalTime: { type: Number, default: 600 },
+        topic: { type: String, default: '' },
+        questionsAllowed: { type: Boolean, default: true }
     },
-
-    // Timers
     timers: {
         session: timerSchema,
         speaker: timerSchema,
@@ -113,332 +48,224 @@ const sessionSchema = new mongoose.Schema({
         qa: timerSchema,
         additional: [timerSchema]
     },
-
-    // Speaker Lists
-    speakerLists: {
-        present: [speakerSchema],
-        absent: [speakerSchema]
-    },
-
-    // Current Speaker
-    currentSpeaker: {
-        country: String,
-        startedAt: Date
-    },
-
-    // Roll Call
     rollCall: {
-        isActive: {
-            type: Boolean,
-            default: false
-        },
-        startedAt: Date,
-        endedAt: Date,
+        isActive: { type: Boolean, default: false },
+        startedAt: { type: Date },
+        endedAt: { type: Date },
         responses: [{
             country: String,
-            status: {
-                type: String,
-                enum: ['present', 'absent', 'present-voting']
-            },
+            status: { type: String, enum: ['present', 'absent', 'present-voting'] },
             respondedAt: Date
         }]
     },
-
-    // Quorum
+    speakerLists: {
+        present: [{
+            country: String,
+            position: Number,
+            hasSpoken: { type: Boolean, default: false },
+            hasMovedToEnd: { type: Boolean, default: false },
+            arrivedLate: { type: Boolean, default: false }
+        }],
+        absent: [{
+            country: String,
+            position: Number,
+            hasSpoken: { type: Boolean, default: false },
+            hasMovedToEnd: { type: Boolean, default: false },
+            arrivedLate: { type: Boolean, default: false }
+        }]
+    },
+    currentSpeaker: {
+        country: { type: String, default: '' },
+        startedAt: { type: Date }
+    },
     quorum: {
-        required: {
-            type: Number,
-            default: 0
-        },
-        present: {
-            type: Number,
-            default: 0
-        },
-        hasQuorum: {
-            type: Boolean,
-            default: false
-        }
+        total: { type: Number, default: 0 },
+        present: { type: Number, default: 0 },
+        required: { type: Number, default: 0 },
+        hasMet: { type: Boolean, default: false }
     },
-
-    // Metadata
-    startedAt: {
-        type: Date,
-        default: Date.now
-    },
-    endedAt: Date,
-
+    startedAt: { type: Date },
+    endedAt: { type: Date },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    },
-
-    notes: String
+    }
 }, {
     timestamps: true
-})
+});
 
-// Indexes
-sessionSchema.index({ committeeId: 1, sessionNumber: 1 }, { unique: true })
-sessionSchema.index({ status: 1, committeeId: 1 })
-sessionSchema.index({ createdAt: -1 })
-
-// Methods
-
-/**
- * Get current state of a timer with real-time calculation
- */
+// FIXED: Calculate current timer state from timestamps
 sessionSchema.methods.getCurrentTimerState = function (timer) {
-    if (!timer) return null
+    if (!timer) return null;
 
-    // If timer is not active or is paused, return as-is
+    const now = new Date();
+
+    // If timer is inactive or paused, return as-is
     if (!timer.isActive || timer.isPaused) {
-        return timer.toObject ? timer.toObject() : timer
+        return {
+            totalDuration: timer.totalDuration,
+            remainingTime: timer.remainingTime,
+            isActive: timer.isActive,
+            isPaused: timer.isPaused,
+            startedAt: timer.startedAt,
+            pausedAt: timer.pausedAt,
+            accumulatedPause: timer.accumulatedPause, // This should be duration in seconds
+            country: timer.country || '',
+            topic: timer.topic || '',
+            purpose: timer.purpose || '',
+            name: timer.name || '',
+            debateType: timer.debateType || ''
+        };
     }
 
-    // Calculate real remaining time based on timestamp
-    const now = new Date()
-    const startedAt = new Date(timer.startedAt)
-    const elapsedMs = now - startedAt
-    const elapsedSeconds = Math.floor(elapsedMs / 1000)
+    // Timer is active and running - calculate real-time remaining
+    const elapsed = Math.floor((now - new Date(timer.startedAt)) / 1000); // seconds
+    const pauseDuration = timer.accumulatedPause || 0; // seconds
+    const actualElapsed = elapsed - pauseDuration;
+    const remaining = Math.max(0, timer.totalDuration - actualElapsed);
 
-    // Subtract accumulated pause time
-    const pauseTime = timer.accumulatedPause || 0
-    const actualElapsed = elapsedSeconds - pauseTime
+    return {
+        totalDuration: timer.totalDuration,
+        remainingTime: remaining,
+        isActive: timer.isActive,
+        isPaused: timer.isPaused,
+        startedAt: timer.startedAt,
+        pausedAt: timer.pausedAt,
+        accumulatedPause: pauseDuration,
+        country: timer.country || '',
+        topic: timer.topic || '',
+        purpose: timer.purpose || '',
+        name: timer.name || '',
+        debateType: timer.debateType || ''
+    };
+};
 
-    // Calculate remaining time
-    const remainingTime = Math.max(0, timer.totalDuration - actualElapsed)
-
-    const timerObj = timer.toObject ? timer.toObject() : { ...timer }
-    timerObj.remainingTime = remainingTime
-
-    return timerObj
-}
-
-/**
- * Get all timer states with real-time calculation
- */
+// Get all timer states with real-time calculation
 sessionSchema.methods.getAllTimerStates = function () {
     return {
-        session: this.getCurrentTimerState(this.timers?.session),
-        speaker: this.getCurrentTimerState(this.timers?.speaker),
-        debate: this.getCurrentTimerState(this.timers?.debate),
-        qa: this.getCurrentTimerState(this.timers?.qa),
-        additional: (this.timers?.additional || []).map(t => this.getCurrentTimerState(t))
-    }
-}
+        session: this.getCurrentTimerState(this.timers.session),
+        speaker: this.getCurrentTimerState(this.timers.speaker),
+        debate: this.getCurrentTimerState(this.timers.debate),
+        qa: this.getCurrentTimerState(this.timers.qa),
+        additional: (this.timers.additional || []).map(t => this.getCurrentTimerState(t))
+    };
+};
 
-/**
- * Initialize default timers based on mode
- */
+// Initialize timers based on mode
 sessionSchema.methods.initializeTimers = function (mode) {
-    const timers = {
-        session: {
-            totalDuration: 0,
-            remainingTime: 0,
-            isActive: false,
-            isPaused: false,
-            startedAt: null,
-            pausedAt: null,
-            accumulatedPause: 0
-        },
-        speaker: {
-            totalDuration: 0,
-            remainingTime: 0,
-            isActive: false,
-            isPaused: false,
-            startedAt: null,
-            pausedAt: null,
-            accumulatedPause: 0,
-            country: ''
-        },
-        debate: {
-            totalDuration: 0,
-            remainingTime: 0,
-            isActive: false,
-            isPaused: false,
-            startedAt: null,
-            pausedAt: null,
-            accumulatedPause: 0
-        },
-        qa: {
-            totalDuration: 0,
-            remainingTime: 0,
-            isActive: false,
-            isPaused: false,
-            startedAt: null,
-            pausedAt: null,
-            accumulatedPause: 0
-        },
-        additional: []
+    const speechTime = this.modeSettings?.speechTime || 180;
+    const totalTime = this.modeSettings?.totalTime || 600;
+
+    // Session/Debate timer (always available)
+    if (!this.timers.session) {
+        this.timers.session = {};
     }
+    this.timers.session.totalDuration = totalTime;
+    this.timers.session.remainingTime = totalTime;
+    this.timers.session.isActive = false;
+    this.timers.session.isPaused = false;
 
-    // Set default durations based on mode
-    if (mode === 'formal') {
-        timers.session.totalDuration = 3600 // 1 hour
-        timers.session.remainingTime = 3600
-        timers.speaker.totalDuration = 180 // 3 minutes
-        timers.speaker.remainingTime = 180
-        timers.qa.totalDuration = 120 // 2 minutes
-        timers.qa.remainingTime = 120
-    } else if (mode === 'moderated') {
-        timers.debate.totalDuration = 600 // 10 minutes
-        timers.debate.remainingTime = 600
-        timers.speaker.totalDuration = 90 // 1.5 minutes
-        timers.speaker.remainingTime = 90
-    } else if (mode === 'unmoderated') {
-        timers.debate.totalDuration = 600 // 10 minutes
-        timers.debate.remainingTime = 600
-    } else if (mode === 'informal') {
-        timers.session.totalDuration = 3600 // 1 hour
-        timers.session.remainingTime = 3600
-        timers.speaker.totalDuration = 120 // 2 minutes
-        timers.speaker.remainingTime = 120
-        timers.qa.totalDuration = 60 // 1 minute
-        timers.qa.remainingTime = 60
+    // Speaker presentation timer
+    if (!this.timers.speaker) {
+        this.timers.speaker = {};
     }
+    this.timers.speaker.totalDuration = speechTime;
+    this.timers.speaker.remainingTime = speechTime;
+    this.timers.speaker.isActive = false;
+    this.timers.speaker.isPaused = false;
 
-    this.timers = timers
-}
+    // Debate timer (for moderated/unmoderated)
+    if (!this.timers.debate) {
+        this.timers.debate = {};
+    }
+    this.timers.debate.totalDuration = totalTime;
+    this.timers.debate.remainingTime = totalTime;
+    this.timers.debate.isActive = false;
+    this.timers.debate.isPaused = false;
+    this.timers.debate.debateType = mode === 'moderated' ? 'moderated' : 'unmoderated';
 
-/**
- * Calculate quorum
- */
+    // Q&A timer (for formal/informal)
+    if (!this.timers.qa) {
+        this.timers.qa = {};
+    }
+    this.timers.qa.totalDuration = Math.floor(speechTime / 2);
+    this.timers.qa.remainingTime = Math.floor(speechTime / 2);
+    this.timers.qa.isActive = false;
+    this.timers.qa.isPaused = false;
+
+    // Initialize additional timers array
+    if (!this.timers.additional) {
+        this.timers.additional = [];
+    }
+};
+
+// Calculate quorum
 sessionSchema.methods.calculateQuorum = function () {
-    const presentCount = this.speakerLists?.present?.length || 0
-    const totalDelegates = presentCount + (this.speakerLists?.absent?.length || 0)
-
-    const requiredForQuorum = Math.floor(totalDelegates / 2) + 1
+    const presentCount = this.speakerLists?.present?.length || 0;
+    const absentCount = this.speakerLists?.absent?.length || 0;
+    const total = presentCount + absentCount;
+    const required = Math.floor(total / 2) + 1;
 
     this.quorum = {
-        required: requiredForQuorum,
+        total,
         present: presentCount,
-        hasQuorum: presentCount >= requiredForQuorum
-    }
+        required,
+        hasMet: presentCount >= required
+    };
+};
 
-    return this.quorum
-}
-
-/**
- * Check if session has quorum
- */
+// Check if quorum is met
 sessionSchema.methods.hasQuorum = function () {
-    return this.quorum?.hasQuorum || false
-}
+    return this.quorum?.hasMet || false;
+};
 
-/**
- * Get next speaker in queue
- */
+// Get next speaker
 sessionSchema.methods.getNextSpeaker = function () {
-    if (!this.speakerLists?.present || this.speakerLists.present.length === 0) {
-        return null
-    }
+    const presentList = this.speakerLists?.present || [];
+    const unspoken = presentList.filter(s => !s.hasSpoken);
 
-    // Find first speaker who hasn't spoken
-    const nextSpeaker = this.speakerLists.present.find(speaker => !speaker.hasSpoken)
-    return nextSpeaker || null
-}
+    return unspoken.length > 0 ? unspoken[0] : null;
+};
 
-/**
- * Mark speaker as having spoken
- */
+// Mark speaker as spoken
 sessionSchema.methods.markSpeakerAsSpoken = function (country) {
-    if (!this.speakerLists?.present) return false
+    const presentList = this.speakerLists?.present || [];
+    const speaker = presentList.find(s => s.country === country);
 
-    const speaker = this.speakerLists.present.find(s => s.country === country)
     if (speaker) {
-        speaker.hasSpoken = true
-        return true
+        speaker.hasSpoken = true;
+    }
+};
+
+// Move speaker to end
+sessionSchema.methods.moveSpeakerToEnd = function (country) {
+    const presentList = this.speakerLists?.present || [];
+    const speakerIndex = presentList.findIndex(s => s.country === country);
+
+    if (speakerIndex === -1) {
+        throw new Error('Speaker not found in present list');
     }
 
-    return false
-}
+    const speaker = presentList[speakerIndex];
 
-/**
- * Move speaker to end of queue
- */
-sessionSchema.methods.moveSpeakerToEnd = function (country) {
-    if (!this.speakerLists?.present) return false
-
-    const speakerIndex = this.speakerLists.present.findIndex(s => s.country === country)
-    if (speakerIndex === -1) return false
-
-    const speaker = this.speakerLists.present[speakerIndex]
-
-    // Check if already moved to end
     if (speaker.hasMovedToEnd) {
-        throw new Error('Speaker has already moved to end once')
+        throw new Error('Speaker has already moved to end once');
     }
 
     // Remove from current position
-    this.speakerLists.present.splice(speakerIndex, 1)
-
-    // Mark as moved to end
-    speaker.hasMovedToEnd = true
+    presentList.splice(speakerIndex, 1);
 
     // Add to end
-    this.speakerLists.present.push(speaker)
+    speaker.hasMovedToEnd = true;
+    speaker.position = presentList.length + 1;
+    presentList.push(speaker);
 
-    // Recalculate positions
-    this.speakerLists.present.forEach((s, idx) => {
-        s.position = idx + 1
-    })
+    // Reorder positions
+    presentList.forEach((s, idx) => {
+        s.position = idx + 1;
+    });
+};
 
-    return true
-}
+const Session = mongoose.model('Session', sessionSchema);
 
-// Statics
-
-/**
- * Get active session for committee
- */
-sessionSchema.statics.getActiveSession = async function (committeeId) {
-    return await this.findOne({
-        committeeId: committeeId,
-        status: 'active'
-    }).populate('committeeId', 'name countries')
-}
-
-/**
- * Get all sessions for committee
- */
-sessionSchema.statics.getCommitteeSessions = async function (committeeId, options = {}) {
-    const {
-        status,
-        page = 1,
-        limit = 20,
-        sort = '-sessionNumber'
-    } = options
-
-    const query = { committeeId }
-    if (status) query.status = status
-
-    const skip = (page - 1) * limit
-
-    return await this.find(query)
-        .sort(sort)
-        .skip(skip)
-        .limit(limit)
-        .populate('committeeId', 'name')
-}
-
-/**
- * Create new session
- */
-sessionSchema.statics.createSession = async function (sessionData) {
-    const session = new this(sessionData)
-
-    // Initialize timers based on mode
-    session.initializeTimers(sessionData.currentMode || 'formal')
-
-    // Set status to active if not specified
-    if (!session.status) {
-        session.status = 'active'
-    }
-
-    await session.save()
-    return session
-}
-
-const Session = mongoose.model('Session', sessionSchema)
-
-module.exports = Session
+module.exports = Session;
