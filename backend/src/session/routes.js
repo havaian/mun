@@ -155,8 +155,8 @@ router.put('/:id/timers/toggle',
     global.auth.presidium,
     [
         param('id').isMongoId(),
-        body('timerType').isIn(['session', 'debate', 'speaker', 'qa', 'additional']),
-        body('timerId').optional().isString() // For additional timers
+        body('timerType').isString().notEmpty(),
+        body('timerId').optional(),
     ],
     handleValidationErrors,
     controller.toggleTimer
@@ -168,8 +168,8 @@ router.put('/:id/timers/adjust',
     global.auth.presidium,
     [
         param('id').isMongoId(),
-        body('timerType').isIn(['session', 'debate', 'speaker', 'qa', 'additional']),
-        body('timerId').optional().isString(), // For additional timers
+        body('timerType').isString().notEmpty(),
+        body('timerId').optional(),
         body('newTime').isInt({ min: 0, max: 5999 }) // Max 99:59
     ],
     handleValidationErrors,

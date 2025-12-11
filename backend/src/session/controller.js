@@ -1,6 +1,8 @@
 const Session = require('./model')
 const { Committee } = require('../committee/model')
 
+const saveSession = (session) => session.save({ validateModifiedOnly: true })
+
 /**
  * Create new session
  */
@@ -49,7 +51,7 @@ exports.createSession = async (req, res) => {
 
         // Initialize timers
         session.initializeTimers(session.currentMode)
-        await session.save()
+        await saveSession(session)
 
         // Emit WebSocket event
         if (req.io) {
@@ -90,7 +92,7 @@ exports.startSession = async (req, res) => {
 
         session.status = 'active'
         session.startedAt = new Date()
-        await session.save()
+        await saveSession(session)
 
         // Emit WebSocket event
         if (req.io) {
@@ -149,7 +151,7 @@ exports.endSession = async (req, res) => {
             }
         }
 
-        await session.save()
+        await saveSession(session)
 
         // Emit WebSocket event
         if (req.io) {
@@ -268,7 +270,7 @@ exports.changeMode = async (req, res) => {
         // Reinitialize timers for new mode
         session.initializeTimers(mode)
 
-        await session.save()
+        await saveSession(session)
 
         // Emit WebSocket event
         if (req.io) {
@@ -325,7 +327,7 @@ exports.startRollCall = async (req, res) => {
             responses: []
         }
 
-        await session.save()
+        await saveSession(session)
 
         // Emit WebSocket event
         if (req.io) {
@@ -410,7 +412,7 @@ exports.endRollCall = async (req, res) => {
         // Calculate quorum
         session.calculateQuorum()
 
-        await session.save()
+        await saveSession(session)
 
         // Emit WebSocket event
         if (req.io) {
@@ -483,7 +485,7 @@ exports.markAttendance = async (req, res) => {
             respondedAt: new Date()
         })
 
-        await session.save()
+        await saveSession(session)
 
         // Emit WebSocket event
         if (req.io) {
@@ -544,7 +546,7 @@ exports.startSessionTimer = async (req, res) => {
         timer.accumulatedPause = 0
         timer.purpose = purpose || ''
 
-        await session.save()
+        await saveSession(session)
 
         // Emit WebSocket event
         if (req.io) {
@@ -600,7 +602,7 @@ exports.startDebateTimer = async (req, res) => {
         timer.accumulatedPause = 0
         timer.remainingTime = timer.totalDuration
 
-        await session.save()
+        await saveSession(session)
 
         // Emit WebSocket event
         if (req.io) {
@@ -690,7 +692,7 @@ exports.toggleTimer = async (req, res) => {
             timer.remainingTime = session.getCurrentTimerState(timer).remainingTime
         }
 
-        await session.save()
+        await saveSession(session)
 
         // Emit WebSocket event
         if (req.io) {
@@ -768,7 +770,7 @@ exports.adjustTimer = async (req, res) => {
 
         timer.totalDuration = newTime
 
-        await session.save()
+        await saveSession(session)
 
         // Emit WebSocket event
         if (req.io) {
@@ -835,7 +837,7 @@ exports.addAdditionalTimer = async (req, res) => {
         }
 
         session.timers.additional.push(newTimer)
-        await session.save()
+        await saveSession(session)
 
         // Emit WebSocket event
         if (req.io) {
@@ -916,7 +918,7 @@ exports.setCurrentSpeaker = async (req, res) => {
             speakerTimer.remainingTime = speakerTimer.totalDuration
         }
 
-        await session.save()
+        await saveSession(session)
 
         // Emit WebSocket event
         if (req.io) {
@@ -971,7 +973,7 @@ exports.moveToEnd = async (req, res) => {
 
         // Move speaker to end
         session.moveSpeakerToEnd(country)
-        await session.save()
+        await saveSession(session)
 
         // Emit WebSocket event
         if (req.io) {

@@ -1355,18 +1355,19 @@ const endVoting = async () => {
 
 // Display Mode
 const setDisplayMode = async (mode) => {
-    if (publicDisplayMode.value === mode) return
-
-    console.log(`🎮 Setting display mode to: ${mode}`)
-
+    if (!committee.value?._id) {
+        console.error('Committee not loaded')
+        return
+    }
+    
     publicDisplayMode.value = mode
-
+    
     wsService.emit('set-public-display-mode', {
         committeeId: committee.value._id,
         mode: mode
     })
-
-    toast.success(`Display switched to ${mode === 'session' ? 'Session View' : 'Gossip Box'}`)
+    
+    toast.success(`Display: ${mode === 'session' ? 'Session View' : 'Gossip Box'}`)
 }
 
 // Utility Methods
