@@ -203,7 +203,7 @@
                 <div
                   class="bg-yellow-50 border border-yellow-200 rounded-full px-5 py-3 flex items-center gap-3 shadow-sm max-w-2xl">
                   <div class="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <ShieldAlertIcon class="w-4 h-4 text-yellow-600" />
+                    <ShieldAlert class="w-4 h-4 text-yellow-600" />
                   </div>
                   <div class="flex-1">
                     <span class="font-semibold text-yellow-800">Chairperson: </span>
@@ -317,7 +317,9 @@ import {
   PaperAirplaneIcon, GlobeAltIcon, BellAlertIcon,
   ShieldExclamationIcon, SparklesIcon, ShieldCheckIcon
 } from '@heroicons/vue/24/outline'
-import { ShieldAlertIcon } from '@heroicons/vue/24/solid'
+import {
+  ShieldAlert,
+} from 'lucide-vue-next'
 
 // Stores
 const router = useRouter()
