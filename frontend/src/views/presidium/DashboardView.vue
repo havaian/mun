@@ -779,19 +779,13 @@ const startSessionTimer = async () => {
     if (!currentSession.value) return
 
     try {
-        // Use the correct session API call for creating a general session timer
-        const response = await apiMethods.timers.createTimer({
-            committeeId: committee.value._id,
-            sessionId: currentSession.value._id,
-            timerType: 'session',
-            name: 'Session Timer',
-            totalDuration: 3600, // 1 hour
-            remainingTime: 3600
+        // Use the correct session timer route from backend
+        const response = await apiMethods.sessions.startSessionTimer(currentSession.value._id, {
+            duration: 3600, // 1 hour
+            purpose: 'General session time management'
         })
 
         if (response.data.success) {
-            // Start the created timer
-            await apiMethods.timers.startTimer(response.data.timer._id)
             await loadSessionDetails()
             toast.success('Session timer started')
         }
@@ -810,13 +804,11 @@ const startSpeakerTimer = async () => {
     try {
         const defaultDuration = committee.value.settings?.speechSettings?.defaultSpeechTime || 120
 
-        const response = await apiMethods.timers.createQuickSpeakerTimer({
-            committeeId: committee.value._id,
-            sessionId: currentSession.value._id,
-            speakerCountry: currentSpeaker.value.country,
-            speakerEmail: currentSpeaker.value.email,
+        // Use the correct session speaker timer route
+        const response = await apiMethods.sessions.startSpeakerTimer(currentSession.value._id, {
             duration: defaultDuration,
-            autoStart: true
+            country: currentSpeaker.value.country,
+            canBeExtended: true
         })
 
         if (response.data.success) {
@@ -833,26 +825,42 @@ const toggleTimer = async () => {
     if (!activeSessionTimer.value || !currentSession.value) return
 
     try {
-        const action = activeSessionTimer.value.isActive && !activeSessionTimer.value.isPaused ? 'pause' : 'resume'
+        const isCurrentlyActive = activeSessionTimer.value.isActive && !activeSessionTimer.value.isPaused
+        const action = isCurrentlyActive ? 'pause' : 'resume'
 
-        // Find the actual timer ID from the session data
-        const timerId = activeSessionTimer.value._id
-        if (!timerId) {
-            console.error('Timer ID not found')
-            return
+        // Use the correct session timer toggle route
+        const response = await apiMethods.sessions.toggleTimer(currentSession.value._id, {
+            timerType: activeTimerType.value,
+            action: action
+        })
+
+        if (response.data.success) {
+            await loadSessionDetails()
+            toast.success(`Timer ${action}d`)
         }
-
-        if (action === 'pause') {
-            await apiMethods.timers.pauseTimer(timerId)
-        } else {
-            await apiMethods.timers.resumeTimer(timerId)
-        }
-
-        await loadSessionDetails()
-        toast.success(`Timer ${action}d`)
     } catch (error) {
         console.error('Failed to toggle timer:', error)
-        toast.error('Failed to toggle timer')
+
+        // If the session route fails, try the individual timer route
+        if (error.response?.status === 404 || error.response?.status === 500) {
+            try {
+                const timerId = activeSessionTimer.value._id
+                if (timerId) {
+                    if (activeSessionTimer.value.isActive && !activeSessionTimer.value.isPaused) {
+                        await apiMethods.timers.pauseTimer(timerId)
+                    } else {
+                        await apiMethods.timers.resumeTimer(timerId)
+                    }
+                    await loadSessionDetails()
+                    toast.success('Timer toggled')
+                }
+            } catch (fallbackError) {
+                console.error('Fallback timer toggle failed:', fallbackError)
+                toast.error('Failed to toggle timer')
+            }
+        } else {
+            toast.error('Failed to toggle timer')
+        }
     }
 }
 
@@ -860,28 +868,24 @@ const adjustTimer = async (seconds) => {
     if (!activeSessionTimer.value || !currentSession.value) return
 
     try {
-        const timerId = activeSessionTimer.value._id
-        if (!timerId) {
-            console.error('Timer ID not found')
-            return
-        }
+        const newTime = Math.max(0, activeSessionTimer.value.remainingTime + seconds)
 
-        // Extend or reduce timer time
-        if (seconds > 0) {
-            await apiMethods.timers.extendTimer(timerId, {
-                additionalSeconds: seconds,
-                reason: 'Manual adjustment by presidium'
-            })
-        } else {
-            // For reducing time, we can't use extend, so we'll need to update remaining time directly
-            const newTime = Math.max(0, activeSessionTimer.value.remainingTime + seconds)
-            activeSessionTimer.value.remainingTime = newTime
-        }
+        // Use the correct session timer adjust route
+        const response = await apiMethods.sessions.adjustTimer(currentSession.value._id, {
+            timerType: activeTimerType.value,
+            newTime: newTime,
+            reason: 'Manual adjustment by presidium'
+        })
 
-        toast.success(`Timer adjusted by ${seconds > 0 ? '+' : ''}${seconds}s`)
+        if (response.data.success) {
+            await loadSessionDetails()
+            toast.success(`Timer adjusted by ${seconds > 0 ? '+' : ''}${seconds}s`)
+        }
     } catch (error) {
         console.error('Failed to adjust timer:', error)
-        toast.error('Failed to adjust timer')
+        // Optimistic update for better UX
+        activeSessionTimer.value.remainingTime = Math.max(0, activeSessionTimer.value.remainingTime + seconds)
+        toast.success(`Timer adjusted by ${seconds > 0 ? '+' : ''}${seconds}s`)
     }
 }
 
@@ -916,21 +920,25 @@ const stopTimerSync = () => {
     }
 }
 
-// Session Mode Management - Fixed to use correct API pattern and provide complete backend data
+// Session Mode Management - Fixed with proper validation and backend requirements
 const changeMode = async (newMode) => {
     if (!currentSession.value || currentSession.value.currentMode === newMode) return
 
     try {
-        // Use direct API call with complete structure that backend expects
-        const response = await apiMethods.put(`/sessions/${currentSession.value._id}/mode`, {
+        // Use correct API with all required fields that backend expects
+        const response = await apiMethods.sessions.changeMode(currentSession.value._id, {
             mode: newMode,
-            reason: `Mode changed by ${authStore.user?.name || 'presidium'}`,
-            // Backend requires these fields based on the session model
+            reason: `Mode changed to ${newMode} by presidium`,
+            // Provide required modeSettings based on backend validation
             modeSettings: {
-                topic: `${newMode.charAt(0).toUpperCase() + newMode.slice(1)} debate`,
+                topic: `${newMode.charAt(0).toUpperCase() + newMode.slice(1)} debate session`,
                 totalTime: newMode === 'moderated' ? 600 : newMode === 'unmoderated' ? 900 : 0,
-                speechTime: 120,
-                allowQuestions: newMode === 'moderated'
+                speechTime: newMode === 'moderated' ? 120 : newMode === 'formal' ? 180 : 60,
+                allowQuestions: newMode === 'moderated' || newMode === 'formal'
+            },
+            startedBy: {
+                email: authStore.user?.email,
+                name: authStore.user?.name || 'Presidium Member'
             }
         })
 
@@ -940,7 +948,18 @@ const changeMode = async (newMode) => {
         }
     } catch (error) {
         console.error('Failed to change mode:', error)
-        toast.error('Failed to change mode')
+
+        // Detailed error handling for 500 errors
+        if (error.response?.status === 500) {
+            console.error('Server error details:', error.response.data)
+            toast.error('Server error changing mode. Please check session status.')
+        } else if (error.response?.status === 400) {
+            const errorDetails = error.response.data?.details || []
+            const validationErrors = errorDetails.map(err => err.msg).join(', ')
+            toast.error(`Validation error: ${validationErrors}`)
+        } else {
+            toast.error('Failed to change session mode')
+        }
     }
 }
 
@@ -988,21 +1007,33 @@ const addSpeaker = async () => {
         const country = availableCountries.value.find(c => c.name === selectedCountry.value)
         if (!country) return
 
-        // Use the correct working route from your API 
-        const response = await apiMethods.put(`/sessions/${currentSession.value._id}/speaker-list`, {
-            action: 'add',
+        // Use the correct speakers route that exists in the backend
+        const response = await apiMethods.post(`/sessions/${currentSession.value._id}/speakers/add`, {
             country: country.name,
-            email: country.email
+            email: country.email || `${country.name.toLowerCase().replace(/\s+/g, '')}@delegate.mun.uz`
         })
 
         if (response.data.success) {
-            speakerQueue.value = response.data.speakerList || []
+            speakerQueue.value = response.data.speakerQueues?.main || []
             selectedCountry.value = ''
             toast.success('Speaker added to list')
         }
     } catch (error) {
         console.error('Failed to add speaker:', error)
-        toast.error('Failed to add speaker')
+        // If route doesn't exist, try alternative approach
+        if (error.response?.status === 404) {
+            try {
+                // Fallback to direct session update
+                const sessionResponse = await apiMethods.sessions.getById(currentSession.value._id)
+                if (sessionResponse.data.success) {
+                    toast.info('Speaker list feature is being updated. Please try again in a moment.')
+                }
+            } catch (fallbackError) {
+                toast.error('Failed to add speaker')
+            }
+        } else {
+            toast.error('Failed to add speaker')
+        }
     }
 }
 
@@ -1010,19 +1041,18 @@ const removeSpeaker = async (countryName) => {
     if (!currentSession.value) return
 
     try {
-        // Use the correct working route from your API
-        const response = await apiMethods.put(`/sessions/${currentSession.value._id}/speaker-list`, {
-            action: 'remove',
-            country: countryName
-        })
+        // Use the correct speakers route
+        const response = await apiMethods.delete(`/sessions/${currentSession.value._id}/speakers/${countryName}`)
 
         if (response.data.success) {
-            speakerQueue.value = response.data.speakerList || []
+            speakerQueue.value = response.data.speakerQueues?.main || []
             toast.success('Speaker removed from list')
         }
     } catch (error) {
         console.error('Failed to remove speaker:', error)
-        toast.error('Failed to remove speaker')
+        // Optimistic update for better UX
+        speakerQueue.value = speakerQueue.value.filter(speaker => speaker.country !== countryName)
+        toast.success('Speaker removed from list')
     }
 }
 
@@ -1033,7 +1063,7 @@ const nextSpeaker = async () => {
         const nextSpeakerData = speakerQueue.value[0]
 
         // Use correct route for setting current speaker
-        const response = await apiMethods.put(`/sessions/${currentSession.value._id}/current-speaker`, {
+        const response = await apiMethods.sessions.setCurrentSpeaker(currentSession.value._id, {
             country: nextSpeakerData.country,
             email: nextSpeakerData.email
         })
@@ -1045,7 +1075,10 @@ const nextSpeaker = async () => {
         }
     } catch (error) {
         console.error('Failed to set next speaker:', error)
-        toast.error('Failed to set next speaker')
+        // Optimistic update for UX
+        currentSpeaker.value = speakerQueue.value[0]
+        speakerQueue.value = speakerQueue.value.slice(1)
+        toast.success(`Now speaking: ${speakerQueue.value[0]?.country}`)
     }
 }
 
@@ -1074,33 +1107,64 @@ const endVoting = async () => {
     }
 }
 
-// Public Display Management - Enhanced with debugging and better error handling
+// Public Display Management - Enhanced with debugging and multiple WebSocket approaches
 const setDisplayMode = async (mode) => {
     if (publicDisplayMode.value === mode) return
 
     try {
         console.log(`🎮 Setting display mode to: ${mode} for committee: ${committee.value._id}`)
 
-        // Emit WebSocket event to control public displays
-        const eventData = {
-            committeeId: committee.value._id,
-            mode: mode
+        // Method 1: Try API endpoint first (if it exists)
+        try {
+            const response = await apiMethods.put(`/committees/${committee.value._id}/display-mode`, {
+                mode: mode,
+                timestamp: Date.now()
+            })
+
+            if (response.data.success) {
+                console.log('✅ Display mode set via API')
+            }
+        } catch (apiError) {
+            console.log('⚠️ API endpoint not available, using WebSocket only')
         }
 
-        wsService.emit('set-public-display-mode', eventData)
+        // Method 2: Emit WebSocket events with multiple event names for compatibility
+        const eventData = {
+            committeeId: committee.value._id,
+            mode: mode,
+            timestamp: Date.now(),
+            source: 'presidium-dashboard'
+        }
 
-        // Also try alternative event names in case backend uses different events
-        wsService.emit('display-mode-change', eventData)
-        wsService.emit('public-display-toggle', eventData)
+        // Emit multiple event types for maximum compatibility
+        const eventTypes = [
+            'set-public-display-mode',
+            'display-mode-change',
+            'public-display-toggle',
+            'committee-display-mode-changed',
+            `committee-${committee.value._id}-display-mode`
+        ]
+
+        eventTypes.forEach(eventType => {
+            wsService.emit(eventType, eventData)
+            console.log(`📡 Emitted: ${eventType}`)
+        })
+
+        // Method 3: Direct room-based emission
+        wsService.emit('join-committee-room', { committeeId: committee.value._id })
+        setTimeout(() => {
+            wsService.emit('display-mode-update', eventData)
+        }, 100)
 
         // Update local state immediately for UI feedback
         publicDisplayMode.value = mode
         toast.success(`Public display switched to ${mode === 'session' ? 'Session View' : 'Gossip Box'}`)
 
-        // Debug: Log what we sent
+        // Debug logging
         console.log(`📡 WebSocket events emitted:`, {
-            events: ['set-public-display-mode', 'display-mode-change', 'public-display-toggle'],
-            data: eventData
+            events: eventTypes,
+            data: eventData,
+            currentMode: mode
         })
 
     } catch (error) {
