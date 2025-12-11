@@ -111,7 +111,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import apiMethods from '@/utils/api'
-import wsService from '@/services/websocket'
+import { wsService } from '@/plugins/websocket'
 
 const route = useRoute()
 
