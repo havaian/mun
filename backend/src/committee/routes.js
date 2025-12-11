@@ -3,7 +3,7 @@ const { body, param, query, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
-const Committee = require('./model');
+const { Committee } = require('./model');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
