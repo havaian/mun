@@ -603,7 +603,7 @@ onUnmounted(() => {
 /* ==================== GOSSIP VIEW ==================== */
 .gossip-view {
     flex: 1;
-    background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%);
+    background: linear-gradient(135deg, #330b78 0%, #07266b 100%);
     color: white;
     padding: 2rem;
 }
