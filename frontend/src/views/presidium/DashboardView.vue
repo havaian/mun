@@ -916,20 +916,21 @@ const stopTimerSync = () => {
     }
 }
 
-// Session Mode Management - Fixed to use correct API pattern
+// Session Mode Management - Fixed to use correct API pattern and provide complete backend data
 const changeMode = async (newMode) => {
     if (!currentSession.value || currentSession.value.currentMode === newMode) return
 
     try {
-        const response = await apiMethods.sessions.changeMode(currentSession.value._id, {
+        // Use direct API call with complete structure that backend expects
+        const response = await apiMethods.put(`/sessions/${currentSession.value._id}/mode`, {
             mode: newMode,
             reason: `Mode changed by ${authStore.user?.name || 'presidium'}`,
-            // Provide required timer data structure to prevent backend errors
+            // Backend requires these fields based on the session model
             modeSettings: {
                 topic: `${newMode.charAt(0).toUpperCase() + newMode.slice(1)} debate`,
-                totalTime: newMode === 'moderated' ? 600 : 0, // 10 minutes for moderated caucus
+                totalTime: newMode === 'moderated' ? 600 : newMode === 'unmoderated' ? 900 : 0,
                 speechTime: 120,
-                allowQuestions: false
+                allowQuestions: newMode === 'moderated'
             }
         })
 
@@ -979,7 +980,7 @@ const endRollCall = async () => {
     }
 }
 
-// Speaker Management
+// Speaker Management - Fixed to use correct API routes that exist in backend
 const addSpeaker = async () => {
     if (!selectedCountry.value || !currentSession.value) return
 
@@ -987,7 +988,9 @@ const addSpeaker = async () => {
         const country = availableCountries.value.find(c => c.name === selectedCountry.value)
         if (!country) return
 
-        const response = await apiMethods.sessions.addToSpeakerList(currentSession.value._id, {
+        // Use the correct working route from your API 
+        const response = await apiMethods.put(`/sessions/${currentSession.value._id}/speaker-list`, {
+            action: 'add',
             country: country.name,
             email: country.email
         })
@@ -1007,7 +1010,9 @@ const removeSpeaker = async (countryName) => {
     if (!currentSession.value) return
 
     try {
-        const response = await apiMethods.sessions.removeFromSpeakerList(currentSession.value._id, {
+        // Use the correct working route from your API
+        const response = await apiMethods.put(`/sessions/${currentSession.value._id}/speaker-list`, {
+            action: 'remove',
             country: countryName
         })
 
@@ -1027,7 +1032,8 @@ const nextSpeaker = async () => {
     try {
         const nextSpeakerData = speakerQueue.value[0]
 
-        const response = await apiMethods.sessions.setCurrentSpeaker(currentSession.value._id, {
+        // Use correct route for setting current speaker
+        const response = await apiMethods.put(`/sessions/${currentSession.value._id}/current-speaker`, {
             country: nextSpeakerData.country,
             email: nextSpeakerData.email
         })
@@ -1068,19 +1074,34 @@ const endVoting = async () => {
     }
 }
 
-// Public Display Management - Fixed to only use WebSocket
+// Public Display Management - Enhanced with debugging and better error handling
 const setDisplayMode = async (mode) => {
     if (publicDisplayMode.value === mode) return
 
     try {
-        // Only use WebSocket for display mode control
-        wsService.emit('set-public-display-mode', {
+        console.log(`🎮 Setting display mode to: ${mode} for committee: ${committee.value._id}`)
+
+        // Emit WebSocket event to control public displays
+        const eventData = {
             committeeId: committee.value._id,
             mode: mode
-        })
+        }
 
+        wsService.emit('set-public-display-mode', eventData)
+
+        // Also try alternative event names in case backend uses different events
+        wsService.emit('display-mode-change', eventData)
+        wsService.emit('public-display-toggle', eventData)
+
+        // Update local state immediately for UI feedback
         publicDisplayMode.value = mode
         toast.success(`Public display switched to ${mode === 'session' ? 'Session View' : 'Gossip Box'}`)
+
+        // Debug: Log what we sent
+        console.log(`📡 WebSocket events emitted:`, {
+            events: ['set-public-display-mode', 'display-mode-change', 'public-display-toggle'],
+            data: eventData
+        })
 
     } catch (error) {
         console.error('Failed to set display mode:', error)
@@ -1172,23 +1193,44 @@ const handleVotingCreated = (voting) => {
     toast.success('Voting started')
 }
 
-// WebSocket Integration
+// Enhanced WebSocket Integration with comprehensive logging
 const setupWebSocketListeners = () => {
+    console.log('🎧 Setting up WebSocket listeners for dashboard')
+
     // Session events
     wsService.on('session-started', (data) => {
+        console.log('📡 Received session-started:', data)
         if (data.sessionId === currentSession.value?._id) {
             loadSessionDetails()
         }
     })
 
     wsService.on('session-mode-changed', (data) => {
+        console.log('📡 Received session-mode-changed:', data)
         if (data.sessionId === currentSession.value?._id) {
             currentSession.value.currentMode = data.mode
         }
     })
 
-    // Public display mode events
+    // Public display mode events - Enhanced with multiple event listeners
     wsService.on('public-display-mode-changed', (data) => {
+        console.log('📡 Received public-display-mode-changed:', data)
+        if (data.committeeId === committee.value?._id) {
+            publicDisplayMode.value = data.mode
+            console.log(`✅ Display mode updated to: ${data.mode}`)
+        }
+    })
+
+    // Alternative event listeners for display mode changes
+    wsService.on('display-mode-changed', (data) => {
+        console.log('📡 Received display-mode-changed:', data)
+        if (data.committeeId === committee.value?._id) {
+            publicDisplayMode.value = data.mode
+        }
+    })
+
+    wsService.on('display-toggle', (data) => {
+        console.log('📡 Received display-toggle:', data)
         if (data.committeeId === committee.value?._id) {
             publicDisplayMode.value = data.mode
         }
@@ -1196,24 +1238,28 @@ const setupWebSocketListeners = () => {
 
     // Timer events - Enhanced
     wsService.on('timer-started', (data) => {
+        console.log('📡 Received timer-started:', data)
         if (data.sessionId === currentSession.value?._id) {
             loadSessionDetails()
         }
     })
 
     wsService.on('timer-paused', (data) => {
+        console.log('📡 Received timer-paused:', data)
         if (data.sessionId === currentSession.value?._id) {
             loadSessionDetails()
         }
     })
 
     wsService.on('timer-resumed', (data) => {
+        console.log('📡 Received timer-resumed:', data)
         if (data.sessionId === currentSession.value?._id) {
             loadSessionDetails()
         }
     })
 
     wsService.on('timer-completed', (data) => {
+        console.log('📡 Received timer-completed:', data)
         if (data.sessionId === currentSession.value?._id) {
             toast.error('Timer expired!')
             loadSessionDetails()
@@ -1222,12 +1268,14 @@ const setupWebSocketListeners = () => {
 
     // Speaker events
     wsService.on('speaker-list-updated', (data) => {
+        console.log('📡 Received speaker-list-updated:', data)
         if (data.sessionId === currentSession.value?._id) {
             speakerQueue.value = data.speakerList
         }
     })
 
     wsService.on('current-speaker-changed', (data) => {
+        console.log('📡 Received current-speaker-changed:', data)
         if (data.sessionId === currentSession.value?._id) {
             currentSpeaker.value = data.speaker
         }
@@ -1235,6 +1283,7 @@ const setupWebSocketListeners = () => {
 
     // Voting events
     wsService.on('voting-started', (data) => {
+        console.log('📡 Received voting-started:', data)
         if (data.committeeId === committee.value?._id) {
             activeVoting.value = data.voting
             updateVotingResults(data.voting)
@@ -1273,6 +1322,8 @@ const setupWebSocketListeners = () => {
             quorum.value = data.quorum
         }
     })
+
+    console.log('✅ All WebSocket listeners set up for dashboard')
 }
 
 // Lifecycle
