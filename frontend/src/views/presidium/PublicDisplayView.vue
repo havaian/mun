@@ -1,26 +1,43 @@
 <template>
-    <div class="h-screen bg-gray-900 text-white flex flex-col overflow-hidden">
+    <div class="h-screen flex flex-col overflow-hidden" :class="[
+        displayMode === 'gossip' ? 'bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900' : 'bg-gray-900',
+        'text-white'
+    ]">
         <!-- Header -->
         <div class="flex items-center justify-between p-8 border-b border-gray-700">
-            <div>
+            <div v-if="displayMode === 'session'">
                 <h1 class="text-4xl font-bold text-white mb-2">{{ committee?.name || 'UN General Assembly' }}</h1>
                 <p class="text-xl text-gray-300">{{ committee?.description || 'Global Sustainability Goals' }}</p>
             </div>
+            <div v-else class="flex items-center">
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                    <ChatBubbleLeftRightIcon class="w-6 h-6 text-purple-700" />
+                </div>
+                <div>
+                    <h1 class="text-4xl font-bold text-white mb-1">GOSSIP BOX</h1>
+                    <p class="text-xl text-purple-200">{{ committee?.name || 'UN General Assembly' }}</p>
+                </div>
+            </div>
+
             <div class="text-right">
-                <div :class="[
+                <div v-if="displayMode === 'session'" :class="[
                     'text-lg font-bold px-6 py-3 rounded-lg uppercase tracking-wide',
                     getModeColor(currentMode)
                 ]">
                     {{ getModeLabel(currentMode) }}
                 </div>
+                <div v-else
+                    class="px-6 py-3 bg-purple-600 text-white rounded-lg text-lg font-bold uppercase tracking-wide">
+                    ANONYMOUS CHAT
+                </div>
                 <div class="text-gray-400 text-sm mt-2">
-                    Session {{ currentSession?.sessionNumber || 1 }}
+                    {{ displayMode === 'session' ? `Session ${currentSession?.sessionNumber || 1}` : 'Live Messages' }}
                 </div>
             </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="flex-1 flex">
+        <!-- Session View Content -->
+        <div v-if="displayMode === 'session'" class="flex-1 flex">
             <!-- Left Side - Timer and Current Speaker -->
             <div class="flex-1 flex flex-col justify-center items-center p-16">
                 <!-- Timer Section -->
@@ -113,30 +130,104 @@
             </div>
         </div>
 
+        <!-- Gossip View Content -->
+        <div v-else class="flex-1 flex flex-col p-8">
+            <!-- Messages Container -->
+            <div class="flex-1 flex justify-center items-start">
+                <div class="w-full max-w-4xl space-y-6">
+                    <!-- Recent Messages -->
+                    <div v-if="gossipMessages.length > 0" class="space-y-4">
+                        <div v-for="message in gossipMessages.slice(-10)" :key="message._id" class="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl p-6 
+                                   hover:bg-black/30 transition-all duration-300 shadow-xl">
+                            <div class="flex items-start space-x-4">
+                                <!-- Anonymous Avatar -->
+                                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 
+                                           flex items-center justify-center shadow-lg">
+                                    <div class="w-6 h-6 bg-white/20 rounded-full"></div>
+                                </div>
+
+                                <!-- Message Content -->
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="text-purple-200 text-sm font-medium">
+                                            {{ formatGossipTime(message.sentAt) }}
+                                        </div>
+                                        <div v-if="message.priority === 'important'"
+                                            class="px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs">
+                                            Important
+                                        </div>
+                                    </div>
+                                    <div class="text-white text-lg leading-relaxed">
+                                        "{{ message.content }}"
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div v-else class="text-center py-20">
+                        <div
+                            class="w-24 h-24 bg-purple-100/10 rounded-full mx-auto mb-6 flex items-center justify-center">
+                            <ChatBubbleLeftRightIcon class="w-12 h-12 text-purple-300" />
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-2">No Messages Yet</h3>
+                        <p class="text-purple-200">Anonymous messages will appear here during the session.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gossip Stats -->
+            <div class="mt-8 grid grid-cols-3 gap-6 max-w-2xl mx-auto">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-white mb-1">{{ gossipMessages.length }}</div>
+                    <div class="text-purple-200 text-sm uppercase tracking-wide">Total Messages</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-purple-300 mb-1">{{ anonymousParticipants }}</div>
+                    <div class="text-purple-200 text-sm uppercase tracking-wide">Anonymous Users</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-pink-300 mb-1">{{ recentMessagesCount }}</div>
+                    <div class="text-purple-200 text-sm uppercase tracking-wide">Recent (5 min)</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Bottom Status Bar -->
-        <div class="bg-gray-800 border-t border-gray-700 px-8 py-4 flex items-center justify-between">
+        <div class="border-t px-8 py-4 flex items-center justify-between" :class="[
+            displayMode === 'gossip' ? 'bg-purple-900/50 border-purple-700' : 'bg-gray-800 border-gray-700'
+        ]">
             <!-- Session Info -->
             <div class="flex items-center space-x-8">
                 <div class="flex items-center space-x-3">
                     <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span class="text-gray-300">Session Active</span>
+                    <span class="text-gray-300">
+                        {{ displayMode === 'session' ? 'Session Active' : 'Gossip Active' }}
+                    </span>
                 </div>
 
-                <div v-if="quorumData.hasQuorum" class="flex items-center space-x-3">
+                <div v-if="displayMode === 'session' && quorumData.hasQuorum" class="flex items-center space-x-3">
                     <CheckCircleIcon class="w-5 h-5 text-green-500" />
                     <span class="text-green-400">Quorum Present</span>
                     <span class="text-gray-400">({{ quorumData.presentVoting }}/{{ quorumData.required }})</span>
                 </div>
 
-                <div v-else class="flex items-center space-x-3">
+                <div v-else-if="displayMode === 'session' && !quorumData.hasQuorum" class="flex items-center space-x-3">
                     <XCircleIcon class="w-5 h-5 text-red-500" />
                     <span class="text-red-400">No Quorum</span>
                     <span class="text-gray-400">({{ quorumData.presentVoting }}/{{ quorumData.required }})</span>
                 </div>
+
+                <!-- Gossip Mode Info -->
+                <div v-if="displayMode === 'gossip'" class="flex items-center space-x-3">
+                    <EyeSlashIcon class="w-5 h-5 text-purple-400" />
+                    <span class="text-purple-300">Anonymous Mode</span>
+                </div>
             </div>
 
             <!-- Voting Status -->
-            <div v-if="activeVoting" class="flex items-center space-x-6">
+            <div v-if="displayMode === 'session' && activeVoting" class="flex items-center space-x-6">
                 <div class="flex items-center space-x-2">
                     <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
                     <span class="text-red-400 font-medium">VOTING IN PROGRESS</span>
@@ -163,7 +254,7 @@ import sessionApi from '@/utils/sessionApi'
 // Icons
 import {
     ClockIcon, UserIcon, MicrophoneIcon, UsersIcon,
-    CheckCircleIcon, XCircleIcon
+    CheckCircleIcon, XCircleIcon, ChatBubbleLeftRightIcon, EyeSlashIcon
 } from '@heroicons/vue/24/outline'
 
 // Stores
@@ -185,6 +276,8 @@ const quorumData = ref({
 })
 const activeVoting = ref(null)
 const currentTime = ref('')
+const displayMode = ref('session') // 'session' or 'gossip'
+const gossipMessages = ref([])
 
 // Timer update interval
 let timerUpdateInterval = null
@@ -216,6 +309,23 @@ const timerLabel = computed(() => {
 const timerProgress = computed(() => {
     if (!activeTimer.value) return 0
     return activeTimer.value.progressPercentage || 0
+})
+
+const anonymousParticipants = computed(() => {
+    // Count unique anonymous IDs from recent gossip messages
+    const recentMessages = gossipMessages.value.filter(msg => {
+        const messageTime = new Date(msg.sentAt)
+        const now = new Date()
+        return (now - messageTime) < 30 * 60 * 1000 // Last 30 minutes
+    })
+
+    const uniqueIds = new Set(recentMessages.map(msg => msg.gossipId))
+    return uniqueIds.size
+})
+
+const recentMessagesCount = computed(() => {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
+    return gossipMessages.value.filter(msg => new Date(msg.sentAt) > fiveMinutesAgo).length
 })
 
 const getModeLabel = (mode) => {
@@ -256,6 +366,9 @@ const loadData = async () => {
 
         // Load active session
         await loadActiveSession()
+
+        // Load gossip messages
+        await loadGossipMessages()
 
     } catch (error) {
         console.error('Failed to load public display data:', error)
@@ -311,6 +424,19 @@ const loadSessionDetails = async () => {
     }
 }
 
+const loadGossipMessages = async () => {
+    if (!committee.value?._id) return
+
+    try {
+        const response = await apiMethods.gossip.getByCommitteeId(committee.value._id)
+        if (response.data.success) {
+            gossipMessages.value = response.data.messages || []
+        }
+    } catch (error) {
+        console.error('Failed to load gossip messages:', error)
+    }
+}
+
 const getCountryFlag = (countryName) => {
     const country = committee.value?.countries?.find(c => c.name === countryName)
     return country?.flagUrl || '/api/countries/flags/default'
@@ -322,6 +448,21 @@ const updateClock = () => {
         minute: '2-digit',
         second: '2-digit'
     })
+}
+
+const formatGossipTime = (dateString) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now - date
+    const diffMins = Math.floor(diffMs / 60000)
+
+    if (diffMins < 1) return 'Just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+
+    const diffHours = Math.floor(diffMins / 60)
+    if (diffHours < 24) return `${diffHours}h ago`
+
+    return date.toLocaleDateString()
 }
 
 const startTimerSync = () => {
@@ -342,6 +483,13 @@ const startTimerSync = () => {
 
 // WebSocket listeners
 const setupWebSocketListeners = () => {
+    // Display mode control events
+    wsService.on('public-display-mode-changed', (data) => {
+        if (data.committeeId === committee.value?._id) {
+            displayMode.value = data.mode
+        }
+    })
+
     // Session events
     wsService.on('session-mode-changed', (data) => {
         if (data.sessionId === currentSession.value?._id) {
@@ -401,6 +549,23 @@ const setupWebSocketListeners = () => {
             quorumData.value = data.quorum
         }
     })
+
+    // Gossip events
+    wsService.on('gossip-message-posted', (data) => {
+        if (data.committeeId === committee.value?._id) {
+            gossipMessages.value.push(data.message)
+            // Keep only last 50 messages in memory
+            if (gossipMessages.value.length > 50) {
+                gossipMessages.value = gossipMessages.value.slice(-50)
+            }
+        }
+    })
+
+    wsService.on('gossip-message-removed', (data) => {
+        if (data.committeeId === committee.value?._id) {
+            gossipMessages.value = gossipMessages.value.filter(msg => msg._id !== data.messageId)
+        }
+    })
 }
 
 // Lifecycle
@@ -415,6 +580,13 @@ onMounted(async () => {
 
     // Auto-refresh data every 30 seconds
     setInterval(loadSessionDetails, 30000)
+
+    // Refresh gossip messages every 10 seconds when in gossip mode
+    setInterval(() => {
+        if (displayMode.value === 'gossip') {
+            loadGossipMessages()
+        }
+    }, 10000)
 })
 
 onUnmounted(() => {
@@ -451,5 +623,10 @@ onUnmounted(() => {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #9CA3AF;
+}
+
+/* Gossip view specific styles */
+.backdrop-blur-sm {
+    backdrop-filter: blur(8px);
 }
 </style>
