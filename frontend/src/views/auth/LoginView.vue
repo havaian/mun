@@ -803,8 +803,9 @@ const handleEmailBinding = async () => {
         
         // Handle specific error cases
         if (err.response?.status === 409) {
-            toast.error('This email is already registered. Try signing in instead.')
-            requiresEmailBinding.value = false // Switch to login mode
+            // Email is already bound to another account - user should try a different email
+            toast.error('This email is already registered to another account. Please use a different email address.')
+            // Keep user in binding view to try again with different email
         } else {
             const errorMsg = err.response?.data?.error || 'Failed to complete registration'
             toast.error(errorMsg)
