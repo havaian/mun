@@ -1,4 +1,4 @@
-const { Session } = require('./model')
+const Session = require('./model')
 const { Committee } = require('../committee/model')
 
 /**
