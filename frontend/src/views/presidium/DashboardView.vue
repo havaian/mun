@@ -46,7 +46,6 @@
         <!-- No Session State -->
         <div v-if="!currentSession" class="flex-1 overflow-y-auto p-6">
             <div class="max-w-6xl mx-auto space-y-8">
-
                 <!-- Session Creation Section -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
                     <div class="text-center mb-8">
@@ -58,7 +57,6 @@
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <!-- Quick Session Start -->
                         <div class="border border-gray-200 rounded-lg p-6 hover:border-blue-200 transition-colors">
                             <div class="flex items-center mb-4">
                                 <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
@@ -73,7 +71,6 @@
                             </button>
                         </div>
 
-                        <!-- Custom Session Setup -->
                         <div class="border border-gray-200 rounded-lg p-6 hover:border-blue-200 transition-colors">
                             <div class="flex items-center mb-4">
                                 <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
@@ -167,21 +164,20 @@
             <div class="w-80 bg-white border-r border-gray-200 p-6 space-y-6">
                 <!-- Timer Section -->
                 <div class="text-center">
-                    <!-- Circular Timer -->
-                    <div class="relative w-48 h-48 mx-auto mb-6">
-                        <!-- Timer Circle -->
-                        <svg class="w-48 h-48 transform -rotate-90" viewBox="0 0 100 100">
-                            <!-- Background circle -->
-                            <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="4" />
-                            <!-- Progress circle -->
-                            <circle cx="50" cy="50" r="45" fill="none" :stroke="currentTimerColor" stroke-width="4"
-                                stroke-linecap="round" :stroke-dasharray="timerCircumference"
-                                :stroke-dashoffset="timerDashOffset" class="transition-all duration-1000" />
-                        </svg>
-                        <!-- Timer Text -->
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <div class="text-3xl font-bold text-gray-900">{{ formattedTimer }}</div>
-                            <div class="text-sm text-gray-500 uppercase tracking-wide">{{ currentTimerName }}</div>
+                    <!-- Circular Timer (clickable) -->
+                    <div @click="openTimerAdjustModal()" class="cursor-pointer hover:scale-105 transition-transform">
+                        <div class="relative w-48 h-48 mx-auto mb-6">
+                            <svg class="w-48 h-48 transform -rotate-90" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="4" />
+                                <circle cx="50" cy="50" r="45" fill="none" :stroke="currentTimerColor" stroke-width="4"
+                                    stroke-linecap="round" :stroke-dasharray="timerCircumference"
+                                    :stroke-dashoffset="timerDashOffset" class="transition-all duration-1000" />
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <div class="text-3xl font-bold text-gray-900">{{ formattedTimer }}</div>
+                                <div class="text-sm text-gray-500 uppercase tracking-wide">{{ currentTimerName }}</div>
+                                <div class="text-xs text-gray-400 mt-1">Click to adjust</div>
+                            </div>
                         </div>
                     </div>
 
@@ -189,54 +185,104 @@
                     <div class="flex justify-center space-x-4 mb-4">
                         <button @click="toggleTimer" :class="[
                             'w-12 h-12 rounded-full flex items-center justify-center transition-colors',
-                            activeSessionTimer?.isActive && !activeSessionTimer?.isPaused ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'
-                        ]" :disabled="!activeSessionTimer">
-                            <PauseIcon v-if="activeSessionTimer?.isActive && !activeSessionTimer?.isPaused"
-                                class="w-6 h-6" />
+                            activeTimer?.isActive && !activeTimer?.isPaused ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-green-100 text-green-600 hover:bg-green-200'
+                        ]" :disabled="!activeTimer">
+                            <PauseIcon v-if="activeTimer?.isActive && !activeTimer?.isPaused" class="w-6 h-6" />
                             <PlayIcon v-else class="w-6 h-6" />
                         </button>
-                        <button @click="adjustTimer(-30)"
+                        <button @click="adjustTimerQuick(-30)"
                             class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors text-xs font-bold"
-                            :disabled="!activeSessionTimer">
+                            :disabled="!activeTimer">
                             -30s
                         </button>
-                        <button @click="adjustTimer(30)"
+                        <button @click="adjustTimerQuick(30)"
                             class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors text-xs font-bold"
-                            :disabled="!activeSessionTimer">
+                            :disabled="!activeTimer">
                             +30s
                         </button>
                     </div>
 
-                    <!-- Timer Selection -->
-                    <div class="grid grid-cols-2 gap-2 text-sm mb-3">
-                        <button @click="startSessionTimer" :class="[
-                            'px-3 py-2 rounded-lg border transition-colors',
-                            activeTimerType === 'session' ? 'bg-purple-50 border-purple-200 text-purple-700' : 'bg-white border-gray-200 hover:bg-gray-50'
+                    <!-- Timer Tiles -->
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <!-- Session/Debate Timer -->
+                        <div @click="switchToTimer('session')" :class="[
+                            'p-3 rounded-lg border-2 cursor-pointer transition-all',
+                            activeTimerType === 'session'
+                                ? 'bg-purple-50 border-purple-300 shadow-md'
+                                : 'bg-white border-gray-200 hover:border-purple-200'
                         ]">
-                            Session Timer
-                        </button>
-
-                        <!-- Debate Timer Button (for moderated/unmoderated) -->
-                        <button
-                            v-if="currentSession?.currentMode === 'moderated' || currentSession?.currentMode === 'unmoderated'"
-                            @click="startDebateTimer" :class="[
-                                'px-3 py-2 rounded-lg border transition-colors',
-                                activeTimerType === 'debate' ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-white border-gray-200 hover:bg-gray-50'
-                            ]" :disabled="sessionTimers.debate?.isActive">
-                            {{ sessionTimers.debate?.isActive ? 'Debate Active' : 'Start Debate' }}
-                        </button>
-                    </div>
-
-                    <!-- Timer Info Display -->
-                    <div v-if="activeSessionTimer" class="text-xs text-gray-500 text-center p-2 bg-gray-50 rounded">
-                        <div v-if="activeTimerType === 'speaker'">
-                            Speaker: {{ activeSessionTimer.country }}
+                            <div class="text-xs text-gray-500 uppercase">
+                                {{ currentSession?.currentMode === 'moderated' || currentSession?.currentMode ===
+                                'unmoderated' ? 'Debate' : 'Session' }}
+                            </div>
+                            <div class="text-lg font-bold font-mono">
+                                {{ formatTimerDisplay(sessionTimers.session) }}
+                            </div>
+                            <div class="text-xs"
+                                :class="sessionTimers.session?.isActive ? 'text-green-600' : 'text-gray-400'">
+                                {{ sessionTimers.session?.isActive ? '● Active' : 'Inactive' }}
+                            </div>
                         </div>
-                        <div v-else-if="activeTimerType === 'debate'">
-                            {{ activeSessionTimer.topic || 'Debate Time' }}
+
+                        <!-- Speaker Presentation Timer -->
+                        <div v-if="hasSpeakerPresentationTimer" @click="switchToTimer('speaker')" :class="[
+                            'p-3 rounded-lg border-2 cursor-pointer transition-all',
+                            activeTimerType === 'speaker'
+                                ? 'bg-blue-50 border-blue-300 shadow-md'
+                                : 'bg-white border-gray-200 hover:border-blue-200'
+                        ]">
+                            <div class="text-xs text-gray-500 uppercase">Presentation</div>
+                            <div class="text-lg font-bold font-mono">
+                                {{ formatTimerDisplay(sessionTimers.speaker) }}
+                            </div>
+                            <div class="text-xs"
+                                :class="sessionTimers.speaker?.isActive ? 'text-green-600' : 'text-gray-400'">
+                                {{ sessionTimers.speaker?.country || 'No Speaker' }}
+                            </div>
                         </div>
-                        <div v-else-if="activeTimerType === 'session'">
-                            {{ activeSessionTimer.purpose || 'Session Time' }}
+
+                        <!-- Speaker Q&A Timer -->
+                        <div v-if="hasSpeakerQATimer" @click="switchToTimer('qa')" :class="[
+                            'p-3 rounded-lg border-2 cursor-pointer transition-all',
+                            activeTimerType === 'qa'
+                                ? 'bg-green-50 border-green-300 shadow-md'
+                                : 'bg-white border-gray-200 hover:border-green-200'
+                        ]">
+                            <div class="text-xs text-gray-500 uppercase">Q&A</div>
+                            <div class="text-lg font-mono font-bold">
+                                {{ formatTimerDisplay(sessionTimers.qa) }}
+                            </div>
+                            <div class="text-xs"
+                                :class="sessionTimers.qa?.isActive ? 'text-green-600' : 'text-gray-400'">
+                                {{ sessionTimers.qa?.isActive ? '● Active' : 'Waiting' }}
+                            </div>
+                        </div>
+
+                        <!-- Additional Timers -->
+                        <div v-for="timer in sessionTimers.additional" :key="timer._id"
+                            @click="switchToTimer('additional', timer._id)" :class="[
+                                'p-3 rounded-lg border-2 cursor-pointer transition-all',
+                                activeTimerType === 'additional' && activeTimerId === timer._id
+                                    ? 'bg-orange-50 border-orange-300 shadow-md'
+                                    : 'bg-white border-gray-200 hover:border-orange-200'
+                            ]">
+                            <div class="text-xs text-gray-500 uppercase truncate">{{ timer.name }}</div>
+                            <div class="text-lg font-bold font-mono">
+                                {{ formatTimerDisplay(timer) }}
+                            </div>
+                            <div class="text-xs" :class="timer.isActive ? 'text-green-600' : 'text-gray-400'">
+                                {{ timer.isActive ? '● Active' : 'Inactive' }}
+                            </div>
+                        </div>
+
+                        <!-- Add Timer Button -->
+                        <div @click="showAddTimerModal = true"
+                            class="p-3 rounded-lg border-2 border-dashed border-gray-300 
+                            cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-all flex items-center justify-center">
+                            <div class="text-center text-gray-500">
+                                <PlusIcon class="w-6 h-6 mx-auto mb-1" />
+                                <div class="text-xs">Add Timer</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -298,7 +344,6 @@
                             </span>
                         </div>
 
-                        <!-- Roll Call Actions -->
                         <div v-if="rollCallStatus === 'inactive'" class="space-y-2">
                             <button @click="startRollCall"
                                 class="w-full px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
@@ -525,6 +570,108 @@
 
         <!-- Quick Vote Modal -->
         <QuickVoteModal v-model="showQuickVoteModal" :session="currentSession" @voting-created="handleVotingCreated" />
+
+        <!-- Timer Adjustment Modal -->
+        <TransitionRoot :show="showTimerAdjustModal" as="template">
+            <Dialog @close="showTimerAdjustModal = false">
+                <div class="fixed inset-0 bg-black/30 z-50" />
+                <div class="fixed inset-0 overflow-y-auto z-50">
+                    <div class="flex min-h-full items-center justify-center p-4">
+                        <DialogPanel class="w-full max-w-md bg-white rounded-xl shadow-xl p-6">
+                            <DialogTitle class="text-lg font-bold mb-4">
+                                Adjust Timer Duration
+                            </DialogTitle>
+
+                            <div class="mb-6">
+                                <label class="text-sm text-gray-600 block mb-2">Duration</label>
+                                <div class="flex items-center justify-center space-x-2">
+                                    <input v-model="timerMinutes" type="number" min="0" max="99"
+                                        class="w-24 text-center text-3xl font-mono border-2 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                    <span class="text-3xl font-bold text-gray-400">:</span>
+                                    <input v-model="timerSeconds" type="number" min="0" max="59"
+                                        class="w-24 text-center text-3xl font-mono border-2 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                </div>
+                                <div class="text-xs text-gray-500 text-center mt-2">
+                                    Maximum: 99:59
+                                </div>
+                            </div>
+
+                            <div class="mb-6">
+                                <label class="text-sm text-gray-600 block mb-2">Quick Presets</label>
+                                <div class="grid grid-cols-4 gap-2">
+                                    <button @click="setPreset(1)"
+                                        class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors">
+                                        1 min
+                                    </button>
+                                    <button @click="setPreset(2)"
+                                        class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors">
+                                        2 min
+                                    </button>
+                                    <button @click="setPreset(5)"
+                                        class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors">
+                                        5 min
+                                    </button>
+                                    <button @click="setPreset(10)"
+                                        class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium transition-colors">
+                                        10 min
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex space-x-3">
+                                <button @click="showTimerAdjustModal = false"
+                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors">
+                                    Cancel
+                                </button>
+                                <button @click="applyTimerDuration"
+                                    class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors">
+                                    Apply
+                                </button>
+                            </div>
+                        </DialogPanel>
+                    </div>
+                </div>
+            </Dialog>
+        </TransitionRoot>
+
+        <!-- Add Timer Modal -->
+        <TransitionRoot :show="showAddTimerModal" as="template">
+            <Dialog @close="showAddTimerModal = false">
+                <div class="fixed inset-0 bg-black/30 z-50" />
+                <div class="fixed inset-0 overflow-y-auto z-50">
+                    <div class="flex min-h-full items-center justify-center p-4">
+                        <DialogPanel class="w-full max-w-md bg-white rounded-xl shadow-xl p-6">
+                            <DialogTitle class="text-lg font-bold mb-4">
+                                Create Additional Timer
+                            </DialogTitle>
+
+                            <div class="mb-4">
+                                <label class="text-sm text-gray-600 block mb-2">Timer Name</label>
+                                <input v-model="newTimerName" type="text" placeholder="e.g., Break, Discussion"
+                                    class="w-full border-2 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                            </div>
+
+                            <div class="mb-6">
+                                <label class="text-sm text-gray-600 block mb-2">Duration (minutes)</label>
+                                <input v-model="newTimerMinutes" type="number" min="1" max="99"
+                                    class="w-full border-2 border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                            </div>
+
+                            <div class="flex space-x-3">
+                                <button @click="showAddTimerModal = false"
+                                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors">
+                                    Cancel
+                                </button>
+                                <button @click="createAdditionalTimer"
+                                    class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors">
+                                    Create
+                                </button>
+                            </div>
+                        </DialogPanel>
+                    </div>
+                </div>
+            </Dialog>
+        </TransitionRoot>
     </div>
 </template>
 
@@ -535,13 +682,14 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
+import { Dialog, DialogPanel, DialogTitle, TransitionRoot } from '@headlessui/vue'
 
 // Icons
 import {
     PlayIcon, PauseIcon, CommandLineIcon, MicrophoneIcon,
     XMarkIcon, CheckCircleIcon, DocumentTextIcon, CalendarDaysIcon,
     CogIcon, ClockIcon, PresentationChartLineIcon,
-    ComputerDesktopIcon, ChatBubbleOvalLeftEllipsisIcon
+    ComputerDesktopIcon, ChatBubbleOvalLeftEllipsisIcon, PlusIcon
 } from '@heroicons/vue/24/outline'
 
 // Components
@@ -556,10 +704,17 @@ const toast = useToast()
 // State
 const committee = ref(null)
 const currentSession = ref(null)
-const sessionTimers = ref({}) // Store all session timers
-const activeSessionTimer = ref(null) // Currently active/displayed timer
-const activeTimerType = ref(null) // 'session', 'speaker', 'debate'
-const speakerLists = ref({ present: [], absent: [] }) // UPDATED: Two lists
+const sessionTimers = ref({
+    session: null,
+    speaker: null,
+    debate: null,
+    qa: null,
+    additional: []
+})
+const activeTimer = ref(null)
+const activeTimerType = ref('session')
+const activeTimerId = ref(null)
+const speakerLists = ref({ present: [], absent: [] })
 const currentSpeaker = ref(null)
 const selectedCountry = ref('')
 const availableCountries = ref([])
@@ -567,17 +722,41 @@ const activeVoting = ref(null)
 const votingResults = ref({})
 const quorum = ref({ hasQuorum: false, present: 0, required: 0 })
 const rollCallStatus = ref('inactive')
-const rollCallCompleted = ref(false) // NEW
+const rollCallCompleted = ref(false)
 const isLoading = ref(false)
 const allSessions = ref([])
 const publicDisplayMode = ref('session')
+
+// Timer adjustment modals
+const showTimerAdjustModal = ref(false)
+const timerMinutes = ref(0)
+const timerSeconds = ref(0)
+const showAddTimerModal = ref(false)
+const newTimerName = ref('')
+const newTimerMinutes = ref(5)
 
 // Modals
 const showCreateSessionModal = ref(false)
 const showQuickVoteModal = ref(false)
 
-// Timer sync interval
-let timerSyncInterval = null
+// Display update interval
+let displayUpdateInterval = null
+
+// Helper: Calculate real-time remaining from timestamp
+const getRealTimeRemaining = (timer) => {
+    if (!timer) return 0
+    if (!timer.isActive) return timer.remainingTime || timer.totalDuration || 0
+    if (timer.isPaused) return timer.remainingTime || 0
+
+    const startedAt = new Date(timer.startedAt)
+    const now = new Date()
+    const elapsed = Math.floor((now - startedAt) / 1000)
+    const pauseTime = timer.accumulatedPause || 0
+    const actualElapsed = elapsed - pauseTime
+    const remaining = Math.max(0, timer.totalDuration - actualElapsed)
+
+    return remaining
+}
 
 // Computed
 const formattedMode = computed(() => {
@@ -601,50 +780,63 @@ const modeColor = computed(() => {
 })
 
 const formattedTimer = computed(() => {
-    if (!activeSessionTimer.value) return '00:00'
+    if (!activeTimer.value) return '00:00'
 
-    const time = Math.max(0, activeSessionTimer.value.remainingTime || 0)
+    const time = getRealTimeRemaining(activeTimer.value)
     const minutes = Math.floor(time / 60)
     const seconds = time % 60
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 })
 
 const currentTimerName = computed(() => {
-    if (!activeSessionTimer.value || !activeTimerType.value) return 'NO TIMER'
+    if (!activeTimer.value) return 'NO TIMER'
 
     if (activeTimerType.value === 'speaker') {
-        return activeSessionTimer.value.country || 'SPEAKER'
+        return activeTimer.value.country || 'SPEAKER'
     } else if (activeTimerType.value === 'debate') {
-        return activeSessionTimer.value.topic || 'DEBATE'
+        return 'DEBATE'
     } else if (activeTimerType.value === 'session') {
         return 'SESSION'
+    } else if (activeTimerType.value === 'qa') {
+        return 'Q&A'
+    } else if (activeTimerType.value === 'additional') {
+        return activeTimer.value.name || 'TIMER'
     }
 
     return 'TIMER'
 })
 
 const currentTimerColor = computed(() => {
-    if (!activeSessionTimer.value) return '#e5e7eb'
+    if (!activeTimer.value) return '#e5e7eb'
 
-    const time = activeSessionTimer.value.remainingTime || 0
+    const time = getRealTimeRemaining(activeTimer.value)
 
-    // Color coding based on technical specs: Green > 30s, Yellow 10-30s, Red < 10s
     if (time > 30) return '#22c55e' // green
     if (time > 10) return '#eab308' // yellow  
     return '#ef4444' // red
 })
 
 const timerCircumference = computed(() => {
-    return 2 * Math.PI * 45 // radius = 45
+    return 2 * Math.PI * 45
 })
 
 const timerDashOffset = computed(() => {
-    if (!activeSessionTimer.value) return timerCircumference.value
+    if (!activeTimer.value) return timerCircumference.value
 
-    const progress = activeSessionTimer.value.totalDuration > 0
-        ? (activeSessionTimer.value.totalDuration - activeSessionTimer.value.remainingTime) / activeSessionTimer.value.totalDuration
-        : 0
+    const remaining = getRealTimeRemaining(activeTimer.value)
+    const total = activeTimer.value.totalDuration || 1
+    const progress = (total - remaining) / total
     return timerCircumference.value * (1 - progress)
+})
+
+const hasSpeakerPresentationTimer = computed(() => {
+    const mode = currentSession.value?.currentMode
+    return mode === 'formal' || mode === 'moderated' || mode === 'informal'
+})
+
+const hasSpeakerQATimer = computed(() => {
+    const mode = currentSession.value?.currentMode
+    return mode === 'formal' || mode === 'informal'
 })
 
 const totalVotes = computed(() => {
@@ -660,7 +852,165 @@ const previousSessions = computed(() => {
     return allSessions.value.filter(session => session.status !== 'active').slice(0, 5)
 })
 
-// Methods
+// Timer Methods
+const formatTimerDisplay = (timer) => {
+    if (!timer) return '--:--'
+
+    const time = getRealTimeRemaining(timer)
+    const minutes = Math.floor(time / 60)
+    const seconds = time % 60
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+}
+
+const switchToTimer = (type, id = null) => {
+    activeTimerType.value = type
+    activeTimerId.value = id
+
+    if (type === 'additional') {
+        activeTimer.value = sessionTimers.value.additional?.find(t => t._id === id)
+    } else {
+        activeTimer.value = sessionTimers.value[type]
+    }
+}
+
+const openTimerAdjustModal = () => {
+    if (!activeTimer.value) return
+
+    const duration = getRealTimeRemaining(activeTimer.value)
+    timerMinutes.value = Math.floor(duration / 60)
+    timerSeconds.value = duration % 60
+
+    showTimerAdjustModal.value = true
+}
+
+const setPreset = (minutes) => {
+    timerMinutes.value = minutes
+    timerSeconds.value = 0
+}
+
+const applyTimerDuration = async () => {
+    const totalSeconds = (parseInt(timerMinutes.value) || 0) * 60 + (parseInt(timerSeconds.value) || 0)
+
+    if (totalSeconds === 0 || totalSeconds > 5999) {
+        toast.error('Invalid duration. Must be between 00:01 and 99:59')
+        return
+    }
+
+    try {
+        const response = await apiMethods.sessions.adjustTimer(currentSession.value._id, {
+            timerType: activeTimerType.value,
+            timerId: activeTimerId.value,
+            newTime: totalSeconds
+        })
+
+        if (response.data.success) {
+            if (activeTimerType.value === 'additional') {
+                const idx = sessionTimers.value.additional.findIndex(t => t._id === activeTimerId.value)
+                if (idx !== -1) {
+                    sessionTimers.value.additional[idx] = response.data.timer
+                }
+            } else {
+                sessionTimers.value[activeTimerType.value] = response.data.timer
+            }
+
+            activeTimer.value = response.data.timer
+            toast.success('Timer duration updated')
+            showTimerAdjustModal.value = false
+        }
+    } catch (error) {
+        console.error('Failed to adjust timer:', error)
+        toast.error('Failed to update timer duration')
+    }
+}
+
+const createAdditionalTimer = async () => {
+    if (!newTimerName.value.trim()) {
+        toast.error('Please enter a timer name')
+        return
+    }
+
+    try {
+        const response = await apiMethods.sessions.addAdditionalTimer(currentSession.value._id, {
+            name: newTimerName.value.trim(),
+            duration: (parseInt(newTimerMinutes.value) || 5) * 60
+        })
+
+        if (response.data.success) {
+            sessionTimers.value = response.data.timers
+            toast.success('Timer created')
+            showAddTimerModal.value = false
+            newTimerName.value = ''
+            newTimerMinutes.value = 5
+        }
+    } catch (error) {
+        console.error('Failed to create timer:', error)
+        toast.error('Failed to create timer')
+    }
+}
+
+const toggleTimer = async () => {
+    if (!activeTimer.value || !currentSession.value) return
+
+    try {
+        const response = await apiMethods.sessions.toggleTimer(currentSession.value._id, {
+            timerType: activeTimerType.value,
+            timerId: activeTimerId.value
+        })
+
+        if (response.data.success) {
+            if (activeTimerType.value === 'additional') {
+                const idx = sessionTimers.value.additional.findIndex(t => t._id === activeTimerId.value)
+                if (idx !== -1) {
+                    sessionTimers.value.additional[idx] = response.data.timer
+                }
+            } else {
+                sessionTimers.value[activeTimerType.value] = response.data.timer
+            }
+
+            activeTimer.value = response.data.timer
+            toast.success(`Timer ${response.data.timer.isPaused ? 'paused' : 'resumed'}`)
+        }
+    } catch (error) {
+        console.error('Failed to toggle timer:', error)
+        toast.error('Failed to toggle timer')
+    }
+}
+
+const adjustTimerQuick = async (seconds) => {
+    if (!activeTimer.value || !currentSession.value) return
+
+    try {
+        const currentTime = getRealTimeRemaining(activeTimer.value)
+        const newTime = Math.max(0, currentTime + seconds)
+
+        const response = await apiMethods.sessions.adjustTimer(currentSession.value._id, {
+            timerType: activeTimerType.value,
+            timerId: activeTimerId.value,
+            newTime: newTime
+        })
+
+        if (response.data.success) {
+            if (activeTimerType.value === 'additional') {
+                const idx = sessionTimers.value.additional.findIndex(t => t._id === activeTimerId.value)
+                if (idx !== -1) {
+                    sessionTimers.value.additional[idx] = response.data.timer
+                }
+            } else {
+                sessionTimers.value[activeTimerType.value] = response.data.timer
+            }
+
+            activeTimer.value = response.data.timer
+            toast.success(`Timer adjusted by ${seconds > 0 ? '+' : ''}${seconds}s`)
+        }
+    } catch (error) {
+        console.error('Failed to adjust timer:', error)
+        // Optimistic update
+        const currentTime = getRealTimeRemaining(activeTimer.value)
+        activeTimer.value.remainingTime = Math.max(0, currentTime + seconds)
+    }
+}
+
+// Data Loading Methods
 const loadDashboardData = async () => {
     try {
         isLoading.value = true
@@ -726,27 +1076,30 @@ const loadSessionDetails = async () => {
             const sessionData = sessionResponse.data.session
             currentSession.value = sessionData
 
-            // Load timers - UPDATED
+            // Load timers
             if (sessionData.timers) {
                 sessionTimers.value = sessionData.timers
 
-                // Priority: speaker > debate > session
+                // Set active timer (priority: speaker > debate > session)
                 if (sessionData.timers.speaker?.isActive) {
-                    activeSessionTimer.value = sessionData.timers.speaker
+                    activeTimer.value = sessionData.timers.speaker
                     activeTimerType.value = 'speaker'
                 } else if (sessionData.timers.debate?.isActive) {
-                    activeSessionTimer.value = sessionData.timers.debate
+                    activeTimer.value = sessionData.timers.debate
                     activeTimerType.value = 'debate'
                 } else if (sessionData.timers.session?.isActive) {
-                    activeSessionTimer.value = sessionData.timers.session
+                    activeTimer.value = sessionData.timers.session
                     activeTimerType.value = 'session'
+                } else if (sessionData.timers.qa?.isActive) {
+                    activeTimer.value = sessionData.timers.qa
+                    activeTimerType.value = 'qa'
                 } else {
-                    activeSessionTimer.value = null
-                    activeTimerType.value = null
+                    activeTimer.value = sessionData.timers.session
+                    activeTimerType.value = 'session'
                 }
             }
 
-            // UPDATED: Load speaker lists (TWO lists now)
+            // Load speaker lists
             speakerLists.value = sessionData.speakerLists || { present: [], absent: [] }
             currentSpeaker.value = sessionData.currentSpeaker || null
 
@@ -769,7 +1122,6 @@ const loadSessionDetails = async () => {
         }
 
         wsService.joinSession(currentSession.value._id)
-        startTimerSync()
 
     } catch (error) {
         console.error('Failed to load session details:', error)
@@ -793,7 +1145,7 @@ const updateVotingResults = (voting) => {
     votingResults.value = results
 }
 
-// Session Management Methods
+// Session Management
 const createQuickSession = async () => {
     try {
         isLoading.value = true
@@ -832,7 +1184,6 @@ const endCurrentSession = async () => {
 
         if (response.data.success) {
             currentSession.value = null
-            stopTimerSync()
             await loadAllSessions()
             toast.success('Session ended successfully')
         }
@@ -842,13 +1193,13 @@ const endCurrentSession = async () => {
     }
 }
 
-// Roll Call Management - CRITICAL
+// Roll Call
 const startRollCall = async () => {
     if (!currentSession.value) return
 
     try {
         const response = await apiMethods.sessions.startRollCall(currentSession.value._id, {
-            timeLimit: 10 // 10 minutes
+            timeLimit: 10
         })
 
         if (response.data.success) {
@@ -871,18 +1222,10 @@ const endRollCall = async () => {
             rollCallStatus.value = 'completed'
             rollCallCompleted.value = true
 
-            // CRITICAL: This initializes the speaker lists!
             speakerLists.value = response.data.speakerLists || { present: [], absent: [] }
             quorum.value = response.data.quorum
 
             toast.success(`Roll call completed! ${speakerLists.value.present.length} present, ${speakerLists.value.absent.length} absent`)
-
-            // Auto-start session timer after roll call
-            if (!sessionTimers.value.session?.isActive) {
-                setTimeout(() => {
-                    toast.info('You can now start the session timer')
-                }, 1000)
-            }
         }
     } catch (error) {
         console.error('Failed to end roll call:', error)
@@ -890,7 +1233,7 @@ const endRollCall = async () => {
     }
 }
 
-// Speaker Management - Completely Updated
+// Speaker Management
 const nextSpeaker = async () => {
     if (!currentSession.value || speakerLists.value.present.length === 0) {
         toast.warn('No speakers in queue')
@@ -898,7 +1241,6 @@ const nextSpeaker = async () => {
     }
 
     try {
-        // Get next speaker who hasn't spoken
         const nextSpeakerData = speakerLists.value.present.find(s => !s.hasSpoken)
 
         if (!nextSpeakerData) {
@@ -914,9 +1256,12 @@ const nextSpeaker = async () => {
             currentSpeaker.value = response.data.currentSpeaker
             speakerLists.value = response.data.speakerLists
 
-            // Speaker timer is automatically started by backend
-            activeSessionTimer.value = response.data.speakerTimer
-            activeTimerType.value = 'speaker'
+            // Speaker timer auto-started by backend
+            if (response.data.speakerTimer) {
+                sessionTimers.value.speaker = response.data.speakerTimer
+                activeTimer.value = response.data.speakerTimer
+                activeTimerType.value = 'speaker'
+            }
 
             toast.success(`Now speaking: ${nextSpeakerData.country}`)
         }
@@ -944,134 +1289,23 @@ const moveSpeakerToEnd = async (country) => {
     }
 }
 
-// Timer Management - Updated
-const startSessionTimer = async () => {
-    if (!currentSession.value) return
-
-    try {
-        const response = await apiMethods.sessions.startSessionTimer(currentSession.value._id, {
-            duration: 3600, // 1 hour
-            purpose: 'General session management'
-        })
-
-        if (response.data.success) {
-            activeSessionTimer.value = response.data.timer
-            activeTimerType.value = 'session'
-            toast.success('Session timer started')
-        }
-    } catch (error) {
-        console.error('Failed to start session timer:', error)
-        toast.error('Failed to start session timer')
-    }
-}
-
-const startDebateTimer = async () => {
-    if (!currentSession.value) return
-
-    try {
-        // This starts the debate timer that was configured during mode change
-        const response = await apiMethods.sessions.startDebateTimer(currentSession.value._id)
-
-        if (response.data.success) {
-            activeSessionTimer.value = response.data.timer
-            activeTimerType.value = 'debate'
-            toast.success('Debate timer started')
-        }
-    } catch (error) {
-        console.error('Failed to start debate timer:', error)
-        toast.error(error.response?.data?.error || 'Failed to start debate timer')
-    }
-}
-
-const toggleTimer = async () => {
-    if (!activeSessionTimer.value || !currentSession.value) return
-
-    try {
-        const response = await apiMethods.sessions.toggleTimer(currentSession.value._id, {
-            timerType: activeTimerType.value
-        })
-
-        if (response.data.success) {
-            activeSessionTimer.value = response.data.timer
-            toast.success(`Timer ${response.data.timer.isPaused ? 'paused' : 'resumed'}`)
-        }
-    } catch (error) {
-        console.error('Failed to toggle timer:', error)
-        toast.error('Failed to toggle timer')
-    }
-}
-
-const adjustTimer = async (seconds) => {
-    if (!activeSessionTimer.value || !currentSession.value) return
-
-    try {
-        const newTime = Math.max(0, activeSessionTimer.value.remainingTime + seconds)
-
-        const response = await apiMethods.sessions.adjustTimer(currentSession.value._id, {
-            timerType: activeTimerType.value,
-            newTime: newTime
-        })
-
-        if (response.data.success) {
-            activeSessionTimer.value = response.data.timer
-            toast.success(`Timer adjusted by ${seconds > 0 ? '+' : ''}${seconds}s`)
-        }
-    } catch (error) {
-        console.error('Failed to adjust timer:', error)
-        // Optimistic update
-        activeSessionTimer.value.remainingTime = newTime
-    }
-}
-
-// Timer Sync - Local countdown for smooth display
-const startTimerSync = () => {
-    stopTimerSync()
-
-    timerSyncInterval = setInterval(() => {
-        if (activeSessionTimer.value?.isActive && !activeSessionTimer.value?.isPaused) {
-            if (activeSessionTimer.value.remainingTime > 0) {
-                activeSessionTimer.value.remainingTime--
-
-                // Visual/audio alerts based on technical specs
-                const time = activeSessionTimer.value.remainingTime
-                if (time === 30) {
-                    toast.warn('30 seconds remaining!')
-                } else if (time === 10) {
-                    toast.error('10 seconds remaining!')
-                } else if (time === 0) {
-                    toast.error('Timer expired!')
-                    stopTimerSync()
-                }
-            }
-        }
-    }, 1000)
-}
-
-const stopTimerSync = () => {
-    if (timerSyncInterval) {
-        clearInterval(timerSyncInterval)
-        timerSyncInterval = null
-    }
-}
-
-// Mode Management - Fixed
+// Mode Management
 const changeMode = async (newMode) => {
     if (!currentSession.value || currentSession.value.currentMode === newMode) return
 
     try {
-        // Prepare mode-specific settings
         let settings = {}
 
         if (newMode === 'moderated') {
             settings = {
                 speechTime: 90,
-                totalTime: 600, // 10 minutes
+                totalTime: 600,
                 topic: 'Discussion Topic',
                 questionsAllowed: false
             }
         } else if (newMode === 'unmoderated') {
             settings = {
-                totalTime: 600 // 10 minutes
+                totalTime: 600
             }
         } else if (newMode === 'formal') {
             settings = {
@@ -1092,16 +1326,9 @@ const changeMode = async (newMode) => {
 
         if (response.data.success) {
             currentSession.value.currentMode = response.data.currentMode
-            sessionTimers.value = response.data.timers
+            sessionTimers.value = response.data.timers || sessionTimers.value
 
             toast.success(`Mode changed to ${formattedMode.value}`)
-
-            // For moderated/unmoderated, show option to start debate timer
-            if (newMode === 'moderated' || newMode === 'unmoderated') {
-                setTimeout(() => {
-                    toast.info('Debate timer configured. Click "Start Debate Timer" to begin.')
-                }, 500)
-            }
         }
     } catch (error) {
         console.error('Failed to change mode:', error)
@@ -1109,7 +1336,7 @@ const changeMode = async (newMode) => {
     }
 }
 
-// Voting Management
+// Voting
 const endVoting = async () => {
     if (!activeVoting.value) return
 
@@ -1126,44 +1353,23 @@ const endVoting = async () => {
     }
 }
 
-// Public Display Management
+// Display Mode
 const setDisplayMode = async (mode) => {
     if (publicDisplayMode.value === mode) return
 
-    try {
-        console.log(`🎮 Setting display mode to: ${mode} for committee: ${committee.value._id}`)
+    console.log(`🎮 Setting display mode to: ${mode}`)
 
-        // Emit WebSocket events
-        const eventData = {
-            committeeId: committee.value._id,
-            mode: mode,
-            timestamp: Date.now(),
-            source: 'presidium-dashboard'
-        }
+    publicDisplayMode.value = mode
 
-        const eventTypes = [
-            'set-public-display-mode',
-            'display-mode-changed',
-            'public-display-mode-changed',
-            'committee-display-mode-changed'
-        ]
+    wsService.emit('set-public-display-mode', {
+        committeeId: committee.value._id,
+        mode: mode
+    })
 
-        eventTypes.forEach(eventType => {
-            wsService.emit(eventType, eventData)
-            console.log(`📡 Emitted: ${eventType}`)
-        })
-
-        // Update local state
-        publicDisplayMode.value = mode
-        toast.success(`Public display switched to ${mode === 'session' ? 'Session View' : 'Gossip Box'}`)
-
-    } catch (error) {
-        console.error('Failed to set display mode:', error)
-        toast.error('Failed to change display mode')
-    }
+    toast.success(`Display switched to ${mode === 'session' ? 'Session View' : 'Gossip Box'}`)
 }
 
-// Utility methods
+// Utility Methods
 const getVotePercentage = (count) => {
     return totalVotes.value > 0 ? (count / totalVotes.value) * 100 : 0
 }
@@ -1177,7 +1383,6 @@ const getVoteBarColor = (option) => {
     return colors[option] || 'bg-gray-500'
 }
 
-// Formatting utility methods
 const formatSessionMode = (mode) => {
     const modes = {
         'formal': 'Formal Debate',
@@ -1247,11 +1452,38 @@ const handleVotingCreated = (voting) => {
     toast.success('Voting started')
 }
 
-// WebSocket Integration
+// WebSocket
 const setupWebSocketListeners = () => {
     console.log('🎧 Setting up WebSocket listeners')
 
-    // Roll call events
+    if (committee.value?._id) {
+        wsService.emit('join-committee-room', {
+            committeeId: committee.value._id
+        })
+    }
+
+    // Timer state sync
+    wsService.on('timer-state-sync', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            sessionTimers.value = data.timers
+
+            // Update active timer
+            if (activeTimerType.value === 'additional') {
+                activeTimer.value = data.timers.additional?.find(t => t._id === activeTimerId.value)
+            } else if (activeTimerType.value && data.timers[activeTimerType.value]) {
+                activeTimer.value = data.timers[activeTimerType.value]
+            }
+        }
+    })
+
+    // Display mode
+    wsService.on('public-display-mode-changed', (data) => {
+        if (data.committeeId === committee.value?._id) {
+            publicDisplayMode.value = data.mode
+        }
+    })
+
+    // Roll call
     wsService.on('roll-call-started', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             rollCallStatus.value = 'active'
@@ -1269,7 +1501,7 @@ const setupWebSocketListeners = () => {
         }
     })
 
-    // Attendance events
+    // Attendance
     wsService.on('attendance-updated', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             quorum.value = data.quorum
@@ -1279,13 +1511,16 @@ const setupWebSocketListeners = () => {
         }
     })
 
-    // Speaker events
+    // Speakers
     wsService.on('current-speaker-set', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             currentSpeaker.value = data.currentSpeaker
             speakerLists.value = data.speakerLists
-            activeSessionTimer.value = data.speakerTimer
-            activeTimerType.value = 'speaker'
+            if (data.speakerTimer) {
+                sessionTimers.value.speaker = data.speakerTimer
+                activeTimer.value = data.speakerTimer
+                activeTimerType.value = 'speaker'
+            }
         }
     })
 
@@ -1295,7 +1530,7 @@ const setupWebSocketListeners = () => {
         }
     })
 
-    // Timer events
+    // Timers
     wsService.on('timer-started', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             loadSessionDetails()
@@ -1304,41 +1539,50 @@ const setupWebSocketListeners = () => {
 
     wsService.on('timer-toggled', (data) => {
         if (data.sessionId === currentSession.value?._id) {
-            activeSessionTimer.value = data.timer
+            if (data.timerType === 'additional') {
+                const idx = sessionTimers.value.additional?.findIndex(t => t._id === data.timer._id)
+                if (idx !== -1) {
+                    sessionTimers.value.additional[idx] = data.timer
+                }
+            } else {
+                sessionTimers.value[data.timerType] = data.timer
+            }
+
+            if (activeTimerType.value === data.timerType) {
+                activeTimer.value = data.timer
+            }
         }
     })
 
     wsService.on('timer-adjusted', (data) => {
         if (data.sessionId === currentSession.value?._id) {
-            activeSessionTimer.value = data.timer
+            if (data.timerType === 'additional') {
+                const idx = sessionTimers.value.additional?.findIndex(t => t._id === data.timer._id)
+                if (idx !== -1) {
+                    sessionTimers.value.additional[idx] = data.timer
+                }
+            } else {
+                sessionTimers.value[data.timerType] = data.timer
+            }
+
+            if (activeTimerType.value === data.timerType) {
+                activeTimer.value = data.timer
+            }
         }
     })
 
-    // Mode events
+    // Mode
     wsService.on('mode-changed', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             currentSession.value.currentMode = data.mode
-            sessionTimers.value = data.timers
+            if (data.timers) {
+                sessionTimers.value = data.timers
+            }
             toast.info(`Mode changed to ${data.mode}`)
         }
     })
 
-    // Display mode events
-    const displayModeEvents = [
-        'public-display-mode-changed',
-        'display-mode-changed',
-        'display-toggle'
-    ]
-
-    displayModeEvents.forEach(eventName => {
-        wsService.on(eventName, (data) => {
-            if (data.committeeId === committee.value?._id) {
-                publicDisplayMode.value = data.mode
-            }
-        })
-    })
-
-    // Voting events
+    // Voting
     wsService.on('voting-started', (data) => {
         if (data.committeeId === committee.value?._id) {
             activeVoting.value = data.voting
@@ -1365,20 +1609,21 @@ const setupWebSocketListeners = () => {
 // Lifecycle
 onMounted(async () => {
     await loadDashboardData()
+
+    // Update display every second
+    displayUpdateInterval = setInterval(() => {
+        if (activeTimer.value?.isActive && !activeTimer.value?.isPaused) {
+            // Trigger reactive update
+            activeTimer.value = { ...activeTimer.value }
+        }
+    }, 1000)
 })
 
 onUnmounted(() => {
-    stopTimerSync()
-})
-
-// Watch for active timer changes to restart sync
-watch([activeSessionTimer, activeTimerType], () => {
-    if (activeSessionTimer.value?.isActive) {
-        startTimerSync()
-    } else {
-        stopTimerSync()
+    if (displayUpdateInterval) {
+        clearInterval(displayUpdateInterval)
     }
-}, { deep: true })
+})
 </script>
 
 <style scoped>

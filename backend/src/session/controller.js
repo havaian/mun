@@ -1,640 +1,773 @@
-const { Session } = require('./model');
-const { Committee } = require('../committee/model');
-const { emitToCommittee } = require('../websocket/socketManager');
+const Session = require('./model') // Adjust path as needed
+const Committee = require('../committee/model') // Adjust path as needed
 
-// ==================== SESSION LIFECYCLE ====================
-
-// Create session with initial mode selection
-const createSession = async (req, res) => {
+/**
+ * Create new session
+ */
+exports.createSession = async (req, res) => {
     try {
-        const {
-            committeeId,
-            initialMode = 'formal',
-            speechTime = 120,
-            questionsAllowed = false,
-            autoStart = false
-        } = req.body;
+        const { committeeId, sessionNumber, currentMode, modeSettings } = req.body
 
-        // Verify committee and access
-        const committee = await Committee.findById(committeeId);
+        // Validate committee exists
+        const committee = await Committee.findById(committeeId)
         if (!committee) {
-            return res.status(404).json({ error: 'Committee not found' });
+            return res.status(404).json({
+                success: false,
+                error: 'Committee not found'
+            })
         }
 
-        if (req.user.committeeId.toString() !== committeeId.toString()) {
-            return res.status(403).json({ error: 'Access denied' });
-        }
-
-        // Check for active session
-        const activeSession = await Session.findOne({
+        // Check for existing active session
+        const existingActive = await Session.findOne({
             committeeId,
-            status: { $in: ['active', 'paused'] }
-        });
+            status: 'active'
+        })
 
-        if (activeSession) {
+        if (existingActive) {
             return res.status(400).json({
-                error: 'Active session already exists',
-                activeSessionId: activeSession._id
-            });
+                success: false,
+                error: 'Committee already has an active session'
+            })
         }
 
-        // Get next session number
-        const lastSession = await Session.findOne({ committeeId })
-            .sort({ number: -1 });
-        const sessionNumber = (lastSession?.number || 0) + 1;
+        // Get next session number if not provided
+        let nextSessionNumber = sessionNumber
+        if (!nextSessionNumber) {
+            const lastSession = await Session.findOne({ committeeId })
+                .sort('-sessionNumber')
+            nextSessionNumber = lastSession ? lastSession.sessionNumber + 1 : 1
+        }
 
         // Create session
-        const session = new Session({
+        const session = await Session.createSession({
             committeeId,
-            number: sessionNumber,
-            title: `Session ${sessionNumber}`,
-            status: autoStart ? 'active' : 'inactive',
-            startedAt: autoStart ? new Date() : null,
-            currentMode: initialMode,
-            modeSettings: {
-                speechTime: speechTime,
-                questionsAllowed: questionsAllowed
-            }
-        });
+            sessionNumber: nextSessionNumber,
+            currentMode: currentMode || 'formal',
+            modeSettings: modeSettings || {},
+            status: 'active',
+            createdBy: req.user?._id
+        })
 
-        // Initialize with committee countries
-        await session.initialize();
-
-        global.logger.info(`Session ${sessionNumber} created for committee ${committee.name}`);
+        // Emit WebSocket event
+        if (req.io) {
+            req.io.to(`committee-${committeeId}`).emit('session-created', {
+                session: session.toObject()
+            })
+        }
 
         res.status(201).json({
             success: true,
-            session: session,
-            message: 'Session created successfully'
-        });
+            session: session.toObject()
+        })
 
     } catch (error) {
-        global.logger.error('Create session error:', error);
-        res.status(500).json({ error: 'Failed to create session' });
+        console.error('Create session error:', error)
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to create session'
+        })
     }
-};
+}
 
-// Start session
-const startSession = async (req, res) => {
+/**
+ * Get all sessions for committee
+ */
+exports.getSessions = async (req, res) => {
     try {
-        const session = await Session.findById(req.params.id);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        if (session.status === 'active') {
-            return res.status(400).json({ error: 'Session already active' });
-        }
-
-        session.status = 'active';
-        session.startedAt = new Date();
-        await session.save();
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'session-started', {
-                sessionId: session._id,
-                sessionNumber: session.number
-            });
-        }
-
-        res.json({ success: true, session });
-
-    } catch (error) {
-        global.logger.error('Start session error:', error);
-        res.status(500).json({ error: 'Failed to start session' });
-    }
-};
-
-// End session
-const endSession = async (req, res) => {
-    try {
-        const session = await Session.findById(req.params.id);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        session.status = 'completed';
-        session.endedAt = new Date();
-
-        // Stop all timers
-        session.timers.session.isActive = false;
-        session.timers.debate.isActive = false;
-        session.timers.speaker.isActive = false;
-        session.timers.additional.forEach(t => t.isActive = false);
-
-        await session.save();
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'session-ended', {
-                sessionId: session._id,
-                duration: session.endedAt - session.startedAt
-            });
-        }
-
-        res.json({ success: true, session });
-
-    } catch (error) {
-        global.logger.error('End session error:', error);
-        res.status(500).json({ error: 'Failed to end session' });
-    }
-};
-
-// Get session
-const getSession = async (req, res) => {
-    try {
-        const session = await Session.findById(req.params.id);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        res.json({ success: true, session });
-
-    } catch (error) {
-        global.logger.error('Get session error:', error);
-        res.status(500).json({ error: 'Failed to get session' });
-    }
-};
-
-// ==================== ROLL CALL ====================
-
-// Start roll call
-const startRollCall = async (req, res) => {
-    try {
-        const { timeLimit } = req.body;
-        const session = await Session.findById(req.params.id);
-
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        if (session.rollCall.isActive) {
-            return res.status(400).json({ error: 'Roll call already in progress' });
-        }
-
-        const timeLimitSeconds = timeLimit ? timeLimit * 60 : null;
-        await session.startRollCall(req.user.userId, timeLimitSeconds);
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'roll-call-started', {
-                sessionId: session._id,
-                timeLimit: timeLimitSeconds
-            });
-        }
-
-        res.json({
-            success: true,
-            rollCall: session.rollCall,
-            message: 'Roll call started'
-        });
-
-    } catch (error) {
-        global.logger.error('Start roll call error:', error);
-        res.status(500).json({ error: 'Failed to start roll call' });
-    }
-};
-
-// End roll call - This initializes the speaker lists!
-const endRollCall = async (req, res) => {
-    try {
-        const session = await Session.findById(req.params.id);
-
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        if (!session.rollCall.isActive) {
-            return res.status(400).json({ error: 'No active roll call' });
-        }
-
-        // End roll call and initialize speaker lists
-        await session.endRollCall();
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'roll-call-ended', {
-                sessionId: session._id,
-                quorum: session.quorum,
-                speakerLists: session.speakerLists
-            });
-        }
-
-        res.json({
-            success: true,
-            rollCall: session.rollCall,
-            quorum: session.quorum,
-            speakerLists: session.speakerLists,
-            message: 'Roll call ended, speaker lists initialized'
-        });
-
-    } catch (error) {
-        global.logger.error('End roll call error:', error);
-        res.status(500).json({ error: 'Failed to end roll call' });
-    }
-};
-
-// Mark attendance
-const markAttendance = async (req, res) => {
-    try {
-        const { country, status } = req.body;
-        const session = await Session.findById(req.params.id);
-
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        // Check permission (delegates can only mark themselves)
-        if (req.user.role === 'delegate' && country !== req.user.countryName) {
-            return res.status(403).json({ error: 'Can only mark your own attendance' });
-        }
-
-        await session.markAttendance(country, status);
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'attendance-updated', {
-                sessionId: session._id,
-                country,
-                status,
-                quorum: session.quorum,
-                speakerLists: session.speakerLists
-            });
-        }
-
-        res.json({
-            success: true,
-            attendance: session.attendance,
-            quorum: session.quorum,
-            speakerLists: session.speakerLists
-        });
-
-    } catch (error) {
-        global.logger.error('Mark attendance error:', error);
-        res.status(500).json({ error: error.message || 'Failed to mark attendance' });
-    }
-};
-
-// ==================== MODE MANAGEMENT ====================
-
-// Change debate mode
-const changeMode = async (req, res) => {
-    try {
-        const { mode, settings = {} } = req.body;
-        const session = await Session.findById(req.params.id);
-
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        const startedBy = {
-            email: req.user.email,
-            name: req.user.name || 'Presidium',
-            userId: req.user.userId
-        };
-
-        await session.changeMode(mode, settings, startedBy);
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'mode-changed', {
-                sessionId: session._id,
-                mode: session.currentMode,
-                modeSettings: session.modeSettings,
-                timers: session.timers
-            });
-        }
-
-        res.json({
-            success: true,
-            currentMode: session.currentMode,
-            modeSettings: session.modeSettings,
-            timers: session.timers,
-            message: `Mode changed to ${mode}`
-        });
-
-    } catch (error) {
-        global.logger.error('Change mode error:', error);
-        res.status(500).json({ error: 'Failed to change mode' });
-    }
-};
-
-// ==================== TIMER MANAGEMENT ====================
-
-// Start session timer
-const startSessionTimer = async (req, res) => {
-    try {
-        const { duration, purpose } = req.body;
-        const session = await Session.findById(req.params.id);
-
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        await session.startSessionTimer(duration, purpose);
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'timer-started', {
-                sessionId: session._id,
-                timerType: 'session',
-                timer: session.timers.session
-            });
-        }
-
-        res.json({
-            success: true,
-            timer: session.timers.session
-        });
-
-    } catch (error) {
-        global.logger.error('Start session timer error:', error);
-        res.status(500).json({ error: 'Failed to start timer' });
-    }
-};
-
-// Start debate timer (after mode change)
-const startDebateTimer = async (req, res) => {
-    try {
-        const session = await Session.findById(req.params.id);
-
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        await session.startDebateTimer();
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'timer-started', {
-                sessionId: session._id,
-                timerType: 'debate',
-                timer: session.timers.debate
-            });
-        }
-
-        res.json({
-            success: true,
-            timer: session.timers.debate
-        });
-
-    } catch (error) {
-        global.logger.error('Start debate timer error:', error);
-        res.status(500).json({ error: error.message || 'Failed to start timer' });
-    }
-};
-
-// Toggle timer (pause/resume)
-const toggleTimer = async (req, res) => {
-    try {
-        const { timerType } = req.body;
-        const session = await Session.findById(req.params.id);
-
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        const timer = session.timers[timerType];
-        if (!timer) {
-            return res.status(400).json({ error: 'Invalid timer type' });
-        }
-
-        if (timer.isPaused) {
-            await session.resumeTimer(timerType);
-        } else {
-            await session.pauseTimer(timerType);
-        }
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'timer-toggled', {
-                sessionId: session._id,
-                timerType,
-                timer: session.timers[timerType]
-            });
-        }
-
-        res.json({
-            success: true,
-            timer: session.timers[timerType]
-        });
-
-    } catch (error) {
-        global.logger.error('Toggle timer error:', error);
-        res.status(500).json({ error: 'Failed to toggle timer' });
-    }
-};
-
-// Adjust timer
-const adjustTimer = async (req, res) => {
-    try {
-        const { timerType, newTime } = req.body;
-        const session = await Session.findById(req.params.id);
-
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        await session.adjustTimer(timerType, newTime);
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'timer-adjusted', {
-                sessionId: session._id,
-                timerType,
-                timer: session.timers[timerType]
-            });
-        }
-
-        res.json({
-            success: true,
-            timer: session.timers[timerType]
-        });
-
-    } catch (error) {
-        global.logger.error('Adjust timer error:', error);
-        res.status(500).json({ error: 'Failed to adjust timer' });
-    }
-};
-
-// Add additional timer
-const addAdditionalTimer = async (req, res) => {
-    try {
-        const { name, purpose, duration } = req.body;
-        const session = await Session.findById(req.params.id);
-
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        await session.addAdditionalTimer(name, purpose, duration);
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'additional-timer-added', {
-                sessionId: session._id,
-                timers: session.timers
-            });
-        }
-
-        res.json({
-            success: true,
-            timers: session.timers
-        });
-
-    } catch (error) {
-        global.logger.error('Add additional timer error:', error);
-        res.status(500).json({ error: error.message || 'Failed to add timer' });
-    }
-};
-
-// ==================== SPEAKER MANAGEMENT ====================
-
-// Set current speaker (and start their timer)
-const setCurrentSpeaker = async (req, res) => {
-    try {
-        const { country } = req.body;
-        const session = await Session.findById(req.params.id);
-
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        await session.setCurrentSpeaker(country);
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'current-speaker-set', {
-                sessionId: session._id,
-                currentSpeaker: session.currentSpeaker,
-                speakerTimer: session.timers.speaker,
-                speakerLists: session.speakerLists
-            });
-        }
-
-        res.json({
-            success: true,
-            currentSpeaker: session.currentSpeaker,
-            speakerTimer: session.timers.speaker,
-            speakerLists: session.speakerLists
-        });
-
-    } catch (error) {
-        global.logger.error('Set current speaker error:', error);
-        res.status(500).json({ error: error.message || 'Failed to set speaker' });
-    }
-};
-
-// Move speaker to end (can only do once)
-const moveToEnd = async (req, res) => {
-    try {
-        const { country } = req.body;
-        const session = await Session.findById(req.params.id);
-
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        // Delegates can only move themselves
-        if (req.user.role === 'delegate' && country !== req.user.countryName) {
-            return res.status(403).json({ error: 'Can only move yourself' });
-        }
-
-        await session.moveToEndOfQueue(country);
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'speaker-moved', {
-                sessionId: session._id,
-                country,
-                speakerLists: session.speakerLists
-            });
-        }
-
-        res.json({
-            success: true,
-            speakerLists: session.speakerLists,
-            message: `${country} moved to end of queue`
-        });
-
-    } catch (error) {
-        global.logger.error('Move to end error:', error);
-        res.status(400).json({ error: error.message || 'Failed to move speaker' });
-    }
-};
-
-// Get next speaker
-const getNextSpeaker = async (req, res) => {
-    try {
-        const session = await Session.findById(req.params.id);
-
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        const nextSpeaker = session.getNextSpeaker();
-
-        res.json({
-            success: true,
-            nextSpeaker
-        });
-
-    } catch (error) {
-        global.logger.error('Get next speaker error:', error);
-        res.status(500).json({ error: 'Failed to get next speaker' });
-    }
-};
-
-// Get committee sessions
-const getCommitteeSessions = async (req, res) => {
-    try {
-        const { committeeId } = req.params;
-        const { status, page = 1, limit = 20 } = req.query;
-
-        const filter = { committeeId };
-        if (status) filter.status = status;
-
-        const sessions = await Session.find(filter)
-            .select('number title status startedAt endedAt currentMode quorum')
-            .sort({ number: -1 })
-            .limit(limit * 1)
-            .skip((page - 1) * limit);
-
-        const total = await Session.countDocuments(filter);
+        const { committeeId } = req.params
+        const { status, page, limit, sort } = req.query
+
+        const sessions = await Session.getCommitteeSessions(committeeId, {
+            status,
+            page: parseInt(page) || 1,
+            limit: parseInt(limit) || 20,
+            sort: sort || '-sessionNumber'
+        })
+
+        const total = await Session.countDocuments({
+            committeeId,
+            ...(status && { status })
+        })
 
         res.json({
             success: true,
             sessions,
             pagination: {
-                currentPage: parseInt(page),
-                totalPages: Math.ceil(total / limit),
-                totalItems: total
+                total,
+                page: parseInt(page) || 1,
+                limit: parseInt(limit) || 20
             }
-        });
+        })
 
     } catch (error) {
-        global.logger.error('Get committee sessions error:', error);
-        res.status(500).json({ error: 'Failed to get sessions' });
+        console.error('Get sessions error:', error)
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to fetch sessions'
+        })
     }
-};
+}
 
-module.exports = {
-    createSession,
-    startSession,
-    endSession,
-    getSession,
-    startRollCall,
-    endRollCall,
-    markAttendance,
-    changeMode,
-    startSessionTimer,
-    startDebateTimer,
-    toggleTimer,
-    adjustTimer,
-    addAdditionalTimer,
-    setCurrentSpeaker,
-    moveToEnd,
-    getNextSpeaker,
-    getCommitteeSessions
-};
+/**
+ * Get session by ID
+ */
+exports.getSessionById = async (req, res) => {
+    try {
+        const { sessionId } = req.params
+
+        const session = await Session.findById(sessionId)
+            .populate('committeeId', 'name countries')
+
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            })
+        }
+
+        // Get real-time timer states
+        const sessionObj = session.toObject()
+        sessionObj.timers = session.getAllTimerStates()
+
+        res.json({
+            success: true,
+            session: sessionObj
+        })
+
+    } catch (error) {
+        console.error('Get session error:', error)
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to fetch session'
+        })
+    }
+}
+
+/**
+ * End session
+ */
+exports.endSession = async (req, res) => {
+    try {
+        const { sessionId } = req.params
+
+        const session = await Session.findById(sessionId)
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            })
+        }
+
+        session.status = 'completed'
+        session.endedAt = new Date()
+
+        // Stop all active timers
+        if (session.timers) {
+            ['session', 'speaker', 'debate', 'qa'].forEach(timerType => {
+                if (session.timers[timerType]) {
+                    session.timers[timerType].isActive = false
+                    session.timers[timerType].isPaused = false
+                }
+            })
+
+            if (session.timers.additional) {
+                session.timers.additional.forEach(timer => {
+                    timer.isActive = false
+                    timer.isPaused = false
+                })
+            }
+        }
+
+        await session.save()
+
+        // Emit WebSocket event
+        if (req.io) {
+            req.io.to(`committee-${session.committeeId}`).emit('session-ended', {
+                sessionId: session._id.toString()
+            })
+        }
+
+        res.json({
+            success: true,
+            session: session.toObject()
+        })
+
+    } catch (error) {
+        console.error('End session error:', error)
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to end session'
+        })
+    }
+}
+
+/**
+ * Change session mode
+ */
+exports.changeMode = async (req, res) => {
+    try {
+        const { sessionId } = req.params
+        const { mode, settings } = req.body
+
+        const session = await Session.findById(sessionId)
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            })
+        }
+
+        session.currentMode = mode
+        session.modeSettings = settings || {}
+
+        // Reinitialize timers for new mode
+        session.initializeTimers(mode)
+
+        await session.save()
+
+        // Emit WebSocket event
+        if (req.io) {
+            req.io.to(`session-${sessionId}`).emit('mode-changed', {
+                sessionId: sessionId,
+                mode: mode,
+                timers: session.getAllTimerStates()
+            })
+        }
+
+        res.json({
+            success: true,
+            currentMode: session.currentMode,
+            timers: session.getAllTimerStates()
+        })
+
+    } catch (error) {
+        console.error('Change mode error:', error)
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to change mode'
+        })
+    }
+}
+
+/**
+ * Start roll call
+ */
+exports.startRollCall = async (req, res) => {
+    try {
+        const { sessionId } = req.params
+        const { timeLimit } = req.body
+
+        const session = await Session.findById(sessionId)
+            .populate('committeeId', 'countries')
+
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            })
+        }
+
+        session.rollCall = {
+            isActive: true,
+            startedAt: new Date(),
+            responses: []
+        }
+
+        await session.save()
+
+        // Emit WebSocket event
+        if (req.io) {
+            req.io.to(`session-${sessionId}`).emit('roll-call-started', {
+                sessionId: sessionId,
+                timeLimit: timeLimit || 10
+            })
+        }
+
+        res.json({
+            success: true,
+            rollCall: session.rollCall
+        })
+
+    } catch (error) {
+        console.error('Start roll call error:', error)
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to start roll call'
+        })
+    }
+}
+
+/**
+ * Submit roll call response (delegates call this)
+ */
+exports.submitRollCallResponse = async (req, res) => {
+    try {
+        const { sessionId } = req.params
+        const { country, status } = req.body
+
+        const session = await Session.findById(sessionId)
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            })
+        }
+
+        if (!session.rollCall?.isActive) {
+            return res.status(400).json({
+                success: false,
+                error: 'Roll call is not active'
+            })
+        }
+
+        // Check if already responded
+        const existing = session.rollCall.responses.find(r => r.country === country)
+        if (existing) {
+            return res.status(400).json({
+                success: false,
+                error: 'Country has already responded'
+            })
+        }
+
+        // Add response
+        session.rollCall.responses.push({
+            country,
+            status,
+            respondedAt: new Date()
+        })
+
+        await session.save()
+
+        // Emit WebSocket event
+        if (req.io) {
+            req.io.to(`session-${sessionId}`).emit('roll-call-response', {
+                sessionId: sessionId,
+                country,
+                status,
+                totalResponses: session.rollCall.responses.length
+            })
+        }
+
+        res.json({
+            success: true,
+            response: { country, status }
+        })
+
+    } catch (error) {
+        console.error('Submit roll call response error:', error)
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to submit response'
+        })
+    }
+}
+
+/**
+ * End roll call and initialize speaker lists
+ */
+exports.endRollCall = async (req, res) => {
+    try {
+        const { sessionId } = req.params
+
+        const session = await Session.findById(sessionId)
+            .populate('committeeId', 'countries')
+
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            })
+        }
+
+        if (!session.rollCall?.isActive) {
+            return res.status(400).json({
+                success: false,
+                error: 'Roll call is not active'
+            })
+        }
+
+        session.rollCall.isActive = false
+        session.rollCall.endedAt = new Date()
+
+        // Initialize speaker lists based on responses
+        const allCountries = session.committeeId.countries || []
+        const presentCountries = session.rollCall.responses
+            .filter(r => r.status === 'present' || r.status === 'present-voting')
+            .map(r => r.country)
+
+        const absentCountries = allCountries.filter(c => !presentCountries.includes(c))
+
+        session.speakerLists = {
+            present: presentCountries.map((country, idx) => ({
+                country,
+                position: idx + 1,
+                hasSpoken: false,
+                hasMovedToEnd: false,
+                arrivedLate: false
+            })),
+            absent: absentCountries.map((country, idx) => ({
+                country,
+                position: idx + 1,
+                hasSpoken: false,
+                hasMovedToEnd: false,
+                arrivedLate: false
+            }))
+        }
+
+        // Calculate quorum
+        session.calculateQuorum()
+
+        await session.save()
+
+        // Emit WebSocket event
+        if (req.io) {
+            req.io.to(`session-${sessionId}`).emit('roll-call-ended', {
+                sessionId: sessionId,
+                speakerLists: session.speakerLists,
+                quorum: session.quorum
+            })
+        }
+
+        res.json({
+            success: true,
+            speakerLists: session.speakerLists,
+            quorum: session.quorum
+        })
+
+    } catch (error) {
+        console.error('End roll call error:', error)
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to end roll call'
+        })
+    }
+}
+
+/**
+ * Set current speaker
+ */
+exports.setCurrentSpeaker = async (req, res) => {
+    try {
+        const { sessionId } = req.params
+        const { country } = req.body
+
+        const session = await Session.findById(sessionId)
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            })
+        }
+
+        // Verify speaker is in present list
+        const speaker = session.speakerLists?.present?.find(s => s.country === country)
+        if (!speaker) {
+            return res.status(400).json({
+                success: false,
+                error: 'Speaker not found in present list'
+            })
+        }
+
+        // Mark previous speaker as spoken
+        if (session.currentSpeaker?.country) {
+            session.markSpeakerAsSpoken(session.currentSpeaker.country)
+        }
+
+        // Set new current speaker
+        session.currentSpeaker = {
+            country,
+            startedAt: new Date()
+        }
+
+        // Start speaker timer based on mode
+        const mode = session.currentMode
+        if (mode === 'formal' || mode === 'moderated' || mode === 'informal') {
+            const speakerTimer = session.timers.speaker
+
+            speakerTimer.country = country
+            speakerTimer.isActive = true
+            speakerTimer.isPaused = false
+            speakerTimer.startedAt = new Date()
+            speakerTimer.pausedAt = null
+            speakerTimer.accumulatedPause = 0
+            speakerTimer.remainingTime = speakerTimer.totalDuration
+        }
+
+        await session.save()
+
+        // Emit WebSocket event
+        if (req.io) {
+            req.io.to(`session-${sessionId}`).emit('current-speaker-set', {
+                sessionId: sessionId,
+                currentSpeaker: session.currentSpeaker,
+                speakerLists: session.speakerLists,
+                speakerTimer: session.getCurrentTimerState(session.timers.speaker)
+            })
+        }
+
+        res.json({
+            success: true,
+            currentSpeaker: session.currentSpeaker,
+            speakerLists: session.speakerLists,
+            speakerTimer: session.getCurrentTimerState(session.timers.speaker)
+        })
+
+    } catch (error) {
+        console.error('Set current speaker error:', error)
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to set speaker'
+        })
+    }
+}
+
+/**
+ * Move speaker to end
+ */
+exports.moveSpeakerToEnd = async (req, res) => {
+    try {
+        const { sessionId } = req.params
+        const { country } = req.body
+
+        const session = await Session.findById(sessionId)
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            })
+        }
+
+        // Move speaker to end
+        session.moveSpeakerToEnd(country)
+        await session.save()
+
+        // Emit WebSocket event
+        if (req.io) {
+            req.io.to(`session-${sessionId}`).emit('speaker-moved', {
+                sessionId: sessionId,
+                country,
+                speakerLists: session.speakerLists
+            })
+        }
+
+        res.json({
+            success: true,
+            speakerLists: session.speakerLists
+        })
+
+    } catch (error) {
+        console.error('Move speaker error:', error)
+        res.status(400).json({
+            success: false,
+            error: error.message || 'Failed to move speaker'
+        })
+    }
+}
+
+/**
+ * Toggle timer (start/pause/resume)
+ */
+exports.toggleTimer = async (req, res) => {
+    try {
+        const { sessionId } = req.params
+        const { timerType, timerId } = req.body
+
+        const session = await Session.findById(sessionId)
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            })
+        }
+
+        let timer
+        if (timerType === 'additional') {
+            timer = session.timers.additional.find(t => t._id.toString() === timerId)
+        } else {
+            timer = session.timers[timerType]
+        }
+
+        if (!timer) {
+            return res.status(404).json({
+                success: false,
+                error: 'Timer not found'
+            })
+        }
+
+        const now = new Date()
+
+        if (!timer.isActive) {
+            // Start timer
+            timer.isActive = true
+            timer.isPaused = false
+            timer.startedAt = now
+            timer.pausedAt = null
+            timer.accumulatedPause = 0
+            timer.remainingTime = timer.totalDuration
+        } else if (timer.isPaused) {
+            // Resume timer
+            timer.isPaused = false
+
+            // Calculate pause duration
+            const pauseDuration = Math.floor((now - new Date(timer.pausedAt)) / 1000)
+            timer.accumulatedPause += pauseDuration
+            timer.pausedAt = null
+        } else {
+            // Pause timer
+            timer.isPaused = true
+            timer.pausedAt = now
+
+            // Update remaining time
+            timer.remainingTime = session.getCurrentTimerState(timer).remainingTime
+        }
+
+        await session.save()
+
+        // Emit WebSocket event
+        if (req.io) {
+            req.io.to(`session-${sessionId}`).emit('timer-toggled', {
+                sessionId: sessionId,
+                timerType,
+                timer: session.getCurrentTimerState(timer)
+            })
+        }
+
+        res.json({
+            success: true,
+            timer: session.getCurrentTimerState(timer)
+        })
+
+    } catch (error) {
+        console.error('Toggle timer error:', error)
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to toggle timer'
+        })
+    }
+}
+
+/**
+ * Adjust timer duration
+ */
+exports.adjustTimer = async (req, res) => {
+    try {
+        const { sessionId } = req.params
+        const { timerType, timerId, newTime } = req.body
+
+        const session = await Session.findById(sessionId)
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            })
+        }
+
+        let timer
+        if (timerType === 'additional') {
+            timer = session.timers.additional.find(t => t._id.toString() === timerId)
+        } else {
+            timer = session.timers[timerType]
+        }
+
+        if (!timer) {
+            return res.status(404).json({
+                success: false,
+                error: 'Timer not found'
+            })
+        }
+
+        const now = new Date()
+
+        if (timer.isActive && !timer.isPaused) {
+            // Timer is running - adjust startedAt to match new duration
+            const elapsedFromNewDuration = timer.totalDuration - newTime
+            timer.startedAt = new Date(now - (elapsedFromNewDuration * 1000) + (timer.accumulatedPause * 1000))
+        } else {
+            // Timer is paused or inactive - directly set remaining time
+            timer.remainingTime = newTime
+        }
+
+        timer.totalDuration = newTime
+
+        await session.save()
+
+        // Emit WebSocket event
+        if (req.io) {
+            req.io.to(`session-${sessionId}`).emit('timer-adjusted', {
+                sessionId: sessionId,
+                timerType,
+                timer: session.getCurrentTimerState(timer)
+            })
+        }
+
+        res.json({
+            success: true,
+            timer: session.getCurrentTimerState(timer)
+        })
+
+    } catch (error) {
+        console.error('Adjust timer error:', error)
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to adjust timer'
+        })
+    }
+}
+
+/**
+ * Add additional timer
+ */
+exports.addAdditionalTimer = async (req, res) => {
+    try {
+        const { sessionId } = req.params
+        const { name, duration } = req.body
+
+        const session = await Session.findById(sessionId)
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            })
+        }
+
+        if (!session.timers.additional) {
+            session.timers.additional = []
+        }
+
+        const newTimer = {
+            name: name || 'Custom Timer',
+            totalDuration: duration || 300,
+            remainingTime: duration || 300,
+            isActive: false,
+            isPaused: false,
+            startedAt: null,
+            pausedAt: null,
+            accumulatedPause: 0
+        }
+
+        session.timers.additional.push(newTimer)
+        await session.save()
+
+        // Emit WebSocket event
+        if (req.io) {
+            req.io.to(`session-${sessionId}`).emit('additional-timer-created', {
+                sessionId: sessionId,
+                timers: session.getAllTimerStates()
+            })
+        }
+
+        res.json({
+            success: true,
+            timers: session.getAllTimerStates()
+        })
+
+    } catch (error) {
+        console.error('Add additional timer error:', error)
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to add timer'
+        })
+    }
+}
+
+module.exports = exports

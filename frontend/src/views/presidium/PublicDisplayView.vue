@@ -1,248 +1,237 @@
 <template>
-    <div class="h-screen flex flex-col overflow-hidden" :class="[
-        displayMode === 'gossip' ? 'bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900' : 'bg-gray-900',
-        'text-white'
-    ]">
-        <!-- Header -->
-        <div class="flex items-center justify-between p-8 border-b border-gray-700">
-            <div v-if="displayMode === 'session'">
-                <h1 class="text-4xl font-bold text-white mb-2">{{ committee?.name || 'UN General Assembly' }}</h1>
-                <p class="text-xl text-gray-300">{{ committee?.description || 'Global Sustainability Goals' }}</p>
-            </div>
-            <div v-else class="flex items-center">
-                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mr-4">
-                    <ChatBubbleLeftRightIcon class="w-6 h-6 text-purple-700" />
-                </div>
-                <div>
-                    <h1 class="text-4xl font-bold text-white mb-1">GOSSIP BOX</h1>
-                    <p class="text-xl text-purple-200">{{ committee?.name || 'UN General Assembly' }}</p>
-                </div>
-            </div>
-
-            <div class="text-right">
-                <div v-if="displayMode === 'session'" :class="[
-                    'text-lg font-bold px-6 py-3 rounded-lg uppercase tracking-wide',
-                    getModeColor(currentMode)
-                ]">
-                    {{ getModeLabel(currentMode) }}
-                </div>
-                <div v-else
-                    class="px-6 py-3 bg-purple-600 text-white rounded-lg text-lg font-bold uppercase tracking-wide">
-                    ANONYMOUS CHAT
-                </div>
-                <div class="text-gray-400 text-sm mt-2">
-                    {{ displayMode === 'session' ? `Session ${currentSession?.sessionNumber || 1}` : 'Live Messages' }}
-                </div>
-            </div>
-        </div>
-
-        <!-- Session View Content -->
-        <div v-if="displayMode === 'session'" class="flex-1 flex">
-            <!-- Left Side - Timer and Current Speaker -->
-            <div class="flex-1 flex flex-col justify-center items-center p-16">
-                <!-- Timer Section -->
-                <div class="text-center mb-16">
-                    <div class="text-gray-400 text-2xl uppercase tracking-wide mb-6 flex items-center justify-center">
-                        <ClockIcon class="w-8 h-8 mr-4" />
-                        {{ timerLabel }}
+    <div class="h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 text-white overflow-hidden">
+        <!-- Session View -->
+        <div v-if="displayMode === 'session'" class="h-full flex flex-col">
+            <!-- Header -->
+            <div class="bg-black/40 backdrop-blur-sm px-8 py-6 border-b border-white/20">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-4xl font-bold mb-1">{{ committee?.name || 'MUN Committee' }}</h1>
+                        <p class="text-xl text-blue-200">
+                            Session {{ currentSession?.sessionNumber || 'N/A' }} - {{ formattedMode }}
+                        </p>
                     </div>
-
-                    <!-- Large Timer Display -->
-                    <div class="relative">
-                        <div class="text-8xl md:text-9xl font-mono font-bold text-white leading-none mb-8">
-                            {{ formattedTimer }}
-                        </div>
-
-                        <!-- Timer Progress Bar -->
-                        <div v-if="primaryTimer" class="w-96 h-4 bg-gray-700 rounded-full mx-auto overflow-hidden">
-                            <div :class="[
-                                'h-full transition-all duration-1000 rounded-full',
-                                getTimerColor()
-                            ]" :style="{ width: `${timerProgress}%` }"></div>
-                        </div>
+                    <div class="text-right">
+                        <p class="text-6xl font-bold font-mono">{{ formattedTimer }}</p>
+                        <p class="text-lg text-gray-300 uppercase tracking-wide">{{ currentTimerName }}</p>
                     </div>
                 </div>
+            </div>
 
-                <!-- Current Speaker -->
-                <div class="bg-gray-800 rounded-2xl p-12 w-full max-w-2xl border border-gray-700">
-                    <div class="text-center">
-                        <div
-                            class="text-gray-400 text-xl uppercase tracking-wide mb-6 flex items-center justify-center">
-                            <UserIcon class="w-6 h-6 mr-3" />
-                            Current Speaker
-                        </div>
-
-                        <div v-if="currentSpeaker" class="space-y-6">
-                            <img :src="getCountryFlag(currentSpeaker.country)" :alt="currentSpeaker.country"
-                                class="w-24 h-16 rounded-lg border-2 border-gray-600 object-cover mx-auto" />
-                            <div class="text-5xl font-bold text-white">{{ currentSpeaker.country }}</div>
-                        </div>
-
-                        <div v-else class="space-y-6">
-                            <div class="w-24 h-16 bg-gray-700 rounded-lg mx-auto flex items-center justify-center">
-                                <MicrophoneIcon class="w-12 h-12 text-gray-500" />
+            <!-- Main Content -->
+            <div class="flex-1 grid grid-cols-3 gap-6 p-8">
+                <!-- Left Column: Current Speaker -->
+                <div class="col-span-1 space-y-6">
+                    <!-- Current Speaker -->
+                    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 shadow-2xl">
+                        <h2 class="text-2xl font-bold mb-4 text-center">Current Speaker</h2>
+                        <div class="text-center">
+                            <div v-if="currentSpeaker" class="space-y-4">
+                                <div
+                                    class="w-32 h-32 mx-auto bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-xl">
+                                    <MicrophoneIcon class="w-16 h-16 text-white" />
+                                </div>
+                                <h3 class="text-3xl font-bold">{{ currentSpeaker.country }}</h3>
+                                <p class="text-lg text-gray-300">
+                                    Speaking time: {{ formatDuration(getSpeakerDuration()) }}
+                                </p>
                             </div>
-                            <div class="text-5xl font-bold text-gray-400">Floor Open</div>
+                            <div v-else class="py-12">
+                                <UserIcon class="w-24 h-24 mx-auto text-gray-400 opacity-50 mb-4" />
+                                <p class="text-2xl text-gray-400">No active speaker</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quorum Status -->
+                    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+                        <h3 class="text-xl font-bold mb-3">Quorum Status</h3>
+                        <div class="flex items-center justify-between">
+                            <div class="text-center flex-1">
+                                <p class="text-4xl font-bold"
+                                    :class="quorum.hasQuorum ? 'text-green-400' : 'text-red-400'">
+                                    {{ quorum.present || 0 }}
+                                </p>
+                                <p class="text-sm text-gray-300">Present</p>
+                            </div>
+                            <div class="text-2xl text-gray-400">/</div>
+                            <div class="text-center flex-1">
+                                <p class="text-4xl font-bold">{{ quorum.required || 0 }}</p>
+                                <p class="text-sm text-gray-300">Required</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-center">
+                            <span :class="[
+                                'px-4 py-2 rounded-full font-bold text-sm',
+                                quorum.hasQuorum ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
+                            ]">
+                                {{ quorum.hasQuorum ? '✓ QUORUM REACHED' : '✗ NO QUORUM' }}
+                            </span>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Right Sidebar - Speakers Queue -->
-            <div class="w-96 bg-gray-800 border-l border-gray-700 p-8">
-                <div class="h-full flex flex-col">
-                    <div class="text-2xl font-bold text-white mb-8">Speakers Queue</div>
-
-                    <!-- Queue List -->
-                    <div class="flex-1 overflow-y-auto space-y-4">
-                        <div v-if="speakerLists.present.length === 0" class="text-center py-16">
-                            <UsersIcon class="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                            <p class="text-gray-400 text-xl italic">No speakers queued.</p>
+                <!-- Middle Column: Speakers Queue -->
+                <div
+                    class="col-span-1 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 overflow-hidden flex flex-col">
+                    <h2 class="text-2xl font-bold mb-4">Speakers Queue</h2>
+                    <div class="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                        <div v-if="speakerLists.present.length === 0" class="text-center py-12">
+                            <UsersIcon class="w-16 h-16 mx-auto text-gray-400 opacity-50 mb-3" />
+                            <p class="text-gray-400">No speakers in queue</p>
                         </div>
-
-                        <div v-else>
-                            <div v-for="(speaker, index) in speakerLists.present" :key="speaker.country"
-                                class="flex items-center space-x-4 p-4 bg-gray-700 rounded-xl transition-colors" :class="{
-                                    'bg-blue-900 border border-blue-500': currentSpeaker?.country === speaker.country,
-                                    'hover:bg-gray-600': currentSpeaker?.country !== speaker.country,
-                                    'opacity-50': speaker.hasSpoken
-                                }">
-                                <div class="text-2xl font-bold text-blue-400 w-8">{{ speaker.position }}</div>
-                                <img :src="getCountryFlag(speaker.country)" :alt="speaker.country"
-                                    class="w-12 h-8 rounded border border-gray-600 object-cover" />
-                                <div class="flex-1">
-                                    <div class="text-lg font-semibold text-white">{{ speaker.country }}</div>
-                                    <div v-if="speaker.hasSpoken" class="text-xs text-green-400">✓ Spoke</div>
+                        <div v-for="(speaker, idx) in speakerLists.present" :key="speaker.country" :class="[
+                            'p-4 rounded-lg transition-all duration-300',
+                            currentSpeaker?.country === speaker.country
+                                ? 'bg-gradient-to-r from-blue-500/40 to-purple-500/40 border-2 border-white/40 shadow-lg scale-105'
+                                : 'bg-white/5 border border-white/10',
+                            speaker.hasSpoken ? 'opacity-60' : ''
+                        ]">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-2xl font-bold text-blue-300">{{ speaker.position }}.</span>
+                                    <span class="text-lg font-medium">{{ speaker.country }}</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span v-if="speaker.hasSpoken"
+                                        class="text-xs bg-green-500/30 text-green-200 px-2 py-1 rounded">
+                                        ✓ Spoke
+                                    </span>
+                                    <span v-if="speaker.hasMovedToEnd"
+                                        class="text-xs bg-yellow-500/30 text-yellow-200 px-2 py-1 rounded">
+                                        ↓ Moved
+                                    </span>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Queue Stats -->
-                    <div class="border-t border-gray-700 pt-6 mt-6">
-                        <div class="grid grid-cols-2 gap-4 text-center">
-                            <div>
-                                <div class="text-3xl font-bold text-blue-400">{{ speakerLists.present.length }}</div>
-                                <div class="text-gray-400 text-sm uppercase">In Queue</div>
-                            </div>
-                            <div>
-                                <div class="text-3xl font-bold text-green-400">{{ speakersSpoken }}</div>
-                                <div class="text-gray-400 text-sm uppercase">Spoken</div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Gossip View Content -->
-        <div v-else class="flex-1 flex flex-col p-8">
-            <!-- Messages Container -->
-            <div class="flex-1 flex justify-center items-start">
-                <div class="w-full max-w-4xl space-y-6">
-                    <!-- Recent Messages -->
-                    <div v-if="gossipMessages.length > 0" class="space-y-4">
-                        <div v-for="message in gossipMessages.slice(-10)" :key="message._id" class="bg-black/20 backdrop-blur-sm border border-white/10 rounded-2xl p-6 
-                                   hover:bg-black/30 transition-all duration-300 shadow-xl">
-                            <div class="flex items-start space-x-4">
-                                <!-- Anonymous Avatar -->
-                                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 
-                                           flex items-center justify-center shadow-lg">
-                                    <div class="w-6 h-6 bg-white/20 rounded-full"></div>
+                <!-- Right Column: Active Voting or Info -->
+                <div class="col-span-1">
+                    <!-- Active Voting -->
+                    <div v-if="activeVoting"
+                        class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 h-full flex flex-col">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-2xl font-bold">Active Voting</h2>
+                            <span class="px-3 py-1 bg-green-500/30 text-green-200 rounded-full text-sm font-bold">
+                                LIVE
+                            </span>
+                        </div>
+
+                        <h3 class="text-xl mb-6">{{ activeVoting.title }}</h3>
+
+                        <!-- Voting Results -->
+                        <div class="flex-1 space-y-6">
+                            <div v-for="(count, option) in votingResults" :key="option">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-lg font-medium capitalize">{{ option }}</span>
+                                    <span class="text-2xl font-bold">{{ count }}</span>
                                 </div>
-
-                                <!-- Message Content -->
-                                <div class="flex-1">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <div class="text-purple-200 text-sm font-medium">
-                                            {{ formatGossipTime(message.sentAt) }}
-                                        </div>
-                                        <div v-if="message.priority === 'important'"
-                                            class="px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs">
-                                            Important
-                                        </div>
-                                    </div>
-                                    <div class="text-white text-lg leading-relaxed">
-                                        "{{ message.content }}"
+                                <div class="h-4 bg-white/10 rounded-full overflow-hidden">
+                                    <div :class="[
+                                        'h-full transition-all duration-500',
+                                        getVoteBarColor(option)
+                                    ]" :style="{ width: `${getVotePercentage(count)}%` }">
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Vote Progress -->
+                        <div class="mt-6 pt-6 border-t border-white/20">
+                            <div class="text-center mb-3">
+                                <p class="text-4xl font-bold">{{ totalVotes }}</p>
+                                <p class="text-sm text-gray-300">votes cast</p>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-300 mb-2">
+                                <span>Progress</span>
+                                <span>{{ totalVotes }} / {{ activeVoting.eligibleVoters?.length || 0 }}</span>
+                            </div>
+                            <div class="w-full bg-white/10 rounded-full h-3">
+                                <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-500"
+                                    :style="{ width: `${votingProgress}%` }"></div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Empty State -->
-                    <div v-else class="text-center py-20">
-                        <div
-                            class="w-24 h-24 bg-purple-100/10 rounded-full mx-auto mb-6 flex items-center justify-center">
-                            <ChatBubbleLeftRightIcon class="w-12 h-12 text-purple-300" />
-                        </div>
-                        <h3 class="text-2xl font-bold text-white mb-2">No Messages Yet</h3>
-                        <p class="text-purple-200">Anonymous messages will appear here during the session.</p>
+                    <!-- Committee Info (No Voting) -->
+                    <div v-else
+                        class="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 h-full flex flex-col justify-center items-center">
+                        <DocumentTextIcon class="w-24 h-24 text-white/30 mb-6" />
+                        <h2 class="text-2xl font-bold mb-3">{{ committee?.name }}</h2>
+                        <p class="text-gray-300 text-center">No active voting session</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Gossip Stats -->
-            <div class="mt-8 grid grid-cols-3 gap-6 max-w-2xl mx-auto">
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-white mb-1">{{ gossipMessages.length }}</div>
-                    <div class="text-purple-200 text-sm uppercase tracking-wide">Total Messages</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-purple-300 mb-1">{{ anonymousParticipants }}</div>
-                    <div class="text-purple-200 text-sm uppercase tracking-wide">Anonymous Users</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-pink-300 mb-1">{{ recentMessagesCount }}</div>
-                    <div class="text-purple-200 text-sm uppercase tracking-wide">Recent (5 min)</div>
+            <!-- Footer: Timer Tiles -->
+            <div class="bg-black/40 backdrop-blur-sm px-8 py-4 border-t border-white/20">
+                <div class="flex items-center justify-center space-x-4">
+                    <!-- Session/Debate Timer -->
+                    <div class="bg-white/10 rounded-lg px-6 py-3 border border-white/20">
+                        <p class="text-xs text-gray-300 uppercase text-center">
+                            {{ currentSession?.currentMode === 'moderated' || currentSession?.currentMode ===
+                                'unmoderated' ? 'Debate' : 'Session' }}
+                        </p>
+                        <p class="text-2xl font-mono font-bold text-center">
+                            {{ formatTimerDisplay(sessionTimers.session) }}
+                        </p>
+                    </div>
+
+                    <!-- Speaker Timer -->
+                    <div v-if="hasSpeakerTimer" class="bg-white/10 rounded-lg px-6 py-3 border border-white/20">
+                        <p class="text-xs text-gray-300 uppercase text-center">Presentation</p>
+                        <p class="text-2xl font-mono font-bold text-center">
+                            {{ formatTimerDisplay(sessionTimers.speaker) }}
+                        </p>
+                    </div>
+
+                    <!-- Q&A Timer -->
+                    <div v-if="hasQATimer" class="bg-white/10 rounded-lg px-6 py-3 border border-white/20">
+                        <p class="text-xs text-gray-300 uppercase text-center">Q&A</p>
+                        <p class="text-2xl font-mono font-bold text-center">
+                            {{ formatTimerDisplay(sessionTimers.qa) }}
+                        </p>
+                    </div>
+
+                    <!-- Additional Timers -->
+                    <div v-for="timer in sessionTimers.additional" :key="timer._id"
+                        class="bg-white/10 rounded-lg px-6 py-3 border border-white/20">
+                        <p class="text-xs text-gray-300 uppercase text-center truncate">{{ timer.name }}</p>
+                        <p class="text-2xl font-mono font-bold text-center">
+                            {{ formatTimerDisplay(timer) }}
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Bottom Status Bar -->
-        <div class="border-t px-8 py-4 flex items-center justify-between" :class="[
-            displayMode === 'gossip' ? 'bg-purple-900/50 border-purple-700' : 'bg-gray-800 border-gray-700'
-        ]">
-            <!-- Session Info -->
-            <div class="flex items-center space-x-8">
-                <div class="flex items-center space-x-3">
-                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span class="text-gray-300">
-                        {{ displayMode === 'session' ? 'Session Active' : 'Gossip Active' }}
-                    </span>
+        <!-- Gossip Box View -->
+        <div v-else class="h-full flex items-center justify-center p-12">
+            <div
+                class="max-w-4xl w-full bg-white/10 backdrop-blur-xl rounded-3xl p-12 border border-white/20 shadow-2xl">
+                <div class="text-center mb-8">
+                    <ChatBubbleOvalLeftEllipsisIcon class="w-24 h-24 mx-auto text-white/80 mb-6" />
+                    <h1 class="text-5xl font-bold mb-3">Gossip Box</h1>
+                    <p class="text-2xl text-gray-300">Anonymous messages from delegates</p>
                 </div>
 
-                <div v-if="displayMode === 'session' && quorumData.hasQuorum" class="flex items-center space-x-3">
-                    <CheckCircleIcon class="w-5 h-5 text-green-500" />
-                    <span class="text-green-400">Quorum Present</span>
-                    <span class="text-gray-400">({{ quorumData.present }}/{{ quorumData.required }})</span>
-                </div>
+                <div class="space-y-6 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar">
+                    <div v-if="gossipMessages.length === 0" class="text-center py-16">
+                        <p class="text-2xl text-gray-400">No messages yet...</p>
+                        <p class="text-lg text-gray-500 mt-2">Waiting for delegates to share their thoughts</p>
+                    </div>
 
-                <div v-else-if="displayMode === 'session' && !quorumData.hasQuorum" class="flex items-center space-x-3">
-                    <XCircleIcon class="w-5 h-5 text-red-500" />
-                    <span class="text-red-400">No Quorum</span>
-                    <span class="text-gray-400">({{ quorumData.present }}/{{ quorumData.required }})</span>
+                    <div v-for="message in gossipMessages" :key="message._id"
+                        class="bg-white/5 rounded-2xl p-6 border border-white/10 hover:bg-white/10 transition-all">
+                        <p class="text-xl leading-relaxed mb-3">{{ message.content }}</p>
+                        <div class="flex items-center justify-between text-sm text-gray-400">
+                            <span>Posted {{ formatMessageTime(message.createdAt) }}</span>
+                            <span>👁️ {{ message.views || 0 }} views</span>
+                        </div>
+                    </div>
                 </div>
-
-                <!-- Gossip Mode Info -->
-                <div v-if="displayMode === 'gossip'" class="flex items-center space-x-3">
-                    <EyeSlashIcon class="w-5 h-5 text-purple-400" />
-                    <span class="text-purple-300">Anonymous Mode</span>
-                </div>
-            </div>
-
-            <!-- Voting Status -->
-            <div v-if="displayMode === 'session' && activeVoting" class="flex items-center space-x-6">
-                <div class="flex items-center space-x-2">
-                    <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                    <span class="text-red-400 font-medium">VOTING IN PROGRESS</span>
-                </div>
-                <div class="text-gray-300">{{ activeVoting.title }}</div>
-            </div>
-
-            <!-- Time -->
-            <div class="text-gray-400 text-lg font-mono">
-                {{ currentTime }}
             </div>
         </div>
     </div>
@@ -250,181 +239,206 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { useRoute } from 'vue-router'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
-
-// Icons
 import {
-    ClockIcon, UserIcon, MicrophoneIcon, UsersIcon,
-    CheckCircleIcon, XCircleIcon, ChatBubbleLeftRightIcon, EyeSlashIcon
+    MicrophoneIcon, UserIcon, UsersIcon, DocumentTextIcon,
+    ChatBubbleOvalLeftEllipsisIcon
 } from '@heroicons/vue/24/outline'
 
-// Stores
-const router = useRouter()
-const authStore = useAuthStore()
+// Props
+const route = useRoute()
 
 // State
 const committee = ref(null)
 const currentSession = ref(null)
-const currentSpeaker = ref(null)
-const speakerLists = ref({ present: [], absent: [] }) // UPDATED: Two lists
-const currentMode = ref('formal')
-
-// All timers from session
 const sessionTimers = ref({
     session: null,
-    debate: null,
     speaker: null,
+    debate: null,
+    qa: null,
     additional: []
 })
-
-const quorumData = ref({
-    hasQuorum: false,
-    present: 0,
-    required: 0
-})
-
+const activeTimer = ref(null)
+const activeTimerType = ref('session')
+const speakerLists = ref({ present: [], absent: [] })
+const currentSpeaker = ref(null)
 const activeVoting = ref(null)
-const currentTime = ref('')
-const displayMode = ref('session') // 'session' or 'gossip'
+const votingResults = ref({})
+const quorum = ref({ hasQuorum: false, present: 0, required: 0 })
+const displayMode = ref('session')
 const gossipMessages = ref([])
 
-// Timer update intervals
-let timerUpdateInterval = null
-let clockUpdateInterval = null
+let displayUpdateInterval = null
 
-// ==================== COMPUTED ====================
+// Helper: Calculate real-time remaining
+const getRealTimeRemaining = (timer) => {
+    if (!timer) return 0
+    if (!timer.isActive) return timer.remainingTime || timer.totalDuration || 0
+    if (timer.isPaused) return timer.remainingTime || 0
 
-// Get the primary timer to display (priority: speaker > debate > session)
-const primaryTimer = computed(() => {
-    if (sessionTimers.value.speaker?.isActive) {
-        return {
-            ...sessionTimers.value.speaker,
-            type: 'speaker',
-            label: sessionTimers.value.speaker.country || 'SPEAKER'
-        }
+    const startedAt = new Date(timer.startedAt)
+    const now = new Date()
+    const elapsed = Math.floor((now - startedAt) / 1000)
+    const pauseTime = timer.accumulatedPause || 0
+    const actualElapsed = elapsed - pauseTime
+    const remaining = Math.max(0, timer.totalDuration - actualElapsed)
+
+    return remaining
+}
+
+// Computed
+const formattedMode = computed(() => {
+    const modes = {
+        'formal': 'FORMAL DEBATE',
+        'moderated': 'MODERATED CAUCUS',
+        'unmoderated': 'UNMODERATED CAUCUS',
+        'informal': 'INFORMAL CONSULTATION'
     }
-    if (sessionTimers.value.debate?.isActive) {
-        return {
-            ...sessionTimers.value.debate,
-            type: 'debate',
-            label: sessionTimers.value.debate.topic || 'DEBATE'
-        }
-    }
-    if (sessionTimers.value.session?.isActive) {
-        return {
-            ...sessionTimers.value.session,
-            type: 'session',
-            label: 'SESSION'
-        }
-    }
-    return null
+    return modes[currentSession.value?.currentMode] || 'FORMAL DEBATE'
 })
 
 const formattedTimer = computed(() => {
-    if (!primaryTimer.value) return '00:00'
+    if (!activeTimer.value) return '00:00'
 
-    const time = Math.max(0, primaryTimer.value.remainingTime || 0)
+    const time = getRealTimeRemaining(activeTimer.value)
     const minutes = Math.floor(time / 60)
     const seconds = time % 60
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 })
 
-const timerLabel = computed(() => {
-    if (!primaryTimer.value) return 'NO TIMER'
-    return primaryTimer.value.label
-})
+const currentTimerName = computed(() => {
+    if (!activeTimer.value) return 'NO TIMER'
 
-const timerProgress = computed(() => {
-    if (!primaryTimer.value || !primaryTimer.value.totalDuration) return 0
-
-    const elapsed = primaryTimer.value.totalDuration - primaryTimer.value.remainingTime
-    return Math.min(100, (elapsed / primaryTimer.value.totalDuration) * 100)
-})
-
-// Get all additional active timers
-const additionalActiveTimers = computed(() => {
-    return sessionTimers.value.additional?.filter(t => t.isActive) || []
-})
-
-const speakersSpoken = computed(() => {
-    return speakerLists.value.present.filter(s => s.hasSpoken).length
-})
-
-const anonymousParticipants = computed(() => {
-    const recentMessages = gossipMessages.value.filter(msg => {
-        const messageTime = new Date(msg.sentAt)
-        const now = new Date()
-        return (now - messageTime) < 30 * 60 * 1000
-    })
-    const uniqueIds = new Set(recentMessages.map(msg => msg.gossipId))
-    return uniqueIds.size
-})
-
-const recentMessagesCount = computed(() => {
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
-    return gossipMessages.value.filter(msg => new Date(msg.sentAt) > fiveMinutesAgo).length
-})
-
-const getModeLabel = (mode) => {
-    const labels = {
-        'formal': 'FORMAL',
-        'moderated': 'MODERATED CAUCUS',
-        'unmoderated': 'UNMODERATED CAUCUS',
-        'informal': 'INFORMAL'
+    if (activeTimerType.value === 'speaker') {
+        return activeTimer.value.country || 'SPEAKER'
+    } else if (activeTimerType.value === 'debate') {
+        return 'DEBATE'
+    } else if (activeTimerType.value === 'session') {
+        return 'SESSION'
+    } else if (activeTimerType.value === 'qa') {
+        return 'Q&A'
+    } else if (activeTimerType.value === 'additional') {
+        return activeTimer.value.name || 'TIMER'
     }
-    return labels[mode] || 'FORMAL'
+
+    return 'TIMER'
+})
+
+const hasSpeakerTimer = computed(() => {
+    const mode = currentSession.value?.currentMode
+    return mode === 'formal' || mode === 'moderated' || mode === 'informal'
+})
+
+const hasQATimer = computed(() => {
+    const mode = currentSession.value?.currentMode
+    return mode === 'formal' || mode === 'informal'
+})
+
+const totalVotes = computed(() => {
+    return Object.values(votingResults.value).reduce((sum, count) => sum + count, 0)
+})
+
+const votingProgress = computed(() => {
+    if (!activeVoting.value || !activeVoting.value.eligibleVoters) return 0
+    return Math.round((totalVotes.value / activeVoting.value.eligibleVoters.length) * 100)
+})
+
+// Methods
+const formatTimerDisplay = (timer) => {
+    if (!timer) return '--:--'
+
+    const time = getRealTimeRemaining(timer)
+    const minutes = Math.floor(time / 60)
+    const seconds = time % 60
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 }
 
-const getModeColor = (mode) => {
+const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+const getSpeakerDuration = () => {
+    if (!currentSpeaker.value?.startedAt) return 0
+    const elapsed = Math.floor((Date.now() - new Date(currentSpeaker.value.startedAt)) / 1000)
+    return elapsed
+}
+
+const getVotePercentage = (count) => {
+    return totalVotes.value > 0 ? (count / totalVotes.value) * 100 : 0
+}
+
+const getVoteBarColor = (option) => {
     const colors = {
-        'formal': 'bg-blue-600',
-        'moderated': 'bg-purple-600',
-        'unmoderated': 'bg-orange-600',
-        'informal': 'bg-gray-600'
+        for: 'bg-green-500',
+        against: 'bg-red-500',
+        abstain: 'bg-yellow-500'
     }
-    return colors[mode] || 'bg-blue-600'
+    return colors[option] || 'bg-gray-500'
 }
 
-const getTimerColor = () => {
-    const time = primaryTimer.value?.remainingTime || 0
-    if (time > 30) return 'bg-green-500'
-    if (time > 10) return 'bg-yellow-500'
-    return 'bg-red-500'
+const formatMessageTime = (timestamp) => {
+    const now = new Date()
+    const then = new Date(timestamp)
+    const diffMs = now - then
+    const diffMins = Math.floor(diffMs / 60000)
+
+    if (diffMins < 1) return 'just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    const diffHours = Math.floor(diffMins / 60)
+    if (diffHours < 24) return `${diffHours}h ago`
+    return then.toLocaleDateString()
 }
 
-// ==================== METHODS ====================
+const updateVotingResults = (voting) => {
+    if (!voting?.votes) {
+        votingResults.value = { for: 0, against: 0, abstain: 0 }
+        return
+    }
 
-const loadData = async () => {
+    const results = { for: 0, against: 0, abstain: 0 }
+    voting.votes.forEach(vote => {
+        if (vote.vote && results.hasOwnProperty(vote.vote)) {
+            results[vote.vote]++
+        }
+    })
+
+    votingResults.value = results
+}
+
+// Data Loading
+const loadPublicData = async () => {
     try {
-        committee.value = authStore.user?.committeeId
-        if (!committee.value) {
-            throw new Error('No committee assigned')
+        const committeeId = route.params.committeeId
+
+        // Load committee
+        const committeeResponse = await apiMethods.committees.getById(committeeId)
+        if (committeeResponse.data.success) {
+            committee.value = committeeResponse.data.committee
         }
 
-        await loadActiveSession()
-        await loadGossipMessages()
-
-    } catch (error) {
-        console.error('Failed to load public display data:', error)
-    }
-}
-
-const loadActiveSession = async () => {
-    try {
-        const response = await apiMethods.sessions.getAll(committee.value._id, {
+        // Load active session
+        const sessionResponse = await apiMethods.sessions.getAll(committeeId, {
             status: 'active',
             limit: 1
         })
 
-        if (response.data.success && response.data.sessions?.length > 0) {
-            currentSession.value = response.data.sessions[0]
+        if (sessionResponse.data.success && sessionResponse.data.sessions?.length > 0) {
+            currentSession.value = sessionResponse.data.sessions[0]
             await loadSessionDetails()
         }
+
+        // Load gossip messages
+        await loadGossipMessages()
+
+        // Setup WebSocket
+        setupWebSocketListeners()
+
     } catch (error) {
-        console.error('Failed to load active session:', error)
+        console.error('Failed to load public data:', error)
     }
 }
 
@@ -432,28 +446,47 @@ const loadSessionDetails = async () => {
     if (!currentSession.value?._id) return
 
     try {
-        const sessionResponse = await apiMethods.sessions.getById(currentSession.value._id)
-        if (sessionResponse.data.success) {
-            const sessionData = sessionResponse.data.session
+        const response = await apiMethods.sessions.getById(currentSession.value._id)
+        if (response.data.success) {
+            const sessionData = response.data.session
+            currentSession.value = sessionData
 
-            currentMode.value = sessionData.currentMode || 'formal'
+            // Load timers
+            if (sessionData.timers) {
+                sessionTimers.value = sessionData.timers
+
+                // Set active timer
+                if (sessionData.timers.speaker?.isActive) {
+                    activeTimer.value = sessionData.timers.speaker
+                    activeTimerType.value = 'speaker'
+                } else if (sessionData.timers.debate?.isActive) {
+                    activeTimer.value = sessionData.timers.debate
+                    activeTimerType.value = 'debate'
+                } else if (sessionData.timers.session?.isActive) {
+                    activeTimer.value = sessionData.timers.session
+                    activeTimerType.value = 'session'
+                } else if (sessionData.timers.qa?.isActive) {
+                    activeTimer.value = sessionData.timers.qa
+                    activeTimerType.value = 'qa'
+                } else {
+                    activeTimer.value = sessionData.timers.session
+                    activeTimerType.value = 'session'
+                }
+            }
+
             speakerLists.value = sessionData.speakerLists || { present: [], absent: [] }
             currentSpeaker.value = sessionData.currentSpeaker || null
-            quorumData.value = sessionData.quorum || quorumData.value
-
-            // Load all timers
-            sessionTimers.value = sessionData.timers || {
-                session: null,
-                debate: null,
-                speaker: null,
-                additional: []
-            }
+            quorum.value = sessionData.quorum || { hasQuorum: false, present: 0, required: 0 }
         }
 
         // Load active voting
         const votingResponse = await apiMethods.voting.getByCommitteeId(committee.value._id)
         if (votingResponse.data.success) {
-            activeVoting.value = votingResponse.data.voting?.find(v => v.status === 'active') || null
+            const activeVotingData = votingResponse.data.voting?.find(v => v.status === 'active')
+            if (activeVotingData) {
+                activeVoting.value = activeVotingData
+                updateVotingResults(activeVotingData)
+            }
         }
 
     } catch (error) {
@@ -463,126 +496,59 @@ const loadSessionDetails = async () => {
 
 const loadGossipMessages = async () => {
     if (!committee.value?._id) return
-    // Gossip messages loaded via WebSocket
-}
 
-const getCountryFlag = (countryName) => {
-    const country = committee.value?.countries?.find(c => c.name === countryName)
-    return country?.flagUrl || '/api/countries/flags/default'
-}
-
-const updateClock = () => {
-    currentTime.value = new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    })
-}
-
-const formatGossipTime = (dateString) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now - date
-    const diffMins = Math.floor(diffMs / 60000)
-
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-
-    const diffHours = Math.floor(diffMins / 60)
-    if (diffHours < 24) return `${diffHours}h ago`
-
-    return date.toLocaleDateString()
-}
-
-const startTimerSync = () => {
-    if (timerUpdateInterval) clearInterval(timerUpdateInterval)
-
-    timerUpdateInterval = setInterval(() => {
-        // Update primary timer
-        if (primaryTimer.value && !primaryTimer.value.isPaused) {
-            const timerType = primaryTimer.value.type
-            if (sessionTimers.value[timerType]?.remainingTime > 0) {
-                sessionTimers.value[timerType].remainingTime--
-            }
+    try {
+        const response = await apiMethods.gossip.getAll(committee.value._id)
+        if (response.data.success) {
+            gossipMessages.value = response.data.messages || []
         }
-
-        // Update additional timers
-        sessionTimers.value.additional?.forEach(timer => {
-            if (timer.isActive && !timer.isPaused && timer.remainingTime > 0) {
-                timer.remainingTime--
-            }
-        })
-    }, 1000)
+    } catch (error) {
+        console.error('Failed to load gossip messages:', error)
+    }
 }
 
-// ==================== WEBSOCKET ====================
-
+// WebSocket
 const setupWebSocketListeners = () => {
-    console.log('🎧 Setting up WebSocket listeners for public display')
+    console.log('🎧 Setting up public display WebSocket listeners')
 
     if (committee.value?._id) {
-        wsService.emit('join-committee-room', { committeeId: committee.value._id })
-        wsService.emit('join-room', `committee-${committee.value._id}`)
+        wsService.emit('join-committee-room', {
+            committeeId: committee.value._id
+        })
     }
 
-    // Display mode events
-    const displayModeEvents = [
-        'public-display-mode-changed',
-        'display-mode-changed',
-        'display-toggle',
-        'committee-display-mode-changed',
-        'set-public-display-mode'
-    ]
-
-    displayModeEvents.forEach(eventName => {
-        wsService.on(eventName, (data) => {
-            console.log(`📡 Received ${eventName}:`, data)
-            if (data.committeeId === committee.value?._id) {
-                displayMode.value = data.mode
-                console.log(`✅ Display mode: ${data.mode}`)
-            }
-        })
-    })
-
-    // Session events
-    wsService.on('mode-changed', (data) => {
+    // Timer state sync
+    wsService.on('timer-state-sync', (data) => {
         if (data.sessionId === currentSession.value?._id) {
-            currentMode.value = data.mode
             sessionTimers.value = data.timers
-        }
-    })
 
-    // Timer events
-    wsService.on('timer-started', (data) => {
-        if (data.sessionId === currentSession.value?._id) {
-            loadSessionDetails()
-        }
-    })
-
-    wsService.on('timer-toggled', (data) => {
-        if (data.sessionId === currentSession.value?._id) {
-            const timerType = data.timerType
-            if (sessionTimers.value[timerType]) {
-                sessionTimers.value[timerType] = data.timer
+            // Update active timer
+            if (activeTimerType.value === 'additional') {
+                activeTimer.value = data.timers.additional?.find(t => t._id === activeTimerId.value)
+            } else if (activeTimerType.value && data.timers[activeTimerType.value]) {
+                activeTimer.value = data.timers[activeTimerType.value]
             }
         }
     })
 
-    wsService.on('timer-adjusted', (data) => {
-        if (data.sessionId === currentSession.value?._id) {
-            const timerType = data.timerType
-            if (sessionTimers.value[timerType]) {
-                sessionTimers.value[timerType] = data.timer
-            }
+    // Display mode
+    wsService.on('public-display-mode-changed', (data) => {
+        console.log('📺 Display mode changed:', data)
+        if (data.committeeId === committee.value?._id) {
+            displayMode.value = data.mode
         }
     })
 
-    // Speaker events
+    // Speakers
     wsService.on('current-speaker-set', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             currentSpeaker.value = data.currentSpeaker
             speakerLists.value = data.speakerLists
-            sessionTimers.value.speaker = data.speakerTimer
+            if (data.speakerTimer) {
+                sessionTimers.value.speaker = data.speakerTimer
+                activeTimer.value = data.speakerTimer
+                activeTimerType.value = 'speaker'
+            }
         }
     })
 
@@ -592,103 +558,80 @@ const setupWebSocketListeners = () => {
         }
     })
 
-    // Voting events
+    // Roll call
+    wsService.on('roll-call-ended', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            speakerLists.value = data.speakerLists
+            quorum.value = data.quorum
+        }
+    })
+
+    // Voting
     wsService.on('voting-started', (data) => {
         if (data.committeeId === committee.value?._id) {
             activeVoting.value = data.voting
+            updateVotingResults(data.voting)
+        }
+    })
+
+    wsService.on('vote-cast', (data) => {
+        if (data.votingId === activeVoting.value?._id) {
+            updateVotingResults(data.voting)
         }
     })
 
     wsService.on('voting-ended', (data) => {
         if (data.votingId === activeVoting.value?._id) {
             activeVoting.value = null
+            votingResults.value = {}
         }
     })
 
-    // Attendance events
-    wsService.on('attendance-updated', (data) => {
-        if (data.sessionId === currentSession.value?._id) {
-            quorumData.value = data.quorum
-            if (data.speakerLists) {
-                speakerLists.value = data.speakerLists
-            }
-        }
-    })
-
-    wsService.on('roll-call-ended', (data) => {
-        if (data.sessionId === currentSession.value?._id) {
-            quorumData.value = data.quorum
-            speakerLists.value = data.speakerLists
-        }
-    })
-
-    // Gossip events
+    // Gossip
     wsService.on('gossip-message-posted', (data) => {
         if (data.committeeId === committee.value?._id) {
-            gossipMessages.value.push(data.message)
-            if (gossipMessages.value.length > 50) {
-                gossipMessages.value = gossipMessages.value.slice(-50)
-            }
+            gossipMessages.value.unshift(data.message)
         }
     })
 
-    wsService.on('gossip-message-removed', (data) => {
-        if (data.committeeId === committee.value?._id) {
-            gossipMessages.value = gossipMessages.value.filter(msg => msg._id !== data.messageId)
-        }
-    })
-
-    console.log('✅ WebSocket listeners set up')
+    console.log('✅ Public display WebSocket listeners ready')
 }
 
-// ==================== LIFECYCLE ====================
-
+// Lifecycle
 onMounted(async () => {
-    await loadData()
-    setupWebSocketListeners()
-    startTimerSync()
+    await loadPublicData()
 
-    updateClock()
-    clockUpdateInterval = setInterval(updateClock, 1000)
-
-    // Auto-refresh
-    setInterval(loadSessionDetails, 30000)
+    // Update display every second
+    displayUpdateInterval = setInterval(() => {
+        if (activeTimer.value?.isActive && !activeTimer.value?.isPaused) {
+            activeTimer.value = { ...activeTimer.value }
+        }
+    }, 1000)
 })
 
 onUnmounted(() => {
-    if (timerUpdateInterval) clearInterval(timerUpdateInterval)
-    if (clockUpdateInterval) clearInterval(clockUpdateInterval)
+    if (displayUpdateInterval) {
+        clearInterval(displayUpdateInterval)
+    }
 })
 </script>
 
 <style scoped>
-/* Ensure full screen and prevent scrollbars */
-.h-screen {
-    height: 100vh;
-    max-height: 100vh;
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
 }
 
-/* Custom scrollbar for queue */
-::-webkit-scrollbar {
-    width: 6px;
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
 }
 
-::-webkit-scrollbar-track {
-    background: #374151;
-    border-radius: 3px;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb {
-    background: #6B7280;
-    border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #9CA3AF;
-}
-
-/* Gossip view specific styles */
-.backdrop-blur-sm {
-    backdrop-filter: blur(8px);
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
 }
 </style>

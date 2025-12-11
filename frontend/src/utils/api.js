@@ -554,6 +554,33 @@ export const apiMethods = {
         moveToEndOfQueue: (id, speakerData) => api.put(`/sessions/${id}/speakers/move-to-end`, speakerData),
         setCurrentSpeaker: (id, speakerData) => api.put(`/sessions/${id}/speakers/current`, speakerData),
         getSpeakers: (sessionId) => api.get(`/sessions/${sessionId}/speakers`),
+
+        // Session timer management
+        startSessionTimer: (sessionId, data) => api.post(`/sessions/${sessionId}/timers/session/start`, data),
+        startDebateTimer: (sessionId, data) => api.post(`/sessions/${sessionId}/timers/debate/start`, data),
+
+        // Timer controls - UPDATED to support all timer types including QA and additional
+        toggleTimer: (sessionId, data) => api.put(`/sessions/${sessionId}/timers/toggle`, data),
+        // data format: { timerType: 'session'|'debate'|'speaker'|'qa'|'additional', timerId?: string }
+
+        adjustTimer: (sessionId, data) => api.put(`/sessions/${sessionId}/timers/adjust`, data),
+        // data format: { timerType: 'session'|'debate'|'speaker'|'qa'|'additional', timerId?: string, newTime: number }
+
+        // NEW: Additional timer management
+        addAdditionalTimer: (sessionId, data) => api.post(`/sessions/${sessionId}/timers/additional`, data),
+        // data format: { name: string, duration: number }
+
+        // ==================== SPEAKER MANAGEMENT ====================
+
+        // Speaker management - CORRECTED routes
+        setCurrentSpeaker: (sessionId, speakerData) => api.put(`/sessions/${sessionId}/speakers/current`, speakerData),
+        // speakerData format: { country: string }
+
+        moveToEnd: (sessionId, speakerData) => api.put(`/sessions/${sessionId}/speakers/move-to-end`, speakerData),
+        // speakerData format: { country: string }
+
+        getNextSpeaker: (sessionId) => api.get(`/sessions/${sessionId}/speakers/next`),
+        getSpeakers: (sessionId) => api.get(`/sessions/${sessionId}/speakers`),
     },
 
     timers: {

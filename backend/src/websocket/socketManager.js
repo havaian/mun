@@ -200,6 +200,81 @@ const setupEventHandlers = (socket) => {
         }
     });
 
+    // ==================== NEW: TIMER & DISPLAY MODE EVENTS ====================
+
+    // Join committee room for display mode and timer updates
+    socket.on('join-committee-room', (data) => {
+        const { committeeId } = data;
+
+        if (!committeeId) {
+            return socket.emit('error', { message: 'Committee ID required' });
+        }
+
+        // Join the committee room
+        const roomName = `committee-${committeeId}`;
+        socket.join(roomName);
+
+        socket.emit('committee-room-joined', {
+            committeeId,
+            roomName,
+            timestamp: new Date()
+        });
+
+        global.logger.debug(`Socket ${socket.id} joined committee room: ${roomName}`);
+    });
+
+    // Display mode control (presidium only)
+    socket.on('set-public-display-mode', (data) => {
+        const { committeeId, mode } = data;
+
+        if (!committeeId || !mode) {
+            return socket.emit('error', { message: 'Committee ID and mode required' });
+        }
+
+        if (!['session', 'gossip'].includes(mode)) {
+            return socket.emit('error', { message: 'Invalid display mode' });
+        }
+
+        // Verify user has permission (presidium only)
+        if (user.role !== 'presidium' || user.committeeId !== committeeId) {
+            return socket.emit('error', { message: 'Unauthorized to change display mode' });
+        }
+
+        global.logger.info(`Display mode change: ${mode} for committee ${committeeId} by ${user.email}`);
+
+        // Broadcast to ALL clients in committee room (including sender)
+        if (io) {
+            io.to(`committee-${committeeId}`).emit('public-display-mode-changed', {
+                committeeId,
+                mode,
+                timestamp: new Date(),
+                changedBy: user.email
+            });
+        }
+    });
+
+    // Join session room for session-specific events
+    socket.on('join-session-room', (data) => {
+        const { sessionId } = data;
+
+        if (!sessionId) {
+            return socket.emit('error', { message: 'Session ID required' });
+        }
+
+        const roomName = `session-${sessionId}`;
+        socket.join(roomName);
+
+        socket.emit('session-room-joined', {
+            sessionId,
+            roomName,
+            timestamp: new Date()
+        });
+
+        global.logger.debug(`Socket ${socket.id} joined session room: ${roomName}`);
+    });
+
+    // ==================== END NEW EVENTS ====================
+
     // Heartbeat for connection monitoring
     socket.on('ping', () => {
         socket.emit('pong', { timestamp: new Date() });
@@ -324,11 +399,11 @@ const emitToCommittee = (io, committeeId, eventName, data) => {
     }
 
     const roomName = `committee-${committeeId}`;
-    
+
     // Log for debugging
     console.log(`📡 Emitting ${eventName} to room: ${roomName}`);
     console.log(`📊 Room ${roomName} has ${io.sockets.adapter.rooms.get(roomName)?.size || 0} clients`);
-    
+
     // Emit to committee room
     io.to(roomName).emit(eventName, {
         ...data,

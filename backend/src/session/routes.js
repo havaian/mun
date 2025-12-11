@@ -149,83 +149,47 @@ router.post('/:id/timers/debate/start',
     controller.startDebateTimer
 );
 
-// Toggle timer (pause/resume)
+// Toggle timer (pause/resume) - UPDATED to support timerType and timerId
 router.put('/:id/timers/toggle',
     global.auth.token,
     global.auth.presidium,
     [
         param('id').isMongoId(),
-        body('timerType').isIn(['session', 'debate', 'speaker'])
+        body('timerType').isIn(['session', 'debate', 'speaker', 'qa', 'additional']),
+        body('timerId').optional().isString() // For additional timers
     ],
     handleValidationErrors,
     controller.toggleTimer
 );
 
-// Adjust timer
+// Adjust timer - UPDATED to support all timer types
 router.put('/:id/timers/adjust',
     global.auth.token,
     global.auth.presidium,
     [
         param('id').isMongoId(),
-        body('timerType').isIn(['session', 'debate', 'speaker']),
-        body('newTime').isInt({ min: 0, max: 7200 })
+        body('timerType').isIn(['session', 'debate', 'speaker', 'qa', 'additional']),
+        body('timerId').optional().isString(), // For additional timers
+        body('newTime').isInt({ min: 0, max: 5999 }) // Max 99:59
     ],
     handleValidationErrors,
     controller.adjustTimer
 );
 
-// Add additional timer
+// Add additional timer - NEW ROUTE
 router.post('/:id/timers/additional',
     global.auth.token,
     global.auth.presidium,
     [
         param('id').isMongoId(),
         body('name').isString().trim().isLength({ min: 1, max: 100 }),
-        body('purpose').isString().trim().isLength({ min: 1, max: 200 }),
-        body('duration').isInt({ min: 30, max: 7200 })
+        body('duration').isInt({ min: 30, max: 5999 }) // Max 99:59
     ],
     handleValidationErrors,
     controller.addAdditionalTimer
 );
 
 // ==================== SPEAKER MANAGEMENT ====================
-
-// Add speaker to queue (for formal mode manual additions)
-router.post('/:id/speakers/add',
-    global.auth.token,
-    [
-        param('id').isMongoId(),
-        body('country').isString().trim().notEmpty(),
-        body('email').isEmail()
-    ],
-    handleValidationErrors,
-    async (req, res) => {
-        // This is just for manual additions in formal mode
-        // The main speaker list is initialized automatically after roll call
-        res.status(501).json({
-            error: 'Manual speaker addition not implemented',
-            message: 'Speaker lists are automatically initialized after roll call'
-        });
-    }
-);
-
-// Remove speaker from queue (presidium only)
-router.delete('/:id/speakers/:country',
-    global.auth.token,
-    global.auth.presidium,
-    [
-        param('id').isMongoId(),
-        param('country').isString().trim().notEmpty()
-    ],
-    handleValidationErrors,
-    async (req, res) => {
-        // You could implement this if needed
-        res.status(501).json({
-            error: 'Speaker removal not implemented',
-            message: 'Speaker lists are managed automatically'
-        });
-    }
-);
 
 // Set current speaker (and start their timer)
 router.put('/:id/speakers/current',
@@ -258,7 +222,7 @@ router.get('/:id/speakers/next',
     controller.getNextSpeaker
 );
 
-// Get speakers (just return the session data)
+// Get speakers list
 router.get('/:id/speakers',
     global.auth.token,
     [param('id').isMongoId()],
