@@ -489,10 +489,12 @@ export const apiMethods = {
         // Mark messages as read
         markAsRead: (conversationId, messageIds = []) =>
             api.post(`/messages/${conversationId}/read`, { messageIds }),
-
-        getCommitteeConversation: (committeeId, channelType) =>
+    
+        // Get or create committee-wide conversation (for public channels)
+        getCommitteeConversation: (committeeId, channelType) => 
             api.get(`/messages/committee/${committeeId}/channel/${channelType}`),
-
+        
+        // Send message to committee-wide conversation
         sendCommitteeMessage: (committeeId, channelType, data) =>
             api.post(`/messages/committee/${committeeId}/channel/${channelType}`, data),
     },

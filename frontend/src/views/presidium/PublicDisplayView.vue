@@ -86,7 +86,7 @@
                             </svg>
                         </div>
                         <p class="gossip-text">{{ message.content }}</p>
-                        <div class="gossip-time">{{ formatTime(message.createdAt) }}</div>
+                        <div class="gossip-time">{{ formatTime(message.timestamp) }}</div>
                     </div>
                 </div>
                 <div v-else class="gossip-empty">
@@ -129,7 +129,6 @@ const currentSpeaker = ref(null)
 const speakerQueue = ref([])
 const gossipMessages = ref([])
 const displayUpdateInterval = ref(null)
-const selectedChannel = ref(null)
 const committee = ref(null)
 
 // Computed
@@ -188,11 +187,39 @@ const formatTime = (timestamp) => {
     })
 }
 
+const loadGossipMessages = async () => {
+    try {
+        const committeeId = committee.value?._id
+        if (!committeeId) return
+
+        console.log('📨 Loading gossip messages for committee:', committeeId)
+
+        // Fetch gossip channel conversation
+        const response = await apiMethods.messages.getCommitteeConversation(
+            committeeId,
+            'gossip'
+        )
+
+        if (response.data?.success && response.data.conversation) {
+            const messages = response.data.conversation.messages || []
+            // Sort by timestamp descending (newest first) and take last 20
+            gossipMessages.value = messages
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                .slice(0, 20)
+
+            console.log('✅ Loaded', gossipMessages.value.length, 'gossip messages')
+        }
+    } catch (error) {
+        console.error('Failed to load gossip messages:', error)
+        gossipMessages.value = []
+    }
+}
+
 const loadPublicData = async () => {
     try {
         committee.value = authStore.user?.committee || authStore.user?.committeeId
         if (!committee.value) {
-        throw new Error('No committee assigned')
+            throw new Error('No committee assigned')
         }
 
         const committeeId = committee.value._id
@@ -201,16 +228,19 @@ const loadPublicData = async () => {
             return
         }
 
+        console.log('📊 Loading public data for committee:', committeeId)
+
         // LOAD COMMITTEE INFO AND DISPLAY MODE
         const committeeResponse = await apiMethods.committees.getById(committeeId)
         if (committeeResponse.data?.committee) {
             committeeName.value = committeeResponse.data.committee.name
-            
+
             // FETCH CURRENT DISPLAY MODE FROM DATABASE
             try {
                 const modeResponse = await apiMethods.committees.getDisplayMode(committeeId)
                 if (modeResponse.data?.displayMode) {
                     displayMode.value = modeResponse.data.displayMode
+                    console.log('✅ Loaded display mode:', displayMode.value)
                 }
             } catch (err) {
                 console.warn('Could not load display mode, using default:', err)
@@ -229,27 +259,22 @@ const loadPublicData = async () => {
             currentSession.value = session
             currentMode.value = session.currentMode
             sessionTopic.value = session.modeSettings?.topic || ''
-            
+
             // Load full session details
             const sessionDetail = await apiMethods.sessions.getById(session._id)
             if (sessionDetail.data?.session) {
                 timers.value = sessionDetail.data.session.timers || {}
                 currentSpeaker.value = sessionDetail.data.session.currentSpeaker
-                
+
                 const present = sessionDetail.data.session.speakerLists?.present || []
                 speakerQueue.value = present.filter(s => !s.hasSpoken)
             }
         }
 
         // Load gossip messages
-        const response = await apiMethods.messages.getCommitteeConversation(
-            committee._id,
-            selectedChannel.value.id
-        )
-        
-        if (response.data?.messages) {
-            gossipMessages.value = response.data.messages
-        }
+        await loadGossipMessages()
+
+        console.log('✅ Public data loaded successfully')
 
     } catch (error) {
         console.error('Failed to load public data:', error)
@@ -257,17 +282,21 @@ const loadPublicData = async () => {
 }
 
 const setupWebSocketListeners = () => {
-    const committeeId = committee.value._id;
-    
+    const committeeId = committee.value?._id
+
     if (!committeeId) return
+
+    console.log('🔧 Setting up WebSocket listeners for committee:', committeeId)
 
     // Join committee room
     wsService.emit('join-committee-room', { committeeId })
 
     // Listen for display mode changes
     wsService.on('public-display-mode-changed', (data) => {
+        console.log('🎬 Display mode changed:', data)
         if (data.committeeId === committeeId) {
             displayMode.value = data.mode
+            console.log('✅ Display mode updated to:', displayMode.value)
         }
     })
 
@@ -310,15 +339,31 @@ const setupWebSocketListeners = () => {
         }
     })
 
-    // Listen for gossip messages
-    wsService.on('gossip-message-created', (data) => {
-        if (data.committeeId === committeeId) {
-            gossipMessages.value.unshift(data.message)
+    // Listen for new gossip messages (committee-wide messages)
+    wsService.on('committee-message-received', (data) => {
+        console.log('📨 Committee message received:', data)
+        if (data.committeeId === committeeId && data.channelType === 'gossip') {
+            // Add new message to the beginning (newest first)
+            const newMessage = {
+                _id: data.messageId,
+                senderCountry: data.senderCountry,
+                content: data.content,
+                timestamp: data.timestamp,
+                messageType: data.messageType
+            }
+
+            gossipMessages.value.unshift(newMessage)
+
+            // Keep only last 20 messages
             if (gossipMessages.value.length > 20) {
                 gossipMessages.value = gossipMessages.value.slice(0, 20)
             }
+
+            console.log('✅ Gossip message added, total:', gossipMessages.value.length)
         }
     })
+
+    console.log('✅ WebSocket listeners ready')
 }
 
 const updateTimer = (timerType, timerData) => {
@@ -327,8 +372,18 @@ const updateTimer = (timerType, timerData) => {
     }
 }
 
+// Watch for display mode changes to reload gossip messages
+watch(displayMode, async (newMode, oldMode) => {
+    console.log('🔄 Display mode changed from', oldMode, 'to', newMode)
+    if (newMode === 'gossip' && oldMode !== 'gossip') {
+        // Reload gossip messages when switching to gossip view
+        await loadGossipMessages()
+    }
+})
+
 // Lifecycle
 onMounted(async () => {
+    console.log('🚀 Public Display mounted')
     await loadPublicData()
     setupWebSocketListeners()
 
@@ -349,6 +404,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* ... (styles remain exactly the same) ... */
 .public-display-container {
     min-height: 100vh;
     display: flex;
