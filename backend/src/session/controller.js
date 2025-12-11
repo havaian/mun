@@ -507,42 +507,31 @@ const adjustTimer = async (req, res) => {
 const changeDebateMode = async (req, res) => {
     try {
         const { id } = req.params;
-        const { mode, settings } = req.body;
+        const { mode, modeSettings, reason, startedBy } = req.body;
 
         const session = await Session.findById(id);
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        // Validate mode
-        const validModes = ['formal', 'moderated', 'unmoderated', 'informal'];
-        if (!validModes.includes(mode)) {
-            return res.status(400).json({ error: 'Invalid debate mode' });
-        }
-
-        // Change mode with settings
-        await session.changeMode(mode, settings, req.user.userId);
+        // Use the fixed changeMode method that handles missing settings
+        await session.changeMode(mode, modeSettings, startedBy);
 
         // Emit to committee
         if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'debate-mode-changed', {
+            emitToCommittee(req.app.locals.io, session.committeeId, 'session-mode-changed', {
                 sessionId: session._id,
-                newMode: mode,
-                settings,
-                speakerQueues: session.speakerQueues,
-                timers: session.timers
+                mode: mode,
+                modeSettings: session.modeSettings,
+                reason: reason
             });
         }
-
-        global.logger.info(`Debate mode changed to ${mode} for session ${session.number}`);
 
         res.json({
             success: true,
             currentMode: session.currentMode,
             modeSettings: session.modeSettings,
-            speakerQueues: session.speakerQueues,
-            timers: session.timers,
-            message: `Debate mode changed to ${mode}`
+            message: `Mode changed to ${mode}`
         });
 
     } catch (error) {
@@ -792,6 +781,110 @@ const endSession = async (req, res) => {
     }
 };
 
+
+// Start session timer
+const startSessionTimer = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { duration, purpose } = req.body;
+
+        const session = await Session.findById(id);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        await session.startSessionTimer(duration, purpose || 'Session time management');
+
+        // Emit to committee
+        if (req.app.locals.io) {
+            emitToCommittee(req.app.locals.io, session.committeeId, 'session-timer-started', {
+                sessionId: session._id,
+                timer: session.timers.session
+            });
+        }
+
+        res.json({
+            success: true,
+            timer: session.timers.session,
+            message: 'Session timer started'
+        });
+
+    } catch (error) {
+        global.logger.error('Start session timer error:', error);
+        res.status(500).json({ error: 'Failed to start session timer' });
+    }
+};
+
+
+// Add speaker to queue
+const addSpeakerToQueue = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { country, email } = req.body;
+
+        const session = await Session.findById(id);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        // Add speaker to the main queue
+        await session.addToSpeakerQueue(country, email);
+
+        // Emit to committee
+        if (req.app.locals.io) {
+            emitToCommittee(req.app.locals.io, session.committeeId, 'speaker-added-to-queue', {
+                sessionId: session._id,
+                speaker: { country, email },
+                speakerQueues: session.speakerQueues
+            });
+        }
+
+        res.json({
+            success: true,
+            speakerQueues: session.speakerQueues,
+            message: `${country} added to speakers queue`
+        });
+
+    } catch (error) {
+        global.logger.error('Add speaker to queue error:', error);
+        res.status(500).json({ error: 'Failed to add speaker to queue' });
+    }
+};
+
+// Remove speaker from queue
+const removeSpeakerFromQueue = async (req, res) => {
+    try {
+        const { id, country } = req.params;
+
+        const session = await Session.findById(id);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        // Remove speaker from all queues
+        await session.removeFromSpeakerQueue(country);
+
+        // Emit to committee
+        if (req.app.locals.io) {
+            emitToCommittee(req.app.locals.io, session.committeeId, 'speaker-removed-from-queue', {
+                sessionId: session._id,
+                country: country,
+                speakerQueues: session.speakerQueues
+            });
+        }
+
+        res.json({
+            success: true,
+            speakerQueues: session.speakerQueues,
+            message: `${country} removed from speakers queue`
+        });
+
+    } catch (error) {
+        global.logger.error('Remove speaker from queue error:', error);
+        res.status(500).json({ error: 'Failed to remove speaker from queue' });
+    }
+};
+
 module.exports = {
     createSession,
     startSession,
@@ -807,5 +900,8 @@ module.exports = {
     setCurrentSpeaker,
     getSession,
     getSessionTimers,
-    endSession
+    endSession,
+    startSessionTimer,
+    addSpeakerToQueue,
+    removeSpeakerFromQueue
 };

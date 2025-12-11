@@ -113,6 +113,19 @@ router.get('/:id/timers',
     controller.getSessionTimers
 );
 
+// Start session timer (presidium only)
+router.post('/:id/timers/session/start',
+    global.auth.token,
+    global.auth.presidium,
+    validateSessionId,
+    [
+        body('duration').isInt({ min: 300, max: 14400 }).withMessage('Duration must be between 5 minutes and 4 hours'),
+        body('purpose').optional().isLength({ min: 1, max: 200 }).withMessage('Purpose must be 1-200 characters')
+    ],
+    handleValidationErrors,
+    controller.startSessionTimer
+);
+
 // Roll Call Management Routes
 
 // Start roll call (presidium only)
@@ -132,6 +145,26 @@ router.post('/:id/roll-call/end',
     validateSessionId,
     handleValidationErrors,
     controller.endRollCall
+);
+
+// Add speaker to queue (delegates and presidium)
+router.post('/:id/speakers/add',
+    global.auth.token,
+    validateSessionId,
+    [
+        body('country').isLength({ min: 1, max: 100 }).withMessage('Country name is required'),
+        body('email').isEmail().withMessage('Valid email is required')
+    ],
+    handleValidationErrors,
+    controller.addSpeakerToQueue
+);
+
+// Remove speaker from queue (presidium only)
+router.delete('/:id/speakers/:country',
+    global.auth.token,
+    global.auth.presidium,
+    validateSessionId,
+    controller.removeSpeakerFromQueue
 );
 
 // Mark attendance (presidium can mark anyone, delegates can mark themselves during roll call)

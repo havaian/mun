@@ -154,6 +154,17 @@ const validatePagination = [
         .withMessage('Event ID must be valid')
 ];
 
+const validateDebateMode = [
+    body('mode').isIn(['formal', 'moderated', 'unmoderated', 'informal']).withMessage('Invalid debate mode'),
+    body('modeSettings').optional().isObject().withMessage('Mode settings must be an object'),
+    body('modeSettings.topic').optional().isLength({ min: 1, max: 200 }).withMessage('Topic must be 1-200 characters'),
+    body('modeSettings.totalTime').optional().isInt({ min: 0, max: 7200 }).withMessage('Total time must be between 0 and 2 hours'),
+    body('modeSettings.speechTime').optional().isInt({ min: 30, max: 600 }).withMessage('Speech time must be between 30 seconds and 10 minutes'),
+    body('modeSettings.allowQuestions').optional().isBoolean().withMessage('Allow questions must be boolean'),
+    body('reason').optional().isLength({ min: 1, max: 200 }).withMessage('Reason must be 1-200 characters'),
+    body('startedBy').optional().isObject().withMessage('Started by must be an object')
+];
+
 // Routes
 
 // Get all committees (admin can see all, presidium/delegates see their own)
@@ -806,6 +817,43 @@ router.post('/:committeeId/presidium/:role/reset-link',
             res.status(500).json({
                 error: 'Failed to reset presidium login link'
             });
+        }
+    }
+);
+
+// Set public display mode (presidium only)
+router.put('/:committeeId/display-mode',
+    global.auth.token,
+    global.auth.presidium,
+    [
+        param('committeeId').isMongoId().withMessage('Invalid committee ID'),
+        body('mode').isIn(['session', 'gossip']).withMessage('Invalid display mode')
+    ],
+    handleValidationErrors,
+    async (req, res) => {
+        try {
+            const { committeeId } = req.params;
+            const { mode } = req.body;
+
+            // Emit WebSocket event to update all displays
+            if (req.app.locals.io) {
+                const { emitToCommittee } = require('../websocket/socketManager');
+                emitToCommittee(req.app.locals.io, committeeId, 'public-display-mode-changed', {
+                    committeeId: committeeId,
+                    mode: mode,
+                    timestamp: new Date()
+                });
+            }
+
+            res.json({
+                success: true,
+                displayMode: mode,
+                message: `Display mode changed to ${mode}`
+            });
+
+        } catch (error) {
+            global.logger.error('Set display mode error:', error);
+            res.status(500).json({ error: 'Failed to set display mode' });
         }
     }
 );

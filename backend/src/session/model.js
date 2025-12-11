@@ -500,7 +500,18 @@ sessionSchema.methods.setCurrentSpeaker = function (country) {
 };
 
 // Debate Mode Management
-sessionSchema.methods.changeMode = function (newMode, settings, changedBy) {
+sessionSchema.methods.changeMode = function (newMode, settings = {}, changedBy) {
+    // Provide default settings if not provided
+    const defaultSettings = {
+        topic: `${newMode.charAt(0).toUpperCase() + newMode.slice(1)} debate session`,
+        totalTime: newMode === 'moderated' ? 600 : newMode === 'unmoderated' ? 900 : 0,
+        speechTime: newMode === 'moderated' ? 120 : newMode === 'formal' ? 180 : 60,
+        allowQuestions: newMode === 'moderated' || newMode === 'formal'
+    };
+
+    // Merge provided settings with defaults
+    const finalSettings = { ...defaultSettings, ...settings };
+
     // Record current mode in history
     if (this.currentMode && this.modeStartedAt) {
         this.modeHistory.push({
@@ -513,7 +524,7 @@ sessionSchema.methods.changeMode = function (newMode, settings, changedBy) {
     }
 
     this.currentMode = newMode;
-    this.modeSettings = { ...settings };
+    this.modeSettings = finalSettings;
     this.modeStartedAt = new Date();
 
     // Mode-specific initialization
@@ -521,15 +532,71 @@ sessionSchema.methods.changeMode = function (newMode, settings, changedBy) {
         // Initialize speaker queue for moderated caucus
         this.initializeSpeakerQueues();
 
-        // Start debate timer
-        if (settings.totalTime) {
+        // Start debate timer if totalTime is provided
+        if (finalSettings.totalTime && finalSettings.totalTime > 0) {
             this.startDebateTimer(
-                settings.totalTime,
+                finalSettings.totalTime,
                 'moderated',
-                `Moderated Caucus: ${settings.topic || 'General Discussion'}`
+                `Moderated Caucus: ${finalSettings.topic || 'General Discussion'}`
             );
         }
     }
+
+    return this.save();
+};
+
+sessionSchema.methods.startSessionTimer = function (duration, purpose = 'Session management') {
+    this.timers.session = {
+        totalDuration: duration,
+        remainingTime: duration,
+        isActive: true,
+        isPaused: false,
+        startedAt: new Date(),
+        pausedTime: 0,
+        purpose: purpose
+    };
+    return this.save();
+};
+
+sessionSchema.methods.addToSpeakerQueue = function (country, email) {
+    // Initialize speaker queues if they don't exist
+    if (!this.speakerQueues) {
+        this.speakerQueues = {
+            main: [],
+            present: [],
+            absent: []
+        };
+    }
+
+    // Check if speaker is already in queue
+    const existsInMain = this.speakerQueues.main.find(s => s.country === country);
+    if (existsInMain) {
+        throw new Error(`${country} is already in the speakers queue`);
+    }
+
+    const speaker = {
+        country,
+        email,
+        position: this.speakerQueues.main.length + 1,
+        addedAt: new Date(),
+        speaking: false,
+        hasSpoken: false
+    };
+
+    this.speakerQueues.main.push(speaker);
+    return this.save();
+};
+
+sessionSchema.methods.removeFromSpeakerQueue = function (country) {
+    if (!this.speakerQueues) return this.save();
+
+    // Remove from main queue
+    this.speakerQueues.main = this.speakerQueues.main.filter(s => s.country !== country);
+    
+    // Reorder positions
+    this.speakerQueues.main.forEach((speaker, index) => {
+        speaker.position = index + 1;
+    });
 
     return this.save();
 };
