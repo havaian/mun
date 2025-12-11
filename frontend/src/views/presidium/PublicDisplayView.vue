@@ -188,14 +188,13 @@ const formatTime = (timestamp) => {
 
 const loadPublicData = async () => {
     try {
+        const committee = authStore.user?.committeeId;
         const committeeId = authStore.user?.committeeId._id;
         
         if (!committeeId) {
             console.error('No committee ID provided')
             return
         }
-
-        console.log('📊 Loading public data for committee:', committeeId)
 
         // LOAD COMMITTEE INFO AND DISPLAY MODE
         const committeeResponse = await apiMethods.committees.getById(committeeId)
@@ -207,7 +206,6 @@ const loadPublicData = async () => {
                 const modeResponse = await apiMethods.committees.getDisplayMode(committeeId)
                 if (modeResponse.data?.displayMode) {
                     displayMode.value = modeResponse.data.displayMode
-                    console.log('✅ Loaded display mode:', displayMode.value)
                 }
             } catch (err) {
                 console.warn('Could not load display mode, using default:', err)
@@ -239,16 +237,14 @@ const loadPublicData = async () => {
         }
 
         // Load gossip messages
-        const gossipResponse = await apiMethods.gossip.getMessages(committeeId, {
-            limit: 20,
-            isAnonymous: true
-        })
+        const response = await apiMethods.messages.getCommitteeConversation(
+            committee.value._id || committee.value,
+            selectedChannel.value.id
+        )
         
-        if (gossipResponse.data?.messages) {
-            gossipMessages.value = gossipResponse.data.messages
+        if (response.data?.messages) {
+            gossipMessages.value = response.data.messages
         }
-
-        console.log('✅ Public data loaded successfully')
 
     } catch (error) {
         console.error('Failed to load public data:', error)
