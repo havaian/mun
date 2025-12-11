@@ -188,7 +188,7 @@ const formatTime = (timestamp) => {
 
 const loadPublicData = async () => {
     try {
-        const committeeId = authStore.user?.committeeId;
+        const committeeId = authStore.user?.committeeId._id;
         
         if (!committeeId) {
             console.error('No committee ID provided')
@@ -256,7 +256,7 @@ const loadPublicData = async () => {
 }
 
 const setupWebSocketListeners = () => {
-    const committeeId = authStore.user?.committeeId;
+    const committeeId = authStore.user?.committeeId._id;
 
     if (!committeeId) return
 
