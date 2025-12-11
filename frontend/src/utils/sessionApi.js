@@ -20,7 +20,7 @@ export const enhancedSessionApi = {
         getTimers: (sessionId) => apiMethods.get(`/sessions/${sessionId}/timers`),
 
         // Get committee sessions
-        getByCommittee: (committeeId, params = {}) => apiMethods.get(`/sessions/committee/${committeeId}`, { params }),
+        getByCommittee: (id, params = {}) => apiMethods.get(`/sessions/${id}`, { params }),
 
         // Get session statistics
         getStatistics: (sessionId) => apiMethods.get(`/sessions/${sessionId}/statistics`)
