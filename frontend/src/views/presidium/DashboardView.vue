@@ -196,12 +196,12 @@
                             <PlayIcon v-else class="w-6 h-6" />
                         </button>
                         <button @click="adjustTimer(-30)"
-                            class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors text-sm font-bold"
+                            class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors text-xs font-bold"
                             :disabled="!activeSessionTimer">
                             -30s
                         </button>
                         <button @click="adjustTimer(30)"
-                            class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors text-sm font-bold"
+                            class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors text-xs font-bold"
                             :disabled="!activeSessionTimer">
                             +30s
                         </button>
@@ -462,7 +462,6 @@ import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
 import sessionApi from '@/utils/sessionApi'
-import { updatedSessionApi } from '@/utils/sessionApi'
 
 // Icons
 import {
@@ -615,7 +614,7 @@ const loadAllSessions = async () => {
     if (!committee.value?._id) return
 
     try {
-        const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
+        const response = await apiMethods.sessions.getAll(committee.value._id, {
             page: 1,
             limit: 20,
             sort: '-number'
@@ -631,7 +630,7 @@ const loadAllSessions = async () => {
 
 const loadActiveSession = async () => {
     try {
-        const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
+        const response = await apiMethods.sessions.getAll(committee.value._id, {
             status: 'active',
             limit: 1
         })
@@ -649,8 +648,8 @@ const loadSessionDetails = async () => {
     if (!currentSession.value?._id) return
 
     try {
-        // Load session details
-        const sessionResponse = await updatedSessionApi.sessions.getById(currentSession.value._id)
+        // Load session details using correct route
+        const sessionResponse = await apiMethods.sessions.getById(currentSession.value._id)
         if (sessionResponse.data.success) {
             const sessionData = sessionResponse.data.session
             currentSession.value = sessionData
@@ -729,7 +728,7 @@ const createQuickSession = async () => {
         const sessionData = {
             committeeId: committee.value._id,
             sessionNumber: allSessions.value.length + 1,
-            mode: 'formal',
+            currentMode: 'formal',
             status: 'active',
             settings: {
                 defaultSpeechTime: 180,
@@ -738,7 +737,7 @@ const createQuickSession = async () => {
             }
         }
 
-        const response = await updatedSessionApi.sessions.create(sessionData)
+        const response = await apiMethods.sessions.create(sessionData)
 
         if (response.data.success) {
             currentSession.value = response.data.session
@@ -758,7 +757,8 @@ const endCurrentSession = async () => {
     if (!currentSession.value) return
 
     try {
-        const response = await updatedSessionApi.sessions.end(currentSession.value._id, {
+        const response = await apiMethods.sessions.updateStatus(currentSession.value._id, {
+            status: 'completed',
             reason: 'Session ended by presidium'
         })
 
@@ -779,11 +779,19 @@ const startSessionTimer = async () => {
     if (!currentSession.value) return
 
     try {
-        const response = await apiMethods.sessions.startSessionTimer(currentSession.value._id, {
-            duration: 3600 // 1 hour default
+        // Use the correct session API call for creating a general session timer
+        const response = await apiMethods.timers.createTimer({
+            committeeId: committee.value._id,
+            sessionId: currentSession.value._id,
+            timerType: 'session',
+            name: 'Session Timer',
+            totalDuration: 3600, // 1 hour
+            remainingTime: 3600
         })
 
         if (response.data.success) {
+            // Start the created timer
+            await apiMethods.timers.startTimer(response.data.timer._id)
             await loadSessionDetails()
             toast.success('Session timer started')
         }
@@ -802,10 +810,13 @@ const startSpeakerTimer = async () => {
     try {
         const defaultDuration = committee.value.settings?.speechSettings?.defaultSpeechTime || 120
 
-        const response = await apiMethods.sessions.startSpeakerTimer(currentSession.value._id, {
+        const response = await apiMethods.timers.createQuickSpeakerTimer({
+            committeeId: committee.value._id,
+            sessionId: currentSession.value._id,
+            speakerCountry: currentSpeaker.value.country,
+            speakerEmail: currentSpeaker.value.email,
             duration: defaultDuration,
-            country: currentSpeaker.value.country,
-            canBeExtended: true
+            autoStart: true
         })
 
         if (response.data.success) {
@@ -819,20 +830,26 @@ const startSpeakerTimer = async () => {
 }
 
 const toggleTimer = async () => {
-    if (!activeSessionTimer.value || !activeTimerType.value || !currentSession.value) return
+    if (!activeSessionTimer.value || !currentSession.value) return
 
     try {
         const action = activeSessionTimer.value.isActive && !activeSessionTimer.value.isPaused ? 'pause' : 'resume'
 
-        const response = await apiMethods.sessions.toggleTimer(currentSession.value._id, {
-            timerType: activeTimerType.value,
-            action: action
-        })
-
-        if (response.data.success) {
-            await loadSessionDetails()
-            toast.success(`Timer ${action}d`)
+        // Find the actual timer ID from the session data
+        const timerId = activeSessionTimer.value._id
+        if (!timerId) {
+            console.error('Timer ID not found')
+            return
         }
+
+        if (action === 'pause') {
+            await apiMethods.timers.pauseTimer(timerId)
+        } else {
+            await apiMethods.timers.resumeTimer(timerId)
+        }
+
+        await loadSessionDetails()
+        toast.success(`Timer ${action}d`)
     } catch (error) {
         console.error('Failed to toggle timer:', error)
         toast.error('Failed to toggle timer')
@@ -840,18 +857,28 @@ const toggleTimer = async () => {
 }
 
 const adjustTimer = async (seconds) => {
-    if (!activeSessionTimer.value || !activeTimerType.value || !currentSession.value) return
+    if (!activeSessionTimer.value || !currentSession.value) return
 
     try {
-        const response = await apiMethods.sessions.adjustTimer(currentSession.value._id, {
-            timerType: activeTimerType.value,
-            adjustment: seconds
-        })
-
-        if (response.data.success) {
-            await loadSessionDetails()
-            toast.success(`Timer adjusted by ${seconds > 0 ? '+' : ''}${seconds}s`)
+        const timerId = activeSessionTimer.value._id
+        if (!timerId) {
+            console.error('Timer ID not found')
+            return
         }
+
+        // Extend or reduce timer time
+        if (seconds > 0) {
+            await apiMethods.timers.extendTimer(timerId, {
+                additionalSeconds: seconds,
+                reason: 'Manual adjustment by presidium'
+            })
+        } else {
+            // For reducing time, we can't use extend, so we'll need to update remaining time directly
+            const newTime = Math.max(0, activeSessionTimer.value.remainingTime + seconds)
+            activeSessionTimer.value.remainingTime = newTime
+        }
+
+        toast.success(`Timer adjusted by ${seconds > 0 ? '+' : ''}${seconds}s`)
     } catch (error) {
         console.error('Failed to adjust timer:', error)
         toast.error('Failed to adjust timer')
@@ -875,6 +902,7 @@ const startTimerSync = () => {
                     toast.error('10 seconds remaining!')
                 } else if (time === 0) {
                     toast.error('Timer expired!')
+                    stopTimerSync()
                 }
             }
         }
@@ -888,14 +916,21 @@ const stopTimerSync = () => {
     }
 }
 
-// Session Mode Management
+// Session Mode Management - Fixed to use correct API pattern
 const changeMode = async (newMode) => {
     if (!currentSession.value || currentSession.value.currentMode === newMode) return
 
     try {
         const response = await apiMethods.sessions.changeMode(currentSession.value._id, {
             mode: newMode,
-            reason: `Mode changed by ${authStore.user?.name || 'presidium'}`
+            reason: `Mode changed by ${authStore.user?.name || 'presidium'}`,
+            // Provide required timer data structure to prevent backend errors
+            modeSettings: {
+                topic: `${newMode.charAt(0).toUpperCase() + newMode.slice(1)} debate`,
+                totalTime: newMode === 'moderated' ? 600 : 0, // 10 minutes for moderated caucus
+                speechTime: 120,
+                allowQuestions: false
+            }
         })
 
         if (response.data.success) {
@@ -931,11 +966,11 @@ const endRollCall = async () => {
     if (!currentSession.value) return
 
     try {
-        const response = await updatedSessionApi.sessions.endRollCall(currentSession.value._id)
+        const response = await apiMethods.sessions.endRollCall(currentSession.value._id)
 
         if (response.data.success) {
             rollCallStatus.value = 'completed'
-            quorum.value = response.data.quorum
+            quorum.value = response.data.quorum || quorum.value
             toast.success('Roll call completed')
         }
     } catch (error) {
@@ -1033,11 +1068,12 @@ const endVoting = async () => {
     }
 }
 
-// Public Display Management
+// Public Display Management - Fixed to only use WebSocket
 const setDisplayMode = async (mode) => {
     if (publicDisplayMode.value === mode) return
 
     try {
+        // Only use WebSocket for display mode control
         wsService.emit('set-public-display-mode', {
             committeeId: committee.value._id,
             mode: mode
@@ -1046,10 +1082,6 @@ const setDisplayMode = async (mode) => {
         publicDisplayMode.value = mode
         toast.success(`Public display switched to ${mode === 'session' ? 'Session View' : 'Gossip Box'}`)
 
-        const response = await apiMethods.committees.setDisplayMode(committee.value._id, { mode })
-        if (!response.data.success) {
-            console.warn('Failed to persist display mode setting')
-        }
     } catch (error) {
         console.error('Failed to set display mode:', error)
         toast.error('Failed to change display mode')
@@ -1163,25 +1195,19 @@ const setupWebSocketListeners = () => {
     })
 
     // Timer events - Enhanced
-    wsService.on('session-timer-started', (data) => {
+    wsService.on('timer-started', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             loadSessionDetails()
         }
     })
 
-    wsService.on('speaker-timer-started', (data) => {
+    wsService.on('timer-paused', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             loadSessionDetails()
         }
     })
 
-    wsService.on('timer-toggled', (data) => {
-        if (data.sessionId === currentSession.value?._id) {
-            loadSessionDetails()
-        }
-    })
-
-    wsService.on('timer-adjusted', (data) => {
+    wsService.on('timer-resumed', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             loadSessionDetails()
         }

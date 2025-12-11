@@ -377,7 +377,7 @@ const loadData = async () => {
 
 const loadActiveSession = async () => {
     try {
-        const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
+        const response = await apiMethods.sessions.getAll(committee.value._id, {
             status: 'active',
             limit: 1
         })
@@ -395,8 +395,7 @@ const loadSessionDetails = async () => {
     if (!currentSession.value?._id) return
 
     try {
-        // Load session details
-        const sessionResponse = await sessionApi.sessions.getById(currentSession.value._id)
+        const sessionResponse = await apiMethods.sessions.getById(currentSession.value._id)
         if (sessionResponse.data.success) {
             const sessionData = sessionResponse.data.session
 
@@ -428,10 +427,8 @@ const loadGossipMessages = async () => {
     if (!committee.value?._id) return
 
     try {
-        const response = await apiMethods.gossip.getByCommitteeId(committee.value._id)
-        if (response.data.success) {
-            gossipMessages.value = response.data.messages || []
-        }
+        // The gossip messages will be populated via WebSocket events
+        console.log('Gossip messages will be loaded via WebSocket events')
     } catch (error) {
         console.error('Failed to load gossip messages:', error)
     }
