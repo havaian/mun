@@ -238,7 +238,7 @@ const loadPublicData = async () => {
 
         // Load gossip messages
         const response = await apiMethods.messages.getCommitteeConversation(
-            committee.value._id || committee.value,
+            committee._id,
             selectedChannel.value.id
         )
         
