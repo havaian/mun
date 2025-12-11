@@ -1248,7 +1248,7 @@ const nextSpeaker = async () => {
         const nextSpeakerData = speakerLists.value.present.find(s => !s.hasSpoken)
 
         if (!nextSpeakerData) {
-            toast.info('All speakers have spoken')
+            toast.log('All speakers have spoken')
             return
         }
 
@@ -1503,7 +1503,7 @@ const setupWebSocketListeners = () => {
         if (data.committeeId === committee.value?._id) {
             publicDisplayMode.value = data.mode
             const modeLabel = data.mode === 'session' ? 'Session View' : 'Gossip Box'
-            toast.info(`Display switched to ${modeLabel}`)
+            toast.log(`Display switched to ${modeLabel}`)
         }
     })
 
@@ -1511,7 +1511,7 @@ const setupWebSocketListeners = () => {
     wsService.on('roll-call-started', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             rollCallStatus.value = 'active'
-            toast.info('Roll call started')
+            toast.log('Roll call started')
         }
     })
 
@@ -1602,7 +1602,7 @@ const setupWebSocketListeners = () => {
             if (data.timers) {
                 sessionTimers.value = data.timers
             }
-            toast.info(`Mode changed to ${data.mode}`)
+            toast.log(`Mode changed to ${data.mode}`)
         }
     })
 
