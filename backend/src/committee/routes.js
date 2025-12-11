@@ -916,27 +916,27 @@ router.put('/:committeeId/display-mode',
         const committeeId = req.params.committeeId;
         try {
             const { Committee } = require('./model')
-            const { displayMode } = req.body
+            const { mode } = req.body
             
-            if (!displayMode || !['session', 'gossip'].includes(displayMode)) {
+            if (!mode || !['session', 'gossip'].includes(mode)) {
                 return res.status(400).json({ error: 'Invalid mode. Must be "session" or "gossip"' })
             }
             
             const committee = await Committee.findByIdAndUpdate(
                 req.params.committeeId,
-                { $set: { publicDisplayMode: displayMode } },
+                { $set: { publicDisplayMode: mode } },
                 { new: true, runValidators: true }
             )
 
             console.log(committee)
             
-            global.logger.info(`Display mode changed to ${displayMode} for committee ${committeeId}`)
+            global.logger.info(`Display mode changed to ${mode} for committee ${committeeId}`)
             
             // Broadcast via WebSocket
             if (req.app.locals.io) {
                 req.app.locals.io.to(`committee-${committeeId}`).emit('public-display-mode-changed', {
                     committeeId: committeeId,
-                    mode: displayMode,
+                    mode: mode,
                     timestamp: new Date(),
                     changedBy: req.user.email
                 })
@@ -944,7 +944,7 @@ router.put('/:committeeId/display-mode',
             
             res.json({
                 success: true,
-                displayMode: displayMode,
+                displayMode: mode,
                 committeeId: committee._id,
                 message: `Display mode changed to ${mode}`
             })
