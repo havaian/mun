@@ -821,69 +821,6 @@ router.post('/:committeeId/presidium/:role/reset-link',
     }
 );
 
-// Set public display mode (presidium only)
-router.put('/:committeeId/display-mode',
-    global.auth.token,
-    global.auth.presidium,
-    [
-        param('committeeId').isMongoId().withMessage('Invalid committee ID'),
-        body('mode').isIn(['session', 'gossip']).withMessage('Invalid display mode')
-    ],
-    handleValidationErrors,
-    async (req, res) => {
-        try {
-            const { committeeId } = req.params;
-            const { mode } = req.body;
-
-            console.log(`🎮 Setting display mode for committee ${committeeId} to ${mode}`);
-
-            // Emit WebSocket event to update all displays
-            if (req.app.locals.io) {
-                const { emitToCommittee } = require('../websocket/socketManager');
-                
-                // Emit multiple event types for maximum compatibility
-                const events = [
-                    'public-display-mode-changed',
-                    'display-mode-changed', 
-                    'committee-display-mode-changed',
-                    'display-toggle',
-                    `committee-${committeeId}-display-mode`
-                ];
-
-                const eventData = {
-                    committeeId: committeeId,
-                    mode: mode,
-                    timestamp: new Date(),
-                    source: 'presidium-api'
-                };
-
-                // Emit each event type
-                events.forEach(eventName => {
-                    emitToCommittee(req.app.locals.io, committeeId, eventName, eventData);
-                });
-
-                // Direct room emissions as fallback
-                req.app.locals.io.to(`committee-${committeeId}`).emit('display-mode-update', eventData);
-                req.app.locals.io.to(`public-display-${committeeId}`).emit('display-mode-update', eventData);
-                req.app.locals.io.to(committeeId).emit('display-mode-update', eventData);
-
-                console.log(`📡 Emitted display mode events for committee ${committeeId}`);
-            }
-
-            res.json({
-                success: true,
-                displayMode: mode,
-                committeeId: committeeId,
-                message: `Display mode changed to ${mode}`
-            });
-
-        } catch (error) {
-            global.logger.error('Set display mode error:', error);
-            res.status(500).json({ error: 'Failed to set display mode' });
-        }
-    }
-);
-
 // Get all login tokens for committee (for export - admin only)
 router.get('/:committeeId/login-tokens',
     global.auth.token,
@@ -990,6 +927,8 @@ router.put('/:committeeId/display-mode',
                 { $set: { publicDisplayMode: displayMode } },
                 { new: true, runValidators: true }
             )
+
+            console.log(committee)
             
             global.logger.info(`Display mode changed to ${displayMode} for committee ${committeeId}`)
             
