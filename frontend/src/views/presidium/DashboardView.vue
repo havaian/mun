@@ -90,6 +90,40 @@
                     </div>
                 </div>
 
+                <!-- Presentation Control (Available without active session) -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <PresentationChartLineIcon class="w-5 h-5 mr-2" />
+                            Presentation Control
+                        </h3>
+                        <span class="text-sm text-gray-500">Controls public display mode</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+                        <button @click="setDisplayMode('session')" :class="[
+                            'p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center space-y-3 hover:shadow-md',
+                            publicDisplayMode === 'session'
+                                ? 'bg-blue-50 border-blue-300 text-blue-700 shadow-sm'
+                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                        ]">
+                            <ComputerDesktopIcon class="w-8 h-8" />
+                            <span class="font-medium">Session View</span>
+                            <span class="text-xs text-center">Timers, speakers, voting</span>
+                        </button>
+                        <button @click="setDisplayMode('gossip')" :class="[
+                            'p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center space-y-3 hover:shadow-md',
+                            publicDisplayMode === 'gossip'
+                                ? 'bg-purple-50 border-purple-300 text-purple-700 shadow-sm'
+                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                        ]">
+                            <ChatBubbleOvalLeftEllipsisIcon class="w-8 h-8" />
+                            <span class="font-medium">Gossip Box</span>
+                            <span class="text-xs text-center">Anonymous messages</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Previous Sessions -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <div class="flex items-center justify-between mb-6">
@@ -276,6 +310,39 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Presentation Control -->
+                <div class="bg-gray-50 p-4 rounded-xl">
+                    <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
+                        <PresentationChartLineIcon class="w-5 h-5 mr-2" />
+                        Presentation Control
+                    </h3>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button @click="setDisplayMode('session')" :class="[
+                            'p-3 text-sm font-medium rounded-lg border transition-colors flex flex-col items-center space-y-1',
+                            publicDisplayMode === 'session'
+                                ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                        ]">
+                            <ComputerDesktopIcon class="w-5 h-5" />
+                            <span>Session View</span>
+                        </button>
+                        <button @click="setDisplayMode('gossip')" :class="[
+                            'p-3 text-sm font-medium rounded-lg border transition-colors flex flex-col items-center space-y-1',
+                            publicDisplayMode === 'gossip'
+                                ? 'bg-purple-50 border-purple-200 text-purple-700'
+                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                        ]">
+                            <ChatBubbleOvalLeftEllipsisIcon class="w-5 h-5" />
+                            <span>Gossip Box</span>
+                        </button>
+                    </div>
+
+                    <div class="mt-3 text-xs text-gray-500 text-center">
+                        Controls what delegates see on public display
+                    </div>
+                </div>
             </div>
 
             <!-- Middle Column: Speakers List -->
@@ -422,7 +489,8 @@ import { updatedSessionApi } from '@/utils/sessionApi'
 import {
     PlayIcon, PauseIcon, ArrowPathIcon, CommandLineIcon, MicrophoneIcon,
     XMarkIcon, CheckCircleIcon, DocumentTextIcon, CalendarDaysIcon,
-    CogIcon, ClockIcon, EyeIcon
+    CogIcon, ClockIcon, EyeIcon, PresentationChartLineIcon,
+    ComputerDesktopIcon, ChatBubbleOvalLeftEllipsisIcon
 } from '@heroicons/vue/24/outline'
 
 // Components
@@ -449,6 +517,7 @@ const quorum = ref({ hasQuorum: false, presentVoting: 0, required: 0 })
 const rollCallStatus = ref('inactive')
 const isLoading = ref(false)
 const allSessions = ref([]) // All sessions for this committee
+const publicDisplayMode = ref('session') // Track current public display mode
 
 // Modals
 const showCreateSessionModal = ref(false)
@@ -563,7 +632,7 @@ const loadDashboardData = async () => {
 
 const loadAllSessions = async () => {
     if (!committee.value?._id) return
-    
+
     try {
         const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
             page: 1,
@@ -789,7 +858,7 @@ const toggleTimer = async () => {
 
     try {
         const action = activeTimer.value.isActive && !activeTimer.value.isPaused ? 'pause' : 'resume'
-        
+
         const response = await apiMethods.timers[`${action}Timer`](activeTimer.value._id)
 
         if (response.data.success) {
@@ -1005,6 +1074,31 @@ const endVoting = async () => {
     }
 }
 
+// Public Display Management
+const setDisplayMode = async (mode) => {
+    if (publicDisplayMode.value === mode) return
+
+    try {
+        // Send WebSocket event to change public display mode
+        wsService.emit('set-public-display-mode', {
+            committeeId: committee.value._id,
+            mode: mode
+        })
+
+        publicDisplayMode.value = mode
+        toast.success(`Public display switched to ${mode === 'session' ? 'Session View' : 'Gossip Box'}`)
+
+        // Optional: Call API to persist the setting
+        const response = await apiMethods.committees.setDisplayMode(committee.value._id, { mode })
+        if (!response.data.success) {
+            console.warn('Failed to persist display mode setting')
+        }
+    } catch (error) {
+        console.error('Failed to set display mode:', error)
+        toast.error('Failed to change display mode')
+    }
+}
+
 // Utility methods
 const getVotePercentage = (count) => {
     return totalVotes.value > 0 ? (count / totalVotes.value) * 100 : 0
@@ -1046,6 +1140,13 @@ const setupWebSocketListeners = () => {
     wsService.on('session-mode-changed', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             currentSession.value.currentMode = data.mode
+        }
+    })
+
+    // Public display mode events
+    wsService.on('public-display-mode-changed', (data) => {
+        if (data.committeeId === committee.value?._id) {
+            publicDisplayMode.value = data.mode
         }
     })
 
