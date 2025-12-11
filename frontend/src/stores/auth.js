@@ -18,6 +18,7 @@ export const useAuthStore = defineStore('auth', () => {
     const sessionWarningShown = ref(false)
     const _lastValidation = ref(0)
     const _validationCache = ref(null)
+    const _validationPromise = ref(null)
     const VALIDATION_CACHE_DURATION = 30000 // 30 seconds
 
     // Retry configuration for network errors
@@ -35,10 +36,11 @@ export const useAuthStore = defineStore('auth', () => {
     const userRole = computed(() => user.value?.role || null)
     const committeeId = computed(() => user.value?.committeeId || null)
 
-    // Helper function to clear validation cache
+    // Helper function to clear validation cache & promise
     const _clearValidationCache = () => {
         _lastValidation.value = 0
         _validationCache.value = null
+        _validationPromise.value = null // Clear promise cache
     }
 
     // Helper function to format presidium role
@@ -298,7 +300,7 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    // FIXED: Session validation with smart error handling
+    // Session validation with smart error handling
     const validateSession = async () => {
         // Return cached result if still valid
         const now = Date.now()
@@ -309,7 +311,9 @@ export const useAuthStore = defineStore('auth', () => {
             return { success: false, error: 'Token expired' }
         }
 
+        // Return cached result if still valid
         if (now - _lastValidation.value < VALIDATION_CACHE_DURATION && _validationCache.value !== null) {
+            console.log('📋 Returning cached validation result')
             return _validationCache.value
         }
 
@@ -319,6 +323,28 @@ export const useAuthStore = defineStore('auth', () => {
             return result
         }
 
+        // If validation is already in progress, return the existing promise
+        if (_validationPromise.value) {
+            console.log('⏳ Validation already in progress, waiting for existing call...')
+            return await _validationPromise.value
+        }
+
+        // Create and cache the validation promise
+        _validationPromise.value = performValidation()
+
+        try {
+            const result = await _validationPromise.value
+            return result
+        } finally {
+            // Clear the promise cache when done
+            _validationPromise.value = null
+        }
+    }
+
+    // Separate function to perform the actual validation
+    const performValidation = async () => {
+        console.log('🔍 Performing session validation...')
+        
         try {
             const response = await retryOperation(() =>
                 apiMethods.auth.validateSession()
@@ -328,9 +354,12 @@ export const useAuthStore = defineStore('auth', () => {
                 user.value = response.data.user
                 const result = { success: true, user: response.data.user }
 
+                // Update cache
+                const now = Date.now()
                 _lastValidation.value = now
                 _validationCache.value = result
 
+                console.log('✅ Session validation successful')
                 return result
             } else {
                 // Session invalid according to server - clear auth data
@@ -344,7 +373,7 @@ export const useAuthStore = defineStore('auth', () => {
         } catch (error) {
             console.error('Session validation error:', error)
 
-            // FIXED: Only clear token for actual auth failures
+            // Only clear token for actual auth failures
             if (shouldClearTokenOnError(error)) {
                 await logout(false)
                 const result = {
@@ -360,7 +389,7 @@ export const useAuthStore = defineStore('auth', () => {
                     error: 'Temporary validation error',
                     retainToken: true
                 }
-                // Don't cache network errors, but don't throw either
+                // Don't cache network errors
                 return result
             }
         }
