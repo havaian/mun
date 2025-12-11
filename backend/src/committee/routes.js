@@ -3,7 +3,6 @@ const { body, param, query, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
-const { Committee } = require('./model');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -953,17 +952,20 @@ router.get('/:committeeId/display-mode',
     async (req, res) => {
         const committeeId = req.params.committeeId;
         try {
+            const { Committee } = require('./model')
             const committee = await Committee.findById(committeeId)
+            
             if (!committee) {
                 return res.status(404).json({ error: 'Committee not found' })
             }
             
             res.json({
                 success: true,
-                displayMode: committee.publicDisplayMode || 'session'
+                displayMode: committee.publicDisplayMode || 'session',
+                committeeId: committee._id
             })
         } catch (error) {
-            global.logger.error(error)
+            global.logger.error('Get display mode error:', error)
             res.status(500).json({ error: 'Failed to get display mode' })
         }
     }
@@ -976,10 +978,11 @@ router.put('/:committeeId/display-mode',
     async (req, res) => {
         const committeeId = req.params.committeeId;
         try {
+            const { Committee } = require('./model')
             const { mode } = req.body
             
-            if (!['session', 'gossip'].includes(mode)) {
-                return res.status(400).json({ error: 'Invalid mode' })
+            if (!mode || !['session', 'gossip'].includes(mode)) {
+                return res.status(400).json({ error: 'Invalid mode. Must be "session" or "gossip"' })
             }
             
             const committee = await Committee.findById(committeeId)
@@ -991,9 +994,11 @@ router.put('/:committeeId/display-mode',
             committee.publicDisplayMode = mode
             await committee.save()
             
+            global.logger.info(`Display mode changed to ${mode} for committee ${committeeId}`)
+            
             // Broadcast via WebSocket
-            if (req.io) {
-                req.io.to(`committee-${committeeId}`).emit('public-display-mode-changed', {
+            if (req.app.locals.io) {
+                req.app.locals.io.to(`committee-${committeeId}`).emit('public-display-mode-changed', {
                     committeeId: committeeId,
                     mode: mode,
                     timestamp: new Date(),
@@ -1003,10 +1008,12 @@ router.put('/:committeeId/display-mode',
             
             res.json({
                 success: true,
-                displayMode: mode
+                displayMode: mode,
+                committeeId: committee._id,
+                message: `Display mode changed to ${mode}`
             })
         } catch (error) {
-            global.logger.error(error)
+            global.logger.error('Set display mode error:', error)
             res.status(500).json({ error: 'Failed to set display mode' })
         }
     }
