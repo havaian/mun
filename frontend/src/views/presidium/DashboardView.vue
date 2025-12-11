@@ -757,7 +757,7 @@ const endCurrentSession = async () => {
     if (!currentSession.value) return
 
     try {
-        const response = await apiMethods.sessions.updateStatus(currentSession.value._id, {
+        const response = await sessionApi.sessions.end(currentSession.value._id, {
             status: 'completed',
             reason: 'Session ended by presidium'
         })
