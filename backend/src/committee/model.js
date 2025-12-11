@@ -230,6 +230,13 @@ const committeeSchema = new mongoose.Schema({
         }
     },
 
+    // Store current public display mode
+    publicDisplayMode: {
+        type: String,
+        enum: ['session', 'gossip'],
+        default: 'session'
+    },
+
     // Soft delete fields
     deletedAt: {
         type: Date,

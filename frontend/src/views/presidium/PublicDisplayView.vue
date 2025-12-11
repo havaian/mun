@@ -187,16 +187,30 @@ const formatTime = (timestamp) => {
 const loadPublicData = async () => {
     try {
         const committeeId = route.params.committeeId || route.query.committeeId
-
+        
         if (!committeeId) {
             console.error('No committee ID provided')
             return
         }
 
-        // Load committee info
+        console.log('📊 Loading public data for committee:', committeeId)
+
+        // LOAD COMMITTEE INFO AND DISPLAY MODE
         const committeeResponse = await apiMethods.committees.getById(committeeId)
         if (committeeResponse.data?.committee) {
             committeeName.value = committeeResponse.data.committee.name
+            
+            // FETCH CURRENT DISPLAY MODE FROM DATABASE
+            try {
+                const modeResponse = await apiMethods.committees.getDisplayMode(committeeId)
+                if (modeResponse.data?.displayMode) {
+                    displayMode.value = modeResponse.data.displayMode
+                    console.log('✅ Loaded display mode:', displayMode.value)
+                }
+            } catch (err) {
+                console.warn('Could not load display mode, using default:', err)
+                displayMode.value = 'session'
+            }
         }
 
         // Load active session
@@ -210,14 +224,13 @@ const loadPublicData = async () => {
             currentSession.value = session
             currentMode.value = session.currentMode
             sessionTopic.value = session.modeSettings?.topic || ''
-
-            // Load full session details for timers
+            
+            // Load full session details
             const sessionDetail = await apiMethods.sessions.getById(session._id)
             if (sessionDetail.data?.session) {
                 timers.value = sessionDetail.data.session.timers || {}
                 currentSpeaker.value = sessionDetail.data.session.currentSpeaker
-
-                // Build speaker queue
+                
                 const present = sessionDetail.data.session.speakerLists?.present || []
                 speakerQueue.value = present.filter(s => !s.hasSpoken)
             }
@@ -228,10 +241,12 @@ const loadPublicData = async () => {
             limit: 20,
             isAnonymous: true
         })
-
+        
         if (gossipResponse.data?.messages) {
             gossipMessages.value = gossipResponse.data.messages
         }
+
+        console.log('✅ Public data loaded successfully')
 
     } catch (error) {
         console.error('Failed to load public data:', error)

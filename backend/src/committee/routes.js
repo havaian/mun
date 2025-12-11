@@ -3,6 +3,7 @@ const { body, param, query, validationResult } = require('express-validator');
 const router = express.Router();
 
 const controller = require('./controller');
+const Committee = require('./model');
 
 // Validation middleware
 const handleValidationErrors = (req, res, next) => {
@@ -946,6 +947,69 @@ router.get('/:committeeId/login-tokens',
         }
     }
 );
+
+// Get display mode
+router.get('/:committeeId/display-mode',
+    global.auth.token,
+    async (req, res) => {
+        const committeeId = req.params.committeeId;
+        try {
+            const committee = await Committee.findById(committeeId)
+            if (!committee) {
+                return res.status(404).json({ error: 'Committee not found' })
+            }
+            
+            res.json({
+                success: true,
+                displayMode: committee.publicDisplayMode || 'session'
+            })
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to get display mode' })
+        }
+    }
+)
+
+// Set display mode (presidium only)
+router.put('/:committeeId/display-mode',
+    global.auth.token,
+    global.auth.presidium,
+    async (req, res) => {
+        const committeeId = req.params.committeeId;
+        try {
+            const { mode } = req.body
+            
+            if (!['session', 'gossip'].includes(mode)) {
+                return res.status(400).json({ error: 'Invalid mode' })
+            }
+            
+            const committee = await Committee.findById(committeeId)
+            if (!committee) {
+                return res.status(404).json({ error: 'Committee not found' })
+            }
+            
+            // Update mode
+            committee.publicDisplayMode = mode
+            await committee.save()
+            
+            // Broadcast via WebSocket
+            if (req.io) {
+                req.io.to(`committee-${committeeId}`).emit('public-display-mode-changed', {
+                    committeeId: committeeId,
+                    mode: mode,
+                    timestamp: new Date(),
+                    changedBy: req.user.email
+                })
+            }
+            
+            res.json({
+                success: true,
+                displayMode: mode
+            })
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to set display mode' })
+        }
+    }
+)
 
 // LEGACY ROUTES: Deprecated QR routes that return migration notices
 router.get('/:id/qr-codes', (req, res) => {

@@ -305,7 +305,17 @@ export const apiMethods = {
         getQRTokens: (id) => {
             console.warn('getQRTokens is deprecated. Use getLoginTokens instead.');
             return api.get(`/committees/${id}/qr-tokens`); // Will return 410 Gone
-        }
+        },
+        
+    
+        // Get display mode
+        getDisplayMode: (committeeId) => 
+            api.get(`/committees/${committeeId}/display-mode`),
+        
+        // Set display mode  
+        setDisplayMode: (committeeId, mode) => 
+            api.put(`/committees/${committeeId}/display-mode`, { mode }),
+
     },
 
     // ✅ IMPLEMENTED - Countries (6/7 methods working)  

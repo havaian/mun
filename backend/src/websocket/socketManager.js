@@ -224,34 +224,45 @@ const setupEventHandlers = (socket) => {
     });
 
     // Display mode control (presidium only)
-    socket.on('set-public-display-mode', (data) => {
-        const { committeeId, mode } = data;
-
+    socket.on('set-public-display-mode', async (data) => {
+        const { committeeId, mode } = data
+        
         if (!committeeId || !mode) {
-            return socket.emit('error', { message: 'Committee ID and mode required' });
+            return socket.emit('error', { message: 'Committee ID and mode required' })
         }
 
         if (!['session', 'gossip'].includes(mode)) {
-            return socket.emit('error', { message: 'Invalid display mode' });
+            return socket.emit('error', { message: 'Invalid display mode' })
         }
 
-        // Verify user has permission (presidium only)
-        if (user.role !== 'presidium' || user.committeeId !== committeeId) {
-            return socket.emit('error', { message: 'Unauthorized to change display mode' });
+        if (socket.user.role !== 'presidium') {
+            return socket.emit('error', { message: 'Unauthorized' })
         }
 
-        global.logger.info(`Display mode change: ${mode} for committee ${committeeId} by ${user.email}`);
+        try {
+            // SAVE TO DATABASE
+            const Committee = require('../committee/model')
+            const committee = await Committee.findById(committeeId)
+            
+            if (committee) {
+                committee.publicDisplayMode = mode
+                await committee.save()
+                
+                global.logger.info(`Display mode changed to ${mode} for committee ${committeeId}`)
+            }
 
-        // Broadcast to ALL clients in committee room (including sender)
-        if (io) {
+            // BROADCAST TO ALL CLIENTS
             io.to(`committee-${committeeId}`).emit('public-display-mode-changed', {
                 committeeId,
                 mode,
                 timestamp: new Date(),
-                changedBy: user.email
-            });
+                changedBy: socket.user.email
+            })
+        } catch (error) {
+            global.logger.error('Error setting display mode:', error)
+            socket.emit('error', { message: 'Failed to set display mode' })
         }
-    });
+    })
 
     // Join session room for session-specific events
     socket.on('join-session-room', (data) => {

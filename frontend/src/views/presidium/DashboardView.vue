@@ -1363,28 +1363,31 @@ const setDisplayMode = async (mode) => {
         console.error('Invalid display mode:', mode)
         return
     }
-
+    
     if (!committee.value?._id) {
-        console.error('Cannot set display mode: Committee not loaded')
         toast.error('Committee not loaded')
         return
     }
-
-    console.log('🎮 Setting display mode to:', mode)
-    publicDisplayMode.value = mode
-
-    console.log('📡 Emitting set-public-display-mode:', {
-        committeeId: committee.value._id,
-        mode: mode
-    })
-
-    wsService.emit('set-public-display-mode', {
-        committeeId: committee.value._id,
-        mode: mode
-    })
-
-    const modeLabel = mode === 'session' ? 'Session View' : 'Gossip Box'
-    toast.success(`Public display: ${modeLabel}`)
+    
+    try {
+        console.log('🎮 Setting display mode to:', mode)
+        
+        // UPDATE DATABASE via API
+        const response = await apiMethods.committees.setDisplayMode(
+            committee.value._id, 
+            mode
+        )
+        
+        if (response.data?.success) {
+            publicDisplayMode.value = mode
+            
+            const modeLabel = mode === 'session' ? 'Session View' : 'Gossip Box'
+            toast.success(`Public display: ${modeLabel}`)
+        }
+    } catch (error) {
+        console.error('Failed to set display mode:', error)
+        toast.error('Failed to change display mode')
+    }
 }
 
 // Utility Methods
