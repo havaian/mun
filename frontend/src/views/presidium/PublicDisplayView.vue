@@ -80,7 +80,11 @@
             <div class="gossip-header">
                 <div class="gossip-header-top">
                     <div class="gossip-badge">
-                        <VenetianMask class="w-10 h-10" />
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
                         GOSSIP BOX
                     </div>
                     <button @click="toggleFullscreen" class="fullscreen-btn gossip-fullscreen-btn"
@@ -106,7 +110,10 @@
                     <div v-for="(message, index) in gossipMessages" :key="message._id || index" class="gossip-card"
                         :style="{ animationDelay: `${index * 0.1}s` }">
                         <div class="gossip-lock">
-                            <Ghost class="w-5 h-5" />
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="5" y="11" width="14" height="10" rx="2" ry="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
                         </div>
                         <p class="gossip-text">{{ message.content }}</p>
                         <div class="gossip-time">{{ formatTime(message.timestamp) }}</div>
@@ -121,6 +128,12 @@
                 </div>
             </div>
         </div>
+
+        <!-- Footer -->
+        <div class="display-footer">
+            <p>This app was developed by another user. It may be inaccurate or unsafe. <a href="#">Report legal
+                    issue</a></p>
+        </div>
     </div>
 </template>
 
@@ -130,8 +143,6 @@ import { useRoute } from 'vue-router'
 import { apiMethods } from '@/utils/api'
 import { wsService } from '@/plugins/websocket'
 import { useAuthStore } from '@/stores/auth'
-
-import { Ghost, VenetianMask } from 'lucide-vue-next'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -453,6 +464,8 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     position: relative;
+    overflow-x: hidden;
+    max-width: 100vw;
 }
 
 /* ==================== SESSION VIEW ==================== */
@@ -460,25 +473,25 @@ onUnmounted(() => {
     flex: 1;
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     color: white;
-    padding: 2rem;
+    padding: clamp(1rem, 3vw, 2rem);
 }
 
 .session-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 3rem;
+    margin-bottom: clamp(1.5rem, 4vw, 3rem);
 }
 
 .committee-info h1 {
-    font-size: 2rem;
+    font-size: clamp(1.25rem, 4vw, 2rem);
     font-weight: 700;
     margin: 0 0 0.5rem 0;
     color: white;
 }
 
 .committee-info p {
-    font-size: 1rem;
+    font-size: clamp(0.875rem, 2vw, 1rem);
     color: #94a3b8;
     margin: 0;
 }
@@ -525,10 +538,16 @@ onUnmounted(() => {
 
 .content-grid {
     display: grid;
-    grid-template-columns: 1fr 400px;
+    grid-template-columns: 1fr;
     gap: 2rem;
     max-width: 1600px;
     margin: 0 auto;
+}
+
+@media (min-width: 1024px) {
+    .content-grid {
+        grid-template-columns: 1fr 400px;
+    }
 }
 
 .left-column {
@@ -540,7 +559,7 @@ onUnmounted(() => {
 .timer-card {
     background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
     border-radius: 1.5rem;
-    padding: 3rem;
+    padding: clamp(1.5rem, 4vw, 3rem);
     text-align: center;
 }
 
@@ -553,7 +572,7 @@ onUnmounted(() => {
     font-size: 0.875rem;
     font-weight: 600;
     letter-spacing: 0.1em;
-    margin-bottom: 2rem;
+    margin-bottom: clamp(1rem, 3vw, 2rem);
     text-transform: uppercase;
 }
 
@@ -562,7 +581,7 @@ onUnmounted(() => {
 }
 
 .timer-display {
-    font-size: 8rem;
+    font-size: clamp(3rem, 12vw, 8rem);
     font-weight: 700;
     line-height: 1;
     font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
@@ -573,14 +592,14 @@ onUnmounted(() => {
 .speaker-card {
     background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
     border-radius: 1.5rem;
-    padding: 3rem;
+    padding: clamp(1.5rem, 4vw, 3rem);
     text-align: center;
 }
 
 .speaker-icon {
     width: 80px;
     height: 80px;
-    margin: 0 auto 2rem;
+    margin: 0 auto clamp(1rem, 3vw, 2rem);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -599,9 +618,11 @@ onUnmounted(() => {
 }
 
 .speaker-name {
-    font-size: 2.5rem;
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
     font-weight: 700;
     color: white;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .right-column {
@@ -612,7 +633,7 @@ onUnmounted(() => {
 .queue-card {
     background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
     border-radius: 1.5rem;
-    padding: 2rem;
+    padding: clamp(1.5rem, 3vw, 2rem);
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -662,6 +683,8 @@ onUnmounted(() => {
     font-size: 1rem;
     color: white;
     font-weight: 500;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .queue-empty {
@@ -678,12 +701,12 @@ onUnmounted(() => {
     flex: 1;
     background: linear-gradient(135deg, #330b78 0%, #07266b 100%);
     color: white;
-    padding: 2rem;
+    padding: clamp(1rem, 3vw, 2rem);
 }
 
 .gossip-header {
     max-width: 1200px;
-    margin: 0 auto 3rem;
+    margin: 0 auto clamp(1.5rem, 4vw, 3rem);
 }
 
 .gossip-header-top {
@@ -716,7 +739,7 @@ onUnmounted(() => {
 }
 
 .gossip-title {
-    font-size: 3rem;
+    font-size: clamp(1.5rem, 6vw, 3rem);
     font-weight: 700;
     margin: 0;
     color: white;
@@ -730,7 +753,7 @@ onUnmounted(() => {
 
 .gossip-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
     gap: 1.5rem;
 }
 
@@ -765,6 +788,8 @@ onUnmounted(() => {
 .gossip-lock {
     width: 24px;
     height: 24px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -778,6 +803,8 @@ onUnmounted(() => {
     color: white;
     margin: 0 0 1rem 0;
     min-height: 60px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .gossip-time {
@@ -835,23 +862,17 @@ onUnmounted(() => {
 }
 
 /* ==================== RESPONSIVE ==================== */
-@media (max-width: 1200px) {
-    .content-grid {
-        grid-template-columns: 1fr;
+@media (max-width: 1023px) {
+    .right-column {
+        max-height: 500px;
     }
 
-    .right-column {
-        max-height: 400px;
+    .queue-card {
+        max-height: 500px;
     }
 }
 
 @media (max-width: 768px) {
-
-    .session-view,
-    .gossip-view {
-        padding: 1rem;
-    }
-
     .session-header {
         flex-direction: column;
         gap: 1rem;
@@ -862,41 +883,9 @@ onUnmounted(() => {
         justify-content: space-between;
     }
 
-    .committee-info h1 {
-        font-size: 1.5rem;
-    }
-
-    .gossip-title {
-        font-size: 2rem;
-    }
-
-    .timer-display {
-        font-size: 4rem;
-    }
-
-    .speaker-name {
-        font-size: 1.5rem;
-    }
-
-    .gossip-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .queue-card {
-        max-height: 300px;
-    }
-}
-
-@media (max-width: 480px) {
-
-    .timer-card,
-    .speaker-card,
-    .queue-card {
-        padding: 1.5rem;
-    }
-
-    .timer-display {
-        font-size: 3rem;
+    .gossip-header-top {
+        flex-wrap: wrap;
+        gap: 0.5rem;
     }
 
     .speaker-icon {
@@ -904,13 +893,108 @@ onUnmounted(() => {
         height: 60px;
     }
 
-    .gossip-title {
-        font-size: 1.5rem;
+    .speaker-icon svg {
+        width: 60px;
+        height: 60px;
     }
 
+    .queue-card {
+        max-height: 400px;
+    }
+
+    .content-grid {
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
     .fullscreen-btn {
         width: 40px;
         height: 40px;
+    }
+
+    .fullscreen-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .mode-badge {
+        padding: 0.375rem 1rem;
+        font-size: 0.75rem;
+    }
+
+    .gossip-badge {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    .timer-label {
+        font-size: 0.75rem;
+    }
+
+    .speaker-label {
+        font-size: 0.625rem;
+    }
+
+    .speaker-icon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .speaker-icon svg {
+        width: 50px;
+        height: 50px;
+    }
+
+    .queue-item {
+        padding: 0.75rem;
+    }
+
+    .queue-position {
+        width: 28px;
+        height: 28px;
+        font-size: 0.875rem;
+    }
+
+    .queue-country {
+        font-size: 0.875rem;
+    }
+
+    .gossip-card {
+        padding: 1.25rem;
+    }
+
+    .gossip-text {
+        font-size: 0.9375rem;
+        min-height: 50px;
+    }
+
+    .content-grid {
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 374px) {
+    .header-actions {
+        flex-wrap: wrap;
+    }
+
+    .mode-badge {
+        order: 2;
+        width: 100%;
+        text-align: center;
+    }
+
+    .fullscreen-btn {
+        order: 1;
+    }
+
+    .gossip-card {
+        padding: 1rem;
+    }
+
+    .queue-title {
+        font-size: 1rem;
     }
 }
 </style>
