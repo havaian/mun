@@ -80,11 +80,7 @@
             <div class="gossip-header">
                 <div class="gossip-header-top">
                     <div class="gossip-badge">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                            <path
-                                d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                        <VenetianMask class="w-10 h-10" />
                         GOSSIP BOX
                     </div>
                     <button @click="toggleFullscreen" class="fullscreen-btn gossip-fullscreen-btn"
@@ -110,10 +106,7 @@
                     <div v-for="(message, index) in gossipMessages" :key="message._id || index" class="gossip-card"
                         :style="{ animationDelay: `${index * 0.1}s` }">
                         <div class="gossip-lock">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <rect x="5" y="11" width="14" height="10" rx="2" ry="2" />
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                            </svg>
+                            <Ghost class="w-5 h-5" />
                         </div>
                         <p class="gossip-text">{{ message.content }}</p>
                         <div class="gossip-time">{{ formatTime(message.timestamp) }}</div>
@@ -143,6 +136,8 @@ import { useRoute } from 'vue-router'
 import { apiMethods } from '@/utils/api'
 import { wsService } from '@/plugins/websocket'
 import { useAuthStore } from '@/stores/auth'
+
+import { Ghost, VenetianMask } from 'lucide-vue-next'
 
 const route = useRoute()
 const authStore = useAuthStore()
