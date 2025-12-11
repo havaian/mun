@@ -405,7 +405,7 @@ const emitToRoom = (io, roomName, event, data) => {
 // Emit to committee
 const emitToCommittee = (io, committeeId, eventName, data) => {
     if (!io || !committeeId) {
-        console.error('Missing io or committeeId in emitToCommittee');
+        global.logger.error('Missing io or committeeId in emitToCommittee');
         return;
     }
 

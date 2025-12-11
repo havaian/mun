@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 
 mongoose.connect(process.env.MONGODB_URI)
 .then(() => {
-  console.info("✅ MongoDB");
+  global.logger.info("✅ MongoDB");
 })
 .catch(err => {
-  console.error("MongoDB ❌", err);
+  global.logger.error("MongoDB ❌", err);
   process.exit();
 });

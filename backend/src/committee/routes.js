@@ -879,7 +879,7 @@ router.put('/:committeeId/display-mode',
             });
 
         } catch (error) {
-            console.error('Set display mode error:', error);
+            global.logger.error('Set display mode error:', error);
             global.logger.error('Set display mode error:', error);
             res.status(500).json({ error: 'Failed to set display mode' });
         }

@@ -429,7 +429,7 @@ router.get('/analytics/usage-patterns',
 
 // Global error handler for admin routes
 router.use((error, req, res, next) => {
-    console.error('Admin route error:', error);
+    global.logger.error('Admin route error:', error);
 
     res.status(500).json({
         error: 'Internal server error in admin module',

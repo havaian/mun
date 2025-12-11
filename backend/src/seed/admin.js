@@ -67,14 +67,14 @@ async function seedDatabase() {
         };
 
     } catch (error) {
-        console.error('Database seeding failed:', error.message);
+        global.logger.error('Database seeding failed:', error.message);
 
         // Provide specific error context
         let errorContext = 'Unknown error occurred';
 
         if (error.name === 'ValidationError') {
             errorContext = 'Data validation failed - check required fields';
-            console.error('Validation details:', error.errors);
+            global.logger.error('Validation details:', error.errors);
         } else if (error.code === 11000) {
             errorContext = 'Duplicate key error - admin user might already exist';
         } else if (error.name === 'TypeError') {
@@ -83,7 +83,7 @@ async function seedDatabase() {
             errorContext = 'Data casting error - invalid data type';
         }
 
-        console.error(`Error context: ${errorContext}`);
+        global.logger.error(`Error context: ${errorContext}`);
 
         return {
             success: false,
@@ -108,10 +108,10 @@ seedDatabase()
         if (result.success) {
             console.log('Database seeding successful');
         } else {
-            console.error('Database seeding failed');
+            global.logger.error('Database seeding failed');
         }
     })
     .catch((error) => {
-        console.error('\nUnexpected error during seeding:');
-        console.error(error);
+        global.logger.error('\nUnexpected error during seeding:');
+        global.logger.error(error);
     });
