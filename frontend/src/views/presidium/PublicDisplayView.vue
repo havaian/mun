@@ -129,6 +129,8 @@ const currentSpeaker = ref(null)
 const speakerQueue = ref([])
 const gossipMessages = ref([])
 const displayUpdateInterval = ref(null)
+const selectedChannel = ref(null)
+const committee = ref(null)
 
 // Computed
 const timerLabel = computed(() => {
@@ -188,9 +190,12 @@ const formatTime = (timestamp) => {
 
 const loadPublicData = async () => {
     try {
-        const committee = authStore.user?.committeeId;
-        const committeeId = authStore.user?.committeeId._id;
-        
+        committee.value = authStore.user?.committee || authStore.user?.committeeId
+        if (!committee.value) {
+        throw new Error('No committee assigned')
+        }
+
+        const committeeId = committee.value._id
         if (!committeeId) {
             console.error('No committee ID provided')
             return
@@ -252,8 +257,8 @@ const loadPublicData = async () => {
 }
 
 const setupWebSocketListeners = () => {
-    const committeeId = authStore.user?.committeeId._id;
-
+    const committeeId = committee.value._id;
+    
     if (!committeeId) return
 
     // Join committee room
