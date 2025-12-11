@@ -985,14 +985,11 @@ router.put('/:committeeId/display-mode',
                 return res.status(400).json({ error: 'Invalid mode. Must be "session" or "gossip"' })
             }
             
-            const committee = await Committee.findById(committeeId)
-            if (!committee) {
-                return res.status(404).json({ error: 'Committee not found' })
-            }
-            
-            // Update mode
-            committee.publicDisplayMode = displayMode
-            await committee.save()
+            const committee = await Committee.findByIdAndUpdate(
+                req.params.committeeId,
+                { $set: { publicDisplayMode: displayMode } },
+                { new: true, runValidators: true }
+            )
             
             global.logger.info(`Display mode changed to ${displayMode} for committee ${committeeId}`)
             
