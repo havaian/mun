@@ -54,7 +54,7 @@
                         </div>
 
                         <!-- Timer Progress Bar -->
-                        <div v-if="activeTimer" class="w-96 h-4 bg-gray-700 rounded-full mx-auto overflow-hidden">
+                        <div v-if="primaryTimer" class="w-96 h-4 bg-gray-700 rounded-full mx-auto overflow-hidden">
                             <div :class="[
                                 'h-full transition-all duration-1000 rounded-full',
                                 getTimerColor()
@@ -95,19 +95,24 @@
 
                     <!-- Queue List -->
                     <div class="flex-1 overflow-y-auto space-y-4">
-                        <div v-if="speakerQueue.length === 0" class="text-center py-16">
+                        <div v-if="speakerLists.present.length === 0" class="text-center py-16">
                             <UsersIcon class="w-16 h-16 text-gray-600 mx-auto mb-4" />
                             <p class="text-gray-400 text-xl italic">No speakers queued.</p>
                         </div>
 
                         <div v-else>
-                            <div v-for="(speaker, index) in speakerQueue" :key="speaker.country"
-                                class="flex items-center space-x-4 p-4 bg-gray-700 rounded-xl hover:bg-gray-600 transition-colors">
-                                <div class="text-2xl font-bold text-blue-400 w-8">{{ index + 1 }}</div>
+                            <div v-for="(speaker, index) in speakerLists.present" :key="speaker.country"
+                                class="flex items-center space-x-4 p-4 bg-gray-700 rounded-xl transition-colors" :class="{
+                                    'bg-blue-900 border border-blue-500': currentSpeaker?.country === speaker.country,
+                                    'hover:bg-gray-600': currentSpeaker?.country !== speaker.country,
+                                    'opacity-50': speaker.hasSpoken
+                                }">
+                                <div class="text-2xl font-bold text-blue-400 w-8">{{ speaker.position }}</div>
                                 <img :src="getCountryFlag(speaker.country)" :alt="speaker.country"
                                     class="w-12 h-8 rounded border border-gray-600 object-cover" />
                                 <div class="flex-1">
                                     <div class="text-lg font-semibold text-white">{{ speaker.country }}</div>
+                                    <div v-if="speaker.hasSpoken" class="text-xs text-green-400">✓ Spoke</div>
                                 </div>
                             </div>
                         </div>
@@ -117,7 +122,7 @@
                     <div class="border-t border-gray-700 pt-6 mt-6">
                         <div class="grid grid-cols-2 gap-4 text-center">
                             <div>
-                                <div class="text-3xl font-bold text-blue-400">{{ speakerQueue.length }}</div>
+                                <div class="text-3xl font-bold text-blue-400">{{ speakerLists.present.length }}</div>
                                 <div class="text-gray-400 text-sm uppercase">In Queue</div>
                             </div>
                             <div>
@@ -210,13 +215,13 @@
                 <div v-if="displayMode === 'session' && quorumData.hasQuorum" class="flex items-center space-x-3">
                     <CheckCircleIcon class="w-5 h-5 text-green-500" />
                     <span class="text-green-400">Quorum Present</span>
-                    <span class="text-gray-400">({{ quorumData.presentVoting }}/{{ quorumData.required }})</span>
+                    <span class="text-gray-400">({{ quorumData.present }}/{{ quorumData.required }})</span>
                 </div>
 
                 <div v-else-if="displayMode === 'session' && !quorumData.hasQuorum" class="flex items-center space-x-3">
                     <XCircleIcon class="w-5 h-5 text-red-500" />
                     <span class="text-red-400">No Quorum</span>
-                    <span class="text-gray-400">({{ quorumData.presentVoting }}/{{ quorumData.required }})</span>
+                    <span class="text-gray-400">({{ quorumData.present }}/{{ quorumData.required }})</span>
                 </div>
 
                 <!-- Gossip Mode Info -->
@@ -249,7 +254,6 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
-import sessionApi from '@/utils/sessionApi'
 
 // Icons
 import {
@@ -265,60 +269,96 @@ const authStore = useAuthStore()
 const committee = ref(null)
 const currentSession = ref(null)
 const currentSpeaker = ref(null)
-const speakerQueue = ref([])
-const speakersSpoken = ref(0)
-const activeTimer = ref(null)
+const speakerLists = ref({ present: [], absent: [] }) // UPDATED: Two lists
 const currentMode = ref('formal')
+
+// All timers from session
+const sessionTimers = ref({
+    session: null,
+    debate: null,
+    speaker: null,
+    additional: []
+})
+
 const quorumData = ref({
     hasQuorum: false,
-    presentVoting: 0,
+    present: 0,
     required: 0
 })
+
 const activeVoting = ref(null)
 const currentTime = ref('')
 const displayMode = ref('session') // 'session' or 'gossip'
 const gossipMessages = ref([])
 
-// Timer update interval
+// Timer update intervals
 let timerUpdateInterval = null
 let clockUpdateInterval = null
 
-// Computed
-const formattedTimer = computed(() => {
-    if (!activeTimer.value) return '00:00'
+// ==================== COMPUTED ====================
 
-    const time = activeTimer.value.remainingTime || 0
+// Get the primary timer to display (priority: speaker > debate > session)
+const primaryTimer = computed(() => {
+    if (sessionTimers.value.speaker?.isActive) {
+        return {
+            ...sessionTimers.value.speaker,
+            type: 'speaker',
+            label: sessionTimers.value.speaker.country || 'SPEAKER'
+        }
+    }
+    if (sessionTimers.value.debate?.isActive) {
+        return {
+            ...sessionTimers.value.debate,
+            type: 'debate',
+            label: sessionTimers.value.debate.topic || 'DEBATE'
+        }
+    }
+    if (sessionTimers.value.session?.isActive) {
+        return {
+            ...sessionTimers.value.session,
+            type: 'session',
+            label: 'SESSION'
+        }
+    }
+    return null
+})
+
+const formattedTimer = computed(() => {
+    if (!primaryTimer.value) return '00:00'
+
+    const time = Math.max(0, primaryTimer.value.remainingTime || 0)
     const minutes = Math.floor(time / 60)
     const seconds = time % 60
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 })
 
 const timerLabel = computed(() => {
-    if (!activeTimer.value) return 'NO TIMER'
-
-    const labels = {
-        'speaker': 'SPEAKER TIME',
-        'session': 'SESSION TIME',
-        'caucus': 'CAUCUS TIME',
-        'break': 'BREAK TIME'
-    }
-
-    return labels[activeTimer.value.timerType] || activeTimer.value.name?.toUpperCase() || 'TIMER'
+    if (!primaryTimer.value) return 'NO TIMER'
+    return primaryTimer.value.label
 })
 
 const timerProgress = computed(() => {
-    if (!activeTimer.value) return 0
-    return activeTimer.value.progressPercentage || 0
+    if (!primaryTimer.value || !primaryTimer.value.totalDuration) return 0
+
+    const elapsed = primaryTimer.value.totalDuration - primaryTimer.value.remainingTime
+    return Math.min(100, (elapsed / primaryTimer.value.totalDuration) * 100)
+})
+
+// Get all additional active timers
+const additionalActiveTimers = computed(() => {
+    return sessionTimers.value.additional?.filter(t => t.isActive) || []
+})
+
+const speakersSpoken = computed(() => {
+    return speakerLists.value.present.filter(s => s.hasSpoken).length
 })
 
 const anonymousParticipants = computed(() => {
-    // Count unique anonymous IDs from recent gossip messages
     const recentMessages = gossipMessages.value.filter(msg => {
         const messageTime = new Date(msg.sentAt)
         const now = new Date()
-        return (now - messageTime) < 30 * 60 * 1000 // Last 30 minutes
+        return (now - messageTime) < 30 * 60 * 1000
     })
-
     const uniqueIds = new Set(recentMessages.map(msg => msg.gossipId))
     return uniqueIds.size
 })
@@ -349,25 +389,22 @@ const getModeColor = (mode) => {
 }
 
 const getTimerColor = () => {
-    const progress = timerProgress.value
-    if (progress > 80) return 'bg-red-500'
-    if (progress > 60) return 'bg-orange-500'
-    return 'bg-blue-500'
+    const time = primaryTimer.value?.remainingTime || 0
+    if (time > 30) return 'bg-green-500'
+    if (time > 10) return 'bg-yellow-500'
+    return 'bg-red-500'
 }
 
-// Methods
+// ==================== METHODS ====================
+
 const loadData = async () => {
     try {
-        // Get committee from auth context
         committee.value = authStore.user?.committeeId
         if (!committee.value) {
             throw new Error('No committee assigned')
         }
 
-        // Load active session
         await loadActiveSession()
-
-        // Load gossip messages
         await loadGossipMessages()
 
     } catch (error) {
@@ -400,16 +437,17 @@ const loadSessionDetails = async () => {
             const sessionData = sessionResponse.data.session
 
             currentMode.value = sessionData.currentMode || 'formal'
-            speakerQueue.value = sessionData.speakerList?.queue || []
-            currentSpeaker.value = sessionData.speakerList?.current || null
-            quorumData.value = sessionData.rollCall?.quorum || quorumData.value
-        }
+            speakerLists.value = sessionData.speakerLists || { present: [], absent: [] }
+            currentSpeaker.value = sessionData.currentSpeaker || null
+            quorumData.value = sessionData.quorum || quorumData.value
 
-        // Load active timers
-        const timerResponse = await apiMethods.timers.getActiveTimers(currentSession.value._id)
-        if (timerResponse.data.success) {
-            const timers = timerResponse.data.timers || []
-            activeTimer.value = timers.find(t => t.status === 'running') || timers[0] || null
+            // Load all timers
+            sessionTimers.value = sessionData.timers || {
+                session: null,
+                debate: null,
+                speaker: null,
+                additional: []
+            }
         }
 
         // Load active voting
@@ -425,13 +463,7 @@ const loadSessionDetails = async () => {
 
 const loadGossipMessages = async () => {
     if (!committee.value?._id) return
-
-    try {
-        // The gossip messages will be populated via WebSocket events
-        console.log('Gossip messages will be loaded via WebSocket events')
-    } catch (error) {
-        console.error('Failed to load gossip messages:', error)
-    }
+    // Gossip messages loaded via WebSocket
 }
 
 const getCountryFlag = (countryName) => {
@@ -463,120 +495,130 @@ const formatGossipTime = (dateString) => {
 }
 
 const startTimerSync = () => {
-    if (timerUpdateInterval) {
-        clearInterval(timerUpdateInterval)
-    }
+    if (timerUpdateInterval) clearInterval(timerUpdateInterval)
 
     timerUpdateInterval = setInterval(() => {
-        if (activeTimer.value?.isActive && !activeTimer.value?.isPaused) {
-            if (activeTimer.value.remainingTime > 0) {
-                activeTimer.value.remainingTime--
-                activeTimer.value.progressPercentage =
-                    ((activeTimer.value.totalDuration - activeTimer.value.remainingTime) / activeTimer.value.totalDuration) * 100
+        // Update primary timer
+        if (primaryTimer.value && !primaryTimer.value.isPaused) {
+            const timerType = primaryTimer.value.type
+            if (sessionTimers.value[timerType]?.remainingTime > 0) {
+                sessionTimers.value[timerType].remainingTime--
             }
         }
+
+        // Update additional timers
+        sessionTimers.value.additional?.forEach(timer => {
+            if (timer.isActive && !timer.isPaused && timer.remainingTime > 0) {
+                timer.remainingTime--
+            }
+        })
     }, 1000)
 }
 
-// WebSocket listeners
+// ==================== WEBSOCKET ====================
+
 const setupWebSocketListeners = () => {
     console.log('🎧 Setting up WebSocket listeners for public display')
 
-    // Join multiple room types for maximum compatibility
     if (committee.value?._id) {
         wsService.emit('join-committee-room', { committeeId: committee.value._id })
         wsService.emit('join-room', `committee-${committee.value._id}`)
-        wsService.emit('join-room', `public-display-${committee.value._id}`)
-        wsService.emit('join-room', committee.value._id)
-        
-        console.log(`📡 Joined multiple rooms for committee: ${committee.value._id}`)
     }
 
-    // Display mode control events - ENHANCED WITH MORE EVENT TYPES
+    // Display mode events
     const displayModeEvents = [
         'public-display-mode-changed',
         'display-mode-changed',
         'display-toggle',
         'committee-display-mode-changed',
-        'set-public-display-mode',
-        'display-mode-change',
-        'public-display-toggle',
-        `committee-${committee.value?._id}-display-mode`
-    ];
+        'set-public-display-mode'
+    ]
 
     displayModeEvents.forEach(eventName => {
         wsService.on(eventName, (data) => {
             console.log(`📡 Received ${eventName}:`, data)
             if (data.committeeId === committee.value?._id) {
                 displayMode.value = data.mode
-                console.log(`✅ Display mode updated to: ${data.mode}`)
+                console.log(`✅ Display mode: ${data.mode}`)
             }
-        });
-    });
+        })
+    })
 
     // Session events
-    wsService.on('session-mode-changed', (data) => {
-        console.log('📡 Received session-mode-changed:', data)
+    wsService.on('mode-changed', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             currentMode.value = data.mode
+            sessionTimers.value = data.timers
         }
     })
 
     // Timer events
-    const timerEvents = [
-        'timer-started', 'timer-paused', 'timer-resumed', 
-        'timer-completed', 'timer-expired', 'timer-updated'
-    ];
-
-    timerEvents.forEach(eventName => {
-        wsService.on(eventName, (data) => {
-            console.log(`📡 Received ${eventName}:`, data)
-            if (data.sessionId === currentSession.value?._id) {
-                loadSessionDetails()
-            }
-        });
-    });
-
-    // Speaker events  
-    wsService.on('speaker-list-updated', (data) => {
-        console.log('📡 Received speaker-list-updated:', data)
+    wsService.on('timer-started', (data) => {
         if (data.sessionId === currentSession.value?._id) {
-            speakerQueue.value = data.speakerList
+            loadSessionDetails()
         }
     })
 
-    wsService.on('current-speaker-changed', (data) => {
-        console.log('📡 Received current-speaker-changed:', data)
+    wsService.on('timer-toggled', (data) => {
         if (data.sessionId === currentSession.value?._id) {
-            currentSpeaker.value = data.speaker
+            const timerType = data.timerType
+            if (sessionTimers.value[timerType]) {
+                sessionTimers.value[timerType] = data.timer
+            }
+        }
+    })
+
+    wsService.on('timer-adjusted', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            const timerType = data.timerType
+            if (sessionTimers.value[timerType]) {
+                sessionTimers.value[timerType] = data.timer
+            }
+        }
+    })
+
+    // Speaker events
+    wsService.on('current-speaker-set', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            currentSpeaker.value = data.currentSpeaker
+            speakerLists.value = data.speakerLists
+            sessionTimers.value.speaker = data.speakerTimer
+        }
+    })
+
+    wsService.on('speaker-moved', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            speakerLists.value = data.speakerLists
         }
     })
 
     // Voting events
     wsService.on('voting-started', (data) => {
-        console.log('📡 Received voting-started:', data)
         if (data.committeeId === committee.value?._id) {
             activeVoting.value = data.voting
         }
     })
 
     wsService.on('voting-ended', (data) => {
-        console.log('📡 Received voting-ended:', data)
         if (data.votingId === activeVoting.value?._id) {
             activeVoting.value = null
         }
     })
 
-    // Roll call events
-    wsService.on('roll-call-completed', (data) => {
-        if (data.sessionId === currentSession.value?._id) {
-            quorumData.value = data.quorum
-        }
-    })
-
+    // Attendance events
     wsService.on('attendance-updated', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             quorumData.value = data.quorum
+            if (data.speakerLists) {
+                speakerLists.value = data.speakerLists
+            }
+        }
+    })
+
+    wsService.on('roll-call-ended', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            quorumData.value = data.quorum
+            speakerLists.value = data.speakerLists
         }
     })
 
@@ -584,7 +626,6 @@ const setupWebSocketListeners = () => {
     wsService.on('gossip-message-posted', (data) => {
         if (data.committeeId === committee.value?._id) {
             gossipMessages.value.push(data.message)
-            // Keep only last 50 messages in memory
             if (gossipMessages.value.length > 50) {
                 gossipMessages.value = gossipMessages.value.slice(-50)
             }
@@ -597,37 +638,26 @@ const setupWebSocketListeners = () => {
         }
     })
 
-    console.log('✅ All WebSocket listeners set up for public display')
+    console.log('✅ WebSocket listeners set up')
 }
 
-// Lifecycle
+// ==================== LIFECYCLE ====================
+
 onMounted(async () => {
     await loadData()
     setupWebSocketListeners()
     startTimerSync()
 
-    // Update clock every second
     updateClock()
     clockUpdateInterval = setInterval(updateClock, 1000)
 
-    // Auto-refresh data every 30 seconds
+    // Auto-refresh
     setInterval(loadSessionDetails, 30000)
-
-    // Refresh gossip messages every 10 seconds when in gossip mode
-    setInterval(() => {
-        if (displayMode.value === 'gossip') {
-            loadGossipMessages()
-        }
-    }, 10000)
 })
 
 onUnmounted(() => {
-    if (timerUpdateInterval) {
-        clearInterval(timerUpdateInterval)
-    }
-    if (clockUpdateInterval) {
-        clearInterval(clockUpdateInterval)
-    }
+    if (timerUpdateInterval) clearInterval(timerUpdateInterval)
+    if (clockUpdateInterval) clearInterval(clockUpdateInterval)
 })
 </script>
 

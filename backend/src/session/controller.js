@@ -2,35 +2,30 @@ const { Session } = require('./model');
 const { Committee } = require('../committee/model');
 const { emitToCommittee } = require('../websocket/socketManager');
 
-// Session Management Controllers
+// ==================== SESSION LIFECYCLE ====================
 
-// Create new session
+// Create session with initial mode selection
 const createSession = async (req, res) => {
     try {
         const {
             committeeId,
-            sessionNumber,
-            title,
-            mode = 'formal',
-            speechTime = 180,
+            initialMode = 'formal',
+            speechTime = 120,
             questionsAllowed = false,
             autoStart = false
         } = req.body;
 
-        // Verify committee exists and user has access
+        // Verify committee and access
         const committee = await Committee.findById(committeeId);
         if (!committee) {
             return res.status(404).json({ error: 'Committee not found' });
         }
 
-        // Check if user can create sessions for this committee
         if (req.user.committeeId.toString() !== committeeId.toString()) {
-            return res.status(403).json({
-                error: 'Access denied. You can only create sessions for your assigned committee.'
-            });
+            return res.status(403).json({ error: 'Access denied' });
         }
 
-        // Check if there's already an active session
+        // Check for active session
         const activeSession = await Session.findOne({
             committeeId,
             status: { $in: ['active', 'paused'] }
@@ -38,114 +33,39 @@ const createSession = async (req, res) => {
 
         if (activeSession) {
             return res.status(400).json({
-                error: 'An active session already exists for this committee',
+                error: 'Active session already exists',
                 activeSessionId: activeSession._id
             });
         }
 
-        // Calculate session number
-        let finalSessionNumber;
-        if (sessionNumber) {
-            const existingSession = await Session.findOne({
-                committeeId,
-                number: sessionNumber
-            });
-            if (existingSession) {
-                return res.status(400).json({
-                    error: `Session number ${sessionNumber} already exists`
-                });
-            }
-            finalSessionNumber = sessionNumber;
-        } else {
-            const lastSession = await Session.findOne({ committeeId })
-                .sort({ number: -1 })
-                .select('number');
-            finalSessionNumber = (lastSession?.number || 0) + 1;
-        }
-
-        // Initialize attendance from committee countries
-        const attendance = committee.countries.map(country => ({
-            country: country.name,
-            email: country.email || '',
-            status: 'absent',
-            markedAt: new Date(),
-            markedBy: req.user.userId
-        }));
-
-        // Set up mode settings
-        const modeSettings = {
-            speechTime: speechTime,
-            questionsAllowed: questionsAllowed
-        };
-
-        if (mode === 'moderated') {
-            modeSettings.individualSpeechTime = speechTime;
-            modeSettings.topic = 'General Discussion';
-        }
+        // Get next session number
+        const lastSession = await Session.findOne({ committeeId })
+            .sort({ number: -1 });
+        const sessionNumber = (lastSession?.number || 0) + 1;
 
         // Create session
         const session = new Session({
             committeeId,
-            number: finalSessionNumber,
-            title: title || `Session ${finalSessionNumber}`,
+            number: sessionNumber,
+            title: `Session ${sessionNumber}`,
             status: autoStart ? 'active' : 'inactive',
-            startedAt: autoStart ? new Date() : null, // Set actual start time
-            attendance,
-            currentMode: mode,
-            modeSettings,
-            
-            // Initialize timers - no preset duration, just track time
-            timers: {
-                session: {
-                    totalDuration: 0,
-                    remainingTime: 0,
-                    isActive: false,
-                    isPaused: false,
-                    startedAt: null,
-                    pausedTime: 0,
-                    extensions: []
-                },
-                debate: {
-                    totalDuration: 0,
-                    remainingTime: 0,
-                    isActive: false,
-                    isPaused: false
-                },
-                speaker: {
-                    totalDuration: speechTime,
-                    remainingTime: speechTime,
-                    isActive: false,
-                    isPaused: false,
-                    canBeExtended: questionsAllowed
-                },
-                additional: []
+            startedAt: autoStart ? new Date() : null,
+            currentMode: initialMode,
+            modeSettings: {
+                speechTime: speechTime,
+                questionsAllowed: questionsAllowed
             }
         });
 
-        if (autoStart) {
-            session.modeStartedAt = new Date();
-        }
+        // Initialize with committee countries
+        await session.initialize();
 
-        // Calculate initial quorum
-        session.calculateQuorum();
-
-        await session.save();
-
-        // Emit WebSocket events if auto-started
-        if (autoStart && req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'session-started', {
-                sessionId: session._id,
-                sessionNumber: session.number,
-                startedAt: session.startedAt
-            });
-        }
-
-        global.logger.info(`Session ${finalSessionNumber} created for committee ${committee.name}${autoStart ? ' and started' : ''}`);
+        global.logger.info(`Session ${sessionNumber} created for committee ${committee.name}`);
 
         res.status(201).json({
             success: true,
             session: session,
-            message: `Session ${finalSessionNumber} created${autoStart ? ' and started' : ''} successfully`
+            message: 'Session created successfully'
         });
 
     } catch (error) {
@@ -157,42 +77,28 @@ const createSession = async (req, res) => {
 // Start session
 const startSession = async (req, res) => {
     try {
-        const { id } = req.params;
-
-        const session = await Session.findById(id);
+        const session = await Session.findById(req.params.id);
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
         }
 
         if (session.status === 'active') {
-            return res.status(400).json({ error: 'Session is already active' });
+            return res.status(400).json({ error: 'Session already active' });
         }
 
-        // Start session
         session.status = 'active';
         session.startedAt = new Date();
-
-        // Start session timer
-        await session.startSessionTimer(session.timers.session.totalDuration);
-
         await session.save();
 
         // Emit to committee
         if (req.app.locals.io) {
             emitToCommittee(req.app.locals.io, session.committeeId, 'session-started', {
                 sessionId: session._id,
-                sessionNumber: session.number,
-                startedAt: session.startedAt
+                sessionNumber: session.number
             });
         }
 
-        global.logger.info(`Session ${session.number} started`);
-
-        res.json({
-            success: true,
-            session: session,
-            message: 'Session started successfully'
-        });
+        res.json({ success: true, session });
 
     } catch (error) {
         global.logger.error('Start session error:', error);
@@ -200,24 +106,73 @@ const startSession = async (req, res) => {
     }
 };
 
-// Timer Management Controllers
+// End session
+const endSession = async (req, res) => {
+    try {
+        const session = await Session.findById(req.params.id);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        session.status = 'completed';
+        session.endedAt = new Date();
+
+        // Stop all timers
+        session.timers.session.isActive = false;
+        session.timers.debate.isActive = false;
+        session.timers.speaker.isActive = false;
+        session.timers.additional.forEach(t => t.isActive = false);
+
+        await session.save();
+
+        // Emit to committee
+        if (req.app.locals.io) {
+            emitToCommittee(req.app.locals.io, session.committeeId, 'session-ended', {
+                sessionId: session._id,
+                duration: session.endedAt - session.startedAt
+            });
+        }
+
+        res.json({ success: true, session });
+
+    } catch (error) {
+        global.logger.error('End session error:', error);
+        res.status(500).json({ error: 'Failed to end session' });
+    }
+};
+
+// Get session
+const getSession = async (req, res) => {
+    try {
+        const session = await Session.findById(req.params.id);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        res.json({ success: true, session });
+
+    } catch (error) {
+        global.logger.error('Get session error:', error);
+        res.status(500).json({ error: 'Failed to get session' });
+    }
+};
+
+// ==================== ROLL CALL ====================
 
 // Start roll call
 const startRollCall = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { timeLimit } = req.body; // optional time limit in minutes
+        const { timeLimit } = req.body;
+        const session = await Session.findById(req.params.id);
 
-        const session = await Session.findById(id);
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
         }
 
         if (session.rollCall.isActive) {
-            return res.status(400).json({ error: 'Roll call is already in progress' });
+            return res.status(400).json({ error: 'Roll call already in progress' });
         }
 
-        // Start roll call
         const timeLimitSeconds = timeLimit ? timeLimit * 60 : null;
         await session.startRollCall(req.user.userId, timeLimitSeconds);
 
@@ -225,18 +180,14 @@ const startRollCall = async (req, res) => {
         if (req.app.locals.io) {
             emitToCommittee(req.app.locals.io, session.committeeId, 'roll-call-started', {
                 sessionId: session._id,
-                timeLimit: timeLimitSeconds,
-                totalCountries: session.attendance.length
+                timeLimit: timeLimitSeconds
             });
         }
-
-        global.logger.info(`Roll call started for session ${session.number}`);
 
         res.json({
             success: true,
             rollCall: session.rollCall,
-            attendance: session.attendance,
-            message: 'Roll call started successfully'
+            message: 'Roll call started'
         });
 
     } catch (error) {
@@ -245,44 +196,37 @@ const startRollCall = async (req, res) => {
     }
 };
 
-// End roll call
+// End roll call - This initializes the speaker lists!
 const endRollCall = async (req, res) => {
     try {
-        const { id } = req.params;
+        const session = await Session.findById(req.params.id);
 
-        const session = await Session.findById(id);
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
         }
 
         if (!session.rollCall.isActive) {
-            return res.status(400).json({ error: 'No active roll call to end' });
+            return res.status(400).json({ error: 'No active roll call' });
         }
 
-        // End roll call and calculate quorum
+        // End roll call and initialize speaker lists
         await session.endRollCall();
-
-        // Initialize speaker queues based on attendance
-        await session.initializeSpeakerQueues();
 
         // Emit to committee
         if (req.app.locals.io) {
             emitToCommittee(req.app.locals.io, session.committeeId, 'roll-call-ended', {
                 sessionId: session._id,
                 quorum: session.quorum,
-                presentCount: session.attendance.filter(a => a.status === 'present_and_voting').length
+                speakerLists: session.speakerLists
             });
         }
-
-        global.logger.info(`Roll call ended for session ${session.number}. Quorum: ${session.quorum.hasQuorum}`);
 
         res.json({
             success: true,
             rollCall: session.rollCall,
             quorum: session.quorum,
-            attendance: session.attendance,
-            speakerQueues: session.speakerQueues,
-            message: 'Roll call ended successfully'
+            speakerLists: session.speakerLists,
+            message: 'Roll call ended, speaker lists initialized'
         });
 
     } catch (error) {
@@ -291,153 +235,175 @@ const endRollCall = async (req, res) => {
     }
 };
 
-// Mark attendance (presidium can mark anyone, delegates can mark themselves during roll call)
+// Mark attendance
 const markAttendance = async (req, res) => {
     try {
-        const { id } = req.params;
         const { country, status } = req.body;
+        const session = await Session.findById(req.params.id);
 
-        const session = await Session.findById(id);
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        // Validate status
-        const validStatuses = ['absent', 'present', 'present_and_voting'];
-        if (!validStatuses.includes(status)) {
-            return res.status(400).json({ error: 'Invalid attendance status' });
+        // Check permission (delegates can only mark themselves)
+        if (req.user.role === 'delegate' && country !== req.user.countryName) {
+            return res.status(403).json({ error: 'Can only mark your own attendance' });
         }
 
-        // Check permissions
-        if (req.user.role === 'delegate') {
-            // Delegates can only mark themselves during active roll call
-            if (!session.rollCall.isActive) {
-                return res.status(400).json({ error: 'Roll call is not active' });
-            }
+        await session.markAttendance(country, status);
 
-            if (country !== req.user.countryName) {
-                return res.status(403).json({ error: 'You can only mark your own attendance' });
-            }
-        }
-
-        // Mark attendance
-        await session.markAttendance(country, status, req.user.userId);
-
-        // Emit real-time update
+        // Emit to committee
         if (req.app.locals.io) {
             emitToCommittee(req.app.locals.io, session.committeeId, 'attendance-updated', {
                 sessionId: session._id,
                 country,
                 status,
-                quorum: session.quorum
+                quorum: session.quorum,
+                speakerLists: session.speakerLists
             });
         }
 
         res.json({
             success: true,
-            attendance: session.attendance.find(a => a.country === country),
+            attendance: session.attendance,
             quorum: session.quorum,
-            message: `Attendance marked for ${country}: ${status}`
+            speakerLists: session.speakerLists
         });
 
     } catch (error) {
         global.logger.error('Mark attendance error:', error);
-        res.status(500).json({ error: 'Failed to mark attendance' });
+        res.status(500).json({ error: error.message || 'Failed to mark attendance' });
     }
 };
 
-// Timer Control Methods
+// ==================== MODE MANAGEMENT ====================
 
-// Start debate timer
-const startDebateTimer = async (req, res) => {
+// Change debate mode
+const changeMode = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { duration, debateType, purpose } = req.body;
+        const { mode, settings = {} } = req.body;
+        const session = await Session.findById(req.params.id);
 
-        const session = await Session.findById(id);
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        await session.startDebateTimer(duration, debateType, purpose);
+        const startedBy = {
+            email: req.user.email,
+            name: req.user.name || 'Presidium',
+            userId: req.user.userId
+        };
+
+        await session.changeMode(mode, settings, startedBy);
 
         // Emit to committee
         if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'debate-timer-started', {
+            emitToCommittee(req.app.locals.io, session.committeeId, 'mode-changed', {
                 sessionId: session._id,
+                mode: session.currentMode,
+                modeSettings: session.modeSettings,
+                timers: session.timers
+            });
+        }
+
+        res.json({
+            success: true,
+            currentMode: session.currentMode,
+            modeSettings: session.modeSettings,
+            timers: session.timers,
+            message: `Mode changed to ${mode}`
+        });
+
+    } catch (error) {
+        global.logger.error('Change mode error:', error);
+        res.status(500).json({ error: 'Failed to change mode' });
+    }
+};
+
+// ==================== TIMER MANAGEMENT ====================
+
+// Start session timer
+const startSessionTimer = async (req, res) => {
+    try {
+        const { duration, purpose } = req.body;
+        const session = await Session.findById(req.params.id);
+
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        await session.startSessionTimer(duration, purpose);
+
+        // Emit to committee
+        if (req.app.locals.io) {
+            emitToCommittee(req.app.locals.io, session.committeeId, 'timer-started', {
+                sessionId: session._id,
+                timerType: 'session',
+                timer: session.timers.session
+            });
+        }
+
+        res.json({
+            success: true,
+            timer: session.timers.session
+        });
+
+    } catch (error) {
+        global.logger.error('Start session timer error:', error);
+        res.status(500).json({ error: 'Failed to start timer' });
+    }
+};
+
+// Start debate timer (after mode change)
+const startDebateTimer = async (req, res) => {
+    try {
+        const session = await Session.findById(req.params.id);
+
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        await session.startDebateTimer();
+
+        // Emit to committee
+        if (req.app.locals.io) {
+            emitToCommittee(req.app.locals.io, session.committeeId, 'timer-started', {
+                sessionId: session._id,
+                timerType: 'debate',
                 timer: session.timers.debate
             });
         }
 
         res.json({
             success: true,
-            timer: session.timers.debate,
-            message: 'Debate timer started'
+            timer: session.timers.debate
         });
 
     } catch (error) {
         global.logger.error('Start debate timer error:', error);
-        res.status(500).json({ error: 'Failed to start debate timer' });
+        res.status(500).json({ error: error.message || 'Failed to start timer' });
     }
 };
 
-// Start speaker timer
-const startSpeakerTimer = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { duration, country, canBeExtended } = req.body;
-
-        const session = await Session.findById(id);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        await session.startSpeakerTimer(duration, country, canBeExtended);
-
-        // Set current speaker if specified
-        if (country) {
-            await session.setCurrentSpeaker(country);
-        }
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'speaker-timer-started', {
-                sessionId: session._id,
-                timer: session.timers.speaker,
-                currentSpeaker: session.currentSpeaker
-            });
-        }
-
-        res.json({
-            success: true,
-            timer: session.timers.speaker,
-            currentSpeaker: session.currentSpeaker,
-            message: 'Speaker timer started'
-        });
-
-    } catch (error) {
-        global.logger.error('Start speaker timer error:', error);
-        res.status(500).json({ error: 'Failed to start speaker timer' });
-    }
-};
-
-// Pause/Resume timer
+// Toggle timer (pause/resume)
 const toggleTimer = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { timerType, action } = req.body; // action: 'pause' or 'resume'
+        const { timerType } = req.body;
+        const session = await Session.findById(req.params.id);
 
-        const session = await Session.findById(id);
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        if (action === 'pause') {
-            await session.pauseTimer(timerType);
-        } else if (action === 'resume') {
+        const timer = session.timers[timerType];
+        if (!timer) {
+            return res.status(400).json({ error: 'Invalid timer type' });
+        }
+
+        if (timer.isPaused) {
             await session.resumeTimer(timerType);
         } else {
-            return res.status(400).json({ error: 'Invalid action. Use "pause" or "resume"' });
+            await session.pauseTimer(timerType);
         }
 
         // Emit to committee
@@ -445,15 +411,13 @@ const toggleTimer = async (req, res) => {
             emitToCommittee(req.app.locals.io, session.committeeId, 'timer-toggled', {
                 sessionId: session._id,
                 timerType,
-                action,
                 timer: session.timers[timerType]
             });
         }
 
         res.json({
             success: true,
-            timer: session.timers[timerType],
-            message: `Timer ${action}d successfully`
+            timer: session.timers[timerType]
         });
 
     } catch (error) {
@@ -462,39 +426,30 @@ const toggleTimer = async (req, res) => {
     }
 };
 
-// Adjust timer (real-time manual adjustment)
+// Adjust timer
 const adjustTimer = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { timerType, newTime, reason } = req.body;
+        const { timerType, newTime } = req.body;
+        const session = await Session.findById(req.params.id);
 
-        const session = await Session.findById(id);
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        const oldTime = session.timers[timerType]?.remainingTime;
         await session.adjustTimer(timerType, newTime);
-
-        // Log the adjustment
-        global.logger.info(`Timer adjusted for session ${session.number}: ${timerType} from ${oldTime}s to ${newTime}s. Reason: ${reason || 'None provided'}`);
 
         // Emit to committee
         if (req.app.locals.io) {
             emitToCommittee(req.app.locals.io, session.committeeId, 'timer-adjusted', {
                 sessionId: session._id,
                 timerType,
-                oldTime,
-                newTime,
-                reason,
                 timer: session.timers[timerType]
             });
         }
 
         res.json({
             success: true,
-            timer: session.timers[timerType],
-            message: 'Timer adjusted successfully'
+            timer: session.timers[timerType]
         });
 
     } catch (error) {
@@ -503,172 +458,24 @@ const adjustTimer = async (req, res) => {
     }
 };
 
-// Change debate mode
-const changeDebateMode = async (req, res) => {
+// Add additional timer
+const addAdditionalTimer = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { mode, modeSettings, reason, startedBy } = req.body;
+        const { name, purpose, duration } = req.body;
+        const session = await Session.findById(req.params.id);
 
-        const session = await Session.findById(id);
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        // Use the fixed changeMode method that handles missing settings
-        await session.changeMode(mode, modeSettings, startedBy);
+        await session.addAdditionalTimer(name, purpose, duration);
 
         // Emit to committee
         if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'session-mode-changed', {
+            emitToCommittee(req.app.locals.io, session.committeeId, 'additional-timer-added', {
                 sessionId: session._id,
-                mode: mode,
-                modeSettings: session.modeSettings,
-                reason: reason
+                timers: session.timers
             });
-        }
-
-        res.json({
-            success: true,
-            currentMode: session.currentMode,
-            modeSettings: session.modeSettings,
-            message: `Mode changed to ${mode}`
-        });
-
-    } catch (error) {
-        global.logger.error('Change debate mode error:', error);
-        res.status(500).json({ error: 'Failed to change debate mode' });
-    }
-};
-
-// Speaker Queue Management
-
-// Move delegate to end of queue (delegates can move themselves once)
-const moveToEndOfQueue = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { country } = req.body;
-
-        const session = await Session.findById(id);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        // Check permissions
-        if (req.user.role === 'delegate' && country !== req.user.countryName) {
-            return res.status(403).json({ error: 'You can only move yourself in the queue' });
-        }
-
-        await session.moveToEndOfQueue(country);
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'speaker-queue-updated', {
-                sessionId: session._id,
-                action: 'moved_to_end',
-                country,
-                speakerQueues: session.speakerQueues
-            });
-        }
-
-        res.json({
-            success: true,
-            speakerQueues: session.speakerQueues,
-            message: `${country} moved to end of speakers queue`
-        });
-
-    } catch (error) {
-        global.logger.error('Move to end of queue error:', error);
-
-        if (error.message.includes('already moved to end') ||
-            error.message.includes('not found') ||
-            error.message.includes('while they are speaking')) {
-            return res.status(400).json({ error: error.message });
-        }
-
-        res.status(500).json({ error: 'Failed to move to end of queue' });
-    }
-};
-
-// Set current speaker
-const setCurrentSpeaker = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { country } = req.body;
-
-        const session = await Session.findById(id);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        await session.setCurrentSpeaker(country);
-
-        // Start speaker timer with appropriate duration
-        const speechTime = session.modeSettings.individualSpeechTime ||
-            session.modeSettings.speechTime || 90;
-
-        await session.startSpeakerTimer(speechTime, country, session.modeSettings.questionsAllowed);
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'current-speaker-changed', {
-                sessionId: session._id,
-                currentSpeaker: session.currentSpeaker,
-                speakerTimer: session.timers.speaker,
-                speakerQueues: session.speakerQueues
-            });
-        }
-
-        res.json({
-            success: true,
-            currentSpeaker: session.currentSpeaker,
-            speakerTimer: session.timers.speaker,
-            speakerQueues: session.speakerQueues,
-            message: `Current speaker set to ${country}`
-        });
-
-    } catch (error) {
-        global.logger.error('Set current speaker error:', error);
-
-        if (error.message.includes('not found')) {
-            return res.status(400).json({ error: error.message });
-        }
-
-        res.status(500).json({ error: 'Failed to set current speaker' });
-    }
-};
-
-// Get session details
-const getSession = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const session = await Session.findById(id)
-            .populate('modeHistory.startedBy', 'presidiumRole')
-            .populate('attendance.markedBy', 'presidiumRole');
-
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        res.json({
-            success: true,
-            session
-        });
-
-    } catch (error) {
-        global.logger.error('Get session error:', error);
-        res.status(500).json({ error: 'Failed to get session details' });
-    }
-};
-
-// Get all session timers
-const getSessionTimers = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const session = await Session.findById(id).select('timers');
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
         }
 
         res.json({
@@ -677,231 +484,157 @@ const getSessionTimers = async (req, res) => {
         });
 
     } catch (error) {
-        global.logger.error('Get session timers error:', error);
-        res.status(500).json({ error: 'Failed to get session timers' });
+        global.logger.error('Add additional timer error:', error);
+        res.status(500).json({ error: error.message || 'Failed to add timer' });
     }
 };
 
-// End session
-const endSession = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { reason } = req.body; // optional reason for ending
+// ==================== SPEAKER MANAGEMENT ====================
 
-        const session = await Session.findById(id);
+// Set current speaker (and start their timer)
+const setCurrentSpeaker = async (req, res) => {
+    try {
+        const { country } = req.body;
+        const session = await Session.findById(req.params.id);
+
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        if (session.status === 'completed') {
-            return res.status(400).json({ error: 'Session is already completed' });
+        await session.setCurrentSpeaker(country);
+
+        // Emit to committee
+        if (req.app.locals.io) {
+            emitToCommittee(req.app.locals.io, session.committeeId, 'current-speaker-set', {
+                sessionId: session._id,
+                currentSpeaker: session.currentSpeaker,
+                speakerTimer: session.timers.speaker,
+                speakerLists: session.speakerLists
+            });
         }
 
-        if (session.status === 'inactive') {
-            return res.status(400).json({ error: 'Cannot end an inactive session' });
+        res.json({
+            success: true,
+            currentSpeaker: session.currentSpeaker,
+            speakerTimer: session.timers.speaker,
+            speakerLists: session.speakerLists
+        });
+
+    } catch (error) {
+        global.logger.error('Set current speaker error:', error);
+        res.status(500).json({ error: error.message || 'Failed to set speaker' });
+    }
+};
+
+// Move speaker to end (can only do once)
+const moveToEnd = async (req, res) => {
+    try {
+        const { country } = req.body;
+        const session = await Session.findById(req.params.id);
+
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
         }
 
-        // End session
-        session.status = 'completed';
-        session.endedAt = new Date();
-
-        // Stop all active timers
-        if (session.timers.session.isActive) {
-            session.timers.session.isActive = false;
-            session.timers.session.remainingTime = 0;
+        // Delegates can only move themselves
+        if (req.user.role === 'delegate' && country !== req.user.countryName) {
+            return res.status(403).json({ error: 'Can only move yourself' });
         }
 
-        if (session.timers.debate.isActive) {
-            session.timers.debate.isActive = false;
-            session.timers.debate.remainingTime = 0;
+        await session.moveToEndOfQueue(country);
+
+        // Emit to committee
+        if (req.app.locals.io) {
+            emitToCommittee(req.app.locals.io, session.committeeId, 'speaker-moved', {
+                sessionId: session._id,
+                country,
+                speakerLists: session.speakerLists
+            });
         }
 
-        if (session.timers.speaker.isActive) {
-            session.timers.speaker.isActive = false;
-            session.timers.speaker.remainingTime = 0;
+        res.json({
+            success: true,
+            speakerLists: session.speakerLists,
+            message: `${country} moved to end of queue`
+        });
+
+    } catch (error) {
+        global.logger.error('Move to end error:', error);
+        res.status(400).json({ error: error.message || 'Failed to move speaker' });
+    }
+};
+
+// Get next speaker
+const getNextSpeaker = async (req, res) => {
+    try {
+        const session = await Session.findById(req.params.id);
+
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
         }
 
-        // Stop any additional timers
-        session.timers.additional.forEach(timer => {
-            if (timer.isActive) {
-                timer.isActive = false;
-                timer.remainingTime = 0;
+        const nextSpeaker = session.getNextSpeaker();
+
+        res.json({
+            success: true,
+            nextSpeaker
+        });
+
+    } catch (error) {
+        global.logger.error('Get next speaker error:', error);
+        res.status(500).json({ error: 'Failed to get next speaker' });
+    }
+};
+
+// Get committee sessions
+const getCommitteeSessions = async (req, res) => {
+    try {
+        const { committeeId } = req.params;
+        const { status, page = 1, limit = 20 } = req.query;
+
+        const filter = { committeeId };
+        if (status) filter.status = status;
+
+        const sessions = await Session.find(filter)
+            .select('number title status startedAt endedAt currentMode quorum')
+            .sort({ number: -1 })
+            .limit(limit * 1)
+            .skip((page - 1) * limit);
+
+        const total = await Session.countDocuments(filter);
+
+        res.json({
+            success: true,
+            sessions,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(total / limit),
+                totalItems: total
             }
         });
 
-        // Clear current speaker
-        if (session.currentSpeaker) {
-            session.currentSpeaker = null;
-        }
-
-        // End current mode
-        if (session.currentMode && session.modeStartedAt) {
-            session.modeHistory.push({
-                mode: session.currentMode,
-                settings: { ...session.modeSettings },
-                startedAt: session.modeStartedAt,
-                endedAt: new Date(),
-                startedBy: req.user.userId
-            });
-        }
-
-        await session.save();
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'session-ended', {
-                sessionId: session._id,
-                sessionNumber: session.number,
-                endedAt: session.endedAt,
-                duration: session.endedAt - session.startedAt,
-                reason: reason || 'Session completed'
-            });
-        }
-
-        // Calculate session duration
-        const duration = session.endedAt - session.startedAt;
-        const durationMinutes = Math.floor(duration / (1000 * 60));
-
-        global.logger.info(`Session ${session.number} ended after ${durationMinutes} minutes. Reason: ${reason || 'Normal completion'}`);
-
-        res.json({
-            success: true,
-            session: session,
-            duration: {
-                milliseconds: duration,
-                minutes: durationMinutes,
-                formatted: `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`
-            },
-            message: 'Session ended successfully'
-        });
-
     } catch (error) {
-        global.logger.error('End session error:', error);
-        res.status(500).json({ error: 'Failed to end session' });
-    }
-};
-
-
-// Start session timer
-const startSessionTimer = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { duration, purpose } = req.body;
-
-        const session = await Session.findById(id);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        await session.startSessionTimer(duration, purpose || 'Session time management');
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'session-timer-started', {
-                sessionId: session._id,
-                timer: session.timers.session
-            });
-        }
-
-        res.json({
-            success: true,
-            timer: session.timers.session,
-            message: 'Session timer started'
-        });
-
-    } catch (error) {
-        global.logger.error('Start session timer error:', error);
-        res.status(500).json({ error: 'Failed to start session timer' });
-    }
-};
-
-
-// Add speaker to queue
-const addSpeakerToQueue = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { country, email } = req.body;
-
-        const session = await Session.findById(id);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        // Add speaker to the main queue
-        await session.addToSpeakerQueue(country, email);
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'speaker-added-to-queue', {
-                sessionId: session._id,
-                speaker: { country, email },
-                speakerQueues: session.speakerQueues
-            });
-        }
-
-        res.json({
-            success: true,
-            speakerQueues: session.speakerQueues,
-            message: `${country} added to speakers queue`
-        });
-
-    } catch (error) {
-        global.logger.error('Add speaker to queue error:', error);
-        res.status(500).json({ error: 'Failed to add speaker to queue' });
-    }
-};
-
-// Remove speaker from queue
-const removeSpeakerFromQueue = async (req, res) => {
-    try {
-        const { id, country } = req.params;
-
-        const session = await Session.findById(id);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        // Remove speaker from all queues
-        await session.removeFromSpeakerQueue(country);
-
-        // Emit to committee
-        if (req.app.locals.io) {
-            emitToCommittee(req.app.locals.io, session.committeeId, 'speaker-removed-from-queue', {
-                sessionId: session._id,
-                country: country,
-                speakerQueues: session.speakerQueues
-            });
-        }
-
-        res.json({
-            success: true,
-            speakerQueues: session.speakerQueues,
-            message: `${country} removed from speakers queue`
-        });
-
-    } catch (error) {
-        global.logger.error('Remove speaker from queue error:', error);
-        res.status(500).json({ error: 'Failed to remove speaker from queue' });
+        global.logger.error('Get committee sessions error:', error);
+        res.status(500).json({ error: 'Failed to get sessions' });
     }
 };
 
 module.exports = {
     createSession,
     startSession,
+    endSession,
+    getSession,
     startRollCall,
     endRollCall,
     markAttendance,
+    changeMode,
+    startSessionTimer,
     startDebateTimer,
-    startSpeakerTimer,
     toggleTimer,
     adjustTimer,
-    changeDebateMode,
-    moveToEndOfQueue,
+    addAdditionalTimer,
     setCurrentSpeaker,
-    getSession,
-    getSessionTimers,
-    endSession,
-    startSessionTimer,
-    addSpeakerToQueue,
-    removeSpeakerFromQueue
+    moveToEnd,
+    getNextSpeaker,
+    getCommitteeSessions
 };

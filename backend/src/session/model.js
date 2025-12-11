@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// Enhanced Session schema for comprehensive MUN session management
+// Complete MUN Session Model - FIXED VERSION
 const sessionSchema = new mongoose.Schema({
     committeeId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -8,19 +8,9 @@ const sessionSchema = new mongoose.Schema({
         required: true
     },
 
-    // Session basic info
-    number: {
-        type: Number,
-        required: true,
-        min: 1
-    },
-
-    title: {
-        type: String,
-        required: true,
-        trim: true,
-        maxlength: 200
-    },
+    // Basic Session Info
+    number: { type: Number, required: true, min: 1 },
+    title: { type: String, required: true, trim: true },
 
     status: {
         type: String,
@@ -28,80 +18,57 @@ const sessionSchema = new mongoose.Schema({
         default: 'inactive'
     },
 
-    // Session timing
-    startedAt: {
-        type: Date,
-        default: null
-    },
+    startedAt: Date,
+    endedAt: Date,
 
-    pausedAt: {
-        type: Date,
-        default: null
-    },
-
-    endedAt: {
-        type: Date,
-        default: null
-    },
-
-    // Timer Hierarchy System
+    // COMPLETE TIMER HIERARCHY - All 4 types needed for MUN
     timers: {
-        // Session timer - overall session time
+        // Session timer - overall session duration
         session: {
-            totalDuration: { type: Number, default: 0 }, // in seconds
+            totalDuration: { type: Number, default: 0 },
             remainingTime: { type: Number, default: 0 },
             isActive: { type: Boolean, default: false },
             isPaused: { type: Boolean, default: false },
-            startedAt: { type: Date, default: null },
-            pausedTime: { type: Number, default: 0 }, // total paused time
-            extensions: [{
-                addedTime: Number,
-                addedAt: Date,
-                addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-                reason: String
-            }]
+            startedAt: Date,
+            purpose: { type: String, default: 'Session management' }
         },
 
-        // Current debate timer (primary display timer)
+        // Debate timer - for moderated/unmoderated caucuses
         debate: {
             totalDuration: { type: Number, default: 0 },
             remainingTime: { type: Number, default: 0 },
             isActive: { type: Boolean, default: false },
             isPaused: { type: Boolean, default: false },
-            startedAt: { type: Date, default: null },
-            pausedTime: { type: Number, default: 0 },
-            debateType: { type: String, enum: ['formal', 'moderated', 'unmoderated', 'informal'] },
-            purpose: String // "Moderated Caucus on Climate Change"
+            startedAt: Date,
+            debateType: String, // 'moderated', 'unmoderated'
+            topic: String
         },
 
-        // Current speaker timer
+        // Speaker timer - current speaker's time
         speaker: {
-            totalDuration: { type: Number, default: 90 }, // default 1:30
-            remainingTime: { type: Number, default: 90 },
+            totalDuration: { type: Number, default: 120 },
+            remainingTime: { type: Number, default: 120 },
             isActive: { type: Boolean, default: false },
             isPaused: { type: Boolean, default: false },
-            startedAt: { type: Date, default: null },
-            pausedTime: { type: Number, default: 0 },
-            speakerCountry: String,
+            startedAt: Date,
+            country: String,
             canBeExtended: { type: Boolean, default: false }
         },
 
         // Additional timers (up to 6)
         additional: [{
-            id: String, // unique identifier
+            id: String,
             name: String,
-            purpose: String, // "Q&A Period", "Technical Break", etc.
+            purpose: String,
             totalDuration: Number,
             remainingTime: Number,
             isActive: { type: Boolean, default: false },
             isPaused: { type: Boolean, default: false },
-            startedAt: { type: Date, default: null },
-            pausedTime: { type: Number, default: 0 },
-            priority: { type: Number, default: 0 } // for display ordering
+            startedAt: Date
         }]
     },
 
-    // Current debate mode and settings
+    // Debate Mode System
     currentMode: {
         type: String,
         enum: ['formal', 'moderated', 'unmoderated', 'informal'],
@@ -109,31 +76,33 @@ const sessionSchema = new mongoose.Schema({
     },
 
     modeSettings: {
-        // Moderated caucus specific
-        topic: String,
-        totalTime: Number, // caucus duration
-        individualSpeechTime: Number, // time per speaker
+        // Used by all modes
+        speechTime: { type: Number, default: 120 }, // seconds per speech
 
         // Formal debate specific
-        speechTime: Number,
         questionsAllowed: { type: Boolean, default: false },
         questionTime: Number,
 
-        // Informal consultation specific
+        // Moderated caucus specific
+        topic: String,
+        totalTime: Number, // max 20 min (1200 sec)
+
+        // Informal specific
         allowPassToNext: { type: Boolean, default: true }
     },
 
-    modeStartedAt: {
-        type: Date,
-        default: null
-    },
+    modeStartedAt: Date,
 
     modeHistory: [{
         mode: String,
         settings: mongoose.Schema.Types.Mixed,
         startedAt: Date,
         endedAt: Date,
-        startedBy: mongoose.Schema.Types.Mixed
+        startedBy: {
+            email: String,
+            name: String,
+            userId: mongoose.Schema.Types.ObjectId
+        }
     }],
 
     // Roll Call System
@@ -141,50 +110,44 @@ const sessionSchema = new mongoose.Schema({
         isActive: { type: Boolean, default: false },
         startedAt: Date,
         endedAt: Date,
-        startedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-        timeLimit: Number, // optional time limit in seconds
-
-        // Auto-mark countries as absent after time limit
-        autoMarkAbsent: { type: Boolean, default: true }
+        startedBy: mongoose.Schema.Types.ObjectId,
+        timeLimit: Number
     },
 
-    // Attendance tracking with three-tier system
+    // Attendance - Simple present/absent
     attendance: [{
         country: { type: String, required: true },
         email: String,
         status: {
             type: String,
-            enum: ['absent', 'present', 'present_and_voting'],
+            enum: ['absent', 'present'],
             default: 'absent'
         },
-        markedAt: { type: Date, default: Date.now },
-        markedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-        arrivedLate: { type: Boolean, default: false } // marked after session started
+        markedAt: Date,
+        arrivedLate: { type: Boolean, default: false }
     }],
 
-    // Quorum calculation
+    // Quorum
     quorum: {
         required: { type: Number, default: 0 },
         present: { type: Number, default: 0 },
         hasQuorum: { type: Boolean, default: false },
-        lastUpdated: { type: Date, default: Date.now }
+        lastUpdated: Date
     },
 
-    // Speaker Queue Management (Complex alphabetical system)
-    speakerQueues: {
-        // Primary queue - present delegates (alphabetical + moved to end)
+    // TWO SPEAKER LISTS as per MUN rules
+    speakerLists: {
+        // Present delegates - alphabetically sorted, can move to end once
         present: [{
             country: String,
             email: String,
             position: Number,
             hasMovedToEnd: { type: Boolean, default: false }, // can only move once
             addedAt: Date,
-            speaking: { type: Boolean, default: false },
-            hasSpoken: { type: Boolean, default: false },
-            spokeAt: Date
+            hasSpoken: { type: Boolean, default: false }
         }],
 
-        // Secondary queue - absent delegates waiting to be moved
+        // Absent delegates - waiting to arrive
         absent: [{
             country: String,
             email: String,
@@ -193,373 +156,313 @@ const sessionSchema = new mongoose.Schema({
         }]
     },
 
-    // Current speaker tracking
+    // Current speaker
     currentSpeaker: {
         country: String,
+        email: String,
         startedAt: Date,
-        timeAllocated: Number,
-        timeUsed: Number,
-        canTakeQuestions: { type: Boolean, default: false }
-    },
-
-    // Session statistics and tracking
-    statistics: {
-        totalSpeakingTime: { type: Number, default: 0 },
-        totalDebates: { type: Number, default: 0 },
-        participationCount: { type: Number, default: 0 },
-        proceduralMotions: { type: Number, default: 0 }
+        canTakeQuestions: Boolean
     }
 }, {
-    timestamps: true,
-    collection: 'sessions'
+    timestamps: true
 });
 
-// Indexes for better query performance
+// Indexes
 sessionSchema.index({ committeeId: 1, number: 1 }, { unique: true });
 sessionSchema.index({ committeeId: 1, status: 1 });
-sessionSchema.index({ status: 1 });
 
-// Instance Methods
+// ==================== INITIALIZATION ====================
 
-// Timer Management Methods
-sessionSchema.methods.startSessionTimer = function (duration) {
-    this.timers.session = {
-        totalDuration: duration,
-        remainingTime: duration,
-        isActive: true,
-        isPaused: false,
-        startedAt: new Date(),
-        pausedTime: 0,
-        extensions: []
-    };
-    return this.save();
-};
+// Initialize session with committee countries
+sessionSchema.methods.initialize = async function () {
+    const Committee = mongoose.model('Committee');
+    const committee = await Committee.findById(this.committeeId);
 
-sessionSchema.methods.startDebateTimer = function (duration, debateType, purpose) {
-    this.timers.debate = {
-        totalDuration: duration,
-        remainingTime: duration,
-        isActive: true,
-        isPaused: false,
-        startedAt: new Date(),
-        pausedTime: 0,
-        debateType,
-        purpose
-    };
-    return this.save();
-};
-
-sessionSchema.methods.startSpeakerTimer = function (duration, country, canBeExtended = false) {
-    this.timers.speaker = {
-        totalDuration: duration,
-        remainingTime: duration,
-        isActive: true,
-        isPaused: false,
-        startedAt: new Date(),
-        pausedTime: 0,
-        speakerCountry: country,
-        canBeExtended
-    };
-    return this.save();
-};
-
-sessionSchema.methods.pauseTimer = function (timerType) {
-    const timer = this.timers[timerType];
-    if (timer && timer.isActive && !timer.isPaused) {
-        timer.isPaused = true;
-        timer.pausedAt = new Date();
+    if (!committee || !committee.countries) {
+        throw new Error('Committee or countries not found');
     }
+
+    // Initialize attendance for all countries
+    this.attendance = committee.countries.map(c => ({
+        country: c.name,
+        email: c.email || '',
+        status: 'absent',
+        markedAt: new Date(),
+        arrivedLate: false
+    }));
+
+    // Initialize absent speaker list (alphabetically)
+    this.speakerLists.absent = committee.countries
+        .map(c => ({
+            country: c.name,
+            email: c.email || '',
+            position: 0,
+            addedAt: new Date()
+        }))
+        .sort((a, b) => a.country.localeCompare(b.country))
+        .map((speaker, index) => ({
+            ...speaker,
+            position: index + 1
+        }));
+
+    this.speakerLists.present = [];
+    this.calculateQuorum();
+
     return this.save();
 };
 
-sessionSchema.methods.resumeTimer = function (timerType) {
-    const timer = this.timers[timerType];
-    if (timer && timer.isActive && timer.isPaused) {
-        timer.isPaused = false;
-        const pauseDuration = Date.now() - new Date(timer.pausedAt).getTime();
-        timer.pausedTime += Math.floor(pauseDuration / 1000);
-        delete timer.pausedAt;
-    }
-    return this.save();
-};
+// ==================== ROLL CALL METHODS ====================
 
-sessionSchema.methods.adjustTimer = function (timerType, newTime) {
-    const timer = this.timers[timerType];
-    if (timer) {
-        timer.remainingTime = newTime;
-        if (newTime > timer.totalDuration) {
-            timer.totalDuration = newTime;
-        }
-    }
-    return this.save();
-};
-
-sessionSchema.methods.addAdditionalTimer = function (name, purpose, duration) {
-    const timerId = `additional_${Date.now()}`;
-    this.timers.additional.push({
-        id: timerId,
-        name,
-        purpose,
-        totalDuration: duration,
-        remainingTime: duration,
-        isActive: false,
-        isPaused: false,
-        priority: this.timers.additional.length
-    });
-    return this.save();
-};
-
-// Roll Call Methods
+// Start roll call
 sessionSchema.methods.startRollCall = function (startedBy, timeLimit = null) {
     this.rollCall = {
         isActive: true,
         startedAt: new Date(),
-        startedBy,
-        timeLimit,
-        autoMarkAbsent: true
+        startedBy: startedBy,
+        timeLimit: timeLimit
     };
-
-    // Reset all attendance to absent at start of roll call
-    this.attendance.forEach(att => {
-        att.status = 'absent';
-        att.markedAt = new Date();
-    });
 
     return this.save();
 };
 
+// End roll call and initialize present speaker list
 sessionSchema.methods.endRollCall = function () {
     this.rollCall.isActive = false;
     this.rollCall.endedAt = new Date();
+
+    // Move all present delegates from absent list to present list
+    const presentCountries = this.attendance
+        .filter(a => a.status === 'present')
+        .map(a => a.country);
+
+    // Create present list alphabetically
+    this.speakerLists.present = this.speakerLists.absent
+        .filter(speaker => presentCountries.includes(speaker.country))
+        .sort((a, b) => a.country.localeCompare(b.country))
+        .map((speaker, index) => ({
+            country: speaker.country,
+            email: speaker.email,
+            position: index + 1,
+            hasMovedToEnd: false,
+            addedAt: new Date(),
+            hasSpoken: false
+        }));
+
+    // Keep only absent countries in absent list
+    this.speakerLists.absent = this.speakerLists.absent
+        .filter(speaker => !presentCountries.includes(speaker.country))
+        .map((speaker, index) => ({
+            ...speaker,
+            position: index + 1
+        }));
+
     this.calculateQuorum();
     return this.save();
 };
 
-sessionSchema.methods.markAttendance = function (country, status, markedBy) {
-    const attendance = this.attendance.find(att => att.country === country);
-    if (attendance) {
-        const wasAbsent = attendance.status === 'absent';
-        attendance.status = status;
-        attendance.markedAt = new Date();
-        attendance.markedBy = markedBy;
-
-        // If marked as present after session started, flag as late arrival
-        if (wasAbsent && this.status === 'active') {
-            attendance.arrivedLate = true;
-            // Move from absent queue to present queue
-            this.moveFromAbsentToPresent(country);
-        }
+// Mark attendance
+sessionSchema.methods.markAttendance = function (country, status = 'present') {
+    const att = this.attendance.find(a => a.country === country);
+    if (!att) {
+        throw new Error('Country not found in attendance');
     }
+
+    const wasAbsent = att.status === 'absent';
+    att.status = status;
+    att.markedAt = new Date();
+
+    // If arrived late (session already started and roll call ended)
+    if (wasAbsent && this.status === 'active' && !this.rollCall.isActive) {
+        att.arrivedLate = true;
+
+        // Move from absent list to END of present list
+        this.moveFromAbsentToPresent(country);
+    }
+
     this.calculateQuorum();
     return this.save();
 };
 
-// Quorum Calculation
-sessionSchema.methods.calculateQuorum = function () {
-    const votingMembers = this.attendance.filter(att =>
-        att.status === 'present_and_voting'
-    ).length;
+// Move country from absent to present (at the end)
+sessionSchema.methods.moveFromAbsentToPresent = function (country) {
+    const absentIndex = this.speakerLists.absent.findIndex(s => s.country === country);
+    if (absentIndex === -1) return;
 
-    const totalVotingEligible = this.attendance.filter(att =>
-        att.email && att.country // has voting rights
-    ).length;
+    const speaker = this.speakerLists.absent.splice(absentIndex, 1)[0];
+
+    // Add to END of present list
+    speaker.position = this.speakerLists.present.length + 1;
+    speaker.hasMovedToEnd = false;
+    speaker.hasSpoken = false;
+    this.speakerLists.present.push(speaker);
+
+    // Reorder absent positions
+    this.speakerLists.absent.forEach((s, i) => {
+        s.position = i + 1;
+    });
+};
+
+// Calculate quorum
+sessionSchema.methods.calculateQuorum = function () {
+    const present = this.attendance.filter(a => a.status === 'present').length;
+    const total = this.attendance.length;
 
     this.quorum = {
-        required: Math.floor(totalVotingEligible / 2) + 1,
-        present: votingMembers,
-        hasQuorum: votingMembers >= Math.floor(totalVotingEligible / 2) + 1,
+        required: Math.floor(total / 2) + 1,
+        present: present,
+        hasQuorum: present >= Math.floor(total / 2) + 1,
         lastUpdated: new Date()
     };
 };
 
-// Speaker Queue Management
-sessionSchema.methods.initializeSpeakerQueues = function () {
-    const presentCountries = this.attendance
-        .filter(att => att.status === 'present' || att.status === 'present_and_voting')
-        .map(att => ({
-            country: att.country,
-            email: att.email,
-            position: 0,
-            hasMovedToEnd: false,
-            addedAt: new Date(),
-            speaking: false,
-            hasSpoken: false
-        }))
-        .sort((a, b) => a.country.localeCompare(b.country)); // Alphabetical
+// ==================== SPEAKER METHODS ====================
 
-    const absentCountries = this.attendance
-        .filter(att => att.status === 'absent')
-        .map(att => ({
-            country: att.country,
-            email: att.email,
-            position: 0,
-            addedAt: new Date()
-        }))
-        .sort((a, b) => a.country.localeCompare(b.country)); // Alphabetical
-
-    // Assign positions
-    presentCountries.forEach((speaker, index) => {
-        speaker.position = index + 1;
-    });
-
-    absentCountries.forEach((speaker, index) => {
-        speaker.position = index + 1;
-    });
-
-    this.speakerQueues = {
-        present: presentCountries,
-        absent: absentCountries
-    };
-
-    return this.save();
-};
-
+// Move delegate to end of queue (can only do once)
 sessionSchema.methods.moveToEndOfQueue = function (country) {
-    const speaker = this.speakerQueues.present.find(s => s.country === country);
+    const speaker = this.speakerLists.present.find(s => s.country === country);
 
     if (!speaker) {
-        throw new Error(`${country} not found in present speakers queue`);
+        throw new Error(`${country} not found in present speakers list`);
     }
 
     if (speaker.hasMovedToEnd) {
         throw new Error(`${country} has already moved to end once`);
     }
 
-    if (speaker.speaking) {
+    if (this.currentSpeaker?.country === country) {
         throw new Error(`Cannot move ${country} while they are speaking`);
     }
 
     // Remove from current position
-    this.speakerQueues.present = this.speakerQueues.present.filter(s => s.country !== country);
+    this.speakerLists.present = this.speakerLists.present.filter(s => s.country !== country);
 
-    // Mark as having moved and add to end
+    // Add to end
     speaker.hasMovedToEnd = true;
-    speaker.position = this.speakerQueues.present.length + 1;
-    this.speakerQueues.present.push(speaker);
+    speaker.position = this.speakerLists.present.length + 1;
+    this.speakerLists.present.push(speaker);
 
     // Reorder positions
-    this.speakerQueues.present.forEach((speaker, index) => {
-        speaker.position = index + 1;
+    this.speakerLists.present.forEach((s, i) => {
+        s.position = i + 1;
     });
 
     return this.save();
 };
 
-sessionSchema.methods.moveFromAbsentToPresent = function (country) {
-    const absentIndex = this.speakerQueues.absent.findIndex(s => s.country === country);
-
-    if (absentIndex === -1) {
-        return; // Country not in absent queue
-    }
-
-    // Remove from absent queue
-    const speaker = this.speakerQueues.absent.splice(absentIndex, 1)[0];
-
-    // Add to end of present queue
-    speaker.hasMovedToEnd = false; // Reset movement flag
-    speaker.position = this.speakerQueues.present.length + 1;
-    speaker.addedAt = new Date();
-
-    this.speakerQueues.present.push(speaker);
-
-    // Reorder absent queue positions
-    this.speakerQueues.absent.forEach((speaker, index) => {
-        speaker.position = index + 1;
-    });
-
-    return this.save();
-};
-
+// Set current speaker and start their timer
 sessionSchema.methods.setCurrentSpeaker = function (country) {
-    const speaker = this.speakerQueues.present.find(s => s.country === country);
+    const speaker = this.speakerLists.present.find(s => s.country === country);
 
     if (!speaker) {
-        throw new Error(`${country} not found in speakers queue`);
+        throw new Error(`${country} not found in speakers list`);
     }
 
-    // Clear previous speaker
-    this.speakerQueues.present.forEach(s => {
-        if (s.speaking) {
-            s.speaking = false;
-            s.hasSpoken = true;
-            s.spokeAt = new Date();
+    // Mark previous speaker as having spoken
+    if (this.currentSpeaker) {
+        const prevSpeaker = this.speakerLists.present.find(
+            s => s.country === this.currentSpeaker.country
+        );
+        if (prevSpeaker) {
+            prevSpeaker.hasSpoken = true;
         }
-    });
+    }
 
-    // Set new speaker
-    speaker.speaking = true;
+    // Set new current speaker
     this.currentSpeaker = {
-        country,
+        country: speaker.country,
+        email: speaker.email,
         startedAt: new Date(),
-        timeAllocated: this.modeSettings.individualSpeechTime || this.modeSettings.speechTime || 90,
-        timeUsed: 0,
         canTakeQuestions: this.modeSettings.questionsAllowed || false
     };
 
+    // Start speaker timer
+    const speechTime = this.modeSettings.speechTime || 120;
+    this.timers.speaker = {
+        totalDuration: speechTime,
+        remainingTime: speechTime,
+        isActive: true,
+        isPaused: false,
+        startedAt: new Date(),
+        country: country,
+        canBeExtended: this.modeSettings.questionsAllowed || false
+    };
+
     return this.save();
 };
 
-// Debate Mode Management
-sessionSchema.methods.changeMode = function (newMode, settings = {}, changedBy = null) {
-    // Provide default settings if not provided
-    const defaultSettings = {
-        topic: `${newMode.charAt(0).toUpperCase() + newMode.slice(1)} debate session`,
-        totalTime: newMode === 'moderated' ? 600 : newMode === 'unmoderated' ? 900 : 0,
-        speechTime: newMode === 'moderated' ? 120 : newMode === 'formal' ? 180 : 60,
-        allowQuestions: newMode === 'moderated' || newMode === 'formal'
-    };
+// Get next speaker in queue
+sessionSchema.methods.getNextSpeaker = function () {
+    // Find first speaker who hasn't spoken
+    const nextSpeaker = this.speakerLists.present.find(s => !s.hasSpoken);
+    return nextSpeaker || null;
+};
 
-    // Merge provided settings with defaults
-    const finalSettings = { ...defaultSettings, ...settings };
+// ==================== MODE METHODS ====================
 
-    // Fix: Ensure changedBy is properly formatted
-    const startedByInfo = changedBy ? {
-        email: changedBy.email || `${changedBy.role}@presidium.mun.uz`,
-        name: changedBy.name || 'Presidium Member',
-        userId: changedBy.userId || null
-    } : {
-        email: 'system@mun.uz',
-        name: 'System',
-        userId: null
-    };
-
-    // Record current mode in history
+// Change debate mode
+sessionSchema.methods.changeMode = function (mode, settings = {}, startedBy = null) {
+    // Save current mode to history
     if (this.currentMode && this.modeStartedAt) {
         this.modeHistory.push({
             mode: this.currentMode,
             settings: { ...this.modeSettings },
             startedAt: this.modeStartedAt,
             endedAt: new Date(),
-            startedBy: startedByInfo  // Now properly formatted
+            startedBy: startedBy ? {
+                email: startedBy.email || 'presidium@mun.uz',
+                name: startedBy.name || 'Presidium',
+                userId: startedBy.userId || null
+            } : null
         });
     }
 
-    this.currentMode = newMode;
-    this.modeSettings = finalSettings;
+    // Set new mode
+    this.currentMode = mode;
     this.modeStartedAt = new Date();
 
-    // Mode-specific initialization
-    if (newMode === 'moderated') {
-        // Initialize speaker queue for moderated caucus
-        if (typeof this.initializeSpeakerQueues === 'function') {
-            this.initializeSpeakerQueues();
+    // Apply mode-specific defaults
+    const defaults = {
+        formal: {
+            speechTime: settings.speechTime || 180,
+            questionsAllowed: settings.questionsAllowed !== undefined ? settings.questionsAllowed : false
+        },
+        moderated: {
+            speechTime: settings.speechTime || 90,
+            totalTime: Math.min(settings.totalTime || 600, 1200), // max 20 min
+            topic: settings.topic || 'Discussion',
+            questionsAllowed: false // no questions in moderated
+        },
+        unmoderated: {
+            totalTime: Math.min(settings.totalTime || 600, 1200), // max 20 min
+            speechTime: 0 // no individual speech time
+        },
+        informal: {
+            speechTime: settings.speechTime || 120,
+            allowPassToNext: true
         }
+    };
 
-        // Start debate timer if totalTime is provided
-        if (finalSettings.totalTime && finalSettings.totalTime > 0) {
-            if (typeof this.startDebateTimer === 'function') {
-                this.startDebateTimer(
-                    finalSettings.totalTime,
-                    'moderated',
-                    `Moderated Caucus: ${finalSettings.topic || 'General Discussion'}`
-                );
-            }
-        }
+    this.modeSettings = { ...defaults[mode], ...settings };
+
+    // Start debate timer for moderated/unmoderated
+    if (mode === 'moderated' || mode === 'unmoderated') {
+        this.timers.debate = {
+            totalDuration: this.modeSettings.totalTime,
+            remainingTime: this.modeSettings.totalTime,
+            isActive: false, // Don't auto-start, presidium must start it
+            isPaused: false,
+            startedAt: null,
+            debateType: mode,
+            topic: this.modeSettings.topic || ''
+        };
     }
 
     return this.save();
 };
 
+// ==================== TIMER METHODS ====================
+
+// Start session timer
 sessionSchema.methods.startSessionTimer = function (duration, purpose = 'Session management') {
     this.timers.session = {
         totalDuration: duration,
@@ -567,55 +470,73 @@ sessionSchema.methods.startSessionTimer = function (duration, purpose = 'Session
         isActive: true,
         isPaused: false,
         startedAt: new Date(),
-        pausedTime: 0,
         purpose: purpose
     };
     return this.save();
 };
 
-sessionSchema.methods.addToSpeakerQueue = function (country, email) {
-    // Initialize speaker queues if they don't exist
-    if (!this.speakerQueues) {
-        this.speakerQueues = {
-            main: [],
-            present: [],
-            absent: []
-        };
+// Start debate timer (for moderated/unmoderated)
+sessionSchema.methods.startDebateTimer = function () {
+    if (!this.timers.debate.totalDuration) {
+        throw new Error('Debate timer not configured');
     }
 
-    // Check if speaker is already in queue
-    const existsInMain = this.speakerQueues.main.find(s => s.country === country);
-    if (existsInMain) {
-        throw new Error(`${country} is already in the speakers queue`);
-    }
-
-    const speaker = {
-        country,
-        email,
-        position: this.speakerQueues.main.length + 1,
-        addedAt: new Date(),
-        speaking: false,
-        hasSpoken: false
-    };
-
-    this.speakerQueues.main.push(speaker);
+    this.timers.debate.isActive = true;
+    this.timers.debate.isPaused = false;
+    this.timers.debate.startedAt = new Date();
     return this.save();
 };
 
-sessionSchema.methods.removeFromSpeakerQueue = function (country) {
-    if (!this.speakerQueues) return this.save();
+// Pause any timer
+sessionSchema.methods.pauseTimer = function (timerType) {
+    const timer = this.timers[timerType];
+    if (timer && timer.isActive && !timer.isPaused) {
+        timer.isPaused = true;
+    }
+    return this.save();
+};
 
-    // Remove from main queue
-    this.speakerQueues.main = this.speakerQueues.main.filter(s => s.country !== country);
-    
-    // Reorder positions
-    this.speakerQueues.main.forEach((speaker, index) => {
-        speaker.position = index + 1;
+// Resume any timer
+sessionSchema.methods.resumeTimer = function (timerType) {
+    const timer = this.timers[timerType];
+    if (timer && timer.isActive && timer.isPaused) {
+        timer.isPaused = false;
+    }
+    return this.save();
+};
+
+// Adjust timer remaining time
+sessionSchema.methods.adjustTimer = function (timerType, newTime) {
+    const timer = this.timers[timerType];
+    if (timer) {
+        timer.remainingTime = Math.max(0, newTime);
+        if (newTime > timer.totalDuration) {
+            timer.totalDuration = newTime;
+        }
+    }
+    return this.save();
+};
+
+// Add additional timer
+sessionSchema.methods.addAdditionalTimer = function (name, purpose, duration) {
+    if (this.timers.additional.length >= 6) {
+        throw new Error('Maximum 6 additional timers allowed');
+    }
+
+    const timerId = `timer_${Date.now()}`;
+    this.timers.additional.push({
+        id: timerId,
+        name: name,
+        purpose: purpose,
+        totalDuration: duration,
+        remainingTime: duration,
+        isActive: false,
+        isPaused: false,
+        startedAt: null
     });
 
     return this.save();
 };
 
 const Session = mongoose.model('Session', sessionSchema);
-
 module.exports = { Session };

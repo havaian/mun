@@ -28,7 +28,7 @@
                             'font-mono text-lg font-bold',
                             quorum.hasQuorum ? 'text-green-600' : 'text-red-600'
                         ]">
-                            {{ quorum.presentVoting || 0 }} / {{ quorum.required || 0 }}
+                            {{ quorum.present || 0 }} / {{ quorum.required || 0 }}
                         </span>
                     </div>
 
@@ -208,19 +208,36 @@
                     </div>
 
                     <!-- Timer Selection -->
-                    <div class="grid grid-cols-2 gap-2 text-sm">
-                        <button @click="startSpeakerTimer" :class="[
-                            'px-3 py-2 rounded-lg border transition-colors',
-                            activeTimerType === 'speaker' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 hover:bg-gray-50'
-                        ]" :disabled="!currentSpeaker">
-                            Speaker Timer
-                        </button>
+                    <div class="grid grid-cols-2 gap-2 text-sm mb-3">
                         <button @click="startSessionTimer" :class="[
                             'px-3 py-2 rounded-lg border transition-colors',
                             activeTimerType === 'session' ? 'bg-purple-50 border-purple-200 text-purple-700' : 'bg-white border-gray-200 hover:bg-gray-50'
                         ]">
                             Session Timer
                         </button>
+
+                        <!-- Debate Timer Button (for moderated/unmoderated) -->
+                        <button
+                            v-if="currentSession?.currentMode === 'moderated' || currentSession?.currentMode === 'unmoderated'"
+                            @click="startDebateTimer" :class="[
+                                'px-3 py-2 rounded-lg border transition-colors',
+                                activeTimerType === 'debate' ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-white border-gray-200 hover:bg-gray-50'
+                            ]" :disabled="sessionTimers.debate?.isActive">
+                            {{ sessionTimers.debate?.isActive ? 'Debate Active' : 'Start Debate' }}
+                        </button>
+                    </div>
+
+                    <!-- Timer Info Display -->
+                    <div v-if="activeSessionTimer" class="text-xs text-gray-500 text-center p-2 bg-gray-50 rounded">
+                        <div v-if="activeTimerType === 'speaker'">
+                            Speaker: {{ activeSessionTimer.country }}
+                        </div>
+                        <div v-else-if="activeTimerType === 'debate'">
+                            {{ activeSessionTimer.topic || 'Debate Time' }}
+                        </div>
+                        <div v-else-if="activeTimerType === 'session'">
+                            {{ activeSessionTimer.purpose || 'Session Time' }}
+                        </div>
                     </div>
                 </div>
 
@@ -238,7 +255,7 @@
                                 ? 'bg-blue-50 border-blue-200 text-blue-700'
                                 : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                         ]">
-                            Formal Debate
+                            Formal
                         </button>
                         <button @click="changeMode('moderated')" :class="[
                             'p-3 text-sm font-medium rounded-lg border transition-colors',
@@ -246,7 +263,7 @@
                                 ? 'bg-purple-50 border-purple-200 text-purple-700'
                                 : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                         ]">
-                            Mod. Caucus
+                            Moderated
                         </button>
                         <button @click="changeMode('unmoderated')" :class="[
                             'p-3 text-sm font-medium rounded-lg border transition-colors',
@@ -254,15 +271,15 @@
                                 ? 'bg-orange-50 border-orange-200 text-orange-700'
                                 : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                         ]">
-                            Unmod. Caucus
+                            Unmoderated
                         </button>
-                        <button @click="createQuickVote" :class="[
+                        <button @click="changeMode('informal')" :class="[
                             'p-3 text-sm font-medium rounded-lg border transition-colors',
-                            activeVoting
-                                ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100'
-                                : 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
+                            currentSession?.currentMode === 'informal'
+                                ? 'bg-gray-50 border-gray-200 text-gray-700'
+                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                         ]">
-                            {{ activeVoting ? 'End Voting' : 'Quick Vote' }}
+                            Informal
                         </button>
                     </div>
 
@@ -272,20 +289,38 @@
                             <span class="text-sm font-medium text-gray-700">Roll Call</span>
                             <span :class="[
                                 'text-xs px-2 py-1 rounded-full',
-                                rollCallStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                                rollCallStatus === 'active' ? 'bg-green-100 text-green-700' :
+                                    rollCallStatus === 'completed' ? 'bg-blue-100 text-blue-700' :
+                                        'bg-gray-100 text-gray-600'
                             ]">
-                                {{ rollCallStatus === 'active' ? 'In Progress' : 'Not Started' }}
+                                {{ rollCallStatus === 'active' ? 'In Progress' :
+                                    rollCallStatus === 'completed' ? 'Completed' : 'Not Started' }}
                             </span>
                         </div>
-                        <div class="flex gap-2">
-                            <button @click="startRollCall" v-if="rollCallStatus !== 'active'"
-                                class="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+
+                        <!-- Roll Call Actions -->
+                        <div v-if="rollCallStatus === 'inactive'" class="space-y-2">
+                            <button @click="startRollCall"
+                                class="w-full px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                                 Start Roll Call
                             </button>
-                            <button @click="endRollCall" v-else
-                                class="flex-1 px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700">
+                            <p class="text-xs text-gray-500 text-center">
+                                Delegates will mark attendance
+                            </p>
+                        </div>
+
+                        <div v-else-if="rollCallStatus === 'active'" class="space-y-2">
+                            <button @click="endRollCall"
+                                class="w-full px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700">
                                 End Roll Call
                             </button>
+                            <p class="text-xs text-gray-500 text-center">
+                                This will initialize speaker lists
+                            </p>
+                        </div>
+
+                        <div v-else class="text-xs text-center text-green-600">
+                            ✓ Roll call completed
                         </div>
                     </div>
                 </div>
@@ -331,7 +366,9 @@
                         <MicrophoneIcon class="w-5 h-5 text-gray-600 mr-2" />
                         <h3 class="font-semibold text-gray-800">Speakers List</h3>
                     </div>
-                    <span class="text-sm text-gray-500">{{ speakerQueue.length }} in queue</span>
+                    <span class="text-sm text-gray-500">
+                        {{ speakerLists.present.length }} present
+                    </span>
                 </div>
 
                 <!-- Current Speaker -->
@@ -342,39 +379,76 @@
                     </p>
                     <button @click="nextSpeaker"
                         class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-                        :disabled="speakerQueue.length === 0">
-                        Next Speaker
+                        :disabled="!rollCallCompleted || speakerLists.present.length === 0">
+                        {{ currentSpeaker ? 'Next Speaker' : 'Start Speaking' }}
                     </button>
                 </div>
 
-                <!-- Speaker Queue -->
+                <!-- Roll Call Warning -->
+                <div v-if="!rollCallCompleted" class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p class="text-sm text-yellow-800">
+                        ⚠️ Complete roll call first to initialize speaker lists
+                    </p>
+                </div>
+
+                <!-- Present Speakers Queue -->
                 <div class="flex-1 overflow-y-auto space-y-2 mb-4">
-                    <div v-if="speakerQueue.length === 0" class="text-center text-gray-400 text-sm py-8">
-                        Speaker list is empty
+                    <div class="text-xs text-gray-500 uppercase mb-2 font-semibold">
+                        Present Delegates ({{ speakerLists.present.length }})
                     </div>
-                    <div v-for="(speaker, idx) in speakerQueue" :key="speaker.country"
-                        class="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg shadow-sm">
-                        <span class="font-medium text-gray-700">{{ idx + 1 }}. {{ speaker.country }}</span>
-                        <button @click="removeSpeaker(speaker.country)"
-                            class="text-red-400 hover:text-red-600 transition-colors">
-                            <XMarkIcon class="w-4 h-4" />
+
+                    <div v-if="speakerLists.present.length === 0" class="text-center text-gray-400 text-sm py-8">
+                        No speakers yet - complete roll call first
+                    </div>
+
+                    <div v-for="(speaker, idx) in speakerLists.present" :key="speaker.country"
+                        class="flex items-center justify-between p-3 bg-white border rounded-lg shadow-sm" :class="{
+                            'border-blue-200 bg-blue-50': currentSpeaker?.country === speaker.country,
+                            'border-gray-100': currentSpeaker?.country !== speaker.country,
+                            'opacity-50': speaker.hasSpoken
+                        }">
+                        <div class="flex items-center space-x-3">
+                            <span class="font-semibold text-gray-600 w-6">{{ speaker.position }}.</span>
+                            <span class="font-medium text-gray-700">
+                                {{ speaker.country }}
+                            </span>
+
+                            <!-- Indicators -->
+                            <span v-if="speaker.hasMovedToEnd"
+                                class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded" title="Moved to end">
+                                ↓
+                            </span>
+                            <span v-if="speaker.hasSpoken"
+                                class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                                ✓ Spoke
+                            </span>
+                            <span v-if="speaker.arrivedLate" class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded"
+                                title="Arrived late">
+                                Late
+                            </span>
+                        </div>
+
+                        <button v-if="!speaker.hasSpoken && !speaker.hasMovedToEnd"
+                            @click="moveSpeakerToEnd(speaker.country)" class="text-xs text-blue-600 hover:text-blue-800"
+                            title="Move to end (once only)">
+                            Move to End
                         </button>
                     </div>
                 </div>
 
-                <!-- Add Speaker -->
-                <div class="flex space-x-2">
-                    <select v-model="selectedCountry"
-                        class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="">Select Country...</option>
-                        <option v-for="country in availableCountries" :key="country.name" :value="country.name">
-                            {{ country.name }}
-                        </option>
-                    </select>
-                    <button @click="addSpeaker" :disabled="!selectedCountry"
-                        class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                        Add
-                    </button>
+                <!-- Absent Speakers (Collapsible) -->
+                <div v-if="speakerLists.absent.length > 0" class="border-t pt-3">
+                    <details class="text-sm">
+                        <summary class="cursor-pointer text-gray-600 hover:text-gray-800 font-medium">
+                            Absent Delegates ({{ speakerLists.absent.length }})
+                        </summary>
+                        <div class="mt-2 space-y-1">
+                            <div v-for="speaker in speakerLists.absent" :key="speaker.country"
+                                class="text-sm text-gray-500 pl-4">
+                                • {{ speaker.country }}
+                            </div>
+                        </div>
+                    </details>
                 </div>
             </div>
 
@@ -461,13 +535,12 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
-import sessionApi from '@/utils/sessionApi'
 
 // Icons
 import {
-    PlayIcon, PauseIcon, ArrowPathIcon, CommandLineIcon, MicrophoneIcon,
+    PlayIcon, PauseIcon, CommandLineIcon, MicrophoneIcon,
     XMarkIcon, CheckCircleIcon, DocumentTextIcon, CalendarDaysIcon,
-    CogIcon, ClockIcon, EyeIcon, PresentationChartLineIcon,
+    CogIcon, ClockIcon, PresentationChartLineIcon,
     ComputerDesktopIcon, ChatBubbleOvalLeftEllipsisIcon
 } from '@heroicons/vue/24/outline'
 
@@ -486,14 +559,15 @@ const currentSession = ref(null)
 const sessionTimers = ref({}) // Store all session timers
 const activeSessionTimer = ref(null) // Currently active/displayed timer
 const activeTimerType = ref(null) // 'session', 'speaker', 'debate'
-const speakerQueue = ref([])
+const speakerLists = ref({ present: [], absent: [] }) // UPDATED: Two lists
 const currentSpeaker = ref(null)
 const selectedCountry = ref('')
 const availableCountries = ref([])
 const activeVoting = ref(null)
 const votingResults = ref({})
-const quorum = ref({ hasQuorum: false, presentVoting: 0, required: 0 })
+const quorum = ref({ hasQuorum: false, present: 0, required: 0 })
 const rollCallStatus = ref('inactive')
+const rollCallCompleted = ref(false) // NEW
 const isLoading = ref(false)
 const allSessions = ref([])
 const publicDisplayMode = ref('session')
@@ -538,12 +612,15 @@ const formattedTimer = computed(() => {
 const currentTimerName = computed(() => {
     if (!activeSessionTimer.value || !activeTimerType.value) return 'NO TIMER'
 
-    const names = {
-        'session': 'SESSION',
-        'speaker': currentSpeaker.value?.country ? `${currentSpeaker.value.country}` : 'SPEAKER',
-        'debate': 'DEBATE'
+    if (activeTimerType.value === 'speaker') {
+        return activeSessionTimer.value.country || 'SPEAKER'
+    } else if (activeTimerType.value === 'debate') {
+        return activeSessionTimer.value.topic || 'DEBATE'
+    } else if (activeTimerType.value === 'session') {
+        return 'SESSION'
     }
-    return names[activeTimerType.value] || 'TIMER'
+
+    return 'TIMER'
 })
 
 const currentTimerColor = computed(() => {
@@ -583,10 +660,6 @@ const previousSessions = computed(() => {
     return allSessions.value.filter(session => session.status !== 'active').slice(0, 5)
 })
 
-const totalCompletedSessions = computed(() => {
-    return allSessions.value.filter(session => session.status === 'completed').length
-})
-
 // Methods
 const loadDashboardData = async () => {
     try {
@@ -617,7 +690,7 @@ const loadAllSessions = async () => {
         const response = await apiMethods.sessions.getAll(committee.value._id, {
             page: 1,
             limit: 20,
-            sort: '-number'
+            sort: '-sessionNumber'
         })
 
         if (response.data.success) {
@@ -648,17 +721,16 @@ const loadSessionDetails = async () => {
     if (!currentSession.value?._id) return
 
     try {
-        // Load session details using correct route
         const sessionResponse = await apiMethods.sessions.getById(currentSession.value._id)
         if (sessionResponse.data.success) {
             const sessionData = sessionResponse.data.session
             currentSession.value = sessionData
 
-            // Load timers from session
+            // Load timers - UPDATED
             if (sessionData.timers) {
                 sessionTimers.value = sessionData.timers
 
-                // Find active timer (priority: speaker > debate > session)
+                // Priority: speaker > debate > session
                 if (sessionData.timers.speaker?.isActive) {
                     activeSessionTimer.value = sessionData.timers.speaker
                     activeTimerType.value = 'speaker'
@@ -674,13 +746,16 @@ const loadSessionDetails = async () => {
                 }
             }
 
-            // Update speaker data
-            speakerQueue.value = sessionData.speakerList?.queue || []
-            currentSpeaker.value = sessionData.speakerList?.current || null
+            // UPDATED: Load speaker lists (TWO lists now)
+            speakerLists.value = sessionData.speakerLists || { present: [], absent: [] }
+            currentSpeaker.value = sessionData.currentSpeaker || null
 
-            // Update roll call status
-            rollCallStatus.value = sessionData.rollCall?.isActive ? 'active' : 'inactive'
-            quorum.value = sessionData.rollCall?.quorum || { hasQuorum: false, presentVoting: 0, required: 0 }
+            // Roll call status
+            rollCallStatus.value = sessionData.rollCall?.isActive ? 'active' :
+                sessionData.rollCall?.endedAt ? 'completed' : 'inactive'
+            rollCallCompleted.value = !!sessionData.rollCall?.endedAt
+
+            quorum.value = sessionData.quorum || { hasQuorum: false, present: 0, required: 0 }
         }
 
         // Load active voting
@@ -693,14 +768,12 @@ const loadSessionDetails = async () => {
             }
         }
 
-        // Join session WebSocket room
         wsService.joinSession(currentSession.value._id)
-
-        // Start timer sync
         startTimerSync()
 
     } catch (error) {
         console.error('Failed to load session details:', error)
+        toast.error('Failed to load session details')
     }
 }
 
@@ -729,11 +802,9 @@ const createQuickSession = async () => {
             committeeId: committee.value._id,
             sessionNumber: allSessions.value.length + 1,
             currentMode: 'formal',
-            status: 'active',
-            settings: {
-                defaultSpeechTime: 180,
-                allowExtensions: true,
-                extensionTime: 60
+            modeSettings: {
+                speechTime: 180,
+                questionsAllowed: true
             }
         }
 
@@ -757,10 +828,7 @@ const endCurrentSession = async () => {
     if (!currentSession.value) return
 
     try {
-        const response = await sessionApi.sessions.end(currentSession.value._id, {
-            status: 'completed',
-            reason: 'Session ended by presidium'
-        })
+        const response = await apiMethods.sessions.end(currentSession.value._id)
 
         if (response.data.success) {
             currentSession.value = null
@@ -774,19 +842,121 @@ const endCurrentSession = async () => {
     }
 }
 
-// Timer Management - Fixed Implementation
+// Roll Call Management - CRITICAL
+const startRollCall = async () => {
+    if (!currentSession.value) return
+
+    try {
+        const response = await apiMethods.sessions.startRollCall(currentSession.value._id, {
+            timeLimit: 10 // 10 minutes
+        })
+
+        if (response.data.success) {
+            rollCallStatus.value = 'active'
+            toast.success('Roll call started - Delegates can now mark attendance')
+        }
+    } catch (error) {
+        console.error('Failed to start roll call:', error)
+        toast.error('Failed to start roll call')
+    }
+}
+
+const endRollCall = async () => {
+    if (!currentSession.value) return
+
+    try {
+        const response = await apiMethods.sessions.endRollCall(currentSession.value._id)
+
+        if (response.data.success) {
+            rollCallStatus.value = 'completed'
+            rollCallCompleted.value = true
+
+            // CRITICAL: This initializes the speaker lists!
+            speakerLists.value = response.data.speakerLists || { present: [], absent: [] }
+            quorum.value = response.data.quorum
+
+            toast.success(`Roll call completed! ${speakerLists.value.present.length} present, ${speakerLists.value.absent.length} absent`)
+
+            // Auto-start session timer after roll call
+            if (!sessionTimers.value.session?.isActive) {
+                setTimeout(() => {
+                    toast.info('You can now start the session timer')
+                }, 1000)
+            }
+        }
+    } catch (error) {
+        console.error('Failed to end roll call:', error)
+        toast.error('Failed to end roll call')
+    }
+}
+
+// Speaker Management - Completely Updated
+const nextSpeaker = async () => {
+    if (!currentSession.value || speakerLists.value.present.length === 0) {
+        toast.warn('No speakers in queue')
+        return
+    }
+
+    try {
+        // Get next speaker who hasn't spoken
+        const nextSpeakerData = speakerLists.value.present.find(s => !s.hasSpoken)
+
+        if (!nextSpeakerData) {
+            toast.info('All speakers have spoken')
+            return
+        }
+
+        const response = await apiMethods.sessions.setCurrentSpeaker(currentSession.value._id, {
+            country: nextSpeakerData.country
+        })
+
+        if (response.data.success) {
+            currentSpeaker.value = response.data.currentSpeaker
+            speakerLists.value = response.data.speakerLists
+
+            // Speaker timer is automatically started by backend
+            activeSessionTimer.value = response.data.speakerTimer
+            activeTimerType.value = 'speaker'
+
+            toast.success(`Now speaking: ${nextSpeakerData.country}`)
+        }
+    } catch (error) {
+        console.error('Failed to set next speaker:', error)
+        toast.error('Failed to set next speaker')
+    }
+}
+
+const moveSpeakerToEnd = async (country) => {
+    if (!currentSession.value) return
+
+    try {
+        const response = await apiMethods.sessions.moveToEnd(currentSession.value._id, {
+            country: country
+        })
+
+        if (response.data.success) {
+            speakerLists.value = response.data.speakerLists
+            toast.success(`${country} moved to end of queue`)
+        }
+    } catch (error) {
+        console.error('Failed to move speaker:', error)
+        toast.error(error.response?.data?.error || 'Failed to move speaker')
+    }
+}
+
+// Timer Management - Updated
 const startSessionTimer = async () => {
     if (!currentSession.value) return
 
     try {
-        // Use the correct session timer route from backend
         const response = await apiMethods.sessions.startSessionTimer(currentSession.value._id, {
             duration: 3600, // 1 hour
-            purpose: 'General session time management'
+            purpose: 'General session management'
         })
 
         if (response.data.success) {
-            await loadSessionDetails()
+            activeSessionTimer.value = response.data.timer
+            activeTimerType.value = 'session'
             toast.success('Session timer started')
         }
     } catch (error) {
@@ -795,29 +965,21 @@ const startSessionTimer = async () => {
     }
 }
 
-const startSpeakerTimer = async () => {
-    if (!currentSession.value || !currentSpeaker.value) {
-        toast.warn('Please set a current speaker first')
-        return
-    }
+const startDebateTimer = async () => {
+    if (!currentSession.value) return
 
     try {
-        const defaultDuration = committee.value.settings?.speechSettings?.defaultSpeechTime || 120
-
-        // Use the correct session speaker timer route
-        const response = await apiMethods.sessions.startSpeakerTimer(currentSession.value._id, {
-            duration: defaultDuration,
-            country: currentSpeaker.value.country,
-            canBeExtended: true
-        })
+        // This starts the debate timer that was configured during mode change
+        const response = await apiMethods.sessions.startDebateTimer(currentSession.value._id)
 
         if (response.data.success) {
-            await loadSessionDetails()
-            toast.success('Speaker timer started')
+            activeSessionTimer.value = response.data.timer
+            activeTimerType.value = 'debate'
+            toast.success('Debate timer started')
         }
     } catch (error) {
-        console.error('Failed to start speaker timer:', error)
-        toast.error('Failed to start speaker timer')
+        console.error('Failed to start debate timer:', error)
+        toast.error(error.response?.data?.error || 'Failed to start debate timer')
     }
 }
 
@@ -825,42 +987,17 @@ const toggleTimer = async () => {
     if (!activeSessionTimer.value || !currentSession.value) return
 
     try {
-        const isCurrentlyActive = activeSessionTimer.value.isActive && !activeSessionTimer.value.isPaused
-        const action = isCurrentlyActive ? 'pause' : 'resume'
-
-        // Use the correct session timer toggle route
         const response = await apiMethods.sessions.toggleTimer(currentSession.value._id, {
-            timerType: activeTimerType.value,
-            action: action
+            timerType: activeTimerType.value
         })
 
         if (response.data.success) {
-            await loadSessionDetails()
-            toast.success(`Timer ${action}d`)
+            activeSessionTimer.value = response.data.timer
+            toast.success(`Timer ${response.data.timer.isPaused ? 'paused' : 'resumed'}`)
         }
     } catch (error) {
         console.error('Failed to toggle timer:', error)
-
-        // If the session route fails, try the individual timer route
-        if (error.response?.status === 404 || error.response?.status === 500) {
-            try {
-                const timerId = activeSessionTimer.value._id
-                if (timerId) {
-                    if (activeSessionTimer.value.isActive && !activeSessionTimer.value.isPaused) {
-                        await apiMethods.timers.pauseTimer(timerId)
-                    } else {
-                        await apiMethods.timers.resumeTimer(timerId)
-                    }
-                    await loadSessionDetails()
-                    toast.success('Timer toggled')
-                }
-            } catch (fallbackError) {
-                console.error('Fallback timer toggle failed:', fallbackError)
-                toast.error('Failed to toggle timer')
-            }
-        } else {
-            toast.error('Failed to toggle timer')
-        }
+        toast.error('Failed to toggle timer')
     }
 }
 
@@ -870,22 +1007,19 @@ const adjustTimer = async (seconds) => {
     try {
         const newTime = Math.max(0, activeSessionTimer.value.remainingTime + seconds)
 
-        // Use the correct session timer adjust route
         const response = await apiMethods.sessions.adjustTimer(currentSession.value._id, {
             timerType: activeTimerType.value,
-            newTime: newTime,
-            reason: 'Manual adjustment by presidium'
+            newTime: newTime
         })
 
         if (response.data.success) {
-            await loadSessionDetails()
+            activeSessionTimer.value = response.data.timer
             toast.success(`Timer adjusted by ${seconds > 0 ? '+' : ''}${seconds}s`)
         }
     } catch (error) {
         console.error('Failed to adjust timer:', error)
-        // Optimistic update for better UX
-        activeSessionTimer.value.remainingTime = Math.max(0, activeSessionTimer.value.remainingTime + seconds)
-        toast.success(`Timer adjusted by ${seconds > 0 ? '+' : ''}${seconds}s`)
+        // Optimistic update
+        activeSessionTimer.value.remainingTime = newTime
     }
 }
 
@@ -920,173 +1054,62 @@ const stopTimerSync = () => {
     }
 }
 
-// Session Mode Management - Fixed with proper validation and backend requirements
+// Mode Management - Fixed
 const changeMode = async (newMode) => {
     if (!currentSession.value || currentSession.value.currentMode === newMode) return
 
     try {
-        // Use correct API with properly formatted startedBy
+        // Prepare mode-specific settings
+        let settings = {}
+
+        if (newMode === 'moderated') {
+            settings = {
+                speechTime: 90,
+                totalTime: 600, // 10 minutes
+                topic: 'Discussion Topic',
+                questionsAllowed: false
+            }
+        } else if (newMode === 'unmoderated') {
+            settings = {
+                totalTime: 600 // 10 minutes
+            }
+        } else if (newMode === 'formal') {
+            settings = {
+                speechTime: 180,
+                questionsAllowed: true
+            }
+        } else if (newMode === 'informal') {
+            settings = {
+                speechTime: 120,
+                allowPassToNext: true
+            }
+        }
+
         const response = await apiMethods.sessions.changeMode(currentSession.value._id, {
             mode: newMode,
-            reason: `Mode changed to ${newMode} by presidium`,
-            modeSettings: {
-                topic: `${newMode.charAt(0).toUpperCase() + newMode.slice(1)} debate session`,
-                totalTime: newMode === 'moderated' ? 600 : newMode === 'unmoderated' ? 900 : 0,
-                speechTime: newMode === 'moderated' ? 120 : newMode === 'formal' ? 180 : 60,
-                allowQuestions: newMode === 'moderated' || newMode === 'formal'
-            },
-            // Fix: Format startedBy to match schema
-            startedBy: {
-                email: authStore.user?.email || 'presidium@mun.uz',
-                name: authStore.user?.name || 'Presidium Member',
-                userId: authStore.user?._id || null
-            }
+            settings: settings
         })
 
         if (response.data.success) {
-            currentSession.value.currentMode = newMode
+            currentSession.value.currentMode = response.data.currentMode
+            sessionTimers.value = response.data.timers
+
             toast.success(`Mode changed to ${formattedMode.value}`)
+
+            // For moderated/unmoderated, show option to start debate timer
+            if (newMode === 'moderated' || newMode === 'unmoderated') {
+                setTimeout(() => {
+                    toast.info('Debate timer configured. Click "Start Debate Timer" to begin.')
+                }, 500)
+            }
         }
     } catch (error) {
         console.error('Failed to change mode:', error)
-
-        if (error.response?.status === 500) {
-            console.error('Server error details:', error.response.data)
-            toast.error('Server error changing mode. Check logs for details.')
-        } else {
-            toast.error('Failed to change session mode')
-        }
-    }
-}
-
-// Roll Call Management
-const startRollCall = async () => {
-    if (!currentSession.value) return
-
-    try {
-        const response = await apiMethods.sessions.startRollCall(currentSession.value._id, {
-            timeLimit: 10
-        })
-
-        if (response.data.success) {
-            rollCallStatus.value = 'active'
-            toast.success('Roll call started')
-        }
-    } catch (error) {
-        console.error('Failed to start roll call:', error)
-        toast.error('Failed to start roll call')
-    }
-}
-
-const endRollCall = async () => {
-    if (!currentSession.value) return
-
-    try {
-        const response = await apiMethods.sessions.endRollCall(currentSession.value._id)
-
-        if (response.data.success) {
-            rollCallStatus.value = 'completed'
-            quorum.value = response.data.quorum || quorum.value
-            toast.success('Roll call completed')
-        }
-    } catch (error) {
-        console.error('Failed to end roll call:', error)
-        toast.error('Failed to end roll call')
-    }
-}
-
-// Speaker Management - Fixed to use correct API routes that exist in backend
-const addSpeaker = async () => {
-    if (!selectedCountry.value || !currentSession.value) return
-
-    try {
-        const country = availableCountries.value.find(c => c.name === selectedCountry.value)
-        if (!country) return
-
-        // Use the correct speakers route that exists in the backend
-        const response = await apiMethods.post(`/sessions/${currentSession.value._id}/speakers/add`, {
-            country: country.name,
-            email: country.email || `${country.name.toLowerCase().replace(/\s+/g, '')}@delegate.mun.uz`
-        })
-
-        if (response.data.success) {
-            speakerQueue.value = response.data.speakerQueues?.main || []
-            selectedCountry.value = ''
-            toast.success('Speaker added to list')
-        }
-    } catch (error) {
-        console.error('Failed to add speaker:', error)
-        // If route doesn't exist, try alternative approach
-        if (error.response?.status === 404) {
-            try {
-                // Fallback to direct session update
-                const sessionResponse = await apiMethods.sessions.getById(currentSession.value._id)
-                if (sessionResponse.data.success) {
-                    toast.info('Speaker list feature is being updated. Please try again in a moment.')
-                }
-            } catch (fallbackError) {
-                toast.error('Failed to add speaker')
-            }
-        } else {
-            toast.error('Failed to add speaker')
-        }
-    }
-}
-
-const removeSpeaker = async (countryName) => {
-    if (!currentSession.value) return
-
-    try {
-        // Use the correct speakers route
-        const response = await apiMethods.delete(`/sessions/${currentSession.value._id}/speakers/${countryName}`)
-
-        if (response.data.success) {
-            speakerQueue.value = response.data.speakerQueues?.main || []
-            toast.success('Speaker removed from list')
-        }
-    } catch (error) {
-        console.error('Failed to remove speaker:', error)
-        // Optimistic update for better UX
-        speakerQueue.value = speakerQueue.value.filter(speaker => speaker.country !== countryName)
-        toast.success('Speaker removed from list')
-    }
-}
-
-const nextSpeaker = async () => {
-    if (!currentSession.value || speakerQueue.value.length === 0) return
-
-    try {
-        const nextSpeakerData = speakerQueue.value[0]
-
-        // Use correct route for setting current speaker
-        const response = await apiMethods.sessions.setCurrentSpeaker(currentSession.value._id, {
-            country: nextSpeakerData.country,
-            email: nextSpeakerData.email
-        })
-
-        if (response.data.success) {
-            currentSpeaker.value = nextSpeakerData
-            speakerQueue.value = speakerQueue.value.slice(1)
-            toast.success(`Now speaking: ${nextSpeakerData.country}`)
-        }
-    } catch (error) {
-        console.error('Failed to set next speaker:', error)
-        // Optimistic update for UX
-        currentSpeaker.value = speakerQueue.value[0]
-        speakerQueue.value = speakerQueue.value.slice(1)
-        toast.success(`Now speaking: ${speakerQueue.value[0]?.country}`)
+        toast.error('Failed to change mode')
     }
 }
 
 // Voting Management
-const createQuickVote = async () => {
-    if (activeVoting.value) {
-        await endVoting()
-    } else {
-        showQuickVoteModal.value = true
-    }
-}
-
 const endVoting = async () => {
     if (!activeVoting.value) return
 
@@ -1103,28 +1126,14 @@ const endVoting = async () => {
     }
 }
 
-// Public Display Management - Enhanced with debugging and multiple WebSocket approaches
+// Public Display Management
 const setDisplayMode = async (mode) => {
     if (publicDisplayMode.value === mode) return
 
     try {
         console.log(`🎮 Setting display mode to: ${mode} for committee: ${committee.value._id}`)
 
-        // Method 1: Try API endpoint first (if it exists)
-        try {
-            const response = await apiMethods.put(`/committees/${committee.value._id}/display-mode`, {
-                mode: mode,
-                timestamp: Date.now()
-            })
-
-            if (response.data.success) {
-                console.log('✅ Display mode set via API')
-            }
-        } catch (apiError) {
-            console.log('⚠️ API endpoint not available, using WebSocket only')
-        }
-
-        // Method 2: Emit WebSocket events with multiple event names for compatibility
+        // Emit WebSocket events
         const eventData = {
             committeeId: committee.value._id,
             mode: mode,
@@ -1132,13 +1141,11 @@ const setDisplayMode = async (mode) => {
             source: 'presidium-dashboard'
         }
 
-        // Emit multiple event types for maximum compatibility
         const eventTypes = [
             'set-public-display-mode',
-            'display-mode-change',
-            'public-display-toggle',
-            'committee-display-mode-changed',
-            `committee-${committee.value._id}-display-mode`
+            'display-mode-changed',
+            'public-display-mode-changed',
+            'committee-display-mode-changed'
         ]
 
         eventTypes.forEach(eventType => {
@@ -1146,22 +1153,9 @@ const setDisplayMode = async (mode) => {
             console.log(`📡 Emitted: ${eventType}`)
         })
 
-        // Method 3: Direct room-based emission
-        wsService.emit('join-committee-room', { committeeId: committee.value._id })
-        setTimeout(() => {
-            wsService.emit('display-mode-update', eventData)
-        }, 100)
-
-        // Update local state immediately for UI feedback
+        // Update local state
         publicDisplayMode.value = mode
         toast.success(`Public display switched to ${mode === 'session' ? 'Session View' : 'Gossip Box'}`)
-
-        // Debug logging
-        console.log(`📡 WebSocket events emitted:`, {
-            events: eventTypes,
-            data: eventData,
-            currentMode: mode
-        })
 
     } catch (error) {
         console.error('Failed to set display mode:', error)
@@ -1253,97 +1247,99 @@ const handleVotingCreated = (voting) => {
     toast.success('Voting started')
 }
 
-// Enhanced WebSocket Integration with comprehensive logging
+// WebSocket Integration
 const setupWebSocketListeners = () => {
-    console.log('🎧 Setting up WebSocket listeners for dashboard')
+    console.log('🎧 Setting up WebSocket listeners')
 
-    // Session events
-    wsService.on('session-started', (data) => {
-        console.log('📡 Received session-started:', data)
+    // Roll call events
+    wsService.on('roll-call-started', (data) => {
         if (data.sessionId === currentSession.value?._id) {
-            loadSessionDetails()
+            rollCallStatus.value = 'active'
+            toast.info('Roll call started')
         }
     })
 
-    wsService.on('session-mode-changed', (data) => {
-        console.log('📡 Received session-mode-changed:', data)
+    wsService.on('roll-call-ended', (data) => {
         if (data.sessionId === currentSession.value?._id) {
-            currentSession.value.currentMode = data.mode
+            rollCallStatus.value = 'completed'
+            rollCallCompleted.value = true
+            speakerLists.value = data.speakerLists
+            quorum.value = data.quorum
+            toast.success('Roll call completed')
         }
     })
 
-    // Public display mode events - Enhanced with multiple event listeners
-    wsService.on('public-display-mode-changed', (data) => {
-        console.log('📡 Received public-display-mode-changed:', data)
-        if (data.committeeId === committee.value?._id) {
-            publicDisplayMode.value = data.mode
-            console.log(`✅ Display mode updated to: ${data.mode}`)
-        }
-    })
-
-    // Alternative event listeners for display mode changes
-    wsService.on('display-mode-changed', (data) => {
-        console.log('📡 Received display-mode-changed:', data)
-        if (data.committeeId === committee.value?._id) {
-            publicDisplayMode.value = data.mode
-        }
-    })
-
-    wsService.on('display-toggle', (data) => {
-        console.log('📡 Received display-toggle:', data)
-        if (data.committeeId === committee.value?._id) {
-            publicDisplayMode.value = data.mode
-        }
-    })
-
-    // Timer events - Enhanced
-    wsService.on('timer-started', (data) => {
-        console.log('📡 Received timer-started:', data)
+    // Attendance events
+    wsService.on('attendance-updated', (data) => {
         if (data.sessionId === currentSession.value?._id) {
-            loadSessionDetails()
-        }
-    })
-
-    wsService.on('timer-paused', (data) => {
-        console.log('📡 Received timer-paused:', data)
-        if (data.sessionId === currentSession.value?._id) {
-            loadSessionDetails()
-        }
-    })
-
-    wsService.on('timer-resumed', (data) => {
-        console.log('📡 Received timer-resumed:', data)
-        if (data.sessionId === currentSession.value?._id) {
-            loadSessionDetails()
-        }
-    })
-
-    wsService.on('timer-completed', (data) => {
-        console.log('📡 Received timer-completed:', data)
-        if (data.sessionId === currentSession.value?._id) {
-            toast.error('Timer expired!')
-            loadSessionDetails()
+            quorum.value = data.quorum
+            if (data.speakerLists) {
+                speakerLists.value = data.speakerLists
+            }
         }
     })
 
     // Speaker events
-    wsService.on('speaker-list-updated', (data) => {
-        console.log('📡 Received speaker-list-updated:', data)
+    wsService.on('current-speaker-set', (data) => {
         if (data.sessionId === currentSession.value?._id) {
-            speakerQueue.value = data.speakerList
+            currentSpeaker.value = data.currentSpeaker
+            speakerLists.value = data.speakerLists
+            activeSessionTimer.value = data.speakerTimer
+            activeTimerType.value = 'speaker'
         }
     })
 
-    wsService.on('current-speaker-changed', (data) => {
-        console.log('📡 Received current-speaker-changed:', data)
+    wsService.on('speaker-moved', (data) => {
         if (data.sessionId === currentSession.value?._id) {
-            currentSpeaker.value = data.speaker
+            speakerLists.value = data.speakerLists
         }
+    })
+
+    // Timer events
+    wsService.on('timer-started', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            loadSessionDetails()
+        }
+    })
+
+    wsService.on('timer-toggled', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            activeSessionTimer.value = data.timer
+        }
+    })
+
+    wsService.on('timer-adjusted', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            activeSessionTimer.value = data.timer
+        }
+    })
+
+    // Mode events
+    wsService.on('mode-changed', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            currentSession.value.currentMode = data.mode
+            sessionTimers.value = data.timers
+            toast.info(`Mode changed to ${data.mode}`)
+        }
+    })
+
+    // Display mode events
+    const displayModeEvents = [
+        'public-display-mode-changed',
+        'display-mode-changed',
+        'display-toggle'
+    ]
+
+    displayModeEvents.forEach(eventName => {
+        wsService.on(eventName, (data) => {
+            if (data.committeeId === committee.value?._id) {
+                publicDisplayMode.value = data.mode
+            }
+        })
     })
 
     // Voting events
     wsService.on('voting-started', (data) => {
-        console.log('📡 Received voting-started:', data)
         if (data.committeeId === committee.value?._id) {
             activeVoting.value = data.voting
             updateVotingResults(data.voting)
@@ -1363,27 +1359,7 @@ const setupWebSocketListeners = () => {
         }
     })
 
-    // Roll call events
-    wsService.on('roll-call-started', (data) => {
-        if (data.sessionId === currentSession.value?._id) {
-            rollCallStatus.value = 'active'
-        }
-    })
-
-    wsService.on('roll-call-completed', (data) => {
-        if (data.sessionId === currentSession.value?._id) {
-            rollCallStatus.value = 'completed'
-            quorum.value = data.quorum
-        }
-    })
-
-    wsService.on('attendance-updated', (data) => {
-        if (data.sessionId === currentSession.value?._id) {
-            quorum.value = data.quorum
-        }
-    })
-
-    console.log('✅ All WebSocket listeners set up for dashboard')
+    console.log('✅ WebSocket listeners ready')
 }
 
 // Lifecycle
