@@ -1,5 +1,5 @@
 <template>
-    <div class="public-display-container">
+    <div class="public-display-container" ref="displayContainer">
         <!-- Session View -->
         <div v-if="displayMode === 'session'" class="session-view">
             <!-- Header -->
@@ -8,7 +8,22 @@
                     <h1 class="committee-name">{{ committeeName }}</h1>
                     <p class="session-topic">{{ sessionTopic || 'Global Sustainability Goals' }}</p>
                 </div>
-                <div class="mode-badge">{{ currentMode?.toUpperCase() || 'FORMAL' }}</div>
+                <div class="header-actions">
+                    <div class="mode-badge">{{ currentMode?.toUpperCase() || 'FORMAL' }}</div>
+                    <button @click="toggleFullscreen" class="fullscreen-btn"
+                        :title="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'">
+                        <svg v-if="!isFullscreen" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <!-- Main Content Grid -->
@@ -63,13 +78,28 @@
         <div v-else class="gossip-view">
             <!-- Header -->
             <div class="gossip-header">
-                <div class="gossip-badge">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path
-                            d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    GOSSIP BOX
+                <div class="gossip-header-top">
+                    <div class="gossip-badge">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        GOSSIP BOX
+                    </div>
+                    <button @click="toggleFullscreen" class="fullscreen-btn gossip-fullscreen-btn"
+                        :title="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'">
+                        <svg v-if="!isFullscreen" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path
+                                d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </button>
                 </div>
                 <h1 class="gossip-title">{{ committeeName }}</h1>
             </div>
@@ -130,6 +160,8 @@ const speakerQueue = ref([])
 const gossipMessages = ref([])
 const displayUpdateInterval = ref(null)
 const committee = ref(null)
+const displayContainer = ref(null)
+const isFullscreen = ref(false)
 
 // Computed
 const timerLabel = computed(() => {
@@ -185,6 +217,24 @@ const formatTime = (timestamp) => {
         minute: '2-digit',
         hour12: true
     })
+}
+
+const toggleFullscreen = async () => {
+    try {
+        if (!document.fullscreenElement) {
+            // Enter fullscreen
+            await displayContainer.value?.requestFullscreen()
+        } else {
+            // Exit fullscreen
+            await document.exitFullscreen()
+        }
+    } catch (error) {
+        console.error('Error toggling fullscreen:', error)
+    }
+}
+
+const handleFullscreenChange = () => {
+    isFullscreen.value = !!document.fullscreenElement
 }
 
 const loadGossipMessages = async () => {
@@ -387,6 +437,9 @@ onMounted(async () => {
     await loadPublicData()
     setupWebSocketListeners()
 
+    // Add fullscreen change listener
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+
     // Update display every second for smooth countdown
     displayUpdateInterval.value = setInterval(() => {
         // Trigger reactivity
@@ -400,6 +453,7 @@ onUnmounted(() => {
     if (displayUpdateInterval.value) {
         clearInterval(displayUpdateInterval.value)
     }
+    document.removeEventListener('fullscreenchange', handleFullscreenChange)
 })
 </script>
 
@@ -440,6 +494,12 @@ onUnmounted(() => {
     margin: 0;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
 .mode-badge {
     background: #3b82f6;
     color: white;
@@ -448,6 +508,30 @@ onUnmounted(() => {
     font-weight: 600;
     font-size: 0.875rem;
     letter-spacing: 0.05em;
+}
+
+.fullscreen-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    width: 44px;
+    height: 44px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.fullscreen-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.fullscreen-btn:active {
+    transform: scale(0.95);
 }
 
 .content-grid {
@@ -613,6 +697,13 @@ onUnmounted(() => {
     margin: 0 auto 3rem;
 }
 
+.gossip-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
 .gossip-badge {
     display: inline-flex;
     align-items: center;
@@ -624,7 +715,15 @@ onUnmounted(() => {
     font-weight: 600;
     font-size: 0.875rem;
     letter-spacing: 0.05em;
-    margin-bottom: 1rem;
+}
+
+.gossip-fullscreen-btn {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.gossip-fullscreen-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .gossip-title {
@@ -738,6 +837,16 @@ onUnmounted(() => {
     text-decoration: underline;
 }
 
+/* ==================== FULLSCREEN MODE ==================== */
+.public-display-container:fullscreen {
+    background: #0f172a;
+}
+
+.public-display-container:fullscreen .session-view,
+.public-display-container:fullscreen .gossip-view {
+    min-height: 100vh;
+}
+
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 1200px) {
     .content-grid {
@@ -759,6 +868,11 @@ onUnmounted(() => {
     .session-header {
         flex-direction: column;
         gap: 1rem;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
     }
 
     .committee-info h1 {
@@ -805,6 +919,11 @@ onUnmounted(() => {
 
     .gossip-title {
         font-size: 1.5rem;
+    }
+
+    .fullscreen-btn {
+        width: 40px;
+        height: 40px;
     }
 }
 </style>
