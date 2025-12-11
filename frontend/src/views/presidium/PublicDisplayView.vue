@@ -110,7 +110,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import apiMethods from '@/utils/api'
+import { apiMethods } from '@/utils/api'
 import { wsService } from '@/plugins/websocket'
 import { useAuthStore } from '@/stores/auth'
 
