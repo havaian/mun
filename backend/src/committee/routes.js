@@ -964,6 +964,7 @@ router.get('/:committeeId/display-mode',
                 displayMode: committee.publicDisplayMode || 'session'
             })
         } catch (error) {
+            global.logger.error(error)
             res.status(500).json({ error: 'Failed to get display mode' })
         }
     }
@@ -1006,6 +1007,7 @@ router.put('/:committeeId/display-mode',
                 displayMode: mode
             })
         } catch (error) {
+            global.logger.error(error)
             res.status(500).json({ error: 'Failed to set display mode' })
         }
     }
