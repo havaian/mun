@@ -112,8 +112,10 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import apiMethods from '@/utils/api'
 import { wsService } from '@/plugins/websocket'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
+const authStore = useAuthStore()
 
 // Refs
 const committeeName = ref('UN General Assembly')
@@ -186,7 +188,7 @@ const formatTime = (timestamp) => {
 
 const loadPublicData = async () => {
     try {
-        const committeeId = route.params.committeeId || route.query.committeeId
+        const committeeId = authStore.user?.committeeId;
         
         if (!committeeId) {
             console.error('No committee ID provided')
@@ -254,7 +256,7 @@ const loadPublicData = async () => {
 }
 
 const setupWebSocketListeners = () => {
-    const committeeId = route.params.committeeId || route.query.committeeId
+    const committeeId = authStore.user?.committeeId;
 
     if (!committeeId) return
 
