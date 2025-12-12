@@ -449,7 +449,7 @@ const markAttendance = async (status) => {
     try {
         isMarkingAttendance.value = true
 
-        const response = await sessionApi.rollCall.markAttendance(currentSession.value._id, 
+        const response = await sessionApi.rollCall.markAttendance(currentSession.value._id, {
             status: status
         })
 
