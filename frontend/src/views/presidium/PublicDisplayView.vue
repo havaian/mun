@@ -12,16 +12,8 @@
                     <div class="mode-badge">{{ currentMode?.toUpperCase() || 'FORMAL' }}</div>
                     <button @click="toggleFullscreen" class="fullscreen-btn"
                         :title="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'">
-                        <svg v-if="!isFullscreen" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path
-                                d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path
-                                d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                        <Maximize v-if="!isFullscreen" :size="24" />
+                        <Minimize v-else :size="24" />
                     </button>
                 </div>
             </div>
@@ -33,10 +25,7 @@
                     <!-- Timer Card -->
                     <div class="timer-card">
                         <div class="timer-label">
-                            <svg class="timer-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-                                <path d="M12 6v6l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                            </svg>
+                            <Clock :size="24" class="timer-icon" />
                             <span>{{ timerLabel }}</span>
                         </div>
                         <div class="timer-display">{{ formattedTime }}</div>
@@ -45,11 +34,7 @@
                     <!-- Current Speaker Card -->
                     <div class="speaker-card">
                         <div class="speaker-icon">
-                            <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" stroke="currentColor"
-                                    stroke-width="2" />
-                                <circle cx="11" cy="7" r="4" stroke="currentColor" stroke-width="2" />
-                            </svg>
+                            <User :size="80" />
                         </div>
                         <div class="speaker-label">CURRENT SPEAKER</div>
                         <div class="speaker-name">{{ currentSpeakerName || 'Floor Open' }}</div>
@@ -80,25 +65,13 @@
             <div class="gossip-header">
                 <div class="gossip-header-top">
                     <div class="gossip-badge">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                            <path
-                                d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                        <VenetianMask :size="20" />
                         GOSSIP BOX
                     </div>
                     <button @click="toggleFullscreen" class="fullscreen-btn gossip-fullscreen-btn"
                         :title="isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'">
-                        <svg v-if="!isFullscreen" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path
-                                d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path
-                                d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
+                        <Maximize v-if="!isFullscreen" :size="24" />
+                        <Minimize v-else :size="24" />
                     </button>
                 </div>
                 <h1 class="gossip-title">{{ committeeName }}</h1>
@@ -110,29 +83,17 @@
                     <div v-for="(message, index) in gossipMessages" :key="message._id || index" class="gossip-card"
                         :style="{ animationDelay: `${index * 0.1}s` }">
                         <div class="gossip-lock">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <rect x="5" y="11" width="14" height="10" rx="2" ry="2" />
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                            </svg>
+                            <Ghost :size="16" />
                         </div>
                         <p class="gossip-text">{{ message.content }}</p>
                         <div class="gossip-time">{{ formatTime(message.timestamp) }}</div>
                     </div>
                 </div>
                 <div v-else class="gossip-empty">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor"
-                            stroke-width="2" />
-                    </svg>
+                    <MessageCircle :size="64" />
                     <p>No gossip messages yet</p>
                 </div>
             </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="display-footer">
-            <p>This app was developed by another user. It may be inaccurate or unsafe. <a href="#">Report legal
-                    issue</a></p>
         </div>
     </div>
 </template>
@@ -143,6 +104,8 @@ import { useRoute } from 'vue-router'
 import { apiMethods } from '@/utils/api'
 import { wsService } from '@/plugins/websocket'
 import { useAuthStore } from '@/stores/auth'
+
+import { Ghost, VenetianMask, Maximize, Minimize, Clock, User, MessageCircle } from 'lucide-vue-next'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -242,8 +205,6 @@ const loadGossipMessages = async () => {
         const committeeId = committee.value?._id
         if (!committeeId) return
 
-        console.log('📨 Loading gossip messages for committee:', committeeId)
-
         // Fetch gossip channel conversation
         const response = await apiMethods.messages.getCommitteeConversation(
             committeeId,
@@ -256,8 +217,6 @@ const loadGossipMessages = async () => {
             gossipMessages.value = messages
                 .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
                 .slice(0, 20)
-
-            console.log('✅ Loaded', gossipMessages.value.length, 'gossip messages')
         }
     } catch (error) {
         console.error('Failed to load gossip messages:', error)
@@ -278,8 +237,6 @@ const loadPublicData = async () => {
             return
         }
 
-        console.log('📊 Loading public data for committee:', committeeId)
-
         // LOAD COMMITTEE INFO AND DISPLAY MODE
         const committeeResponse = await apiMethods.committees.getById(committeeId)
         if (committeeResponse.data?.committee) {
@@ -290,7 +247,6 @@ const loadPublicData = async () => {
                 const modeResponse = await apiMethods.committees.getDisplayMode(committeeId)
                 if (modeResponse.data?.displayMode) {
                     displayMode.value = modeResponse.data.displayMode
-                    console.log('✅ Loaded display mode:', displayMode.value)
                 }
             } catch (err) {
                 console.warn('Could not load display mode, using default:', err)
@@ -324,8 +280,6 @@ const loadPublicData = async () => {
         // Load gossip messages
         await loadGossipMessages()
 
-        console.log('✅ Public data loaded successfully')
-
     } catch (error) {
         console.error('Failed to load public data:', error)
     }
@@ -336,17 +290,13 @@ const setupWebSocketListeners = () => {
 
     if (!committeeId) return
 
-    console.log('🔧 Setting up WebSocket listeners for committee:', committeeId)
-
     // Join committee room
     wsService.emit('join-committee-room', { committeeId })
 
     // Listen for display mode changes
     wsService.on('public-display-mode-changed', (data) => {
-        console.log('🎬 Display mode changed:', data)
         if (data.committeeId === committeeId) {
             displayMode.value = data.mode
-            console.log('✅ Display mode updated to:', displayMode.value)
         }
     })
 
@@ -391,7 +341,6 @@ const setupWebSocketListeners = () => {
 
     // Listen for new gossip messages (committee-wide messages)
     wsService.on('committee-committee-message-received', (data) => {
-        console.log('📨 Committee message received:', data)
         if (data.committeeId === committeeId && data.channelType === 'gossip') {
             // Add new message to the beginning (newest first)
             const newMessage = {
@@ -408,12 +357,8 @@ const setupWebSocketListeners = () => {
             if (gossipMessages.value.length > 20) {
                 gossipMessages.value = gossipMessages.value.slice(0, 20)
             }
-
-            console.log('✅ Gossip message added, total:', gossipMessages.value.length)
         }
     })
-
-    console.log('✅ WebSocket listeners ready')
 }
 
 const updateTimer = (timerType, timerData) => {
@@ -424,7 +369,6 @@ const updateTimer = (timerType, timerData) => {
 
 // Watch for display mode changes to reload gossip messages
 watch(displayMode, async (newMode, oldMode) => {
-    console.log('🔄 Display mode changed from', oldMode, 'to', newMode)
     if (newMode === 'gossip' && oldMode !== 'gossip') {
         // Reload gossip messages when switching to gossip view
         await loadGossipMessages()
@@ -433,7 +377,6 @@ watch(displayMode, async (newMode, oldMode) => {
 
 // Lifecycle
 onMounted(async () => {
-    console.log('🚀 Public Display mounted')
     await loadPublicData()
     setupWebSocketListeners()
 
@@ -699,7 +642,7 @@ onUnmounted(() => {
 /* ==================== GOSSIP VIEW ==================== */
 .gossip-view {
     flex: 1;
-    background: linear-gradient(135deg, #330b78 0%, #07266b 100%);
+    background: linear-gradient(135deg, #071d4e 0%, #052260 100%);
     color: white;
     padding: clamp(1rem, 3vw, 2rem);
 }
@@ -788,8 +731,6 @@ onUnmounted(() => {
 .gossip-lock {
     width: 24px;
     height: 24px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
