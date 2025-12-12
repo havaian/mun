@@ -51,21 +51,27 @@
             <!-- Results Bar - Fixed height -->
             <div class="bg-gray-900 px-8 py-4 border-t border-gray-700 flex items-center justify-between flex-shrink-0">
                 <!-- In Favour -->
-                <div class="flex items-center space-x-3 bg-[#00ff00] px-6 py-3">
-                    <PlusIcon class="w-8 h-8 text-white stroke-[3]" />
-                    <div class="text-3xl font-bold text-black">IN FAVOUR: {{ results.for }}</div>
+                <div class="flex items-center space-x-3 px-6 py-3">
+                    <div class="p-1  bg-[#00ff00]">
+                        <PlusIcon class="w-8 h-8 text-white stroke-[3]" />
+                    </div>
+                    <div class="p-1 text-3xl bg-[#00ff00] font-bold text-black">IN FAVOUR: {{ results.for }}</div>
                 </div>
 
                 <!-- Against -->
-                <div class="flex items-center space-x-3 bg-[#ff0000] px-6 py-3">
-                    <MinusIcon class="w-8 h-8 text-white stroke-[3]" />
-                    <div class="text-3xl font-bold text-black">AGAINST:{{ results.against }}</div>
+                <div class="flex items-center space-x-3 px-6 py-3">
+                    <div class="p-1  bg-[#ff0000]">
+                        <MinusIcon class="w-8 h-8 text-white stroke-[3]" />
+                    </div>
+                    <div class="p-1 text-3xl bg-[#ff0000] font-bold text-black">AGAINST:{{ results.against }}</div>
                 </div>
 
                 <!-- Abstention -->
-                <div class="flex items-center space-x-3 bg-[#ffff00] px-6 py-3">
-                    <XMarkIcon class="w-8 h-8 text-black stroke-[3]" />
-                    <div class="text-3xl font-bold text-black">ABSTENTION:{{ results.abstain }}</div>
+                <div class="flex items-center space-x-3 px-6 py-3">
+                    <div class="p-1  bg-[#ffff00]">
+                        <XMarkIcon class="w-8 h-8 text-black stroke-[3]" />
+                    </div>
+                    <div class="p-1 text-3xl bg-[#ffff00] font-bold text-black">ABSTENTION:{{ results.abstain }}</div>
                 </div>
 
                 <!-- UN Logo -->
