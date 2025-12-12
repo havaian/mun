@@ -149,42 +149,70 @@
             </div>
 
             <!-- Message Items -->
-            <div v-for="message in currentMessages" :key="message._id" class="mb-4">
-              <!-- General Assembly - Right-aligned blue speech bubbles for Chairperson -->
-              <div v-if="selectedChannel.id === 'general'" class="flex flex-col items-end">
-                <div class="flex items-center gap-2 mb-1 mr-2">
-                  <span class="text-sm text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
-                  <span class="font-medium text-gray-700">
-                    {{ message.senderCountry.includes('Presidium') ? 'Chairperson' : message.senderCountry }}
-                  </span>
-                </div>
-                <div class="bg-blue-600 text-white rounded-2xl rounded-br-md px-4 py-2 max-w-xs shadow-sm">
-                  {{ message.content }}
+            <div v-for="message in currentMessages" :key="message._id">
+              <!-- General Assembly - Speech bubbles -->
+              <div v-if="selectedChannel.id === 'general'"
+                :class="['flex', isMyMessage(message) ? 'justify-end' : 'justify-start']">
+                <div :class="['max-w-md', isMyMessage(message) ? 'items-end' : 'items-start']">
+                  <div class="flex items-center gap-2 mb-1" :class="isMyMessage(message) ? 'flex-row-reverse' : ''">
+                    <span class="text-xs text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
+                    <span class="font-medium text-sm text-gray-700">{{ message.senderCountry }}</span>
+                  </div>
+                  <div :class="[
+                    'px-4 py-2.5 rounded-2xl shadow-sm',
+                    isMyMessage(message)
+                      ? 'bg-blue-600 text-white rounded-br-md'
+                      : 'bg-white text-gray-900 rounded-bl-md border border-gray-200'
+                  ]">
+                    {{ message.content }}
+                  </div>
                 </div>
               </div>
 
               <!-- Announcements - Yellow notification style -->
-              <div v-else-if="selectedChannel.id === 'announcements'" class="flex justify-center mb-3">
-                <div class="bg-yellow-50 border border-yellow-200 rounded-full px-4 py-3 flex items-center gap-2 shadow-sm">
-                  <div class="w-5 h-5 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <ShieldAlert class="w-3 h-3 text-yellow-600" />
+              <div v-else-if="selectedChannel.id === 'announcements'" class="flex justify-center">
+                <div
+                  class="bg-yellow-50 border border-yellow-200 rounded-full px-5 py-3 flex items-center gap-3 shadow-sm max-w-2xl">
+                  <div class="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <ShieldAlert class="w-4 h-4 text-yellow-600" />
                   </div>
-                  <span class="font-medium text-yellow-800">Chairperson:</span>
-                  <span class="text-yellow-700">{{ message.content }}</span>
+                  <div class="flex-1">
+                    <span class="font-semibold text-yellow-800">Chairperson: </span>
+                    <span class="text-yellow-700">{{ message.content }}</span>
+                  </div>
+                  <span class="text-xs text-yellow-600 flex-shrink-0">{{ formatMessageTime(message.timestamp) }}</span>
                 </div>
               </div>
 
               <!-- Gossip Box - Pink anonymous messages -->
-              <div v-else-if="selectedChannel.id === 'gossip'" class="mb-3">
+              <div v-else-if="selectedChannel.id === 'gossip'">
                 <div class="flex items-center gap-2 mb-1">
-                  <div class="w-4 h-4 bg-pink-100 rounded-full flex items-center justify-center">
-                    <Ghost class="w-3 h-3 text-pink-600" />
+                  <div class="w-5 h-5 bg-pink-100 rounded-full flex items-center justify-center">
+                    <SparklesIcon class="w-3 h-3 text-pink-600" />
                   </div>
-                  <span class="font-medium text-pink-600">Anonymous</span>
-                  <span class="text-sm text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
+                  <span class="font-semibold text-pink-600 text-sm">Anonymous</span>
+                  <span class="text-xs text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
                 </div>
-                <div class="bg-pink-50 border border-pink-200 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm max-w-md">
+                <div class="bg-pink-50 border border-pink-200 rounded-2xl rounded-tl-md px-4 py-3 shadow-sm max-w-md">
                   <div class="text-pink-800">{{ message.content }}</div>
+                </div>
+              </div>
+
+              <!-- Direct Messages -->
+              <div v-else-if="selectedChannel.type === 'dm'"
+                :class="['flex', isMyMessage(message) ? 'justify-end' : 'justify-start']">
+                <div :class="['max-w-md', isMyMessage(message) ? 'items-end' : 'items-start']">
+                  <div class="flex items-center gap-2 mb-1" :class="isMyMessage(message) ? 'flex-row-reverse' : ''">
+                    <span class="text-xs text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
+                  </div>
+                  <div :class="[
+                    'px-4 py-2.5 rounded-2xl shadow-sm',
+                    isMyMessage(message)
+                      ? 'bg-blue-600 text-white rounded-br-md'
+                      : 'bg-white text-gray-900 rounded-bl-md border border-gray-200'
+                  ]">
+                    {{ message.content }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -637,11 +665,6 @@ const getUnreadDMCount = (email) => {
   return 0
 }
 
-const getCountryFlag = (countryName) => {
-  const country = committee.value?.countries?.find(c => c.name === countryName)
-  return country?.code || ''
-}
-
 const formatMessageTime = (timestamp) => {
   return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
@@ -652,6 +675,22 @@ const scrollToBottom = () => {
       messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
     }
   })
+}
+
+/**
+ * Check if a message was sent by the current user
+ */
+const isCurrentUserMessage = (message) => {
+  const currentUserEmail = authStore.user?.email
+  return message.senderEmail === currentUserEmail
+}
+
+/**
+ * Get country code for flag display
+ */
+const getCountryCode = (countryName) => {
+  const country = committee.value?.countries?.find(c => c.name === countryName)
+  return country?.code || ''
 }
 
 // WebSocket listeners
@@ -690,3 +729,15 @@ onMounted(async () => {
   setupWebSocketListeners()
 })
 </script>
+
+<style scoped>
+/* Optional: Add smooth transitions */
+.rounded-2xl {
+  transition: all 0.2s ease;
+}
+
+.rounded-2xl:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+</style>
