@@ -1,6 +1,6 @@
 const { ProceduralMotion, Question } = require('./model');
 const { Committee } = require('../committee/model');
-const { Session } = require('../session/model');
+const Session = require('../session/model');
 const { User } = require('../auth/model');
 const { emitToRoom, emitToUser } = require('../websocket/socketManager');
 

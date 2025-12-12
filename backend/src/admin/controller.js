@@ -24,7 +24,7 @@ const getDashboardStats = async (req, res) => {
             const { Committee } = require('../committee/model');
             const { User } = require('../auth/model');
             const { Document } = require('../document/model');
-            const { Session } = require('../session/model');
+            const Session = require('../session/model');
             const { Voting } = require('../voting/model');
 
             // Use Promise.all for parallel queries to improve performance

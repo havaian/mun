@@ -1,6 +1,6 @@
 const { Timer } = require('./model');
 const { Committee } = require('../committee/model');
-const { Session } = require('../session/model');
+const Session = require('../session/model');
 const { emitToRoom } = require('../websocket/socketManager');
 
 // Active timer intervals storage

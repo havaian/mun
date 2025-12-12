@@ -71,7 +71,7 @@ router.get('/committee/:committeeId',
                 filter.status = status;
             }
 
-            const { Session } = require('./model');
+            const Session = require('./model');
             const sessions = await Session.find(filter)
                 .select('number title status startedAt endedAt currentMode quorum')
                 .sort({ number: -1 })
@@ -278,7 +278,7 @@ router.get('/:id/speakers',
     handleValidationErrors,
     async (req, res) => {
         try {
-            const { Session } = require('./model');
+            const Session = require('./model');
             const session = await Session.findById(req.params.id)
                 .select('speakerLists currentSpeaker');
 

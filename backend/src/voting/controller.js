@@ -1,7 +1,7 @@
 const { Voting } = require('./model');
 const { Committee } = require('../committee/model');
 const { User } = require('../auth/model');
-const { Session } = require('../session/model');
+const Session = require('../session/model');
 const { emitToRoom, emitToUser } = require('../websocket/socketManager');
 
 // Create new voting (presidium only)
