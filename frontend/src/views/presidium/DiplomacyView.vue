@@ -484,58 +484,65 @@ const selectChannel = (channel) => {
 }
 
 const sendMessage = async () => {
-  if (!newMessage.value.trim() || !selectedChannel.value) {
+  if (!newMessage.value.trim() || !selectedChannel.value || isSending.value) {
     return
   }
 
+  const messageContent = newMessage.value.trim()
+  
   try {
     isSending.value = true
 
-    // For public channels, use committee messaging API
+    // For public channels
     if (selectedChannel.value.type === 'public') {
       const response = await apiMethods.messages.sendCommitteeMessage(
         committee.value._id || committee.value,
         selectedChannel.value.id,
-        {
-          content: newMessage.value.trim()
-        }
+        { content: messageContent }
       )
 
       if (response.data.success) {
+        // Immediately add message to local array for instant display
         const newMsg = {
           _id: response.data.message._id,
-          senderName: authStore.user?.name || authStore.user?.countryName,
-          senderRole: authStore.user?.role,
-          senderCountry: response.data.message.senderCountry,
-          content: response.data.message.content,
-          timestamp: response.data.message.timestamp
+          senderEmail: authStore.user?.email,
+          senderCountry: response.data.message.senderCountry || authStore.user?.countryName || 'Unknown',
+          content: response.data.message.content || messageContent,
+          timestamp: response.data.message.timestamp || new Date().toISOString()
         }
 
+        // DEBUG: Remove these console.logs once working
+        console.log('Adding own message:', newMsg)
+        console.log('Current user email:', authStore.user?.email)
+        
         messages.value.push(newMsg)
         newMessage.value = ''
+        await nextTick()
         scrollToBottom()
       }
       return
     }
 
-    // For DM channels, send to conversation
+    // For DM channels
     if (selectedChannel.value.conversationId) {
-      const response = await apiMethods.messages.sendMessage(selectedChannel.value.conversationId, {
-        content: newMessage.value.trim()
-      })
+      const response = await apiMethods.messages.sendMessage(
+        selectedChannel.value.conversationId,
+        { content: messageContent }
+      )
 
       if (response.data.success) {
+        // Immediately add message to local array for instant display
         const newMsg = {
           _id: response.data.message._id,
-          senderName: authStore.user?.name || authStore.user?.countryName,
-          senderRole: authStore.user?.role,
-          senderCountry: authStore.user?.countryName,
-          content: newMessage.value.trim(),
-          timestamp: new Date().toISOString()
+          senderEmail: authStore.user?.email,
+          senderCountry: authStore.user?.countryName || 'Unknown',
+          content: response.data.message.content || messageContent,
+          timestamp: response.data.message.timestamp || new Date().toISOString()
         }
 
         messages.value.push(newMsg)
         newMessage.value = ''
+        await nextTick()
         scrollToBottom()
       }
     }
@@ -681,8 +688,14 @@ const scrollToBottom = () => {
  * Check if a message was sent by the current user
  */
 const isCurrentUserMessage = (message) => {
-  const currentUserEmail = authStore.user?.email
-  return message.senderEmail === currentUserEmail
+  const result = message.senderEmail === authStore.user?.email
+  // DEBUG: Remove once working
+  console.log('isCurrentUserMessage check:', {
+    messageSenderEmail: message.senderEmail,
+    currentUserEmail: authStore.user?.email,
+    result: result
+  })
+  return result
 }
 
 /**
@@ -696,21 +709,49 @@ const getCountryCode = (countryName) => {
 // WebSocket listeners
 const setupWebSocketListeners = () => {
   wsService.on('message-received', (data) => {
-    if (selectedChannel.value?.conversationId === data.conversationId) {
-      const newMessage = {
-        _id: data.messageId,
-        senderName: data.senderCountry,
-        senderCountry: data.senderCountry,
-        content: data.content,
-        timestamp: data.timestamp
+    // DEBUG: Remove these console.logs once working
+    console.log('WebSocket message-received event:', data)
+    console.log('Current channel:', selectedChannel.value)
+    console.log('Current user email:', authStore.user?.email)
+    
+    // Check if message is for current channel
+    const isCurrentChannel =
+      (selectedChannel.value?.conversationId === data.conversationId) ||
+      (selectedChannel.value?.type === 'public' && data.channelType === selectedChannel.value.id)
+
+    if (isCurrentChannel) {
+      // Check if message already exists (prevents duplicates from our own sends)
+      const messageExists = messages.value.some(msg => msg._id === data.messageId)
+      
+      // DEBUG
+      console.log('Message exists?', messageExists)
+      console.log('Is from current user?', data.senderEmail === authStore.user?.email)
+      
+      if (!messageExists) {
+        const newMessage = {
+          _id: data.messageId,
+          senderEmail: data.senderEmail,
+          senderCountry: data.senderCountry,
+          content: data.content,
+          timestamp: data.timestamp
+        }
+        
+        console.log('Adding message from WebSocket:', newMessage)
+        messages.value.push(newMessage)
+        scrollToBottom()
+      } else {
+        console.log('Skipping duplicate message')
       }
-      messages.value.push(newMessage)
-      scrollToBottom()
+    } else {
+      // Update unread count for other channels
+      const channel = publicChannels.find(c => c.id === data.channelType)
+      if (channel) {
+        channel.unreadCount++
+      }
     }
   })
 
-  wsService.on('conversation-created', (data) => {
-    // Refresh conversations list
+  wsService.on('conversation-created', () => {
     loadConversations()
   })
 }
