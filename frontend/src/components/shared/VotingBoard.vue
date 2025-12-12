@@ -29,15 +29,15 @@
                         <!-- Vote Icon -->
                         <span class="w-4 h-4 flex-shrink-0">
                             <!-- In Favour -->
-                            <div v-if="voter.vote === 'for'"  class="w-5 f-5 flex items-center space-x-3 bg-[#00ff00]">
+                            <div v-if="voter.vote === 'for'"  class="w-4 h-4 flex items-center space-x-3 bg-[#00ff00]">
                                 <PlusIcon class="w-4 h-4 text-white stroke-[3]" />
                             </div>
                             <!-- Against -->
-                            <div v-else-if="voter.vote === 'against'"  class="w-5 f-5 flex items-center space-x-3 bg-[#ff0000]">
+                            <div v-else-if="voter.vote === 'against'"  class="w-4 h-4 flex items-center space-x-3 bg-[#ff0000]">
                                 <MinusIcon class="w-4 h-4 text-white stroke-[3]" />
                             </div>
                             <!-- Abstention -->
-                            <div v-else-if="voter.vote === 'abstain'"  class="w-5 f-5 flex items-center space-x-3 bg-[#ffff00]">
+                            <div v-else-if="voter.vote === 'abstain'"  class="w-4 h-4 flex items-center space-x-3 bg-[#ffff00]">
                                 <XMarkIcon class="w-4 h-4 text-black stroke-[3]" />
                             </div>
                             <span v-else class="text-gray-600 text-lg">○</span>
