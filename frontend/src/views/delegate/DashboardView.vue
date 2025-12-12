@@ -70,7 +70,7 @@
 
                         <!-- Request to Speak -->
                         <button @click="requestToSpeak" :disabled="!canRequestSpeak" :class="[
-                            'w-full mb-6 py-4 px-6 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-3',
+                            'w-full py-4 px-6 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-3',
                             isInSpeakersList
                                 ? 'bg-green-50 border-2 border-green-200 text-green-700'
                                 : canRequestSpeak
@@ -84,7 +84,7 @@
                         </button>
 
                         <!-- Procedural Actions -->
-                        <div class="grid grid-cols-2 gap-4">
+                        <!-- <div class="grid grid-cols-2 gap-4">
                             <button @click="pointOfOrder" :disabled="!canTakeActions"
                                 class="py-3 px-4 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                 Point of Order
@@ -93,7 +93,7 @@
                                 class="py-3 px-4 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                                 Right of Reply
                             </button>
-                        </div>
+                        </div> -->
                     </div>
 
                     <!-- Current Speaker Card -->
@@ -489,19 +489,19 @@ const requestToSpeak = async () => {
     }
 }
 
-const pointOfOrder = async () => {
-    if (!canTakeActions.value) return
+// const pointOfOrder = async () => {
+//     if (!canTakeActions.value) return
 
-    // This would typically trigger a notification to presidium
-    toast.success('Point of order submitted to chairperson')
-}
+//     // This would typically trigger a notification to presidium
+//     toast.success('Point of order submitted to chairperson')
+// }
 
-const rightOfReply = async () => {
-    if (!canTakeActions.value) return
+// const rightOfReply = async () => {
+//     if (!canTakeActions.value) return
 
-    // This would typically trigger a notification to presidium
-    toast.success('Right of reply requested')
-}
+//     // This would typically trigger a notification to presidium
+//     toast.success('Right of reply requested')
+// }
 
 // WebSocket Listeners
 const setupWebSocketListeners = () => {

@@ -32,7 +32,7 @@ const createVoting = async (req, res) => {
         }
 
         // Check if session has quorum
-        if (!session.quorum.hasQuorum) {
+        if (!session.quorum.hasMet) {
             return res.status(400).json({
                 error: 'Cannot start voting without quorum',
                 required: session.quorum.required,
@@ -41,7 +41,7 @@ const createVoting = async (req, res) => {
         }   
 
         // Get eligible voters from session roll call
-        const eligibleVoters = session.attendance
+        const eligibleVoters = session.speakerLists.present
             .filter(entry => entry.status === 'present_and_voting')
             .map(entry => {
                 const countryData = committee.countries.find(c => c.name === entry.country);
