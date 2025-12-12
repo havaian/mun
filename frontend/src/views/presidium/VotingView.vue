@@ -535,8 +535,31 @@ const setupWebSocketListeners = () => {
 
   wsService.on('vote-cast', (data) => {
     if (data.votingId === activeVote.value?._id) {
-      // Update voting results in real-time
-      loadVotingData()
+      // Update vote counts in real-time from WebSocket data
+      if (data.results && activeVote.value) {
+        activeVote.value.results = data.results
+        
+        // For roll call, also update current voter if provided
+        if (data.nextVoter !== undefined) {
+          const currentIndex = activeVote.value.rollCallOrder?.indexOf(data.nextVoter)
+          if (currentIndex !== undefined && currentIndex !== -1) {
+            activeVote.value.currentVoterIndex = currentIndex
+          }
+        }
+        
+        // Update vote record for roll call display
+        if (data.country && data.vote && activeVote.value.votingType === 'rollCall') {
+          const existingVote = activeVote.value.votes?.find(v => v.country === data.country)
+          if (!existingVote) {
+            if (!activeVote.value.votes) activeVote.value.votes = []
+            activeVote.value.votes.push({
+              country: data.country,
+              vote: data.vote,
+              timestamp: new Date().toISOString()
+            })
+          }
+        }
+      }
     }
   })
 
@@ -564,5 +587,11 @@ const setupWebSocketListeners = () => {
 onMounted(async () => {
   await loadData()
   setupWebSocketListeners()
+
+  if (committee.value?._id) {
+       wsService.emit('join-committee-room', {
+           committeeId: committee.value._id
+       })
+   }
 })
 </script>

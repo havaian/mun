@@ -275,7 +275,13 @@ const castVote = async (req, res) => {
                 isVeto,
                 nextVoter: voting.currentlyVoting,
                 totalVotes: voting.votes.length,
-                remainingVoters: voting.eligibleVoters.length - voting.votes.length
+                remainingVoters: voting.eligibleVoters.length - voting.votes.length,
+                results: {
+                    votesFor,
+                    votesAgainst,
+                    abstentions,
+                    totalVotes: voting.votes.length
+                }
             };
 
             // For simple voting, don't reveal vote details
@@ -320,58 +326,115 @@ const castVote = async (req, res) => {
 };
 
 // Skip turn in roll call voting
-const skipVote = async (req, res) => {
+const castVote = async (req, res) => {
     try {
         const { id } = req.params;
+        const { vote, vetoJustification } = req.body;
 
         const voting = await Voting.findById(id);
         if (!voting) {
             return res.status(404).json({ error: 'Voting not found' });
         }
 
-        if (voting.votingType !== 'rollCall') {
-            return res.status(400).json({ error: 'Can only skip in roll call voting' });
+        if (voting.status !== 'active') {
+            return res.status(400).json({
+                error: 'Voting is not active',
+                currentStatus: voting.status
+            });
         }
 
-        if (voting.status !== 'active') {
-            return res.status(400).json({ error: 'Voting is not active' });
+        // Check if user can vote
+        if (!voting.canVote(req.user.email)) {
+            return res.status(400).json({ error: 'You are not eligible to vote or have already voted' });
         }
 
         const voter = voting.eligibleVoters.find(v => v.email === req.user.email);
-        if (!voter) {
-            return res.status(400).json({ error: 'You are not eligible to vote' });
+
+        // For roll call voting, check if it's the user's turn
+        if (voting.votingType === 'rollCall') {
+            if (voting.currentlyVoting !== voter.country) {
+                return res.status(400).json({
+                    error: 'Not your turn to vote',
+                    currentlyVoting: voting.currentlyVoting
+                });
+            }
         }
 
-        if (voting.currentlyVoting !== voter.country) {
-            return res.status(400).json({
-                error: 'Not your turn to vote',
-                currentlyVoting: voting.currentlyVoting
-            });
+        // For skipped countries, check allowed votes
+        if (voting.votingType === 'rollCall' && voting.skippedCountries.includes(voter.country)) {
+            const allowedVotes = voting.getAllowedVotesForSkipped(voter.country);
+            if (!allowedVotes.includes(vote)) {
+                return res.status(400).json({
+                    error: `Skipped countries can only vote: ${allowedVotes.join(', ')}`,
+                    allowedVotes
+                });
+            }
         }
 
-        if (!voting.canSkipInRollCall(voter.country)) {
-            return res.status(400).json({ error: 'You have already skipped or voted' });
+        // Handle veto (Security Council only)
+        const isVeto = vote === 'against' &&
+            voter.hasVetoRight &&
+            vetoJustification &&
+            vetoJustification.trim().length > 0;
+
+        // Create vote record
+        const voteRecord = {
+            country: voter.country,
+            email: req.user.email,
+            vote,
+            timestamp: new Date(),
+            isVeto,
+            vetoJustification: isVeto ? vetoJustification.trim() : null
+        };
+
+        // For roll call, add position
+        if (voting.votingType === 'rollCall') {
+            voteRecord.rollCallPosition = voting.rollCallOrder.indexOf(voter.country) + 1;
         }
 
-        // Add to skipped countries
-        voting.skippedCountries.push(voter.country);
+        voting.votes.push(voteRecord);
 
-        // Move to next voter
-        voting.currentlyVoting = voting.getNextRollCallVoter();
+        // For roll call, move to next voter
+        if (voting.votingType === 'rollCall') {
+            voting.currentlyVoting = voting.getNextRollCallVoter();
+        }
 
         await voting.save();
 
-        // Emit skip notification
+        // Calculate current vote counts for real-time update
+        const votesFor = voting.votes.filter(v => v.vote === 'for').length;
+        const votesAgainst = voting.votes.filter(v => v.vote === 'against').length;
+        const abstentions = voting.votes.filter(v => v.vote === 'abstain').length;
+
+        // Emit vote notification
         if (req.app.locals.io) {
-            emitToRoom(req.app.locals.io, `committee-${voting.committeeId}`, 'vote-skipped', {
+            const voteNotification = {
                 votingId: voting._id,
                 country: voter.country,
+                vote,
+                isVeto,
                 nextVoter: voting.currentlyVoting,
-                skippedCount: voting.skippedCountries.length
-            });
+                totalVotes: voting.votes.length,
+                remainingVoters: voting.eligibleVoters.length - voting.votes.length,
+                results: {
+                    votesFor,
+                    votesAgainst,
+                    abstentions,
+                    totalVotes: voting.votes.length
+                }
+            };
 
-            // Notify next voter
-            if (voting.currentlyVoting) {
+            // For simple voting, don't reveal vote details
+            if (voting.votingType === 'simple') {
+                delete voteNotification.vote;
+                delete voteNotification.country;
+                delete voteNotification.isVeto;
+            }
+
+            emitToRoom(req.app.locals.io, `committee-${voting.committeeId}`, 'vote-cast', voteNotification);
+
+            // Notify next voter in roll call
+            if (voting.votingType === 'rollCall' && voting.currentlyVoting) {
                 const nextVoter = voting.eligibleVoters.find(v => v.country === voting.currentlyVoting);
                 if (nextVoter) {
                     emitToUser(req.app.locals.io, nextVoter.email, 'your-turn-to-vote', {
@@ -382,18 +445,23 @@ const skipVote = async (req, res) => {
             }
         }
 
-        global.logger.info(`Vote skipped: ${voter.country} in voting ${voting._id}`);
+        global.logger.info(`Vote cast: ${voter.country} voted "${vote}" in voting ${voting._id}${isVeto ? ' (VETO)' : ''}`);
 
         res.json({
             success: true,
+            vote: {
+                country: voter.country,
+                vote,
+                isVeto,
+                timestamp: voteRecord.timestamp
+            },
             nextVoter: voting.currentlyVoting,
-            skippedCount: voting.skippedCountries.length,
-            message: 'Vote skipped successfully'
+            message: `Vote cast successfully${isVeto ? ' with veto' : ''}`
         });
 
     } catch (error) {
-        global.logger.error('Skip vote error:', error);
-        res.status(500).json({ error: 'Failed to skip vote' });
+        global.logger.error('Cast vote error:', error);
+        res.status(500).json({ error: 'Failed to cast vote' });
     }
 };
 
