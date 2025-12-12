@@ -1,144 +1,109 @@
 <template>
-    <div v-if="show" class="fixed inset-0 bg-black z-50 flex items-center justify-center p-2 sm:p-4 overflow-auto"
-        @click="$emit('close')">
-        <div class="w-full max-w-7xl my-auto" @click.stop>
-            <!-- Print Button -->
-            <div class="flex justify-end mb-2 space-x-2">
-                <button @click="printBoard"
-                    class="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-sm sm:text-base">
-                    <PrinterIcon class="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span class="hidden sm:inline">Print Results</span>
-                    <span class="sm:hidden">Print</span>
-                </button>
-                <button @click="$emit('close')"
-                    class="px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm sm:text-base">
-                    Close
-                </button>
+    <div v-if="show" class="fixed inset-0 bg-black z-50 flex flex-col" @click="$emit('close')">
+        <!-- Print Button Overlay -->
+        <div class="absolute top-4 right-4 z-10 flex space-x-2">
+            <button @click="printBoard"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 shadow-lg">
+                <PrinterIcon class="w-5 h-5" />
+                <span>Print</span>
+            </button>
+            <button @click="$emit('close')"
+                class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 shadow-lg">
+                Close
+            </button>
+        </div>
+
+        <!-- Voting Board - Fullscreen -->
+        <div id="voting-board-print" class="flex flex-col h-full bg-black text-white" @click.stop>
+            <!-- Header Bar - Pink/Magenta -->
+            <div class="bg-pink-500 px-8 py-2 flex items-center justify-between flex-shrink-0">
+                <div class="text-2xl font-bold text-black">Voting Started</div>
+                <div class="text-2xl font-bold text-black">{{ formatDate(voting.startedAt || voting.createdAt) }}</div>
+                <div class="text-2xl font-bold font-mono text-black">{{ formatTime(voting.startedAt || voting.createdAt)
+                    }}
+                </div>
             </div>
 
-            <!-- Voting Board -->
-            <div id="voting-board-print" class="bg-black text-white border border-gray-700">
-                <!-- Header Bar -->
-                <div
-                    class="bg-gradient-to-r from-blue-800 to-blue-600 px-3 sm:px-6 lg:px-8 py-2 sm:py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-0">
-                    <div class="text-sm sm:text-lg lg:text-xl font-bold">Voting Started</div>
-                    <div class="text-sm sm:text-lg lg:text-xl">{{ formatDate(voting.startedAt || voting.createdAt) }}
-                    </div>
-                    <div class="text-sm sm:text-lg lg:text-xl font-mono">{{ formatTime(voting.startedAt ||
-                        voting.createdAt) }}
-                    </div>
-                </div>
+            <!-- Title Section -->
+            <div class="px-8 py-3 border-b border-gray-700 flex-shrink-0">
+                <div class="text-xl font-bold mb-1">{{ voting.subjectType?.toUpperCase() || 'ITEM' }} - {{ voting.title
+                    }}</div>
+                <div v-if="voting.description" class="text-lg text-gray-300">{{ voting.description }}</div>
+            </div>
 
-                <!-- Title Section -->
-                <div class="px-3 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-6 border-b border-gray-700">
-                    <div class="text-lg sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2">{{ voting.title }}</div>
-                    <div v-if="voting.description" class="text-sm sm:text-lg lg:text-xl text-gray-300">{{
-                        voting.description }}
-                    </div>
-                </div>
-
-                <!-- Countries Grid -->
-                <div class="px-3 sm:px-6 lg:px-8 py-4 sm:py-6 min-h-[300px] sm:min-h-[400px] lg:min-h-[500px]">
-                    <div
-                        class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-2 sm:gap-x-3 lg:gap-x-4 gap-y-1 sm:gap-y-2">
-                        <div v-for="voter in sortedVoters" :key="voter.country"
-                            class="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm lg:text-base font-medium">
-                            <!-- Vote Icon -->
-                            <span class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0">
-                                <svg v-if="voter.vote === 'for'" viewBox="0 0 24 24" fill="none"
-                                    class="w-4 h-4 sm:w-5 sm:h-5">
-                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"
-                                        fill="#00FF00" />
-                                </svg>
-                                <svg v-else-if="voter.vote === 'against'" viewBox="0 0 24 24" fill="none"
-                                    class="w-4 h-4 sm:w-5 sm:h-5">
-                                    <path
-                                        d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"
-                                        fill="#FF0000" />
-                                </svg>
-                                <svg v-else-if="voter.vote === 'abstain'" viewBox="0 0 24 24" fill="none"
-                                    class="w-4 h-4 sm:w-5 sm:h-5">
-                                    <path
-                                        d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"
-                                        fill="#FFFF00" />
-                                </svg>
-                                <span v-else class="text-gray-600 text-lg">○</span>
-                            </span>
-                            <!-- Country Name -->
-                            <span class="truncate uppercase">{{ voter.country }}</span>
-                        </div>
+            <!-- Countries Grid - Takes remaining space -->
+            <div class="flex-1 px-8 py-4 overflow-hidden">
+                <div class="h-full grid grid-cols-6 gap-x-3 gap-y-1 content-start">
+                    <div v-for="voter in sortedVoters" :key="voter.country" class="flex items-center space-x-2 text-sm">
+                        <!-- Vote Icon -->
+                        <span class="w-4 h-4 flex-shrink-0">
+                            <svg v-if="voter.vote === 'for'" viewBox="0 0 24 24" fill="none" class="w-4 h-4">
+                                <rect width="24" height="24" fill="#00FF00" />
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="black" />
+                            </svg>
+                            <svg v-else-if="voter.vote === 'against'" viewBox="0 0 24 24" fill="none" class="w-4 h-4">
+                                <rect width="24" height="24" fill="#FF0000" />
+                                <path
+                                    d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"
+                                    fill="black" />
+                            </svg>
+                            <svg v-else-if="voter.vote === 'abstain'" viewBox="0 0 24 24" fill="none" class="w-4 h-4">
+                                <rect width="24" height="24" fill="#FFFF00" />
+                                <path
+                                    d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"
+                                    fill="black" />
+                            </svg>
+                            <span v-else class="text-gray-600 text-lg">○</span>
+                        </span>
+                        <!-- Country Name -->
+                        <span class="truncate uppercase font-medium">{{ voter.country }}</span>
                     </div>
                 </div>
+            </div>
 
-                <!-- Results Bar -->
-                <div
-                    class="bg-gray-900 px-3 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-6 border-t border-gray-700 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 sm:gap-4">
-                    <div
-                        class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-wrap w-full lg:w-auto">
-                        <!-- In Favour -->
-                        <div class="flex items-center space-x-2 sm:space-x-3">
-                            <div
-                                class="w-6 h-6 sm:w-8 sm:h-8 bg-green-600 flex items-center justify-center flex-shrink-0">
-                                <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4 sm:w-6 sm:h-6">
-                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="white" />
-                                </svg>
-                            </div>
-                            <div class="text-base sm:text-xl lg:text-2xl font-bold whitespace-nowrap">IN FAVOUR: {{
-                                results.for }}
-                            </div>
-                        </div>
-
-                        <!-- Against -->
-                        <div class="flex items-center space-x-2 sm:space-x-3">
-                            <div
-                                class="w-6 h-6 sm:w-8 sm:h-8 bg-red-600 flex items-center justify-center flex-shrink-0">
-                                <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4 sm:w-6 sm:h-6">
-                                    <path
-                                        d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"
-                                        fill="white" />
-                                </svg>
-                            </div>
-                            <div class="text-base sm:text-xl lg:text-2xl font-bold whitespace-nowrap">AGAINST: {{
-                                results.against }}
-                            </div>
-                        </div>
-
-                        <!-- Abstention -->
-                        <div class="flex items-center space-x-2 sm:space-x-3">
-                            <div
-                                class="w-6 h-6 sm:w-8 sm:h-8 bg-yellow-500 flex items-center justify-center flex-shrink-0">
-                                <svg viewBox="0 0 24 24" fill="none" class="w-4 h-4 sm:w-6 sm:h-6">
-                                    <path
-                                        d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"
-                                        fill="white" />
-                                </svg>
-                            </div>
-                            <div class="text-base sm:text-xl lg:text-2xl font-bold whitespace-nowrap">ABSTENTION: {{
-                                results.abstain }}</div>
-                        </div>
-                    </div>
-
-                    <!-- UN Logo -->
-                    <div class="hidden lg:block">
-                        <svg class="w-16 h-16 lg:w-20 lg:h-20 xl:w-24 xl:h-24" viewBox="0 0 100 100" fill="none">
-                            <circle cx="50" cy="50" r="45" stroke="#4A9EDA" stroke-width="2" fill="none" />
-                            <path
-                                d="M50 10 L50 90 M10 50 L90 50 M20 20 L80 80 M80 20 L20 80 M50 20 L50 80 M20 50 L80 50 M30 30 L70 70 M70 30 L30 70"
-                                stroke="#4A9EDA" stroke-width="1.5" />
-                            <circle cx="50" cy="50" r="8" fill="#4A9EDA" />
-                            <text x="50" y="97" font-size="8" fill="#4A9EDA" text-anchor="middle"
-                                font-weight="bold">UN</text>
-                        </svg>
-                    </div>
+            <!-- Results Bar - Fixed height -->
+            <div class="bg-gray-900 px-8 py-4 border-t border-gray-700 flex items-center justify-between flex-shrink-0">
+                <!-- In Favour -->
+                <div class="flex items-center space-x-3 bg-green-600 px-6 py-3">
+                    <svg viewBox="0 0 24 24" fill="none" class="w-8 h-8">
+                        <rect width="24" height="24" fill="#00FF00" />
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="black" />
+                    </svg>
+                    <div class="text-3xl font-bold text-black">IN FAVOUR: {{ results.for }}</div>
                 </div>
 
-                <!-- Final Result Banner (if completed) -->
-                <div v-if="voting.status === 'completed'" :class="[
-                    'px-3 sm:px-6 lg:px-8 py-4 sm:py-6 text-center text-xl sm:text-2xl lg:text-3xl font-bold border-t border-gray-700',
-                    voting.results?.passed ? 'bg-green-900 text-green-100' : 'bg-red-900 text-red-100'
-                ]">
-                    {{ voting.results?.passed ? '✓ MOTION ADOPTED' : '✗ MOTION NOT ADOPTED' }}
+                <!-- Against -->
+                <div class="flex items-center space-x-3 bg-red-600 px-6 py-3">
+                    <svg viewBox="0 0 24 24" fill="none" class="w-8 h-8">
+                        <rect width="24" height="24" fill="#FF0000" />
+                        <path
+                            d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"
+                            fill="black" />
+                    </svg>
+                    <div class="text-3xl font-bold text-black">AGAINST:{{ results.against }}</div>
                 </div>
+
+                <!-- Abstention -->
+                <div class="flex items-center space-x-3 bg-yellow-400 px-6 py-3">
+                    <svg viewBox="0 0 24 24" fill="none" class="w-8 h-8">
+                        <rect width="24" height="24" fill="#FFFF00" />
+                        <path
+                            d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"
+                            fill="black" />
+                    </svg>
+                    <div class="text-3xl font-bold text-black">ABSTENTION:{{ results.abstain }}</div>
+                </div>
+
+                <!-- UN Logo -->
+                <img src="/un-logo.svg" alt="UN" class="h-24 w-24 ml-8" />
+            </div>
+
+            <!-- Final Result Banner (if completed) -->
+            <div v-if="voting.status === 'completed'" :class="[
+                'px-8 py-4 text-center text-3xl font-bold flex-shrink-0',
+                voting.results?.passed ? 'bg-green-600 text-black' : 'bg-red-600 text-black'
+            ]">
+                {{ voting.results?.passed ? '✓ MOTION ADOPTED' : '✗ MOTION NOT ADOPTED' }}
             </div>
         </div>
     </div>
@@ -235,11 +200,18 @@ const printBoard = () => {
             font-family: Arial, sans-serif;
             background: black;
             color: white;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
           }
           @media print {
             body {
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
+            }
+            @page {
+              size: landscape;
+              margin: 0;
             }
           }
         </style>
@@ -263,6 +235,11 @@ const printBoard = () => {
     body {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+    }
+
+    @page {
+        size: landscape;
+        margin: 0;
     }
 }
 </style>
