@@ -330,6 +330,83 @@ const castVote = async (req, res) => {
     }
 };
 
+const skipVote = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const voting = await Voting.findById(id);
+        if (!voting) {
+            return res.status(404).json({ error: 'Voting not found' });
+        }
+
+        if (voting.votingType !== 'rollCall') {
+            return res.status(400).json({ error: 'Can only skip in roll call voting' });
+        }
+
+        if (voting.status !== 'active') {
+            return res.status(400).json({ error: 'Voting is not active' });
+        }
+
+        const voter = voting.eligibleVoters.find(v => v.email === req.user.email);
+        if (!voter) {
+            return res.status(400).json({ error: 'You are not eligible to vote' });
+        }
+
+        if (voting.currentlyVoting !== voter.country) {
+            return res.status(400).json({
+                error: 'Not your turn to vote',
+                currentlyVoting: voting.currentlyVoting
+            });
+        }
+
+        if (!voting.canSkipInRollCall(voter.country)) {
+            return res.status(400).json({ error: 'You have already skipped or voted' });
+        }
+
+        // Add to skipped countries
+        voting.skippedCountries.push(voter.country);
+
+        // Move to next voter
+        voting.currentlyVoting = voting.getNextRollCallVoter();
+
+        await voting.save();
+
+        // Emit skip notification
+        if (req.app.locals.io) {
+            emitToRoom(req.app.locals.io, `committee-${voting.committeeId}`, 'vote-skipped', {
+                votingId: voting._id,
+                country: voter.country,
+                nextVoter: voting.currentlyVoting,
+                skippedCount: voting.skippedCountries.length
+            });
+
+            // Notify next voter
+            if (voting.currentlyVoting) {
+                const nextVoter = voting.eligibleVoters.find(v => v.country === voting.currentlyVoting);
+                if (nextVoter) {
+                    emitToUser(req.app.locals.io, nextVoter.email, 'your-turn-to-vote', {
+                        votingId: voting._id,
+                        title: voting.title
+                    });
+                }
+            }
+        }
+
+        global.logger.info(`Vote skipped: ${voter.country} in voting ${voting._id}`);
+
+        res.json({
+            success: true,
+            nextVoter: voting.currentlyVoting,
+            skippedCount: voting.skippedCountries.length,
+            message: 'Vote skipped successfully'
+        });
+
+    } catch (error) {
+        global.logger.error('Skip vote error:', error);
+        res.status(500).json({ error: 'Failed to skip vote' });
+    }
+};
+
 // Complete voting (automatic or manual)
 const completeVoting = async (req, res) => {
     try {
