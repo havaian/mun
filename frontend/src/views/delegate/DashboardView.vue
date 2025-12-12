@@ -25,18 +25,34 @@
             <!-- Content Area -->
             <div class="flex-1 p-6 overflow-y-auto">
                 <div class="max-w-2xl space-y-6">
-                    <!-- Roll Call Active Banner -->
+                    <!-- Roll Call Active Banner - BIG PROMINENT NOTIFICATION -->
                     <div v-if="rollCallActive && !isMarkedPresent"
-                        class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h3 class="font-semibold text-blue-800">Roll Call Active</h3>
-                                <p class="text-sm text-blue-600">Mark your attendance now</p>
+                        class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl p-8 shadow-2xl border-2 border-blue-400">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start space-x-4">
+                                <div class="flex-shrink-0">
+                                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                                        <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-2xl font-bold mb-2">Roll Call in Progress</h3>
+                                    <p class="text-blue-100 text-lg">Please confirm your presence for this session.</p>
+                                </div>
                             </div>
-                            <button @click="showAttendanceModal = true"
-                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                Mark Attendance
-                            </button>
+                            <div class="flex space-x-3">
+                                <button @click="markAttendance('present')" :disabled="isMarkingAttendance"
+                                    class="px-6 py-3 bg-white/10 hover:bg-white/20 border-2 border-white/30 text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Present
+                                </button>
+                                <button @click="markAttendance('present_and_voting')" :disabled="isMarkingAttendance"
+                                    class="px-6 py-3 bg-white/10 hover:bg-white/20 border-2 border-white/30 text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Present & Voting
+                                </button>
+                            </div>
                         </div>
                     </div>
 
