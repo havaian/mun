@@ -272,15 +272,15 @@
               <!-- Results Summary -->
               <div class="grid grid-cols-3 gap-4 mb-3">
                 <div class="text-center">
-                  <div class="text-lg font-bold text-green-600">{{ vote.results?.for || 0 }}</div>
+                  <div class="text-lg font-bold text-green-600">{{ vote.results?.votesFor || 0 }}</div>
                   <div class="text-xs text-gray-500">For</div>
                 </div>
                 <div class="text-center">
-                  <div class="text-lg font-bold text-red-600">{{ vote.results?.against || 0 }}</div>
+                  <div class="text-lg font-bold text-red-600">{{ vote.results?.votesAgainst || 0 }}</div>
                   <div class="text-xs text-gray-500">Against</div>
                 </div>
                 <div class="text-center">
-                  <div class="text-lg font-bold text-yellow-600">{{ vote.results?.abstain || 0 }}</div>
+                  <div class="text-lg font-bold text-yellow-600">{{ vote.results?.abstentions || 0 }}</div>
                   <div class="text-xs text-gray-500">Abstain</div>
                 </div>
               </div>
