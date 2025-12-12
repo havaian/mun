@@ -45,8 +45,7 @@
 
         <!-- No Session State -->
         <div v-if="!currentSession" class="flex-1 overflow-y-auto p-6">
-            <div class="max-w-6xl mx-auto space-y-8">
-                <!-- Session Creation Section -->
+            <div class="max-w-2xl mx-auto">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
                     <div class="text-center mb-8">
                         <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -56,108 +55,10 @@
                         <p class="text-gray-600">Start a new session to begin committee proceedings</p>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="border border-gray-200 rounded-lg p-6 hover:border-blue-200 transition-colors">
-                            <div class="flex items-center mb-4">
-                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                                    <PlayIcon class="w-5 h-5 text-green-600" />
-                                </div>
-                                <h3 class="text-lg font-semibold text-gray-900">Quick Start</h3>
-                            </div>
-                            <p class="text-gray-600 mb-6">Start a new session with default settings immediately</p>
-                            <button @click="createQuickSession" :disabled="isLoading"
-                                class="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50">
-                                <PlayIcon class="w-5 h-5 mx-auto" />
-                            </button>
-                        </div>
-
-                        <div class="border border-gray-200 rounded-lg p-6 hover:border-blue-200 transition-colors">
-                            <div class="flex items-center mb-4">
-                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                                    <CogIcon class="w-5 h-5 text-blue-600" />
-                                </div>
-                                <h3 class="text-lg font-semibold text-gray-900">Custom Setup</h3>
-                            </div>
-                            <p class="text-gray-600 mb-6">Configure session settings, timers, and debate modes</p>
-                            <button @click="showCreateSessionModal = true"
-                                class="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                                <CogIcon class="w-5 h-5 mx-auto" />
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Presentation Control -->
-                <div class="display-mode-controls">
-                    <h3 class="text-lg font-semibold mb-3">Public Display Mode</h3>
-                    <div class="flex gap-2">
-                        <button @click="setDisplayMode('session')" :class="[
-                            'flex-1 px-4 py-3 rounded-lg font-medium transition-all',
-                            publicDisplayMode === 'session'
-                                ? 'bg-blue-600 text-white shadow-lg'
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        ]">
-                            <svg class="inline-block w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <circle cx="12" cy="12" r="10" stroke-width="2" />
-                                <path d="M12 6v6l4 4" stroke-width="2" stroke-linecap="round" />
-                            </svg>
-                            Session View
-                        </button>
-
-                        <button @click="setDisplayMode('gossip')" :class="[
-                            'flex-1 px-4 py-3 rounded-lg font-medium transition-all',
-                            publicDisplayMode === 'gossip'
-                                ? 'bg-purple-600 text-white shadow-lg'
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        ]">
-                            <svg class="inline-block w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path
-                                    d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
-                            Gossip Box
-                        </button>
-                    </div>
-                    <p class="text-sm text-gray-400 mt-2">
-                        Current: <span class="font-semibold text-white">{{ publicDisplayMode === 'session' ? 'Session View' : 'Gossip Box' }}</span>
-                    </p>
-                </div>
-
-                <!-- Previous Sessions -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-lg font-semibold text-gray-900">Previous Sessions</h3>
-                        <span class="text-sm text-gray-500">{{ previousSessions.length }} session{{
-                            previousSessions.length !== 1 ? 's' : '' }}</span>
-                    </div>
-
-                    <div v-if="previousSessions.length > 0" class="space-y-4">
-                        <div v-for="session in previousSessions.slice(0, 5)" :key="session._id"
-                            class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                            <div class="flex-1">
-                                <div class="flex items-center space-x-3 mb-2">
-                                    <h4 class="font-semibold text-gray-900">Session {{ session.sessionNumber || 'N/A' }}
-                                    </h4>
-                                    <span :class="getSessionStatusClass(session.status)">
-                                        {{ session.status }}
-                                    </span>
-                                </div>
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-gray-600">
-                                    <div>Mode: {{ formatSessionMode(session.currentMode) }}</div>
-                                    <div>Started: {{ formatSessionDate(session.startedAt) }}</div>
-                                    <div v-if="session.endedAt">Ended: {{ formatSessionDate(session.endedAt) }}</div>
-                                    <div>Duration: {{ formatSessionDuration(session.startedAt, session.endedAt) }}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div v-else class="text-center py-8">
-                        <ClockIcon class="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                        <p class="text-gray-600">No previous sessions found</p>
-                    </div>
+                    <button @click="showCreateSessionModal = true"
+                        class="w-full px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium">
+                        Create New Session
+                    </button>
                 </div>
             </div>
         </div>
@@ -397,7 +298,7 @@
                                 ? 'bg-purple-50 border-purple-200 text-purple-700'
                                 : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                         ]">
-                            <ChatBubbleOvalLeftEllipsisIcon class="w-5 h-5" />
+                            <Ghost class="w-5 h-5" />
                             <span>Gossip Box</span>
                         </button>
                     </div>
@@ -695,6 +596,8 @@ import {
     CogIcon, ClockIcon, PresentationChartLineIcon,
     ComputerDesktopIcon, ChatBubbleOvalLeftEllipsisIcon, PlusIcon
 } from '@heroicons/vue/24/outline'
+
+import { Ghost, LaptopMinimal } from 'lucide-vue-next'
 
 // Components
 import SessionCreateModal from '@/components/presidium/SessionCreateModal.vue'
