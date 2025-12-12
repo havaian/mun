@@ -193,6 +193,7 @@ const isLoading = ref(false)
 const rollCallActive = ref(false)
 const countries = ref([])
 const attendanceData = ref([])
+const committee = ref(null)
 const quorumData = ref({
     hasQuorum: false,
     required: 0,
@@ -280,6 +281,7 @@ const loadData = async () => {
 
 const loadActiveSession = async () => {
     try {
+        console.log(committee.value)
         const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
             status: 'active',
             limit: 1
@@ -300,6 +302,7 @@ const loadAttendanceData = async () => {
     if (!currentSession.value?._id) return
 
     try {
+        console.log(currentSession.value)
         // Get session details instead of attendance endpoint
         const response = await sessionApi.sessions.getById(currentSession.value._id)
 

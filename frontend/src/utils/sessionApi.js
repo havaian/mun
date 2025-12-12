@@ -19,9 +19,6 @@ export const enhancedSessionApi = {
         // Get all session timers
         getTimers: (sessionId) => apiMethods.get(`/sessions/${sessionId}/timers`),
 
-        // Get committee sessions
-        getByCommittee: (id, params = {}) => apiMethods.get(`/sessions/${id}`, { params }),
-
         // Get session statistics
         getStatistics: (sessionId) => apiMethods.get(`/sessions/${sessionId}/statistics`)
     },
@@ -95,7 +92,6 @@ export const updateApiMethods = () => {
         startSession: enhancedSessionApi.sessions.start,
         getById: enhancedSessionApi.sessions.getById,
         getTimers: enhancedSessionApi.sessions.getTimers,
-        getAll: enhancedSessionApi.sessions.getByCommittee,
         getStatistics: enhancedSessionApi.sessions.getStatistics,
         end: enhancedSessionApi.sessions.end,
 
