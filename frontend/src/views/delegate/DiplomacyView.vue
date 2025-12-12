@@ -179,13 +179,19 @@
 
             <!-- Message Items -->
             <div v-for="message in currentMessages" :key="message._id">
-              <!-- General Assembly - Speech bubbles -->
+              <!-- General Assembly - Speech bubbles with flags -->
               <div v-if="selectedChannel.id === 'general'"
                 :class="['flex', message.isCurrentUser ? 'justify-end' : 'justify-start']">
                 <div :class="['max-w-md', message.isCurrentUser ? 'items-end' : 'items-start']">
                   <div class="flex items-center gap-2 mb-1" :class="message.isCurrentUser ? 'flex-row-reverse' : ''">
                     <span class="text-xs text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
-                    <span class="font-medium text-sm text-gray-700">{{ message.senderCountry }}</span>
+
+                    <!-- Flag and Country Name -->
+                    <div class="flex items-center gap-2">
+                      <CountryFlag :country-name="message.senderCountry"
+                        :country-code="getCountryCodeForMessage(message)" size="small" variant="bordered" />
+                      <span class="font-medium text-sm text-gray-700">{{ message.senderCountry }}</span>
+                    </div>
                   </div>
                   <div :class="[
                     'px-4 py-2.5 rounded-2xl shadow-sm',
@@ -198,7 +204,7 @@
                 </div>
               </div>
 
-              <!-- Announcements - Yellow notification style -->
+              <!-- Announcements - Yellow notification style (no changes needed) -->
               <div v-else-if="selectedChannel.id === 'announcements'" class="flex justify-center">
                 <div
                   class="bg-yellow-50 border border-yellow-200 rounded-full px-5 py-3 flex items-center gap-3 shadow-sm max-w-2xl">
@@ -213,7 +219,7 @@
                 </div>
               </div>
 
-              <!-- Gossip Box - Pink anonymous messages -->
+              <!-- Gossip Box - Pink anonymous messages (no changes needed) -->
               <div v-else-if="selectedChannel.id === 'gossip'">
                 <div class="flex items-center gap-2 mb-1">
                   <div class="w-5 h-5 bg-pink-100 rounded-full flex items-center justify-center">
@@ -227,12 +233,19 @@
                 </div>
               </div>
 
-              <!-- Direct Messages -->
+              <!-- Direct Messages with flags -->
               <div v-else-if="selectedChannel.type === 'dm'"
                 :class="['flex', message.isCurrentUser ? 'justify-end' : 'justify-start']">
                 <div :class="['max-w-md', message.isCurrentUser ? 'items-end' : 'items-start']">
                   <div class="flex items-center gap-2 mb-1" :class="message.isCurrentUser ? 'flex-row-reverse' : ''">
                     <span class="text-xs text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
+
+                    <!-- Show flag and name for other user's messages -->
+                    <div v-if="!message.isCurrentUser" class="flex items-center gap-2">
+                      <CountryFlag :country-name="message.senderCountry"
+                        :country-code="getCountryCodeForMessage(message)" size="small" variant="bordered" />
+                      <span class="font-medium text-sm text-gray-700">{{ message.senderCountry }}</span>
+                    </div>
                   </div>
                   <div :class="[
                     'px-4 py-2.5 rounded-2xl shadow-sm',
@@ -556,6 +569,8 @@ const sendMessage = async () => {
     return
   }
 
+  const messageContent = newMessage.value.trim()
+
   try {
     isSending.value = true
 
@@ -564,7 +579,7 @@ const sendMessage = async () => {
       const response = await apiMethods.messages.sendCommitteeMessage(
         committee.value._id || committee.value,
         selectedChannel.value.id,
-        { content: newMessage.value.trim() }
+        { content: messageContent }
       )
 
       if (response.data.success) {
@@ -572,13 +587,18 @@ const sendMessage = async () => {
         const newMsg = {
           _id: response.data.message._id,
           senderEmail: authStore.user?.email,
-          senderCountry: response.data.message.senderCountry || authStore.user?.countryName,
-          content: response.data.message.content,
+          senderCountry: response.data.message.senderCountry || authStore.user?.countryName || 'Unknown',
+          content: response.data.message.content || messageContent,
           timestamp: response.data.message.timestamp || new Date().toISOString()
         }
 
+        // DEBUG: Remove these console.logs once working
+        console.log('Adding own message:', newMsg)
+        console.log('Current user email:', authStore.user?.email)
+
         messages.value.push(newMsg)
         newMessage.value = ''
+        await nextTick()
         scrollToBottom()
       }
       return
@@ -588,7 +608,7 @@ const sendMessage = async () => {
     if (selectedChannel.value.conversationId) {
       const response = await apiMethods.messages.sendMessage(
         selectedChannel.value.conversationId,
-        { content: newMessage.value.trim() }
+        { content: messageContent }
       )
 
       if (response.data.success) {
@@ -596,13 +616,14 @@ const sendMessage = async () => {
         const newMsg = {
           _id: response.data.message._id,
           senderEmail: authStore.user?.email,
-          senderCountry: authStore.user?.countryName,
-          content: newMessage.value.trim(),
+          senderCountry: authStore.user?.countryName || 'Unknown',
+          content: response.data.message.content || messageContent,
           timestamp: response.data.message.timestamp || new Date().toISOString()
         }
 
         messages.value.push(newMsg)
         newMessage.value = ''
+        await nextTick()
         scrollToBottom()
       }
     }
@@ -680,6 +701,24 @@ const messagesWithUserFlag = computed(() => {
   }))
 })
 
+/**
+ * Get country code for displaying flag in messages
+ */
+const getCountryCodeForMessage = (message) => {
+  // Check if sender is Presidium (chairperson, vice-chairperson, etc.)
+  if (message.senderCountry && message.senderCountry.toLowerCase().includes('presidium')) {
+    return 'UN' // Use UN flag for all presidium members
+  }
+  
+  // Find country code from committee countries
+  const country = committee.value?.countries?.find(c => 
+    c.name === message.senderCountry || 
+    c.name.toLowerCase() === message.senderCountry.toLowerCase()
+  )
+  
+  return country?.code || 'UN' // Fallback to UN flag if not found
+}
+
 const getInputPlaceholder = () => {
   if (!selectedChannel.value) return 'Type a message...'
 
@@ -747,6 +786,7 @@ const scrollToBottom = () => {
 // WebSocket listeners
 const setupWebSocketListeners = () => {
   wsService.on('committee-message-received', (data) => {
+
     // Check if message is for current channel
     const isCurrentChannel =
       (selectedChannel.value?.conversationId === data.conversationId) ||
@@ -757,13 +797,15 @@ const setupWebSocketListeners = () => {
       const messageExists = messages.value.some(msg => msg._id === data.messageId)
 
       if (!messageExists) {
-        messages.value.push({
+        const newMessage = {
           _id: data.messageId,
           senderEmail: data.senderEmail,
           senderCountry: data.senderCountry,
           content: data.content,
           timestamp: data.timestamp
-        })
+        }
+
+        messages.value.push(newMessage)
         scrollToBottom()
       }
     } else {

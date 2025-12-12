@@ -927,8 +927,6 @@ router.put('/:committeeId/display-mode',
                 { $set: { publicDisplayMode: mode } },
                 { new: true, runValidators: true }
             )
-
-            console.log(committee)
             
             global.logger.info(`Display mode changed to ${mode} for committee ${committeeId}`)
             
