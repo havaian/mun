@@ -50,6 +50,55 @@ router.put('/:id/end',
     controller.endSession
 );
 
+// Committee Sessions List
+router.get('/committee/:committeeId',
+    global.auth.token,
+    param('committeeId').isMongoId().withMessage('Invalid committee ID'),
+    query('status').optional().isIn(['inactive', 'active', 'paused', 'completed']).withMessage('Invalid status filter'),
+    handleValidationErrors,
+    async (req, res) => {
+        try {
+            const { committeeId } = req.params;
+            const { status, page = 1, limit = 10 } = req.query;
+
+            // Check committee access
+            if (req.user.committeeId.toString() !== committeeId.toString() && req.user.role !== 'admin') {
+                return res.status(403).json({ error: 'Access denied to this committee' });
+            }
+
+            const filter = { committeeId };
+            if (status) {
+                filter.status = status;
+            }
+
+            const { Session } = require('./model');
+            const sessions = await Session.find(filter)
+                .select('number title status startedAt endedAt currentMode quorum')
+                .sort({ number: -1 })
+                .limit(limit * 1)
+                .skip((page - 1) * limit);
+
+            const total = await Session.countDocuments(filter);
+
+            res.json({
+                success: true,
+                sessions,
+                pagination: {
+                    currentPage: parseInt(page),
+                    totalPages: Math.ceil(total / limit),
+                    totalItems: total,
+                    hasNextPage: page * limit < total,
+                    hasPrevPage: page > 1
+                }
+            });
+
+        } catch (error) {
+            global.logger.error('Get committee sessions error:', error);
+            res.status(500).json({ error: 'Failed to get committee sessions' });
+        }
+    }
+);
+
 // Get session details - Frontend uses /sessions/detail/:id
 router.get('/detail/:id',
     global.auth.token,

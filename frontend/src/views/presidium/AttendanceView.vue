@@ -174,7 +174,6 @@ import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
 import sessionApi from '@/utils/sessionApi'
-import { updatedApiMethods } from '@/utils/sessionApi'
 import CountryFlag from '@/components/shared/CountryFlag.vue'
 
 // Icons
