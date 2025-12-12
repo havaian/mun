@@ -709,9 +709,9 @@ const getCountryCode = (countryName) => {
 
 // WebSocket listeners
 const setupWebSocketListeners = () => {
-  wsService.on('message-received', (data) => {
+  wsService.on('committee-message-received', (data) => {
     // DEBUG: Remove these console.logs once working
-    console.log('WebSocket message-received event:', data)
+    console.log('WebSocket committee-message-received event:', data)
     console.log('Current channel:', selectedChannel.value)
     console.log('Current user email:', authStore.user?.email)
     

@@ -751,7 +751,7 @@ const scrollToBottom = () => {
 
 // WebSocket listeners
 const setupWebSocketListeners = () => {
-  wsService.on('message-received', (data) => {
+  wsService.on('committee-message-received', (data) => {
     // Check if message is for current channel
     const isCurrentChannel =
       (selectedChannel.value?.conversationId === data.conversationId) ||

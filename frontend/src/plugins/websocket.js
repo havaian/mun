@@ -246,9 +246,9 @@ class WebSocketService {
         })
 
         // Messages
-        this.socket.on('message-received', (data) => {
+        this.socket.on('committee-message-received', (data) => {
             console.log('💬 Message received:', data)
-            this.emit('message-received', data)
+            this.emit('committee-message-received', data)
         })
 
         this.socket.on('official-message', (data) => {

@@ -390,7 +390,7 @@ const setupWebSocketListeners = () => {
     })
 
     // Listen for new gossip messages (committee-wide messages)
-    wsService.on('committee-message-received', (data) => {
+    wsService.on('committee-committee-message-received', (data) => {
         console.log('📨 Committee message received:', data)
         if (data.committeeId === committeeId && data.channelType === 'gossip') {
             // Add new message to the beginning (newest first)
