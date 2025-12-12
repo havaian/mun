@@ -239,7 +239,8 @@
           <!-- History List -->
           <div v-if="votingHistory.length > 0" class="space-y-4">
             <div v-for="vote in votingHistory" :key="vote._id"
-              class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+              @click="showVotingBoard(vote)">
               <div class="flex items-center justify-between mb-3">
                 <div class="flex-1">
                   <div class="flex items-center space-x-3 mb-2">
@@ -288,9 +289,9 @@
               <div class="text-center">
                 <span :class="[
                   'text-sm font-medium px-3 py-1 rounded-full inline-block',
-                  vote.result === 'passed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  vote.results?.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                 ]">
-                  {{ vote.result === 'passed' ? '✓ Motion Passed' : '✗ Motion Failed' }}
+                  {{ vote.results?.passed ? '✓ Motion Passed' : '✗ Motion Failed' }}
                 </span>
               </div>
             </div>
@@ -305,6 +306,9 @@
 
       </div>
     </div>
+
+    <!-- Voting Board Modal -->
+    <VotingBoard :show="showBoard" :voting="selectedVoting" @close="closeVotingBoard" />
   </div>
 </template>
 
@@ -316,6 +320,7 @@ import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
 import CountryFlag from '@/components/shared/CountryFlag.vue'
+import VotingBoard from '@/components/shared/VotingBoard.vue'
 
 // Icons
 import {
@@ -333,6 +338,8 @@ const isSubmitting = ref(false)
 const activeVote = ref(null)
 const votingHistory = ref([])
 const committee = ref(null)
+const showBoard = ref(false)
+const selectedVoting = ref(null)
 
 // Computed
 const myVote = computed(() => {
@@ -413,8 +420,6 @@ const castVote = async (voteChoice) => {
     })
 
     if (response.data.success) {
-      // Update will come through WebSocket, but update locally too
-      await loadVotingData()
       toast.success('Vote cast successfully!')
     }
   } catch (error) {
@@ -424,6 +429,16 @@ const castVote = async (voteChoice) => {
   } finally {
     isSubmitting.value = false
   }
+}
+
+const showVotingBoard = (voting) => {
+  selectedVoting.value = voting
+  showBoard.value = true
+}
+
+const closeVotingBoard = () => {
+  showBoard.value = false
+  selectedVoting.value = null
 }
 
 // Utility methods
@@ -507,25 +522,34 @@ const formatTime = (dateString) => {
 const setupWebSocketListeners = () => {
   wsService.on('voting-started', (data) => {
     if (data.committeeId === committee.value?._id) {
-      activeVote.value = data.voting
-      toast.log('New vote started: ' + data.voting.title)
+      loadVotingData() // Reload to get full voting data
+      toast.log('New vote started: ' + data.title)
     }
   })
 
   wsService.on('vote-cast', (data) => {
     if (data.votingId === activeVote.value?._id) {
-      // Update active vote with new results
-      if (activeVote.value) {
-        activeVote.value = { ...activeVote.value, ...data.voting }
-      }
+      // Update vote counts in real-time
+      loadVotingData()
     }
   })
 
-  wsService.on('voting-ended', (data) => {
+  wsService.on('voting-completed', async (data) => {
     if (data.votingId === activeVote.value?._id) {
-      toast.log('Vote ended: ' + data.voting.title)
+      toast.log('Vote ended')
+
+      // Load full voting data
+      await loadVotingData()
+
+      // Show voting board with results
+      const completedVoting = votingHistory.value.find(v => v._id === data.votingId)
+      if (completedVoting) {
+        setTimeout(() => {
+          showVotingBoard(completedVoting)
+        }, 500)
+      }
+
       activeVote.value = null
-      loadVotingData() // Refresh to get updated history
     }
   })
 

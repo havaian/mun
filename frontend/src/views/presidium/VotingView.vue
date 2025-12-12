@@ -11,6 +11,11 @@
           <p class="text-gray-600">Manage motions, resolutions, and procedural votes.</p>
         </div>
         <div class="flex space-x-3">
+          <button v-if="activeVote" @click="showVotingBoard(activeVote)"
+            class="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+            <EyeIcon class="w-5 h-5 mr-2" />
+            View Board
+          </button>
           <button @click="showCreateVoteModal = true"
             class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
             <PlusIcon class="w-5 h-5 mr-2" />
@@ -185,7 +190,7 @@
               <HandRaisedIcon class="w-8 h-8 text-gray-400" />
             </div>
             <h3 class="text-lg font-medium text-gray-900 mb-2">No Active Vote</h3>
-            <p class="text-gray-600 mb-6">Wait for the Presidium to initiate a new voting session.</p>
+            <p class="text-gray-600 mb-6">Create a new voting session to begin.</p>
             <button @click="showCreateVoteModal = true"
               class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
               Start New Vote
@@ -208,7 +213,8 @@
           <!-- History List -->
           <div v-if="votingHistory.length > 0" class="space-y-4">
             <div v-for="vote in votingHistory" :key="vote._id"
-              class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+              class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+              @click="showVotingBoard(vote)">
               <div class="flex items-center justify-between mb-3">
                 <div>
                   <div class="flex items-center space-x-3">
@@ -253,9 +259,9 @@
               <div class="mt-3 text-center">
                 <span :class="[
                   'text-sm font-medium px-3 py-1 rounded-full',
-                  vote.result === 'passed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  vote.results?.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                 ]">
-                  {{ vote.result === 'passed' ? '✓ Motion Passed' : '✗ Motion Failed' }}
+                  {{ vote.results?.passed ? '✓ Motion Passed' : '✗ Motion Failed' }}
                 </span>
               </div>
             </div>
@@ -272,12 +278,16 @@
       </div>
     </div>
 
-    <!-- Create Vote Modal (reuse QuickVoteModal) -->
+    <!-- Create Vote Modal -->
     <QuickVoteModal v-model="showCreateVoteModal" :session="currentSession" @voting-created="handleVotingCreated" />
 
+    <!-- Force Complete Modal -->
     <ForceCompleteModal v-model="showForceCompleteModal" :remaining-voters="forceCompleteData.remainingVoters || 0"
       :total-votes="forceCompleteData.totalVotes || 0" :eligible-voters="forceCompleteData.eligibleVoters || 0"
       @force-complete="handleForceComplete" />
+
+    <!-- Voting Board Modal -->
+    <VotingBoard :show="showBoard" :voting="selectedVoting" @close="closeVotingBoard" />
   </div>
 </template>
 
@@ -291,10 +301,11 @@ import { apiMethods } from '@/utils/api'
 import sessionApi from '@/utils/sessionApi'
 import QuickVoteModal from '@/components/presidium/QuickVoteModal.vue'
 import ForceCompleteModal from '@/components/presidium/ForceCompleteModal.vue'
+import VotingBoard from '@/components/shared/VotingBoard.vue'
 
 // Icons
 import {
-  HandRaisedIcon, PlusIcon, ClockIcon,
+  HandRaisedIcon, PlusIcon, ClockIcon, EyeIcon
 } from '@heroicons/vue/24/outline'
 
 // Stores
@@ -312,6 +323,8 @@ const showCreateVoteModal = ref(false)
 const pendingVote = ref(null)
 const showForceCompleteModal = ref(false)
 const forceCompleteData = ref({})
+const showBoard = ref(false)
+const selectedVoting = ref(null)
 
 // Methods
 const loadData = async () => {
@@ -364,7 +377,7 @@ const loadVotingData = async () => {
       pendingVote.value = allVotes.find(v => v.status === 'pending') || null
       activeVote.value = allVotes.find(v => v.status === 'active') || null
       votingHistory.value = allVotes
-        .filter(v => ['completed', 'cancelled'].includes(v.status)) // Include cancelled votings
+        .filter(v => ['completed', 'cancelled'].includes(v.status))
         .sort((a, b) => new Date(b.completedAt || b.createdAt) - new Date(a.completedAt || a.createdAt))
     }
   } catch (error) {
@@ -424,6 +437,16 @@ const handleVotingCreated = (voting) => {
 
 const handleForceComplete = async () => {
   await endVote(forceCompleteData.value.voteId, true)
+}
+
+const showVotingBoard = (voting) => {
+  selectedVoting.value = voting
+  showBoard.value = true
+}
+
+const closeVotingBoard = () => {
+  showBoard.value = false
+  selectedVoting.value = null
 }
 
 // Utility methods
@@ -506,23 +529,33 @@ const setupWebSocketListeners = () => {
   wsService.on('voting-started', (data) => {
     if (data.votingId === pendingVote.value?._id) {
       pendingVote.value = null
-      activeVote.value = data.voting
+      loadVotingData()
     }
   })
 
   wsService.on('vote-cast', (data) => {
     if (data.votingId === activeVote.value?._id) {
-      // Update voting results
-      if (activeVote.value) {
-        activeVote.value = { ...activeVote.value, ...data.voting }
-      }
+      // Update voting results in real-time
+      loadVotingData()
     }
   })
 
-  wsService.on('voting-ended', (data) => {
+  wsService.on('voting-completed', async (data) => {
     if (data.votingId === activeVote.value?._id) {
+      toast.success('Vote ended')
+
+      // Load full voting data
+      await loadVotingData()
+
+      // Show voting board with results
+      const completedVoting = votingHistory.value.find(v => v._id === data.votingId)
+      if (completedVoting) {
+        setTimeout(() => {
+          showVotingBoard(completedVoting)
+        }, 500)
+      }
+
       activeVote.value = null
-      loadVotingData() // Refresh to get updated history
     }
   })
 }

@@ -580,21 +580,38 @@ const getCommitteeVotings = async (req, res) => {
         const total = await Voting.countDocuments(filter);
 
         // Map response data
-        const votingsData = votings.map(voting => ({
-            _id: voting._id,
-            title: voting.title,
-            votingType: voting.votingType,
-            subjectType: voting.subjectType,
-            majorityRequired: voting.majorityRequired,
-            status: voting.status,
-            totalVotes: voting.votes.length,
-            eligibleVoters: voting.eligibleVoters.length,
-            results: voting.status === 'completed' ? voting.results : null,
-            startedAt: voting.startedAt,
-            completedAt: voting.completedAt,
-            createdBy: voting.createdBy,
-            createdAt: voting.createdAt
-        }));
+        const votingsData = votings.map(voting => {
+            // Calculate current vote counts for active votings
+            let currentResults = null;
+            if (voting.status === 'active' || voting.status === 'completed') {
+                const votesFor = voting.votes.filter(v => v.vote === 'for').length;
+                const votesAgainst = voting.votes.filter(v => v.vote === 'against').length;
+                const abstentions = voting.votes.filter(v => v.vote === 'abstain').length;
+
+                currentResults = {
+                    for: votesFor,
+                    against: votesAgainst,
+                    abstain: abstentions,
+                    total: voting.votes.length
+                };
+            }
+
+            return {
+                _id: voting._id,
+                title: voting.title,
+                votingType: voting.votingType,
+                subjectType: voting.subjectType,
+                majorityRequired: voting.majorityRequired,
+                status: voting.status,
+                totalVotes: voting.votes.length,
+                eligibleVoters: voting.eligibleVoters.length,
+                results: voting.status === 'completed' ? voting.results : currentResults,
+                startedAt: voting.startedAt,
+                completedAt: voting.completedAt,
+                createdBy: voting.createdBy,
+                createdAt: voting.createdAt
+            };
+        });
 
         res.json({
             success: true,
