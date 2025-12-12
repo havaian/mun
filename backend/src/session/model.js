@@ -54,7 +54,7 @@ const sessionSchema = new mongoose.Schema({
         endedAt: { type: Date },
         responses: [{
             country: String,
-            status: { type: String, enum: ['present', 'absent', 'present-voting'] },
+            status: { type: String, enum: ['absent', 'present', 'present_and_voting'] },
             respondedAt: Date
         }]
     },

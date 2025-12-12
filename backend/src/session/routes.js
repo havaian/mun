@@ -149,7 +149,7 @@ router.put('/:id/attendance',
     [
         param('id').isMongoId(),
         body('country').isString().trim().notEmpty(),
-        body('status').isIn(['absent', 'present'])
+        body('status').isIn(['absent', 'present', 'present_and_voting'])
     ],
     handleValidationErrors,
     controller.markAttendance

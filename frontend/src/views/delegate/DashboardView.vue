@@ -378,9 +378,7 @@ const loadActiveSession = async () => {
                     const myAttendance = sessionData.rollCall.responses.find(a => a.country === myCountry)
                     if (myAttendance) {
                         // Convert from backend format to frontend format
-                        attendanceStatus.value = myAttendance.status === 'present-voting'
-                            ? 'present_and_voting'
-                            : myAttendance.status
+                        attendanceStatus.value = myAttendance.status
                     }
                 }
             }
@@ -453,6 +451,7 @@ const markAttendance = async (status) => {
         isMarkingAttendance.value = true
 
         const response = await sessionApi.rollCall.markAttendance(currentSession.value._id, {
+            country: userCountry.value,
             status: status
         })
 

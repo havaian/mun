@@ -375,7 +375,7 @@ exports.endRollCall = async (req, res) => {
 
         const allCountries = session.committeeId.countries || []
         const presentCountries = session.rollCall.responses
-            .filter(r => r.status === 'present' || r.status === 'present-voting')
+            .filter(r => r.status === 'present' || r.status === 'present_and_voting')
             .map(r => r.country)
 
         const absentCountries = allCountries.filter(c => !presentCountries.includes(c))
