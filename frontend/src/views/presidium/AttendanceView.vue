@@ -287,6 +287,8 @@ const loadActiveSession = async () => {
         if (response.data.success && response.data.sessions?.length > 0) {
             currentSession.value = response.data.sessions[0]
 
+            console.log('response.data', response.data)
+
             // Load session attendance data
             await loadAttendanceData()
         }
@@ -302,9 +304,12 @@ const loadAttendanceData = async () => {
         // Get session details instead of attendance endpoint
         const response = await sessionApi.sessions.getById(currentSession.value._id)
 
+        console.log('currentSession.value', currentSession.value)
+        console.log('response', response)
+
         if (response.data.success) {
             const sessionData = response.data.session
-            console.log(sessionData)
+            console.log('sessionData', sessionData)
             rollCallActive.value = sessionData.rollCall?.isActive || false
             
             // Update quorum data from session
