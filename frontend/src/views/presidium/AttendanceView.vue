@@ -302,7 +302,7 @@ const loadAttendanceData = async () => {
 
     try {
         // Get session details instead of attendance endpoint
-        const response = await sessionApi.sessions.getById(currentSession.value._id)
+        const response = await sessionApi.sessions.getDetail(currentSession.value._id)
 
         console.log('currentSession.value', currentSession.value)
         console.log('response', response)
