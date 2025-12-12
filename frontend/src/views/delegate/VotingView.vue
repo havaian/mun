@@ -125,7 +125,7 @@
               <!-- For Votes -->
               <div class="bg-green-50 p-4 rounded-lg border border-green-200">
                 <div class="text-center">
-                  <div class="text-3xl font-bold text-green-700">{{ activeVote.results?.for || 0 }}</div>
+                  <div class="text-3xl font-bold text-green-700">{{ activeVote.results?.votesFor || 0 }}</div>
                   <div class="text-sm text-green-600 uppercase mt-1">For</div>
                 </div>
               </div>
@@ -133,7 +133,7 @@
               <!-- Against Votes -->
               <div class="bg-red-50 p-4 rounded-lg border border-red-200">
                 <div class="text-center">
-                  <div class="text-3xl font-bold text-red-700">{{ activeVote.results?.against || 0 }}</div>
+                  <div class="text-3xl font-bold text-red-700">{{ activeVote.results?.votesAgainst || 0 }}</div>
                   <div class="text-sm text-red-600 uppercase mt-1">Against</div>
                 </div>
               </div>
@@ -141,7 +141,7 @@
               <!-- Abstentions -->
               <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                 <div class="text-center">
-                  <div class="text-3xl font-bold text-yellow-700">{{ activeVote.results?.abstain || 0 }}</div>
+                  <div class="text-3xl font-bold text-yellow-700">{{ activeVote.results?.abstentions || 0 }}</div>
                   <div class="text-sm text-yellow-600 uppercase mt-1">Abstain</div>
                 </div>
               </div>
@@ -444,7 +444,7 @@ const closeVotingBoard = () => {
 // Utility methods
 const getTotalVotes = (vote) => {
   if (!vote?.results) return 0
-  return (vote.results.for || 0) + (vote.results.against || 0) + (vote.results.abstain || 0)
+  return (vote.results.votesFor || 0) + (vote.results.votesAgainst || 0) + (vote.results.abstentions || 0)
 }
 
 const getVotingProgress = (vote) => {
