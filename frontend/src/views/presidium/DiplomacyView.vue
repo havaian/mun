@@ -71,7 +71,6 @@
               <div class="relative">
                 <CountryFlag :country-name="delegate.name" :country-code="delegate.code" size="medium"
                   variant="bordered" />
-                class="w-8 h-6 rounded border border-gray-200 object-cover" />
                 <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
               </div>
               <div class="flex-1">
