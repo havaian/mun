@@ -568,8 +568,18 @@ const sendMessage = async () => {
       )
 
       if (response.data.success) {
-        // Message will be added via WebSocket
+        // Immediately add message to local array for instant display
+        const newMsg = {
+          _id: response.data.message._id,
+          senderEmail: authStore.user?.email,
+          senderCountry: response.data.message.senderCountry || authStore.user?.countryName,
+          content: response.data.message.content,
+          timestamp: response.data.message.timestamp || new Date().toISOString()
+        }
+
+        messages.value.push(newMsg)
         newMessage.value = ''
+        scrollToBottom()
       }
       return
     }
@@ -582,8 +592,18 @@ const sendMessage = async () => {
       )
 
       if (response.data.success) {
-        // Message will be added via WebSocket
+        // Immediately add message to local array for instant display
+        const newMsg = {
+          _id: response.data.message._id,
+          senderEmail: authStore.user?.email,
+          senderCountry: authStore.user?.countryName,
+          content: newMessage.value.trim(),
+          timestamp: response.data.message.timestamp || new Date().toISOString()
+        }
+
+        messages.value.push(newMsg)
         newMessage.value = ''
+        scrollToBottom()
       }
     }
   } catch (error) {
@@ -727,14 +747,19 @@ const setupWebSocketListeners = () => {
       (selectedChannel.value?.type === 'public' && data.channelType === selectedChannel.value.id)
 
     if (isCurrentChannel) {
-      messages.value.push({
-        _id: data.messageId,
-        senderEmail: data.senderEmail,
-        senderCountry: data.senderCountry,
-        content: data.content,
-        timestamp: data.timestamp
-      })
-      scrollToBottom()
+      // Check if message already exists (prevents duplicates from our own sends)
+      const messageExists = messages.value.some(msg => msg._id === data.messageId)
+
+      if (!messageExists) {
+        messages.value.push({
+          _id: data.messageId,
+          senderEmail: data.senderEmail,
+          senderCountry: data.senderCountry,
+          content: data.content,
+          timestamp: data.timestamp
+        })
+        scrollToBottom()
+      }
     } else {
       // Update unread count for other channels
       const channel = publicChannels.find(c => c.id === data.channelType)
