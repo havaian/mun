@@ -7,6 +7,12 @@ const coalitionMemberSchema = new mongoose.Schema({
         required: true
     },
 
+    code: {
+        type: String,
+        required: true,
+        lowercase: true
+    },
+
     email: {
         type: String,
         required: true,

@@ -65,7 +65,8 @@
               <div class="space-y-2 mb-4">
                 <div v-for="member in (coalition.members || []).slice(0, 3)" :key="member.country"
                   class="flex items-center space-x-3">
-                  <img :src="getCountryFlag(member.country)" :alt="member.country"
+                  <CountryFlag :country-name="member.country" :country-code="member.country" size="medium"
+                      variant="bordered" />
                     class="w-6 h-4 rounded border border-gray-200 object-cover" />
                   <span class="text-sm font-medium text-gray-700">{{ member.country }}</span>
                   <span :class="[
@@ -314,13 +315,19 @@ const loadData = async () => {
   try {
     isLoading.value = true
 
-    // Get committee from auth context
-    committee.value = authStore.user?.committeeId
-    if (!committee.value) {
+    // Get committee ID from auth context
+    const committeeId = authStore.user?.committeeId
+    if (!committeeId) {
       throw new Error('No committee assigned')
     }
 
-    // Set countries from committee
+    // Fetch full committee details to get countries
+    const committeeResponse = await apiMethods.committees.getById(committeeId)
+    if (!committeeResponse.data.success) {
+      throw new Error('Failed to fetch committee details')
+    }
+
+    committee.value = committeeResponse.data.committee
     countries.value = committee.value.countries || []
 
     // Load coalitions
@@ -355,7 +362,16 @@ const createCoalition = async () => {
       name: newCoalition.name.trim(),
       description: newCoalition.description.trim(),
       color: newCoalition.color,
-      initialMembers: newCoalition.initialMembers.filter(m => m.country)
+      initialMembers: newCoalition.initialMembers
+        .filter(m => m.country)
+        .map(m => {
+          const country = countries.value.find(c => c.name === m.country)
+          return {
+            country: m.country,
+            code: country?.code || m.country,
+            role: m.role
+          }
+        })
     }
 
     const response = await apiMethods.resolutions.createCoalition(coalitionData)
@@ -393,13 +409,16 @@ const addMemberToCoalition = async (coalitionId) => {
   if (!countryName) return
 
   try {
+    const country = countries.value.find(c => c.name === countryName)
+    const code = country?.code || countryName
+
     // Note: You'll need to implement this API method
-    // await apiMethods.resolutions.addCoalitionMember(coalitionId, { country: countryName, role: 'member' })
+    // await apiMethods.resolutions.addCoalitionMember(coalitionId, { country: countryName, code, role: 'member' })
 
     const coalition = coalitions.value.find(c => c._id === coalitionId)
     if (coalition) {
       if (!coalition.members) coalition.members = []
-      coalition.members.push({ country: countryName, role: 'member' })
+      coalition.members.push({ country: countryName, code, role: 'member' })
     }
 
     newMember[coalitionId] = ''
@@ -434,11 +453,6 @@ const toggleCoalitionManagement = (coalitionId) => {
 const getAvailableCountries = (coalition) => {
   const memberCountries = new Set((coalition.members || []).map(m => m.country))
   return countries.value.filter(country => !memberCountries.has(country.name))
-}
-
-const getCountryFlag = (countryName) => {
-  const country = countries.value.find(c => c.name === countryName)
-  return country?.flagUrl || '/api/countries/flags/default'
 }
 
 const getCoalitionHeaderClass = (color) => {
