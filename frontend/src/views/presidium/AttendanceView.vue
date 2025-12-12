@@ -254,11 +254,19 @@ const loadData = async () => {
     try {
         isLoading.value = true
 
-        // Get committee from auth context
-        committee.value = authStore.user?.committeeId
-        if (!committee.value) {
+        // Get committee ID from auth context
+        const committeeId = authStore.user?.committeeId
+        if (!committeeId) {
             throw new Error('No committee assigned')
         }
+
+        // Fetch full committee details to get countries
+        const committeeResponse = await apiMethods.committees.getById(committeeId)
+        if (!committeeResponse.data.success) {
+            throw new Error('Failed to fetch committee details')
+        }
+
+        committee.value = committeeResponse.data.committee
 
         // Set countries from committee
         countries.value = committee.value.countries.map(country => ({

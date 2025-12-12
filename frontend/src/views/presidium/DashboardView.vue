@@ -922,13 +922,20 @@ const adjustTimerQuick = async (seconds) => {
 const loadDashboardData = async () => {
     try {
         isLoading.value = true
-        committee.value = authStore.user?.committeeId
 
-        if (!committee.value) {
-            throw new Error('No committee assigned to user')
+        // Get committee ID from auth context
+        const committeeId = authStore.user?.committeeId
+        if (!committeeId) {
+            toast.error('No committee assigned')
         }
 
-        availableCountries.value = committee.value.countries || []
+        // Fetch full committee details to get countries
+        const committeeResponse = await apiMethods.committees.getById(committeeId)
+        if (!committeeResponse.data.success) {
+            toast.error('Failed to fetch committee details')
+        }
+
+        committee.value = committeeResponse.data.committee
         await loadActiveSession()
         await loadAllSessions()
         setupWebSocketListeners()
