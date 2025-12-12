@@ -16,11 +16,6 @@
             <input v-model="searchQuery" type="text" placeholder="Find alliance..."
               class="pl-10 pr-4 py-2 w-80 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
-          <button @click="showCreateModal = true"
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2">
-            <PlusIcon class="w-5 h-5" />
-            <span>Form New Coalition</span>
-          </button>
         </div>
       </div>
     </div>
@@ -122,8 +117,8 @@
                 <!-- Coalition Head -->
                 <div class="mb-4 pb-4 border-b border-gray-200">
                   <div class="flex items-center space-x-3">
-                    <img :src="getCountryFlag(coalition.headCountry)" :alt="coalition.headCountry"
-                      class="w-8 h-6 rounded border border-gray-200 object-cover" />
+                    <CountryFlag :country-name="coalition.headCountry" :country-code="getCountryFlag(coalition.headCountry)" size="medium"
+                      variant="bordered" />
                     <div>
                       <p class="text-xs text-gray-500 uppercase">Alliance Head</p>
                       <p class="text-sm font-semibold text-gray-900">{{ coalition.headCountry }}</p>
@@ -146,8 +141,8 @@
                 <div class="space-y-2 mb-4">
                   <div v-for="member in getDisplayedMembers(coalition)" :key="member.country"
                     class="flex items-center space-x-3">
-                    <img :src="getCountryFlag(member.country)" :alt="member.country"
-                      class="w-6 h-4 rounded border border-gray-200 object-cover" />
+                    <CountryFlag :country-name="member.country" :country-code="getCountryFlag(member.country)" size="medium"
+                      variant="bordered" />
                     <span class="text-sm font-medium text-gray-700 flex-1">{{ member.country }}</span>
                     <span v-if="member.status === 'invited'"
                       class="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
@@ -272,6 +267,8 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
+
+import CountryFlag from '@/components/shared/CountryFlag.vue'
 
 // Icons
 import {
@@ -564,7 +561,7 @@ const getDisplayedMembers = (coalition) => {
 
 const getCountryFlag = (countryName) => {
   const country = countries.value.find(c => c.name === countryName)
-  return country?.flagUrl || '/api/countries/flags/default'
+  return country?.code
 }
 
 const getCoalitionHeaderClass = (color) => {

@@ -65,9 +65,8 @@
               <div class="space-y-2 mb-4">
                 <div v-for="member in (coalition.members || []).slice(0, 3)" :key="member.country"
                   class="flex items-center space-x-3">
-                  <CountryFlag :country-name="member.country" :country-code="member.country" size="medium"
+                  <CountryFlag :country-name="member.country" :country-code="getCountryFlag(member.country)" size="medium"
                       variant="bordered" />
-                    class="w-6 h-4 rounded border border-gray-200 object-cover" />
                   <span class="text-sm font-medium text-gray-700">{{ member.country }}</span>
                   <span :class="[
                     'text-xs px-2 py-1 rounded-full',
@@ -90,8 +89,8 @@
                   <div v-for="member in coalition.members || []" :key="member.country"
                     class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                     <div class="flex items-center space-x-3">
-                      <img :src="getCountryFlag(member.country)" :alt="member.country"
-                        class="w-6 h-4 rounded border border-gray-200 object-cover" />
+                      <CountryFlag :country-name="member.country" :country-code="getCountryFlag(member.country)" size="medium"
+                        variant="bordered" />
                       <span class="text-sm font-medium">{{ member.country }}</span>
                       <span :class="[
                         'text-xs px-2 py-1 rounded-full',
@@ -246,6 +245,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
+import CountryFlag from '@/components/shared/CountryFlag.vue'
 
 // Icons
 import {
@@ -453,6 +453,11 @@ const toggleCoalitionManagement = (coalitionId) => {
 const getAvailableCountries = (coalition) => {
   const memberCountries = new Set((coalition.members || []).map(m => m.country))
   return countries.value.filter(country => !memberCountries.has(country.name))
+}
+
+const getCountryFlag = (countryName) => {
+  const country = countries.value.find(c => c.name === countryName)
+  return country?.code
 }
 
 const getCoalitionHeaderClass = (color) => {
