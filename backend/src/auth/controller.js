@@ -481,7 +481,12 @@ const emailLogin = async (req, res) => {
             userId: user._id,
             role: user.role,
             email: user.email,
-            committeeId: user.committeeId,
+            committeeId: user.committeeId ? {
+                _id: user.committeeId._id,
+                name: user.committeeId.name,
+                type: user.committeeId.type,
+                eventId: user.committeeId.eventId
+            } : null,
             sessionId: sessionToken
         };
 
