@@ -165,7 +165,7 @@
         <!-- Active Session Layout -->
         <div v-else class="flex-1 flex overflow-hidden">
             <!-- Left Column: Timer & Session Controls -->
-            <div class="w-80 bg-white border-r border-gray-200 p-6 space-y-6">
+            <div class="w-80 bg-white border-r border-gray-200 p-6 space-y-6 overflow-y-auto">
                 <!-- Timer Section -->
                 <div class="text-center">
                     <!-- Circular Timer (clickable) -->
@@ -1070,7 +1070,7 @@ const loadActiveSession = async () => {
         console.error('Failed to load active session:', error)
     }
 }
-
+    
 const loadSessionDetails = async () => {
     if (!currentSession.value?._id) return
 
