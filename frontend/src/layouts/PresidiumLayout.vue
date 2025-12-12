@@ -14,9 +14,7 @@
 
                 <!-- User Info -->
                 <div class="flex items-center gap-3 px-3 py-3 bg-gray-50 rounded-lg border">
-                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <UserIcon class="w-5 h-5 text-blue-600" />
-                    </div>
+                    <CountryFlag country-name="United Nations" country-code="UN" size="large" variant="bordered" />
                     <div class="overflow-hidden">
                         <p class="text-sm font-semibold text-gray-900 truncate">
                             {{ authStore.user?.name || 'Chairperson' }}
@@ -81,10 +79,11 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
+import CountryFlag from '@/components/shared/CountryFlag.vue'
 
 // Icons
 import {
-    GlobeAltIcon, UserIcon, ArrowRightOnRectangleIcon,
+    GlobeAltIcon, ArrowRightOnRectangleIcon,
     RectangleGroupIcon, UsersIcon, ShieldCheckIcon, DocumentTextIcon,
     HandRaisedIcon, ChatBubbleLeftRightIcon, PresentationChartBarIcon
 } from '@heroicons/vue/24/outline'
@@ -192,7 +191,7 @@ const handleLogout = async () => {
 const loadLayoutData = async () => {
     try {
         // Load committee info
-        committeeInfo.value = {
+        committeeInfo.value = authStore.user?.committeeId || {
             name: 'UN General Assembly'
         }
 

@@ -14,10 +14,8 @@
 
                 <!-- User Info -->
                 <div class="flex items-center gap-3 px-3 py-3 bg-gray-50 rounded-lg border">
-                    <div
-                        class="w-10 h-10 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center text-lg">
-                        {{ countryFlag || '🏳️' }}
-                    </div>
+                    <CountryFlag :country-name="userCountry" :country-code="userCountryCode" size="large"
+                        variant="bordered" />
                     <div class="overflow-hidden">
                         <p class="text-sm font-semibold text-gray-900 truncate">
                             {{ userCountry }}
@@ -65,6 +63,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
+import CountryFlag from '@/components/shared/CountryFlag.vue'
 
 // Icons
 import {
@@ -82,7 +81,7 @@ const toast = useToast()
 // State
 const committeeInfo = ref(null)
 const userCountry = ref('Chile')
-const countryFlag = ref('🇨🇱')
+const userCountryCode = ref('CL')
 const activeVoting = ref(null)
 const unreadMessages = ref(0)
 const userCoalition = ref(null)
@@ -165,7 +164,7 @@ const handleLogout = async () => {
 const loadLayoutData = async () => {
     try {
         // Load committee info
-        committeeInfo.value = {
+        committeeInfo.value = authStore.user?.committeeId || {
             name: 'UN General Assembly'
         }
 
@@ -173,7 +172,7 @@ const loadLayoutData = async () => {
         const user = authStore.user
         if (user) {
             userCountry.value = user.countryName || 'Chile'
-            countryFlag.value = user.countryFlag || '🇨🇱'
+            userCountryCode.value = user.countryCode || 'CL'
         }
 
         // Load dynamic data
