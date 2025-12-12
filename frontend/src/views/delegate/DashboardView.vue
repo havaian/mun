@@ -8,24 +8,38 @@
                     <div>
                         <h1 class="text-3xl font-bold text-gray-900">{{ userCountry }}</h1>
                         <p class="text-gray-500 text-sm mt-1">
-                            STATUS: <span :class="attendanceStatusClass">{{ attendanceStatus }}</span>
+                            STATUS: <span :class="attendanceStatusClass">{{ attendanceStatusDisplay }}</span>
                         </p>
                     </div>
                     <div class="flex items-center space-x-2">
                         <div :class="[
                             'px-3 py-1 rounded-full text-sm font-medium',
-                            sessionStatus === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                            currentSession ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
                         ]">
-                            {{ sessionStatus === 'active' ? 'Listening' : 'Session Inactive' }}
+                            {{ currentSession ? 'Listening' : 'Session Inactive' }}
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Content Grid -->
-            <div class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Left Column: Floor Actions -->
-                <div class="space-y-6">
+            <!-- Content Area -->
+            <div class="flex-1 p-6 overflow-y-auto">
+                <div class="max-w-2xl space-y-6">
+                    <!-- Roll Call Active Banner -->
+                    <div v-if="rollCallActive && !isMarkedPresent"
+                        class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-semibold text-blue-800">Roll Call Active</h3>
+                                <p class="text-sm text-blue-600">Mark your attendance now</p>
+                            </div>
+                            <button @click="showAttendanceModal = true"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                Mark Attendance
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Floor Actions Card -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                         <h2 class="text-lg font-semibold text-gray-900 mb-4">Floor Actions</h2>
@@ -68,103 +82,29 @@
 
                     <!-- Current Speaker Card -->
                     <div class="bg-gray-800 text-white rounded-xl shadow-sm p-6">
-                        <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-3 mb-4">
                             <SpeakerWaveIcon class="w-6 h-6" />
                             <h3 class="text-lg font-semibold">CURRENT SPEAKER</h3>
                         </div>
-                        <div class="mt-4">
-                            <p class="text-3xl font-bold">{{ currentSpeaker || 'None' }}</p>
-                            <div v-if="currentSpeaker && speakerTimeRemaining" class="mt-2 text-sm text-gray-300">
+                        <div>
+                            <p class="text-3xl font-bold">{{ currentSpeaker?.country || 'None' }}</p>
+                            <div v-if="currentSpeaker && speakerTimer" class="mt-2 text-sm text-gray-300">
                                 Time remaining: {{ formattedSpeakerTime }}
                             </div>
                         </div>
                     </div>
 
-                    <!-- Quick Actions -->
+                    <!-- Active Voting Alert -->
                     <div v-if="activeVoting" class="bg-red-50 border border-red-200 rounded-xl p-4">
                         <div class="flex items-center justify-between">
                             <div>
                                 <h3 class="font-semibold text-red-800">Active Voting</h3>
-                                <p class="text-sm text-red-600">{{ activeVoting.subject }}</p>
+                                <p class="text-sm text-red-600">{{ activeVoting.title }}</p>
                             </div>
                             <RouterLink to="/delegate/voting"
                                 class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium">
                                 Vote Now
                             </RouterLink>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Column: Session Info -->
-                <div class="space-y-6">
-                    <!-- Session Status -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Session Information</h2>
-
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Current Mode</span>
-                                <span class="font-medium">{{ formatSessionMode(sessionMode) }}</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Quorum Status</span>
-                                <span :class="[
-                                    'font-medium',
-                                    hasQuorum ? 'text-green-600' : 'text-red-600'
-                                ]">
-                                    {{ hasQuorum ? 'Achieved' : 'Not Met' }}
-                                </span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Present Delegates</span>
-                                <span class="font-medium">{{ presentCount }}/{{ totalDelegates }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Speaker Queue -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Speakers List</h2>
-
-                        <div v-if="speakersList.length === 0" class="text-center text-gray-500 py-4">
-                            No speakers in queue
-                        </div>
-                        <div v-else class="space-y-2">
-                            <div v-for="(speaker, index) in speakersList.slice(0, 5)" :key="speaker.country" :class="[
-                                'flex items-center justify-between p-3 rounded-lg',
-                                index === 0 ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'
-                            ]">
-                                <span class="font-medium">{{ index + 1 }}. {{ speaker.country }}</span>
-                                <span v-if="index === 0" class="text-xs text-blue-600 font-medium">NEXT</span>
-                            </div>
-                            <div v-if="speakersList.length > 5" class="text-center text-sm text-gray-500 pt-2">
-                                +{{ speakersList.length - 5 }} more speakers
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Coalition Status -->
-                    <div v-if="userCoalition" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Coalition Status</h2>
-
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Coalition</span>
-                                <span class="font-medium">{{ userCoalition.name }}</span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Role</span>
-                                <span :class="[
-                                    'font-medium',
-                                    userCoalition.isLeader ? 'text-blue-600' : 'text-gray-900'
-                                ]">
-                                    {{ userCoalition.isLeader ? 'Leader' : 'Member' }}
-                                </span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-600">Members</span>
-                                <span class="font-medium">{{ userCoalition.memberCount }}</span>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -178,16 +118,28 @@
             </div>
 
             <div class="flex-1 overflow-y-auto p-4 space-y-4">
-                <!-- Recent Messages -->
-                <div v-for="message in recentMessages" :key="message.id" class="p-4 bg-gray-50 rounded-lg">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="font-medium text-sm">{{ message.sender }}</span>
-                        <span class="text-xs text-gray-500">{{ message.time }}</span>
-                    </div>
-                    <p class="text-sm text-gray-700">{{ message.content }}</p>
+                <!-- Loading -->
+                <div v-if="isLoadingMessages" class="text-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                 </div>
 
-                <div v-if="recentMessages.length === 0" class="text-center text-gray-500 py-8">
+                <!-- Recent Messages -->
+                <div v-else-if="recentMessages.length > 0">
+                    <div v-for="message in recentMessages" :key="message._id" class="p-4 rounded-lg transition-colors"
+                        :class="[
+                            message.channelType === 'announcements' ? 'bg-yellow-50 border border-yellow-200' :
+                                message.channelType === 'gossip' ? 'bg-pink-50 border border-pink-200' :
+                                    'bg-gray-50'
+                        ]">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-medium text-sm">{{ getSenderName(message) }}</span>
+                            <span class="text-xs text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
+                        </div>
+                        <p class="text-sm text-gray-700">{{ message.content }}</p>
+                    </div>
+                </div>
+
+                <div v-else class="text-center text-gray-500 py-8">
                     No recent messages
                 </div>
             </div>
@@ -200,14 +152,56 @@
                 </RouterLink>
             </div>
         </div>
+
+        <!-- Mark Attendance Modal -->
+        <TransitionRoot :show="showAttendanceModal" as="template">
+            <Dialog @close="showAttendanceModal = false">
+                <div class="fixed inset-0 bg-black/30 z-50" />
+                <div class="fixed inset-0 overflow-y-auto z-50">
+                    <div class="flex min-h-full items-center justify-center p-4">
+                        <DialogPanel class="w-full max-w-md bg-white rounded-xl shadow-xl p-6">
+                            <DialogTitle class="text-lg font-bold mb-4">
+                                Mark Attendance
+                            </DialogTitle>
+
+                            <p class="text-sm text-gray-600 mb-6">
+                                Select your attendance status for this session:
+                            </p>
+
+                            <div class="space-y-3 mb-6">
+                                <button @click="markAttendance('present_and_voting')" :disabled="isMarkingAttendance"
+                                    class="w-full p-4 border-2 border-green-200 bg-green-50 rounded-lg hover:bg-green-100 transition-colors text-left disabled:opacity-50">
+                                    <div class="font-semibold text-green-800">Present and Voting</div>
+                                    <div class="text-sm text-green-600">Full participation in session and voting</div>
+                                </button>
+
+                                <button @click="markAttendance('present')" :disabled="isMarkingAttendance"
+                                    class="w-full p-4 border-2 border-blue-200 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-left disabled:opacity-50">
+                                    <div class="font-semibold text-blue-800">Present</div>
+                                    <div class="text-sm text-blue-600">Participating but not voting</div>
+                                </button>
+                            </div>
+
+                            <button @click="showAttendanceModal = false"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors">
+                                Cancel
+                            </button>
+                        </DialogPanel>
+                    </div>
+                </div>
+            </Dialog>
+        </TransitionRoot>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
+import { wsService } from '@/plugins/websocket'
+import { apiMethods } from '@/utils/api'
+import { Dialog, DialogPanel, DialogTitle, TransitionRoot } from '@headlessui/vue'
 
 // Icons
 import {
@@ -215,142 +209,403 @@ import {
 } from '@heroicons/vue/24/outline'
 
 // Stores
-const router = useRouter()
 const authStore = useAuthStore()
 const toast = useToast()
 
 // State
-const userCountry = ref('Chile')
-const attendanceStatus = ref('NOT MARKED')
-const sessionStatus = ref('active')
-const sessionMode = ref('formal')
+const currentSession = ref(null)
+const committee = ref(null)
+const attendanceStatus = ref(null)
+const rollCallActive = ref(false)
 const currentSpeaker = ref(null)
-const speakerTimeRemaining = ref(90)
-const isInSpeakersList = ref(false)
+const speakerTimer = ref(null)
+const speakerLists = ref({ present: [], absent: [] })
 const activeVoting = ref(null)
-const hasQuorum = ref(false)
-const presentCount = ref(25)
-const totalDelegates = ref(50)
+const recentMessages = ref([])
+const isLoadingMessages = ref(false)
+const showAttendanceModal = ref(false)
+const isMarkingAttendance = ref(false)
 
-// Coalition data
-const userCoalition = ref(null)
-
-// Speakers list
-const speakersList = ref([
-    { country: 'United States', position: 1 },
-    { country: 'United Kingdom', position: 2 },
-    { country: 'France', position: 3 },
-])
-
-// Messages
-const recentMessages = ref([
-    {
-        id: 1,
-        sender: 'Chairperson',
-        content: 'Session will resume in 5 minutes.',
-        time: '09:01 AM'
-    },
-    {
-        id: 2,
-        sender: 'Anonymous',
-        content: 'Did anyone see the amendment from Russian Federation?',
-        time: '09:01 AM'
-    },
-    {
-        id: 3,
-        sender: 'Anonymous',
-        content: 'The coffee break needs to be longer!',
-        time: '09:01 AM'
-    }
-])
+// Timer update interval
+let timerUpdateInterval = null
 
 // Computed
-const isMarkedPresent = computed(() => attendanceStatus.value !== 'NOT MARKED')
-const canRequestSpeak = computed(() => isMarkedPresent.value && !isInSpeakersList.value)
-const canTakeActions = computed(() => isMarkedPresent.value)
+const userCountry = computed(() => authStore.user?.countryName || 'Unknown')
+
+const isMarkedPresent = computed(() => {
+    return attendanceStatus.value === 'present' || attendanceStatus.value === 'present_and_voting'
+})
+
+const attendanceStatusDisplay = computed(() => {
+    if (!attendanceStatus.value) return 'NOT MARKED'
+    if (attendanceStatus.value === 'present_and_voting') return 'PRESENT AND VOTING'
+    if (attendanceStatus.value === 'present') return 'PRESENT'
+    return 'NOT MARKED'
+})
 
 const attendanceStatusClass = computed(() => {
-    switch (attendanceStatus.value) {
-        case 'PRESENT_AND_VOTING':
-            return 'text-green-600 font-medium'
-        case 'PRESENT':
-            return 'text-blue-600 font-medium'
-        case 'NOT MARKED':
-        default:
-            return 'text-red-600 font-medium'
-    }
+    if (attendanceStatus.value === 'present_and_voting') return 'text-green-600 font-medium'
+    if (attendanceStatus.value === 'present') return 'text-blue-600 font-medium'
+    return 'text-red-600 font-medium'
+})
+
+const isInSpeakersList = computed(() => {
+    if (!userCountry.value || !speakerLists.value.present) return false
+    return speakerLists.value.present.some(s => s.country === userCountry.value && !s.hasSpoken)
+})
+
+const canRequestSpeak = computed(() => {
+    return isMarkedPresent.value && !isInSpeakersList.value && currentSession.value
+})
+
+const canTakeActions = computed(() => {
+    return isMarkedPresent.value && currentSession.value
 })
 
 const formattedSpeakerTime = computed(() => {
-    const minutes = Math.floor(speakerTimeRemaining.value / 60)
-    const seconds = speakerTimeRemaining.value % 60
+    if (!speakerTimer.value) return '0:00'
+
+    const remaining = getRealTimeRemaining(speakerTimer.value)
+    const minutes = Math.floor(remaining / 60)
+    const seconds = remaining % 60
     return `${minutes}:${seconds.toString().padStart(2, '0')}`
 })
 
-// Methods
-const formatSessionMode = (mode) => {
-    const modeMap = {
-        'formal': 'Formal Debate',
-        'moderated': 'Moderated Caucus',
-        'unmoderated': 'Unmoderated Caucus',
-        'informal': 'Informal Consultation'
+// Helper Methods
+const getRealTimeRemaining = (timer) => {
+    if (!timer) return 0
+    if (!timer.isActive) return timer.remainingTime || timer.totalDuration || 0
+    if (timer.isPaused) return timer.remainingTime || 0
+
+    const startedAt = new Date(timer.startedAt)
+    const now = new Date()
+    const elapsed = Math.floor((now - startedAt) / 1000)
+    const pauseTime = timer.accumulatedPause || 0
+    const actualElapsed = elapsed - pauseTime
+    const remaining = Math.max(0, timer.totalDuration - actualElapsed)
+
+    return remaining
+}
+
+const formatMessageTime = (timestamp) => {
+    if (!timestamp) return ''
+    const date = new Date(timestamp)
+    return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    })
+}
+
+const getSenderName = (message) => {
+    if (message.channelType === 'announcements') return 'Chairperson'
+    if (message.channelType === 'gossip') return 'Anonymous'
+    return message.senderCountry || 'Unknown'
+}
+
+// Data Loading Methods
+const loadDashboardData = async () => {
+    try {
+        committee.value = authStore.user?.committeeId
+        if (!committee.value) {
+            throw new Error('No committee assigned')
+        }
+
+        await Promise.all([
+            loadActiveSession(),
+            loadRecentMessages(),
+            loadActiveVoting()
+        ])
+
+        setupWebSocketListeners()
+
+    } catch (error) {
+        console.error('Failed to load dashboard data:', error)
+        toast.error('Failed to load dashboard data')
     }
-    return modeMap[mode] || 'Unknown Mode'
+}
+
+const loadActiveSession = async () => {
+    try {
+        const response = await apiMethods.sessions.getAll(committee.value._id, {
+            status: 'active',
+            limit: 1
+        })
+
+        if (response.data.success && response.data.sessions?.length > 0) {
+            const session = response.data.sessions[0]
+            currentSession.value = session
+
+            // Load full session details
+            const sessionDetail = await apiMethods.sessions.getById(session._id)
+            if (sessionDetail.data.success) {
+                const sessionData = sessionDetail.data.session
+
+                // Roll call status
+                rollCallActive.value = sessionData.rollCall?.isActive || false
+
+                // Speaker lists
+                speakerLists.value = sessionData.speakerLists || { present: [], absent: [] }
+
+                // Current speaker
+                currentSpeaker.value = sessionData.currentSpeaker || null
+
+                // Speaker timer
+                if (sessionData.timers?.speaker) {
+                    speakerTimer.value = sessionData.timers.speaker
+                }
+
+                // Check attendance status
+                const myCountry = authStore.user?.countryName
+                if (myCountry && sessionData.attendance) {
+                    const myAttendance = sessionData.attendance.find(a => a.country === myCountry)
+                    if (myAttendance) {
+                        attendanceStatus.value = myAttendance.status
+                    }
+                }
+            }
+
+            // Join session room
+            wsService.joinSession(session._id)
+        }
+    } catch (error) {
+        console.error('Failed to load active session:', error)
+    }
+}
+
+const loadRecentMessages = async () => {
+    try {
+        isLoadingMessages.value = true
+
+        // Load announcements
+        const announcementsResponse = await apiMethods.messages.getCommitteeConversation(
+            committee.value._id,
+            'announcements'
+        )
+
+        // Load gossip
+        const gossipResponse = await apiMethods.messages.getCommitteeConversation(
+            committee.value._id,
+            'gossip'
+        )
+
+        const allMessages = []
+
+        if (announcementsResponse.data.success) {
+            const announcements = announcementsResponse.data.conversation.messages || []
+            allMessages.push(...announcements.map(m => ({ ...m, channelType: 'announcements' })))
+        }
+
+        if (gossipResponse.data.success) {
+            const gossip = gossipResponse.data.conversation.messages || []
+            allMessages.push(...gossip.map(m => ({ ...m, channelType: 'gossip' })))
+        }
+
+        // Sort by timestamp descending and take last 5
+        recentMessages.value = allMessages
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+            .slice(0, 5)
+
+    } catch (error) {
+        console.error('Failed to load recent messages:', error)
+    } finally {
+        isLoadingMessages.value = false
+    }
+}
+
+const loadActiveVoting = async () => {
+    try {
+        const response = await apiMethods.voting.getByCommitteeId(committee.value._id)
+        if (response.data.success) {
+            const active = response.data.voting?.find(v => v.status === 'active')
+            activeVoting.value = active || null
+        }
+    } catch (error) {
+        console.error('Failed to load active voting:', error)
+    }
+}
+
+// Actions
+const markAttendance = async (status) => {
+    if (!currentSession.value || isMarkingAttendance.value) return
+
+    try {
+        isMarkingAttendance.value = true
+
+        const response = await apiMethods.sessions.markAttendance(currentSession.value._id, {
+            status: status
+        })
+
+        if (response.data.success) {
+            attendanceStatus.value = status
+            showAttendanceModal.value = false
+            toast.success('Attendance marked successfully')
+
+            // Reload session details
+            await loadActiveSession()
+        }
+    } catch (error) {
+        console.error('Failed to mark attendance:', error)
+        toast.error(error.response?.data?.error || 'Failed to mark attendance')
+    } finally {
+        isMarkingAttendance.value = false
+    }
 }
 
 const requestToSpeak = async () => {
-    if (!canRequestSpeak.value) return
+    if (!canRequestSpeak.value || !currentSession.value) return
 
     try {
-        // API call would go here
-        isInSpeakersList.value = true
-        toast.success('Added to speakers list')
+        const response = await apiMethods.sessions.addToSpeakersList(currentSession.value._id, {
+            country: userCountry.value
+        })
+
+        if (response.data.success) {
+            speakerLists.value = response.data.speakerLists
+            toast.success('Added to speakers list')
+        }
     } catch (error) {
         console.error('Failed to request to speak:', error)
-        toast.error('Failed to add to speakers list')
+        toast.error(error.response?.data?.error || 'Failed to add to speakers list')
     }
 }
 
 const pointOfOrder = async () => {
     if (!canTakeActions.value) return
 
-    try {
-        // API call would go here
-        toast.success('Point of order submitted')
-    } catch (error) {
-        toast.error('Failed to submit point of order')
-    }
+    // This would typically trigger a notification to presidium
+    toast.success('Point of order submitted to chairperson')
 }
 
 const rightOfReply = async () => {
     if (!canTakeActions.value) return
 
-    try {
-        // API call would go here
-        toast.success('Right of reply requested')
-    } catch (error) {
-        toast.error('Failed to request right of reply')
-    }
+    // This would typically trigger a notification to presidium
+    toast.success('Right of reply requested')
 }
 
-// Load initial data
-const loadDashboardData = async () => {
-    try {
-        // Mock data - in real app would come from API
-        hasQuorum.value = presentCount.value >= Math.floor(totalDelegates.value / 2) + 1
+// WebSocket Listeners
+const setupWebSocketListeners = () => {
+    if (!currentSession.value) return
 
-        // Check for active voting
-        // activeVoting.value = {
-        //     subject: 'Amendment to Resolution A/RES/123',
-        //     timeRemaining: 300
-        // }
-    } catch (error) {
-        console.error('Failed to load dashboard data:', error)
+    // Join committee room
+    if (committee.value?._id) {
+        wsService.emit('join-committee-room', {
+            committeeId: committee.value._id
+        })
     }
+
+    // Roll call events
+    wsService.on('roll-call-started', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            rollCallActive.value = true
+            toast.log('Roll call started - Please mark your attendance')
+            if (!isMarkedPresent.value) {
+                showAttendanceModal.value = true
+            }
+        }
+    })
+
+    wsService.on('roll-call-ended', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            rollCallActive.value = false
+            speakerLists.value = data.speakerLists || speakerLists.value
+            toast.log('Roll call ended')
+        }
+    })
+
+    // Attendance updates
+    wsService.on('attendance-updated', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            // Reload session to get updated attendance
+            loadActiveSession()
+        }
+    })
+
+    // Speaker events
+    wsService.on('current-speaker-set', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            currentSpeaker.value = data.currentSpeaker
+            speakerLists.value = data.speakerLists || speakerLists.value
+
+            if (data.speakerTimer) {
+                speakerTimer.value = data.speakerTimer
+            }
+
+            if (data.currentSpeaker?.country === userCountry.value) {
+                toast.success('You are now speaking!')
+            }
+        }
+    })
+
+    wsService.on('speaker-moved', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            speakerLists.value = data.speakerLists || speakerLists.value
+        }
+    })
+
+    // Timer events
+    wsService.on('timer-toggled', (data) => {
+        if (data.sessionId === currentSession.value?._id && data.timerType === 'speaker') {
+            speakerTimer.value = data.timer
+        }
+    })
+
+    wsService.on('timer-adjusted', (data) => {
+        if (data.sessionId === currentSession.value?._id && data.timerType === 'speaker') {
+            speakerTimer.value = data.timer
+        }
+    })
+
+    // Voting events
+    wsService.on('voting-started', (data) => {
+        if (data.committeeId === committee.value?._id) {
+            activeVoting.value = data.voting
+            toast.success('New voting started!')
+        }
+    })
+
+    wsService.on('voting-ended', (data) => {
+        if (data.votingId === activeVoting.value?._id) {
+            activeVoting.value = null
+            toast.log('Voting ended')
+        }
+    })
+
+    // Message events
+    wsService.on('committee-message-received', (data) => {
+        if (data.committeeId === committee.value?._id) {
+            const newMessage = {
+                _id: data.messageId,
+                senderCountry: data.senderCountry,
+                content: data.content,
+                timestamp: data.timestamp,
+                channelType: data.channelType
+            }
+
+            recentMessages.value.unshift(newMessage)
+            if (recentMessages.value.length > 5) {
+                recentMessages.value = recentMessages.value.slice(0, 5)
+            }
+        }
+    })
 }
 
 // Lifecycle
-onMounted(() => {
-    loadDashboardData()
+onMounted(async () => {
+    await loadDashboardData()
+
+    // Update speaker timer every second
+    timerUpdateInterval = setInterval(() => {
+        if (speakerTimer.value?.isActive && !speakerTimer.value?.isPaused) {
+            speakerTimer.value = { ...speakerTimer.value }
+        }
+    }, 1000)
+})
+
+onUnmounted(() => {
+    if (timerUpdateInterval) {
+        clearInterval(timerUpdateInterval)
+    }
 })
 </script>
