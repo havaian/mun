@@ -299,7 +299,7 @@ const loadAttendanceData = async () => {
     if (!currentSession.value?._id) return
 
     try {
-        // Get session details instead of attendance endpoint
+        // Get session details
         const response = await apiMethods.sessions.getById(currentSession.value._id)
 
         if (response.data.success) {
@@ -317,12 +317,17 @@ const loadAttendanceData = async () => {
                 }
             }
 
-            // Update country attendance status from session attendance data
-            if (sessionData.attendance && sessionData.attendance.length > 0) {
-                sessionData.attendance.forEach(attendanceRecord => {
-                    const countryIndex = countries.value.findIndex(c => c.name === attendanceRecord.country)
+            // Update country attendance status from rollCall responses
+            if (sessionData.rollCall?.responses && sessionData.rollCall.responses.length > 0) {
+                sessionData.rollCall.responses.forEach(response => {
+                    const countryIndex = countries.value.findIndex(c => c.name === response.country)
                     if (countryIndex !== -1) {
-                        countries.value[countryIndex].attendanceStatus = attendanceRecord.status
+                        // Convert status format if needed: 'present-voting' -> 'present_and_voting'
+                        let status = response.status
+                        if (status === 'present-voting') {
+                            status = 'present_and_voting'
+                        }
+                        countries.value[countryIndex].attendanceStatus = status
                     }
                 })
             }
