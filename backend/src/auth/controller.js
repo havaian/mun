@@ -78,6 +78,35 @@ const createActiveSession = async (userId, sessionToken, req) => {
     return session;
 };
 
+// Helper function to update committee country information
+const updateCommitteeCountry = async (committeeId, countryName, updateData) => {
+    const { Committee } = require('../committee/model');
+
+    const result = await Committee.updateOne(
+        {
+            _id: committeeId,
+            'countries.name': countryName
+        },
+        {
+            $set: {
+                'countries.$.email': updateData.email,
+                'countries.$.registeredAt': updateData.registeredAt,
+                'countries.$.lastActivity': updateData.lastActivity
+            }
+        }
+    );
+
+    if (result.matchedCount === 0) {
+        throw new Error(`Committee or country not found: ${committeeId} / ${countryName}`);
+    }
+
+    if (result.modifiedCount === 0) {
+        global.logger.warn(`Committee country update matched but not modified: ${countryName}`);
+    }
+
+    return result;
+};
+
 // Admin login with standard 24h expiration
 const adminLogin = async (req, res) => {
     try {
@@ -297,7 +326,7 @@ const bindEmail = async (req, res) => {
             });
         }
 
-        // Bind email and generate session (without transaction)
+        // Bind email and generate session
         user.email = email.toLowerCase();
         user.lastLogin = new Date();
         user.lastActivity = new Date();
@@ -306,26 +335,34 @@ const bindEmail = async (req, res) => {
         const sessionToken = user.generateSessionId();
         await user.save();
 
-        // Update committee countries array with the email (best effort, no transaction)
-        // If this fails, user is still created successfully
+        // Update committee countries array for delegates
         if (user.role === 'delegate' && user.countryName) {
             try {
-                await Committee.updateOne(
+                await updateCommitteeCountry(
+                    user.committeeId._id,
+                    user.countryName,
                     {
-                        _id: user.committeeId._id,
-                        'countries.name': user.countryName
-                    },
-                    {
-                        $set: {
-                            'countries.$.email': email.toLowerCase(),
-                            'countries.$.registeredAt': new Date(),
-                            'countries.$.lastActivity': new Date()
-                        }
+                        email: email.toLowerCase(),
+                        registeredAt: new Date(),
+                        lastActivity: new Date()
                     }
                 );
             } catch (committeeUpdateError) {
-                // Log error but don't fail the whole operation
-                global.logger.warn('Committee countries update failed (non-critical):', committeeUpdateError);
+                global.logger.error('Failed to update committee country:', committeeUpdateError);
+                // Rollback user changes
+                await User.updateOne(
+                    { _id: user._id },
+                    {
+                        $set: {
+                            email: null,
+                            sessionId: null
+                        }
+                    }
+                );
+                return res.status(500).json({
+                    error: 'Failed to complete registration',
+                    message: 'Committee update failed'
+                });
             }
         }
 
@@ -490,7 +527,7 @@ const emailLogin = async (req, res) => {
     }
 };
 
-// Logout (unchanged)
+// Logout
 const logout = async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -515,7 +552,7 @@ const logout = async (req, res) => {
     }
 };
 
-// Session validation (unchanged)
+// Session validation
 const validateSession = async (req, res) => {
     try {
         // User data is already attached by auth middleware
@@ -571,7 +608,7 @@ const validateSession = async (req, res) => {
     }
 };
 
-// Check login link status (unchanged)
+// Check login link status
 const checkLinkStatus = async (req, res) => {
     try {
         const { token } = req.params;
@@ -604,7 +641,7 @@ const checkLinkStatus = async (req, res) => {
     }
 };
 
-// Login link reactivation (unchanged)
+// Login link reactivation
 const reactivateLink = async (req, res) => {
     try {
         const { userId } = req.body;

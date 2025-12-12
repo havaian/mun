@@ -44,10 +44,11 @@ const createVoting = async (req, res) => {
         const eligibleVoters = session.rollCall.responses
             .filter(entry => entry.status === 'present_and_voting')
             .map(entry => {
+                console.log(entry)
                 const countryData = committee.countries.find(c => c.name === entry.country);
                 return {
-                    country: entry.country,
-                    email: entry.email,
+                    country: countryData.name,
+                    email: countryData.email,
                     hasVetoRight: countryData ? countryData.hasVetoRight : false,
                     canVote: true,
                     attendanceStatus: entry.status
