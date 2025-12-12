@@ -152,15 +152,15 @@
             <div v-for="message in currentMessages" :key="message._id">
               <!-- General Assembly - Speech bubbles -->
               <div v-if="selectedChannel.id === 'general'"
-                :class="['flex', isCurrentUserMessage(message) ? 'justify-end' : 'justify-start']">
-                <div :class="['max-w-md', isCurrentUserMessage(message) ? 'items-end' : 'items-start']">
-                  <div class="flex items-center gap-2 mb-1" :class="isCurrentUserMessage(message) ? 'flex-row-reverse' : ''">
+                :class="['flex', message.isCurrentUser ? 'justify-end' : 'justify-start']">
+                <div :class="['max-w-md', message.isCurrentUser ? 'items-end' : 'items-start']">
+                  <div class="flex items-center gap-2 mb-1" :class="message.isCurrentUser ? 'flex-row-reverse' : ''">
                     <span class="text-xs text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
                     <span class="font-medium text-sm text-gray-700">{{ message.senderCountry }}</span>
                   </div>
                   <div :class="[
                     'px-4 py-2.5 rounded-2xl shadow-sm',
-                    isCurrentUserMessage(message)
+                    message.isCurrentUser
                       ? 'bg-blue-600 text-white rounded-br-md'
                       : 'bg-white text-gray-900 rounded-bl-md border border-gray-200'
                   ]">
@@ -200,14 +200,14 @@
 
               <!-- Direct Messages -->
               <div v-else-if="selectedChannel.type === 'dm'"
-                :class="['flex', isCurrentUserMessage(message) ? 'justify-end' : 'justify-start']">
-                <div :class="['max-w-md', isCurrentUserMessage(message) ? 'items-end' : 'items-start']">
-                  <div class="flex items-center gap-2 mb-1" :class="isCurrentUserMessage(message) ? 'flex-row-reverse' : ''">
+                :class="['flex', message.isCurrentUser ? 'justify-end' : 'justify-start']">
+                <div :class="['max-w-md', message.isCurrentUser ? 'items-end' : 'items-start']">
+                  <div class="flex items-center gap-2 mb-1" :class="message.isCurrentUser ? 'flex-row-reverse' : ''">
                     <span class="text-xs text-gray-500">{{ formatMessageTime(message.timestamp) }}</span>
                   </div>
                   <div :class="[
                     'px-4 py-2.5 rounded-2xl shadow-sm',
-                    isCurrentUserMessage(message)
+                    message.isCurrentUser
                       ? 'bg-blue-600 text-white rounded-br-md'
                       : 'bg-white text-gray-900 rounded-bl-md border border-gray-200'
                   ]">
@@ -687,16 +687,17 @@ const scrollToBottom = () => {
 /**
  * Check if a message was sent by the current user
  */
-const isCurrentUserMessage = (message) => {
-  const result = message.senderEmail === authStore.user?.email
-  // DEBUG: Remove once working
-  console.log('isCurrentUserMessage check:', {
-    messageSenderEmail: message.senderEmail,
-    currentUserEmail: authStore.user?.email,
-    result: result
-  })
-  return result
-}
+const messagesWithUserFlag = computed(() => {
+  return messages.value.map(msg => ({
+    ...msg,
+    isCurrentUser: msg.senderEmail === authStore.user?.email
+  }))
+})
+
+// Then update currentMessages to use this
+const currentMessages = computed(() => {
+  return messagesWithUserFlag.value
+})
 
 /**
  * Get country code for flag display
