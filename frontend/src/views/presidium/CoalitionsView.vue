@@ -316,7 +316,7 @@ const loadData = async () => {
     isLoading.value = true
 
     // Get committee ID from auth context
-    const committeeId = authStore.user?.committeeId
+    const committeeId = authStore.user?.committeeId._id
     if (!committeeId) {
       throw new Error('No committee assigned')
     }

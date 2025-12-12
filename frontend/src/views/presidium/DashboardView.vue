@@ -924,7 +924,7 @@ const loadDashboardData = async () => {
         isLoading.value = true
 
         // Get committee ID from auth context
-        const committeeId = authStore.user?.committeeId
+        const committeeId = authStore.user?.committeeId._id
         if (!committeeId) {
             toast.error('No committee assigned')
         }
