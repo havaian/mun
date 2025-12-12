@@ -80,8 +80,8 @@ const toast = useToast()
 
 // State
 const committeeInfo = ref(null)
-const userCountry = ref('Chile')
-const userCountryCode = ref('CL')
+const userCountry = ref('Unknown')
+const userCountryCode = ref('UN')
 const activeVoting = ref(null)
 const unreadMessages = ref(0)
 const userCoalition = ref(null)
@@ -163,22 +163,28 @@ const handleLogout = async () => {
 // Load initial data
 const loadLayoutData = async () => {
     try {
-        // Load committee info
-        committeeInfo.value = authStore.user?.committeeId || {
-            name: 'UN General Assembly'
-        }
-
         // Load user data from auth store
         const user = authStore.user
         if (user) {
-            userCountry.value = user.countryName || 'Chile'
-            userCountryCode.value = user.countryCode || 'CL'
+            userCountry.value = user.countryName || 'Unknown'
+
+            // Find country code from committee countries array
+            const committee = user.committeeId
+            if (committee && committee.countries && Array.isArray(committee.countries)) {
+                const myCountry = committee.countries.find(c => c.name === user.countryName)
+                userCountryCode.value = myCountry ? myCountry.code.toUpperCase() : 'UN'
+            } else {
+                userCountryCode.value = 'UN' // Fallback to UN flag
+            }
+
+            // Set committee info
+            committeeInfo.value = committee || { name: 'UN General Assembly' }
         }
 
-        // Load dynamic data
-        activeVoting.value = null // Would come from API
-        unreadMessages.value = 0  // Would come from API
-        userCoalition.value = null // Would come from API
+        // Load dynamic data (would come from API in real implementation)
+        activeVoting.value = null
+        unreadMessages.value = 0
+        userCoalition.value = null
     } catch (error) {
         console.error('Failed to load layout data:', error)
     }

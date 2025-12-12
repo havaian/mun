@@ -24,7 +24,7 @@
 
             <!-- Content Area -->
             <div class="flex-1 p-6 overflow-y-auto">
-                <div class="max-w-2xl space-y-6">
+                <div class="max-w-4xl mx-auto space-y-6">
                     <!-- Roll Call Active Banner - BIG PROMINENT NOTIFICATION -->
                     <div v-if="rollCallActive && !isMarkedPresent"
                         class="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl p-8 shadow-2xl border-2 border-blue-400">
@@ -217,7 +217,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
-import sessionApi from '@/utils/sessionApi'
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot } from '@headlessui/vue'
 
 // Icons
@@ -372,12 +371,15 @@ const loadActiveSession = async () => {
                     speakerTimer.value = sessionData.timers.speaker
                 }
 
-                // Check attendance status
+                // Check attendance status from rollCall responses
                 const myCountry = authStore.user?.countryName
-                if (myCountry && sessionData.attendance) {
-                    const myAttendance = sessionData.attendance.find(a => a.country === myCountry)
+                if (myCountry && sessionData.rollCall?.responses) {
+                    const myAttendance = sessionData.rollCall.responses.find(a => a.country === myCountry)
                     if (myAttendance) {
-                        attendanceStatus.value = myAttendance.status
+                        // Convert from backend format to frontend format
+                        attendanceStatus.value = myAttendance.status === 'present-voting'
+                            ? 'present_and_voting'
+                            : myAttendance.status
                     }
                 }
             }
@@ -449,7 +451,7 @@ const markAttendance = async (status) => {
     try {
         isMarkingAttendance.value = true
 
-        const response = await sessionApi.rollCall.markAttendance(currentSession.value._id, {
+        const response = await apiMethods.sessions.markAttendance(currentSession.value._id, {
             status: status
         })
 
