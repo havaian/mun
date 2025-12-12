@@ -604,7 +604,12 @@ const getCommitteeVotings = async (req, res) => {
                 majorityRequired: voting.majorityRequired,
                 status: voting.status,
                 totalVotes: voting.votes.length,
-                eligibleVoters: voting.eligibleVoters.length,
+                eligibleVoters: voting.eligibleVoters,
+                votes: voting.votes.map(v => ({
+                    country: v.country,
+                    vote: v.vote,
+                    timestamp: v.timestamp
+                })),
                 results: voting.status === 'completed' ? voting.results : currentResults,
                 startedAt: voting.startedAt,
                 completedAt: voting.completedAt,
