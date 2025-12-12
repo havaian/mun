@@ -304,6 +304,7 @@ const loadAttendanceData = async () => {
 
         if (response.data.success) {
             const sessionData = response.data.session
+            console.log(sessionData)
             rollCallActive.value = sessionData.rollCall?.isActive || false
             
             // Update quorum data from session
