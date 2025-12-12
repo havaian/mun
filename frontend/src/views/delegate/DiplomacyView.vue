@@ -146,7 +146,7 @@
       </div>
 
       <!-- Messages Area -->
-      <div class="flex-1 overflow-y-auto bg-gray-50">
+      <div class="flex-1 flex flex-col overflow-hidden bg-gray-50">
         <!-- No channel selected -->
         <div v-if="!selectedChannel" class="h-full flex items-center justify-center">
           <div class="text-center">
