@@ -800,6 +800,7 @@ const sendCommitteeMessage = async (req, res) => {
                 conversationId: conversation._id,
                 messageId: message._id,
                 channelType,
+                senderEmail: message.senderEmail,
                 senderCountry,
                 content: message.content,
                 timestamp: message.timestamp,
