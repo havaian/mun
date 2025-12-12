@@ -40,10 +40,10 @@
                   ]"></div>
                   <h3 class="text-lg font-bold text-white">{{ coalition.name }}</h3>
                 </div>
-                <button @click="deleteCoalition(coalition._id)"
+                <!-- <button @click="deleteCoalition(coalition._id)"
                   class="text-white/80 hover:text-white transition-colors">
                   <TrashIcon class="w-5 h-5" />
-                </button>
+                </button> -->
               </div>
               <p class="text-white/90 text-sm mt-2">{{ coalition.description }}</p>
             </div>
