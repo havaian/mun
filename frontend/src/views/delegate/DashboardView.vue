@@ -217,6 +217,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
+import sessionApi from '@/utils/sessionApi'
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot } from '@headlessui/vue'
 
 // Icons
@@ -448,7 +449,7 @@ const markAttendance = async (status) => {
     try {
         isMarkingAttendance.value = true
 
-        const response = await apiMethods.sessions.markAttendance(currentSession.value._id, {
+        const response = await sessionApi.rollCall.markAttendance(currentSession.value._id, 
             status: status
         })
 
