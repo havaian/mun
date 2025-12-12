@@ -295,6 +295,9 @@ const loadActiveSession = async () => {
         if (response.data.success && response.data.sessions?.length > 0) {
             currentSession.value = response.data.sessions[0]
 
+            // Join session WebSocket room for real-time updates
+            wsService.joinSession(currentSession.value._id)
+
             // Load session attendance data
             await loadAttendanceData()
         }
@@ -509,15 +512,15 @@ const setupWebSocketListeners = () => {
 
     // Attendance updated during roll call
     wsService.on('attendance-updated', (data) => {
-        if (data.sessionId === currentSession.value?._id) {
-            if (data.quorum) {
-                quorumData.value = data.quorum
-            }
-            
-            // Reload attendance data to stay in sync
-            loadAttendanceData()
-        }
-    })
+       // Update country status directly
+       if (data.country && data.status) {
+           const countryIndex = countries.value.findIndex(c => c.name === data.country)
+           if (countryIndex !== -1) {
+               countries.value[countryIndex].attendanceStatus = data.status
+           }
+       }
+       // Update quorum and reload for full sync
+   })
 }
 
 // Watchers
@@ -531,5 +534,12 @@ watch(attendanceCounts, (newCounts) => {
 onMounted(async () => {
     await loadData()
     setupWebSocketListeners()
+
+    // Join committee WebSocket room for real-time updates
+   if (committee.value?._id) {
+       wsService.emit('join-committee-room', {
+           committeeId: committee.value._id
+       })
+   }
 })
 </script>
