@@ -587,6 +587,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
+import sessionApi from '@/utils/sessionApi'
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot } from '@headlessui/vue'
 
 // Icons
@@ -1087,7 +1088,7 @@ const endCurrentSession = async () => {
     if (!currentSession.value) return
 
     try {
-        const response = await apiMethods.sessions.end(currentSession.value._id)
+        const response = await sessionApi.sessions.end(currentSession.value._id)
 
         if (response.data.success) {
             currentSession.value = null
