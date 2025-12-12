@@ -5,7 +5,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Presidium Console</h1>
-                    <p class="text-gray-600">{{ currentSession ? `Session ${currentSession.sessionNumber}` : 'No active session' }}</p>
+                    <p class="text-gray-600">{{ currentSession ? `Session ${currentSession.number}` : 'No active session' }}</p>
                 </div>
                 <div class="flex items-center space-x-4">
                     <!-- Session Controls -->
