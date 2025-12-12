@@ -146,9 +146,9 @@
       </div>
 
       <!-- Messages Area -->
-      <div class="flex-1 flex flex-col overflow-hidden bg-gray-50">
+      <div class="flex-1 flex flex-col bg-gray-50 min-h-0">
         <!-- No channel selected -->
-        <div v-if="!selectedChannel" class="h-full flex items-center justify-center">
+        <div v-if="!selectedChannel" class="flex-1 flex items-center justify-center">
           <div class="text-center">
             <ChatBubbleLeftRightIcon class="mx-auto h-16 w-16 text-gray-400 mb-4" />
             <h3 class="text-lg font-medium text-gray-900 mb-2">Welcome to Diplomacy</h3>
@@ -157,7 +157,7 @@
         </div>
 
         <!-- Messages -->
-        <div v-else class="h-full flex flex-col">
+        <div v-else class="flex-1 flex flex-col min-h-0">
           <!-- Loading -->
           <div v-if="isLoadingMessages" class="flex-1 flex items-center justify-center">
             <div class="text-center">
@@ -167,7 +167,7 @@
           </div>
 
           <!-- Message List -->
-          <div v-else class="flex-1 p-6 space-y-4" ref="messagesContainer">
+          <div v-else class="flex-1 overflow-y-auto p-6 space-y-4" ref="messagesContainer">
             <!-- No messages -->
             <div v-if="currentMessages.length === 0" class="text-center py-16">
               <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">

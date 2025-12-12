@@ -125,20 +125,28 @@
       </div>
 
       <!-- Messages Area -->
-      <div class="flex-1 flex flex-col overflow-hidden bg-gray-50">
+      <div class="flex-1 flex flex-col bg-gray-50 min-h-0">
         <!-- No channel selected -->
-        <div v-if="!selectedChannel" class="h-full flex items-center justify-center">
+        <div v-if="!selectedChannel" class="flex-1 flex items-center justify-center">
           <div class="text-center">
             <ChatBubbleLeftRightIcon class="mx-auto h-16 w-16 text-gray-400 mb-4" />
             <h3 class="text-lg font-medium text-gray-900 mb-2">Welcome to Diplomacy</h3>
-            <p class="text-gray-600">Select a channel to start the conversation.</p>
+            <p class="text-gray-600">Select a channel or start a conversation with a delegate.</p>
           </div>
         </div>
 
         <!-- Messages -->
-        <div v-else class="h-full flex flex-col">
+        <div v-else class="flex-1 flex flex-col min-h-0">
+          <!-- Loading -->
+          <div v-if="isLoadingMessages" class="flex-1 flex items-center justify-center">
+            <div class="text-center">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+              <p class="text-sm text-gray-600">Loading messages...</p>
+            </div>
+          </div>
+
           <!-- Message List -->
-          <div class="flex-1 p-6 space-y-4" ref="messagesContainer">
+          <div v-else class="flex-1 overflow-y-auto p-6 space-y-4" ref="messagesContainer">
             <!-- No messages -->
             <div v-if="currentMessages.length === 0" class="text-center py-16">
               <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
