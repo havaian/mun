@@ -10,16 +10,6 @@
         <template #content>
             <!-- Form -->
             <form @submit.prevent="handleSubmit" class="space-y-6">
-                <!-- Session Number -->
-                <div>
-                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                        Session Number
-                    </label>
-                    <input v-model.number="form.sessionNumber" type="number" min="1" required
-                        class="w-full px-4 py-2 border border-mun-gray-300 rounded-lg focus:ring-2 focus:ring-mun-blue focus:border-transparent"
-                        placeholder="1" />
-                </div>
-
                 <!-- Initial Mode -->
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">
@@ -83,7 +73,6 @@ const toast = useToast()
 const isSubmitting = ref(false)
 
 const form = reactive({
-    sessionNumber: 1,
     mode: 'formal',
     speechTime: 180, // 3 minutes default
     questionsAllowed: false
@@ -98,7 +87,6 @@ const closeModal = () => {
 }
 
 const resetForm = () => {
-    form.sessionNumber = 1
     form.mode = 'formal'
     form.speechTime = 180
     form.questionsAllowed = false
@@ -111,8 +99,7 @@ const handleSubmit = async () => {
         // Send data that matches backend expectations
         const sessionData = {
             committeeId: props.committeeId,
-            sessionNumber: form.sessionNumber,
-            title: `Session ${form.sessionNumber}`,
+            title: `Session`,
             mode: form.mode,
             speechTime: form.speechTime,
             questionsAllowed: form.questionsAllowed,
@@ -124,7 +111,7 @@ const handleSubmit = async () => {
         if (response.data.success) {
             emit('session-created', response.data.session)
             closeModal()
-            toast.success(`Session ${form.sessionNumber} created and started!`)
+            toast.success(`Session created and started!`)
         }
 
     } catch (error) {

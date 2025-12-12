@@ -1053,37 +1053,6 @@ const updateVotingResults = (voting) => {
     votingResults.value = results
 }
 
-// Session Management
-const createQuickSession = async () => {
-    try {
-        isLoading.value = true
-
-        const sessionData = {
-            committeeId: committee.value._id,
-            sessionNumber: allSessions.value.length + 1,
-            currentMode: 'formal',
-            modeSettings: {
-                speechTime: 180,
-                questionsAllowed: true
-            }
-        }
-
-        const response = await apiMethods.sessions.create(sessionData)
-
-        if (response.data.success) {
-            currentSession.value = response.data.session
-            await loadSessionDetails()
-            await loadAllSessions()
-            toast.success('Session started successfully')
-        }
-    } catch (error) {
-        console.error('Failed to create quick session:', error)
-        toast.error('Failed to start session')
-    } finally {
-        isLoading.value = false
-    }
-}
-
 const endCurrentSession = async () => {
     if (!currentSession.value) return
 
