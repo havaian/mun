@@ -374,18 +374,7 @@ const allDelegates = computed(() => {
 })
 
 const currentMessages = computed(() => {
-  if (!selectedChannel.value) return []
-
-  // For public channels, show all loaded messages since they're already filtered by channel
-  if (selectedChannel.value.type === 'public') {
-    return messages.value
-  }
-
-  // For DM channels, filter by conversation/channel
-  return messages.value.filter(msg =>
-    msg.channelId === selectedChannel.value.id ||
-    msg.channelType === selectedChannel.value.type
-  )
+  return messagesWithUserFlag.value
 })
 
 // Methods
@@ -692,11 +681,6 @@ const messagesWithUserFlag = computed(() => {
     ...msg,
     isCurrentUser: msg.senderEmail === authStore.user?.email
   }))
-})
-
-// Then update currentMessages to use this
-const currentMessages = computed(() => {
-  return messagesWithUserFlag.value
 })
 
 /**

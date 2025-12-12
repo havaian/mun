@@ -415,7 +415,7 @@ const allDelegates = computed(() => {
 })
 
 const currentMessages = computed(() => {
-  return messages.value
+  return messagesWithUserFlag.value
 })
 
 const canSendMessage = computed(() => {
@@ -678,11 +678,6 @@ const messagesWithUserFlag = computed(() => {
     ...msg,
     isCurrentUser: msg.senderEmail === authStore.user?.email
   }))
-})
-
-// Then update currentMessages to use this
-const currentMessages = computed(() => {
-  return messagesWithUserFlag.value
 })
 
 const getInputPlaceholder = () => {
