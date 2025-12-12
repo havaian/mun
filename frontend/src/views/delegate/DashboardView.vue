@@ -533,10 +533,31 @@ const setupWebSocketListeners = () => {
         }
     })
 
+    wsService.on('late-arrival-marked', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            console.log('Late arrival marked:', data.country)
+            
+            // Update speaker lists from response
+            if (data.speakerLists) {
+                speakerLists.value = data.speakerLists
+            }
+            
+            // Show notification if it's the current user
+            const myCountry = authStore.user?.countryName
+            if (data.country === myCountry) {
+                toast.success('Your attendance has been marked! You are added to the end of the speaker list.')
+                // Update local attendance status
+                attendanceStatus.value = data.status
+            } else {
+                toast.log(`${data.country} arrived late`)
+            }
+        }
+    })
+
     // Attendance updates
     wsService.on('attendance-updated', (data) => {
         if (data.sessionId === currentSession.value?._id) {
-            // Reload session to get updated attendance
+            // Reload session to get updated attendance and speaker lists
             loadActiveSession()
         }
     })

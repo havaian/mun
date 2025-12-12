@@ -200,7 +200,7 @@ const setupEventHandlers = (socket) => {
         }
     });
 
-    // ==================== NEW: TIMER & DISPLAY MODE EVENTS ====================
+    // ==================== TIMER & DISPLAY MODE EVENTS ====================
 
     // Join committee room for display mode and timer updates
     socket.on('join-committee-room', (data) => {

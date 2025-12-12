@@ -1519,16 +1519,41 @@ const setupWebSocketListeners = () => {
         if (data.sessionId === currentSession.value?._id) {
             rollCallStatus.value = 'completed'
             rollCallCompleted.value = true
-            speakerLists.value = data.speakerLists
+            
+            // Update speaker lists from response
+            speakerLists.value = data.speakerLists || { present: [], absent: [] }
             quorum.value = data.quorum
-            toast.success('Roll call completed')
+            
+            toast.success(`Roll call completed! ${speakerLists.value.present.length} present`)
+        }
+    })
+
+    wsService.on('late-arrival-marked', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            console.log('Late arrival marked:', data.country)
+            
+            // Update speaker lists - delegate added to END
+            if (data.speakerLists) {
+                speakerLists.value = data.speakerLists
+            }
+            
+            // Update quorum if changed
+            if (data.quorum) {
+                quorum.value = data.quorum
+            }
+            
+            toast.log(`${data.country} arrived late and added to end of speaker list`)
         }
     })
 
     // Attendance
     wsService.on('attendance-updated', (data) => {
         if (data.sessionId === currentSession.value?._id) {
-            quorum.value = data.quorum
+            if (data.quorum) {
+                quorum.value = data.quorum
+            }
+            
+            // Handle speaker list updates (for late arrivals during session)
             if (data.speakerLists) {
                 speakerLists.value = data.speakerLists
             }

@@ -139,7 +139,7 @@ const validatePagination = [
         .withMessage('Status filter must be draft, active, or completed')
 ];
 
-// NEW: Position paper deadline validation
+// Position paper deadline validation
 const validatePositionPaperDeadlineUpdate = [
     body('positionPaperDeadline')
         .optional()
@@ -218,7 +218,7 @@ router.get('/:id/statistics',
     controller.getEventStatistics
 );
 
-// NEW: Position paper related routes
+// Position paper related routes
 
 // Get position paper submission status for event (accessible by all authenticated users)
 router.get('/:id/position-papers/status',

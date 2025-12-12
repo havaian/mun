@@ -64,14 +64,16 @@ const sessionSchema = new mongoose.Schema({
             position: Number,
             hasSpoken: { type: Boolean, default: false },
             hasMovedToEnd: { type: Boolean, default: false },
-            arrivedLate: { type: Boolean, default: false }
+            arrivedLate: { type: Boolean, default: false },
+            canVote: { type: Boolean, default: false } // tracks if delegate has voting rights
         }],
         absent: [{
             country: String,
             position: Number,
             hasSpoken: { type: Boolean, default: false },
             hasMovedToEnd: { type: Boolean, default: false },
-            arrivedLate: { type: Boolean, default: false }
+            arrivedLate: { type: Boolean, default: false },
+            canVote: { type: Boolean, default: false } // always false for absent
         }]
     },
     currentSpeaker: {
@@ -79,10 +81,11 @@ const sessionSchema = new mongoose.Schema({
         startedAt: { type: Date }
     },
     quorum: {
-        total: { type: Number, default: 0 },
-        present: { type: Number, default: 0 },
-        required: { type: Number, default: 0 },
-        hasMet: { type: Boolean, default: false }
+        total: { type: Number, default: 0 }, // Total delegates in committee
+        present: { type: Number, default: 0 }, // Physically present (present + present_and_voting)
+        voting: { type: Number, default: 0 }, // Only present_and_voting count
+        required: { type: Number, default: 0 }, // Required for quorum (total/2 + 1)
+        hasMet: { type: Boolean, default: false } // Whether voting >= required
     },
     startedAt: { type: Date },
     endedAt: { type: Date },
@@ -94,7 +97,7 @@ const sessionSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// FIXED: Calculate current timer state from timestamps
+// Calculate current timer state from timestamps
 sessionSchema.methods.getCurrentTimerState = function (timer) {
     if (!timer) return null;
 
@@ -201,16 +204,16 @@ sessionSchema.methods.initializeTimers = function (mode) {
 
 // Calculate quorum
 sessionSchema.methods.calculateQuorum = function () {
-    const presentCount = this.speakerLists?.present?.length || 0;
-    const absentCount = this.speakerLists?.absent?.length || 0;
-    const total = presentCount + absentCount;
-    const required = Math.floor(total / 2) + 1;
+    const votingCount = this.speakerLists?.present?.filter(s => s.canVote).length || 0;
+    const totalDelegates = (this.speakerLists?.present?.length || 0) + (this.speakerLists?.absent?.length || 0);
+    const requiredForQuorum = Math.floor(totalDelegates / 2) + 1;
 
     this.quorum = {
-        total,
-        present: presentCount,
-        required,
-        hasMet: presentCount >= required
+        total: totalDelegates,
+        present: this.speakerLists?.present?.length || 0,
+        voting: votingCount, // Only delegates with canVote: true
+        required: requiredForQuorum,
+        hasMet: votingCount >= requiredForQuorum
     };
 };
 

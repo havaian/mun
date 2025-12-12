@@ -450,22 +450,64 @@ const getStatusColor = (status) => {
 
 // WebSocket listeners
 const setupWebSocketListeners = () => {
+    // Roll call started
     wsService.on('roll-call-started', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             rollCallActive.value = true
         }
     })
 
+    // Roll call ended - update attendance from speaker lists
     wsService.on('roll-call-ended', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             rollCallActive.value = false
             quorumData.value = data.quorum
+            
+            // Update countries' attendance status from speaker lists
+            if (data.speakerLists?.present) {
+                data.speakerLists.present.forEach(speaker => {
+                    const countryIndex = countries.value.findIndex(c => c.name === speaker.country)
+                    if (countryIndex !== -1) {
+                        // Set status based on canVote flag
+                        countries.value[countryIndex].attendanceStatus = 
+                            speaker.canVote ? 'present_and_voting' : 'present'
+                    }
+                })
+            }
+            
+            toast.success('Roll call completed')
         }
     })
 
+    // Late arrival marked - update attendance display
+    wsService.on('late-arrival-marked', (data) => {
+        if (data.sessionId === currentSession.value?._id) {
+            console.log('Late arrival marked:', data.country, data.status)
+            
+            // Update country status in local state
+            const countryIndex = countries.value.findIndex(c => c.name === data.country)
+            if (countryIndex !== -1) {
+                countries.value[countryIndex].attendanceStatus = data.status
+            }
+            
+            // Update quorum
+            if (data.quorum) {
+                quorumData.value = data.quorum
+            }
+            
+            toast.success(`${data.country} marked as ${data.arrivedLate ? 'late arrival' : 'present'}`)
+        }
+    })
+
+    // Attendance updated during roll call
     wsService.on('attendance-updated', (data) => {
         if (data.sessionId === currentSession.value?._id) {
-            quorumData.value = data.quorum
+            if (data.quorum) {
+                quorumData.value = data.quorum
+            }
+            
+            // Reload attendance data to stay in sync
+            loadAttendanceData()
         }
     })
 }

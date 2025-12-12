@@ -348,7 +348,177 @@ exports.startRollCall = async (req, res) => {
 }
 
 /**
- * End roll call
+ * Mark attendance - handles both roll call and late arrivals
+ */
+exports.markAttendance = async (req, res) => {
+    try {
+        const { id } = req.params
+        const { country, status } = req.body
+
+        const session = await Session.findById(id).populate('committeeId', 'countries')
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                error: 'Session not found'
+            })
+        }
+
+        // Check if presidium is marking attendance
+        const isPresidium = req.user?.role === 'presidium' || req.user?.role === 'admin'
+        
+        // CASE 1: Roll call is active - standard attendance marking (delegates + presidium)
+        if (session.rollCall?.isActive) {
+            const existing = session.rollCall.responses.find(r => r.country === country)
+            if (existing) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Country has already responded to roll call'
+                })
+            }
+
+            session.rollCall.responses.push({
+                country,
+                status,
+                respondedAt: new Date()
+            })
+
+            await saveSession(session)
+
+            if (req.io) {
+                req.io.to(`session-${id}`).emit('attendance-updated', {
+                    sessionId: id,
+                    country,
+                    status,
+                    totalResponses: session.rollCall.responses.length,
+                    timestamp: new Date()
+                })
+
+                req.io.to(`committee-${session.committeeId}`).emit('attendance-updated', {
+                    sessionId: id,
+                    country,
+                    status,
+                    totalResponses: session.rollCall.responses.length,
+                    timestamp: new Date()
+                })
+            }
+
+            global.logger.info(`Attendance marked during roll call: ${country} - ${status}`)
+
+            return res.json({
+                success: true,
+                response: { country, status },
+                message: 'Attendance marked during roll call'
+            })
+        }
+
+        // CASE 2: Roll call is not active - late arrival (presidium only)
+        if (!isPresidium) {
+            return res.status(403).json({
+                success: false,
+                error: 'Only presidium can mark attendance when roll call is not active'
+            })
+        }
+
+        // Verify speaker lists are initialized
+        if (!session.speakerLists?.present || !session.speakerLists?.absent) {
+            return res.status(400).json({
+                success: false,
+                error: 'Speaker lists not initialized. Please complete roll call first.'
+            })
+        }
+
+        // Check if country is already present
+        const alreadyPresent = session.speakerLists.present.find(s => s.country === country)
+        if (alreadyPresent) {
+            return res.status(400).json({
+                success: false,
+                error: 'Country is already marked as present'
+            })
+        }
+
+        // Find and remove from absent list
+        const absentIndex = session.speakerLists.absent.findIndex(s => s.country === country)
+        if (absentIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                error: 'Country not found in absent list'
+            })
+        }
+
+        const absentSpeaker = session.speakerLists.absent[absentIndex]
+        session.speakerLists.absent.splice(absentIndex, 1)
+
+        // Add to END of present list with arrivedLate flag
+        const newPosition = session.speakerLists.present.length + 1
+        session.speakerLists.present.push({
+            country,
+            position: newPosition,
+            hasSpoken: false,
+            hasMovedToEnd: false,
+            arrivedLate: true,
+            canVote: status === 'present_and_voting' // Track voting rights
+        })
+
+        // Update quorum
+        if (status === 'present_and_voting') {
+            const votingCount = session.speakerLists.present.filter(s => s.canVote).length
+            const totalDelegates = session.quorum.total
+            const requiredForQuorum = Math.floor(totalDelegates / 2) + 1
+
+            session.quorum = {
+                total: totalDelegates,
+                present: session.speakerLists.present.length,
+                voting: votingCount,
+                required: requiredForQuorum,
+                hasMet: votingCount >= requiredForQuorum
+            }
+        }
+
+        await saveSession(session)
+
+        if (req.io) {
+            req.io.to(`session-${id}`).emit('late-arrival-marked', {
+                sessionId: id,
+                country,
+                status,
+                speakerLists: session.speakerLists,
+                quorum: session.quorum,
+                timestamp: new Date()
+            })
+
+            req.io.to(`committee-${session.committeeId}`).emit('late-arrival-marked', {
+                sessionId: id,
+                country,
+                status,
+                speakerLists: session.speakerLists,
+                quorum: session.quorum,
+                timestamp: new Date()
+            })
+        }
+
+        global.logger.info(`Late arrival marked: ${country} - ${status}`)
+
+        return res.json({
+            success: true,
+            country,
+            status,
+            arrivedLate: true,
+            speakerLists: session.speakerLists,
+            quorum: session.quorum,
+            message: 'Late arrival marked successfully. Country added to end of speaker list.'
+        })
+
+    } catch (error) {
+        global.logger.error('Mark attendance error:', error)
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to mark attendance'
+        })
+    }
+}
+
+/**
+ * End roll call - creates alphabetically sorted speaker lists
  */
 exports.endRollCall = async (req, res) => {
     try {
@@ -373,31 +543,56 @@ exports.endRollCall = async (req, res) => {
         session.rollCall.isActive = false
         session.rollCall.endedAt = new Date()
 
-        const allCountries = session.committeeId.countries || []
-        const presentCountries = session.rollCall.responses
+        // Get all country names from committee
+        const allCountries = session.committeeId.countries?.map(c => c.name) || []
+        
+        // Build map of present countries with their voting status
+        const presentCountriesMap = new Map()
+        session.rollCall.responses
             .filter(r => r.status === 'present' || r.status === 'present_and_voting')
-            .map(r => r.country)
+            .forEach(r => {
+                presentCountriesMap.set(r.country, r.status === 'present_and_voting')
+            })
 
+        const presentCountries = Array.from(presentCountriesMap.keys())
         const absentCountries = allCountries.filter(c => !presentCountries.includes(c))
 
+        // Sort ALPHABETICALLY for initial speaker list order
+        presentCountries.sort((a, b) => a.localeCompare(b))
+        absentCountries.sort((a, b) => a.localeCompare(b))
+
+        // Create speaker lists with voting rights tracking
         session.speakerLists = {
             present: presentCountries.map((country, idx) => ({
                 country,
                 position: idx + 1,
                 hasSpoken: false,
                 hasMovedToEnd: false,
-                arrivedLate: false
+                arrivedLate: false,
+                canVote: presentCountriesMap.get(country) // true if present_and_voting, false if just present
             })),
             absent: absentCountries.map((country, idx) => ({
                 country,
                 position: idx + 1,
                 hasSpoken: false,
                 hasMovedToEnd: false,
-                arrivedLate: false
+                arrivedLate: false,
+                canVote: false // Absent delegates cannot vote
             }))
         }
 
-        session.calculateQuorum()
+        // Calculate quorum based ONLY on voting delegates (present_and_voting)
+        const votingCount = session.speakerLists.present.filter(s => s.canVote).length
+        const totalDelegates = allCountries.length
+        const requiredForQuorum = Math.floor(totalDelegates / 2) + 1
+
+        session.quorum = {
+            total: totalDelegates,
+            present: presentCountries.length,
+            voting: votingCount, // Only present_and_voting count
+            required: requiredForQuorum,
+            hasMet: votingCount >= requiredForQuorum
+        }
 
         await saveSession(session)
 
@@ -417,10 +612,13 @@ exports.endRollCall = async (req, res) => {
             })
         }
 
+        global.logger.info(`Roll call ended for session ${id}. Present: ${presentCountries.length}, Voting: ${votingCount}, Quorum: ${session.quorum.hasMet ? 'MET' : 'NOT MET'}`)
+
         res.json({
             success: true,
             speakerLists: session.speakerLists,
-            quorum: session.quorum
+            quorum: session.quorum,
+            message: `Roll call completed. ${presentCountries.length} present (${votingCount} voting). Quorum ${session.quorum.hasMet ? 'achieved' : 'not met'}.`
         })
 
     } catch (error) {
@@ -428,77 +626,6 @@ exports.endRollCall = async (req, res) => {
         res.status(500).json({
             success: false,
             error: error.message || 'Failed to end roll call'
-        })
-    }
-}
-
-/**
- * Mark attendance
- */
-exports.markAttendance = async (req, res) => {
-    try {
-        const { id } = req.params
-        const { country, status } = req.body
-
-        const session = await Session.findById(id)
-        if (!session) {
-            return res.status(404).json({
-                success: false,
-                error: 'Session not found'
-            })
-        }
-
-        if (!session.rollCall?.isActive) {
-            return res.status(400).json({
-                success: false,
-                error: 'Roll call is not active'
-            })
-        }
-
-        const existing = session.rollCall.responses.find(r => r.country === country)
-        if (existing) {
-            return res.status(400).json({
-                success: false,
-                error: 'Country has already responded'
-            })
-        }
-
-        session.rollCall.responses.push({
-            country,
-            status,
-            respondedAt: new Date()
-        })
-
-        await saveSession(session)
-
-        if (req.io) {
-            req.io.to(`session-${id}`).emit('attendance-updated', {
-                sessionId: id,
-                country,
-                status,
-                totalResponses: session.rollCall.responses.length,
-                timestamp: new Date()
-            })
-
-            req.io.to(`committee-${session.committeeId}`).emit('attendance-updated', {
-                sessionId: id,
-                country,
-                status,
-                totalResponses: session.rollCall.responses.length,
-                timestamp: new Date()
-            })
-        }
-
-        res.json({
-            success: true,
-            response: { country, status }
-        })
-
-    } catch (error) {
-        global.logger.error('Mark attendance error:', error)
-        res.status(500).json({
-            success: false,
-            error: error.message || 'Failed to mark attendance'
         })
     }
 }

@@ -578,7 +578,7 @@ export const apiMethods = {
         adjustTimer: (sessionId, data) => api.put(`/sessions/${sessionId}/timers/adjust`, data),
         // data format: { timerType: 'session'|'debate'|'speaker'|'qa'|'additional', timerId?: string, newTime: number }
 
-        // NEW: Additional timer management
+        // Additional timer management
         addAdditionalTimer: (sessionId, data) => api.post(`/sessions/${sessionId}/timers/additional`, data),
         // data format: { name: string, duration: number }
 
