@@ -261,7 +261,7 @@
           </div>
 
           <!-- Message Input -->
-          <div class="bg-white border-t border-gray-200 p-4">
+          <div class="flex-shrink-0 bg-white border-t border-gray-200 p-4">
             <!-- Show input for General Assembly, Gossip Box, and DMs -->
             <div v-if="canSendMessage" class="flex gap-3">
               <input v-model="newMessage" type="text" :placeholder="getInputPlaceholder()" :class="getInputClass()"

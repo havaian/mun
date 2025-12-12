@@ -240,7 +240,7 @@
           </div>
 
           <!-- Message Input -->
-          <div class="bg-white border-t border-gray-200 p-4">
+          <div class="flex-shrink-0 bg-white border-t border-gray-200 p-4">
             <!-- Show input for General Assembly and Gossip Box -->
             <form v-if="selectedChannel.id !== 'announcements' || authStore.user?.role === 'presidium'"
               @submit.prevent="sendMessage" class="flex gap-3">
