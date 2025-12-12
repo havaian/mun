@@ -241,7 +241,7 @@ const setupEventHandlers = (socket) => {
 
         try {
             // SAVE TO DATABASE
-            const Committee = require('../committee/model')
+            const { Committee } = require('../committee/model');
             const committee = await Committee.findById(committeeId)
             
             if (committee) {

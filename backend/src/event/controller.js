@@ -279,8 +279,8 @@ const updateEventStatus = async (req, res) => {
 
         // 🚨 PREVENTION: Check for active sessions before completing event
         if (status === 'completed') {
-            const Committee = require('../committee/model').Committee;
-            const Session = require('../session/model').Session;
+            const { Committee } = require('../committee/model');
+            const Session = require('../session/model');
 
             // Get all committees for this event
             const committees = await Committee.find({ eventId: id }).select('_id name');
@@ -318,7 +318,7 @@ const updateEventStatus = async (req, res) => {
         // ✅ SAFE COMPLETION: Only complete committees after session check passes
         if (status === 'completed') {
             try {
-                const Committee = require('../committee/model').Committee;
+                const { Committee } = require('../committee/model');
 
                 // Complete all committees (now safe since no active sessions)
                 const updateResult = await Committee.updateMany(
@@ -385,8 +385,8 @@ const getEventCompletionReadiness = async (req, res) => {
             return res.status(404).json({ error: 'Event not found' });
         }
 
-        const Committee = require('../committee/model').Committee;
-        const Session = require('../session/model').Session;
+        const { Committee } = require('../committee/model');
+        const Session = require('../session/model');
 
         // Get all committees for this event
         const committees = await Committee.find({ eventId: id }).select('_id name status');
@@ -450,7 +450,7 @@ const deleteEvent = async (req, res) => {
         }
 
         // Check if event has committees
-        const Committee = require('../committee/model').Committee;
+        const { Committee } = require('../committee/model');
         const committeesCount = await Committee.countDocuments({ eventId: id });
 
         if (committeesCount > 0) {
@@ -532,7 +532,7 @@ const getEventStatistics = async (req, res) => {
         await event.updateStatistics();
 
         // Get additional committee-level statistics
-        const Committee = require('../committee/model').Committee;
+        const { Committee } = require('../committee/model');
         const committees = await Committee.find({ eventId: id })
             .select('name status countries statistics');
 

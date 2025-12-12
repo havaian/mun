@@ -437,7 +437,7 @@ proceduralMotionSchema.pre('save', async function(next) {
         // Set required support if not already set
         if (!this.requiredSupport && this.committeeId) {
             try {
-                const Committee = require('../committee/model').Committee;
+                const { Committee } = require('../committee/model');
                 const committee = await Committee.findById(this.committeeId);
                 if (committee) {
                     this.requiredSupport = this.constructor.getRequiredSupport(

@@ -1,5 +1,5 @@
 const Session = require('./model')
-const Committee = require('../committee/model')
+const { Committee } = require('../committee/model')
 
 /**
  * Helper to save session with partial validation
