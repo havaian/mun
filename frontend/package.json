@@ -24,7 +24,7 @@
     "chartjs-adapter-date-fns": "^3.0.0",
     "date-fns": "^2.30.0",
     "html2canvas": "^1.4.1",
-    "jspdf": "^2.5.1",
+    "jspdf": "^4.1.0",
     "jsqr": "^1.4.0",
     "lodash-es": "^4.17.21",
     "lucide-vue-next": "^0.559.0",
