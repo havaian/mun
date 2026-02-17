@@ -16,4 +16,4 @@ EXPOSE 5000
 ENV NODE_ENV=production
 
 # Seed runs first, then the server starts
-CMD sh -c "npm run seed:superadmin && node src/index.js"
+CMD sh -c "npm run seed:superadmin && node index.js"
