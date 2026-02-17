@@ -25,14 +25,14 @@ const seed = async () => {
         const existing = await User.findOne({ email });
         if (existing) {
             if (existing.isSuperAdmin) {
-                logger.info(`SuperAdmin already exists: ${email}`);
-                logger.info('Skipping creation.');
+                global.logger.info(`SuperAdmin already exists: ${email}`);
+                global.logger.info('Skipping creation.');
                 return;
             } else {
                 // User exists but isn't superadmin — promote them
                 existing.isSuperAdmin = true;
                 await existing.save();
-                logger.info(`Existing user promoted to SuperAdmin: ${email}`);
+                global.logger.info(`Existing user promoted to SuperAdmin: ${email}`);
                 return;
             }
         }
@@ -50,23 +50,23 @@ const seed = async () => {
 
         await superAdmin.save();
 
-        logger.info('');
-        logger.info('===========================================');
-        logger.info('  SuperAdmin account created successfully');
-        logger.info('===========================================');
-        logger.info(`  Email:    ${email}`);
+        global.logger.info('');
+        global.logger.info('===========================================');
+        global.logger.info('  SuperAdmin account created successfully');
+        global.logger.info('===========================================');
+        global.logger.info(`  Email:    ${email}`);
         if (!process.env.SUPERADMIN_PASSWORD) {
-            logger.info(`  Password: ${password}`);
-            logger.info('');
-            logger.info('  ⚠️  SAVE THIS PASSWORD — it will not be shown again!');
+            global.logger.info(`  Password: ${password}`);
+            global.logger.info('');
+            global.logger.info('  ⚠️  SAVE THIS PASSWORD — it will not be shown again!');
         } else {
-            logger.info('  Password: (from SUPERADMIN_PASSWORD env var)');
+            global.logger.info('  Password: (from SUPERADMIN_PASSWORD env var)');
         }
-        logger.info('===========================================');
-        logger.info('');
+        global.logger.info('===========================================');
+        global.logger.info('');
         return;
     } catch (error) {
-        logger.error('Seed failed:', error);
+        global.logger.error('Seed failed:', error);
     }
 };
 
