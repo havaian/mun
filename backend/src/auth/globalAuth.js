@@ -16,6 +16,7 @@ const setupGlobalAuth = () => {
         token: middleware.authenticateToken,
 
         // Platform-level
+        admin: middleware.requireSuperAdmin,
         superAdmin: middleware.requireSuperAdmin,
 
         // Organization-level (dynamic — checks org ownership/membership)
