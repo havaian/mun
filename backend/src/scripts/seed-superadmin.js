@@ -26,7 +26,7 @@ const logger = {
 };
 global.logger = logger;
 
-const { User } = require('../src/auth/model');
+const { User } = require('../auth/model');
 const crypto = require('crypto');
 
 const seed = async () => {
