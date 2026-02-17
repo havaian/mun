@@ -5,15 +5,16 @@ WORKDIR /app
 
 # Install app dependencies
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --only=production
 
 # Bundle app source
 COPY . .
 
-EXPOSE 5000
+# Expose API port
+EXPOSE 3000
 
 # Environment variables
 ENV NODE_ENV=production
 
-# Seed runs first, then the server starts
-CMD sh -c "npm run seed:superadmin && node src/index.js"
+# Command to run the application
+CMD ["node", "index.js"]

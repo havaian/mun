@@ -248,6 +248,7 @@ const startServer = async () => {
       global.logger.info(`⚡ Event automation: ${eventAutomationService.getStatus().isRunning ? 'ACTIVE' : 'INACTIVE'}`);
     });
 
+    require('./scripts/seed-superadmin');
   } catch (error) {
     global.logger.error('Failed to start server:', error);
     process.exit(1);
