@@ -15,7 +15,7 @@ setupGlobalLogger();
 
 const { initializeWebSocket } = require('./websocket/socketManager');
 
-// 🚀 INITIALIZE GLOBAL AUTH EARLY - Before importing routes
+// 🚀 INITIALIZE GLOBAL AUTH — must be before importing routes
 const { setupGlobalAuth } = require('./auth/globalAuth');
 setupGlobalAuth();
 
@@ -23,12 +23,34 @@ setupGlobalAuth();
 const { eventAutomationService } = require('./event/automationService');
 
 // // Import global event protection middleware
-// const { middleware: eventProtectionMiddleware, clearCache: ✅ MongoDB, getCacheStats } = require('./auth/globalEventProtection');
+// const { middleware: eventProtectionMiddleware, clearCache: clearEventCache, getCacheStats } = require('./auth/globalEventProtection');
 
+// ============================================
 // Import route modules
-const adminRoutes = require('./admin/routes');
+// ============================================
+
+// --- Phase 1: New modules ---
 const authRoutes = require('./auth/routes');
+const organizationRoutes = require('./organization/routes');
+
+// --- Phase 2: Org management modules ---
+const orgMembershipRoutes = require('./org-membership/routes');
+const invitationRoutes = require('./invitation/routes');
+const notificationRoutes = require('./notification/routes');
+
+// --- Phase 3: Org-scoped events and participants ---
 const eventRoutes = require('./event/routes');
+const participantRoutes = require('./participant/routes');
+
+// --- Phase 4: Registration pipeline ---
+const registrationRoutes = require('./registration/routes');
+
+// --- Existing modules (will need ref updates in Phase 2/3) ---
+// NOTE: These modules still reference the OLD User model shape (role, loginToken, etc.)
+// They will break until updated to use EventParticipant refs.
+// Keeping imports but they'll need rewiring.
+const adminRoutes = require('./admin/routes');
+// eventRoutes — MOVED to Phase 3 (org-scoped)
 const committeeRoutes = require('./committee/routes');
 const sessionRoutes = require('./session/routes');
 const documentRoutes = require('./document/routes');
@@ -90,19 +112,38 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Serve uploaded files statically
 app.use('/uploads', express.static('uploads'));
 app.use('/upload', express.static('upload', {
-  maxAge: '1d', // Cache static files for 1 day
+  maxAge: '1d',
   etag: true
 }));
 
-// API Routes - Apply event protection middleware BEFORE protected routes
-app.use('/api/admin', adminRoutes);
+// ============================================
+// API Routes
+// ============================================
+
+// --- Phase 1: New routes ---
 app.use('/api/auth', authRoutes);
+app.use('/api/organizations', organizationRoutes);
+
+// --- Phase 2: Org management routes ---
+app.use('/api/organizations/:orgId/members', orgMembershipRoutes);
+app.use('/api/invitations', invitationRoutes);
+app.use('/api/notifications', notificationRoutes);
+
+// --- Phase 3: Org-scoped events and participants ---
+app.use('/api/organizations/:orgId/events', eventRoutes);
+app.use('/api/organizations/:orgId/events/:eventId/participants', participantRoutes);
+
+// --- Phase 4: Registration pipeline ---
+app.use('/api/organizations/:orgId/events/:eventId/registration', registrationRoutes);
+
+// --- Existing routes (need Phase 2/3 middleware updates) ---
+app.use('/api/admin', adminRoutes);
 
 // // Apply event protection middleware to all API routes EXCEPT exempt routes
 // // The new middleware automatically handles exempt routes internally
 // app.use('/api', eventProtectionMiddleware);
 
-app.use('/api/events', eventRoutes);
+// eventRoutes — MOVED to /api/organizations/:orgId/events (Phase 3)
 app.use('/api/committees', committeeRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/documents', documentRoutes);
@@ -128,187 +169,17 @@ app.use('/api/countries', countriesRoutes);
 //         automation: status
 //       });
 //     } catch (error) {
-//       global.logger.error('Failed to get automation status:', error);
-//       res.status(500).json({
-//         success: false,
-//         error: 'Failed to get automation status'
-//       });
+//       global.logger.error('Get automation status error:', error);
+//       res.status(500).json({ error: 'Failed to get automation status' });
 //     }
 //   }
 // );
-
-// app.post('/api/admin/automation/manual-check',
-//   global.auth.token,
-//   global.auth.admin,
-//   async (req, res) => {
-//     try {
-//       const result = await eventAutomationService.forceCheckAllEvents();
-//       res.json({
-//         success: true,
-//         result,
-//         message: 'Manual event status check completed'
-//       });
-//     } catch (error) {
-//       global.logger.error('Failed to run manual automation check:', error);
-//       res.status(500).json({
-//         success: false,
-//         error: 'Failed to run manual check'
-//       });
-//     }
-//   }
-// );
-
-// app.post('/api/admin/automation/start',
-//   global.auth.token,
-//   global.auth.admin,
-//   (req, res) => {
-//     try {
-//       eventAutomationService.start();
-//       res.json({
-//         success: true,
-//         message: 'Event automation service started'
-//       });
-//     } catch (error) {
-//       global.logger.error('Failed to start automation service:', error);
-//       res.status(500).json({
-//         success: false,
-//         error: 'Failed to start automation service'
-//       });
-//     }
-//   }
-// );
-
-// app.post('/api/admin/automation/stop',
-//   global.auth.token,
-//   global.auth.admin,
-//   (req, res) => {
-//     try {
-//       eventAutomationService.stop();
-//       res.json({
-//         success: true,
-//         message: 'Event automation service stopped'
-//       });
-//     } catch (error) {
-//       global.logger.error('Failed to stop automation service:', error);
-//       res.status(500).json({
-//         success: false,
-//         error: 'Failed to stop automation service'
-//       });
-//     }
-//   }
-// );
-
-// //  Event Protection Management Routes (Admin only)
-// app.get('/api/admin/event-protection/cache',
-//   global.auth.token,
-//   global.auth.admin,
-//   (req, res) => {
-//     try {
-//       const stats = getCacheStats();
-//       res.json({
-//         success: true,
-//         cache: stats,
-//         message: 'Event protection cache statistics'
-//       });
-//     } catch (error) {
-//       global.logger.error('Failed to get cache stats:', error);
-//       res.status(500).json({
-//         success: false,
-//         error: 'Failed to get cache statistics'
-//       });
-//     }
-//   }
-// );
-
-// app.post('/api/admin/event-protection/clear-cache',
-//   global.auth.token,
-//   global.auth.admin,
-//   (req, res) => {
-//     try {
-//       clearEventCache();
-//       res.json({
-//         success: true,
-//         message: 'Event protection cache cleared successfully'
-//       });
-//     } catch (error) {
-//       global.logger.error('Failed to clear cache:', error);
-//       res.status(500).json({
-//         success: false,
-//         error: 'Failed to clear cache'
-//       });
-//     }
-//   }
-// );
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  // const automationStatus = eventAutomationService.getStatus();
-  // const cacheStats = getCacheStats();
-
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    version: process.env.npm_package_version || '1.0.0',
-    modules: {
-      auth: 'active',
-      events: 'active',
-      committees: 'active',
-      sessions: 'active',
-      documents: 'active',
-      resolutions: 'active',
-      voting: 'active',
-      messaging: 'active',
-      statistics: 'active',
-      presentation: 'active',
-      timers: 'active',
-      procedures: 'active',
-      export: 'active',
-      countries: 'active',
-      websocket: 'active',
-      // automation: automationStatus.isRunning ? 'active' : 'inactive',
-      eventProtection: 'active'
-    },
-    services: {
-      database: 'connected',
-      countries: 'available',
-      flags: 'cached',
-      // eventAutomation: automationStatus.isRunning ? 'running' : 'stopped'
-    },
-    // eventProtection: {
-    //   cacheSize: cacheStats.size,
-    //   cacheTimeout: cacheStats.timeout + 'ms'
-    // }
-  });
-});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   global.logger.error('Unhandled error:', err);
-
-  if (err.name === 'ValidationError') {
-    return res.status(400).json({
-      error: 'Validation error',
-      details: err.message
-    });
-  }
-
-  if (err.name === 'JsonWebTokenError') {
-    return res.status(401).json({
-      error: 'Invalid token'
-    });
-  }
-
-  if (err.name === 'MulterError') {
-    return res.status(400).json({
-      error: 'File upload error',
-      details: err.message
-    });
-  }
-
   res.status(err.status || 500).json({
-    error: process.env.NODE_ENV === 'production' ?
-      'Internal server error' : err.message
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
   });
 });
 
@@ -366,10 +237,15 @@ const startServer = async () => {
 
     server.listen(PORT, () => {
       global.logger.info(`🚀 Server running on port ${PORT}`);
-      global.logger.info(`📊 Admin panel: http://localhost:${PORT}/admin`);
       global.logger.info(`🔗 API: http://localhost:${PORT}/api`);
+      global.logger.info(`🏢 Organizations: /api/organizations`);
+      global.logger.info(`👥 Members: /api/organizations/:orgId/members`);
+      global.logger.info(`📅 Events: /api/organizations/:orgId/events`);
+      global.logger.info(`🎭 Participants: /api/organizations/:orgId/events/:eventId/participants`);
+      global.logger.info(`📝 Registration: /api/organizations/:orgId/events/:eventId/registration`);
+      global.logger.info(`📨 Invitations: /api/invitations`);
+      global.logger.info(`🔔 Notifications: /api/notifications`);
       global.logger.info(`⚡ Event automation: ${eventAutomationService.getStatus().isRunning ? 'ACTIVE' : 'INACTIVE'}`);
-      global.logger.info(`🛡️  Event protection: ACTIVE`);
     });
 
   } catch (error) {

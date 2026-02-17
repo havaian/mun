@@ -2,49 +2,76 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
 
-// Import views
+// =============================================
+// AUTH VIEWS
+// =============================================
 const LoginView = () => import('@/views/auth/LoginView.vue')
-const EmailBindingView = () => import('@/views/auth/EmailBindingView.vue')
-const LanguageSelectionView = () => import('@/views/auth/LanguageSelectionView.vue')
+const RegisterView = () => import('@/views/auth/RegisterView.vue')
+const ForgotPasswordView = () => import('@/views/auth/ForgotPasswordView.vue')
+const ResetPasswordView = () => import('@/views/auth/ResetPasswordView.vue')
 
-// Admin views
-const AdminDashboard = () => import('@/views/admin/DashboardView.vue')
-const AdminEvents = () => import('@/views/admin/EventsView.vue')
-const AdminCommittees = () => import('@/views/admin/CommitteesView.vue')
-// const AdminUsers = () => import('@/views/admin/UsersView.vue')
-const AdminReports = () => import('@/views/admin/ReportsView.vue')
-// const AdminLogs = () => import('@/views/admin/LogsView.vue')
-// const AdminSettings = () => import('@/views/admin/SettingsView.vue')
-// const AdminDocuments = () => import('@/views/admin/DocumentsView.vue')
+// =============================================
+// SUPERADMIN VIEWS
+// =============================================
+const SuperAdminDashboard = () => import('@/views/superadmin/DashboardView.vue')
+const SuperAdminOrganizations = () => import('@/views/superadmin/OrganizationsView.vue')
 
-// Presidium views
+// =============================================
+// ORG ADMIN/MEMBER VIEWS
+// =============================================
+const OrgDashboard = () => import('@/views/org/DashboardView.vue')
+const OrgEvents = () => import('@/views/org/EventsView.vue')
+const OrgEventDetail = () => import('@/views/org/EventDetailView.vue')
+const OrgMembers = () => import('@/views/org/MembersView.vue')
+const OrgSettings = () => import('@/views/org/SettingsView.vue')
+
+// =============================================
+// EVENT MANAGEMENT VIEWS
+// =============================================
+const EventParticipants = () => import('@/views/org/event/ParticipantsView.vue')
+const EventRegistration = () => import('@/views/org/event/RegistrationView.vue')
+const EventApplications = () => import('@/views/org/event/ApplicationsView.vue')
+const EventCommittees = () => import('@/views/org/event/CommitteesView.vue')
+
+// =============================================
+// PRESIDIUM VIEWS (existing — will be rewired later)
+// =============================================
+const PresidiumDashboard = () => import('@/views/presidium/DashboardView.vue')
 const PresidiumAttendance = () => import('@/views/presidium/AttendanceView.vue')
 const PresidiumCoalitions = () => import('@/views/presidium/CoalitionsView.vue')
-const PresidiumDashboard = () => import('@/views/presidium/DashboardView.vue')
-// const PresidiumDocuments = () => import('@/views/presidium/DocumentsView.vue')
 const PresidiumDiplomacy = () => import('@/views/presidium/DiplomacyView.vue')
 const PresidiumVoting = () => import('@/views/presidium/VotingView.vue')
 const PresidiumPublicDisplay = () => import('@/views/presidium/PublicDisplayView.vue')
 
-// Delegate views
-const DelegateCoalitions = () => import('@/views/delegate/CoalitionsView.vue')
+// =============================================
+// DELEGATE VIEWS (existing — will be rewired later)
+// =============================================
 const DelegateDashboard = () => import('@/views/delegate/DashboardView.vue')
+const DelegateCoalitions = () => import('@/views/delegate/CoalitionsView.vue')
 const DelegateDiplomacy = () => import('@/views/delegate/DiplomacyView.vue')
-// const DelegateDocuments = () => import('@/views/delegate/DocumentsView.vue')
 const DelegateVoting = () => import('@/views/delegate/VotingView.vue')
 
-// Shared views
+// =============================================
+// SHARED VIEWS
+// =============================================
 const ProfileView = () => import('@/views/shared/ProfileView.vue')
+const UserHomeView = () => import('@/views/shared/UserHomeView.vue')
+const AcceptInvitationView = () => import('@/views/shared/AcceptInvitationView.vue')
 const NotFoundView = () => import('@/views/NotFoundView.vue')
 
+// =============================================
+// ROUTES
+// =============================================
 const routes = [
-  // '/login' redirect to '/auth/login'
+  // Redirects
   {
     path: '/login',
-    redirect: { name: 'Login' } // Redirects to the named route 'Login', i.e '/auth/login'
+    redirect: { name: 'Login' }
   },
-  
-  // Authentication routes
+
+  // =============================================
+  // AUTH ROUTES (public)
+  // =============================================
   {
     path: '/auth',
     component: () => import('@/layouts/AuthLayout.vue'),
@@ -60,90 +87,148 @@ const routes = [
         }
       },
       {
-        path: 'bind-email',
-        name: 'EmailBinding',
-        component: EmailBindingView,
+        path: 'register',
+        name: 'Register',
+        component: RegisterView,
         meta: {
-          title: 'Complete Registration',
+          title: 'Create Account',
           requiresAuth: false,
           hideForAuthenticated: true
         }
       },
-      // {
-      //   path: 'language',
-      //   name: 'LanguageSelection',
-      //   component: LanguageSelectionView,
-      //   meta: {
-      //     title: 'Select Language',
-      //     requiresAuth: true,
-      //     newUserOnly: true
-      //   }
-      // }
+      {
+        path: 'forgot-password',
+        name: 'ForgotPassword',
+        component: ForgotPasswordView,
+        meta: {
+          title: 'Forgot Password',
+          requiresAuth: false,
+          hideForAuthenticated: true
+        }
+      },
+      {
+        path: 'reset-password',
+        name: 'ResetPassword',
+        component: ResetPasswordView,
+        meta: {
+          title: 'Reset Password',
+          requiresAuth: false,
+          hideForAuthenticated: true
+        }
+      }
     ]
   },
 
-  // Admin routes
+  // =============================================
+  // INVITATION ACCEPT (authenticated)
+  // =============================================
   {
-    path: '/admin',
-    component: () => import('@/layouts/AdminLayout.vue'),
-    meta: { requiresAuth: true, roles: ['admin'] },
+    path: '/invite/:token',
+    name: 'AcceptInvitation',
+    component: AcceptInvitationView,
+    meta: {
+      title: 'Accept Invitation',
+      requiresAuth: false // Can view info without auth, but needs auth to accept
+    }
+  },
+
+  // =============================================
+  // SUPERADMIN ROUTES
+  // =============================================
+  {
+    path: '/superadmin',
+    component: () => import('@/layouts/SuperAdminLayout.vue'),
+    meta: { requiresAuth: true, requiresSuperAdmin: true },
     children: [
       {
         path: '',
-        name: 'AdminDashboard',
-        component: AdminDashboard,
-        meta: { title: 'Admin Dashboard' }
+        name: 'SuperAdminDashboard',
+        component: SuperAdminDashboard,
+        meta: { title: 'Platform Administration' }
       },
       {
-        path: 'events',
-        name: 'AdminEvents',
-        component: AdminEvents,
-        meta: { title: 'Event Management' }
-      },
-      {
-        path: 'committees',
-        name: 'AdminCommittees',
-        component: AdminCommittees,
-        meta: { title: 'Committee Management' }
-      },
-      // {
-      //   path: 'users',
-      //   name: 'AdminUsers',
-      //   component: AdminUsers,
-      //   meta: { title: 'User Management' }
-      // },
-      {
-        path: 'reports',
-        name: 'AdminReports',
-        component: AdminReports,
-        meta: { title: 'Reports & Analytics' }
-      },
-      // {
-      //   path: 'logs',
-      //   name: 'AdminLogs',
-      //   component: AdminLogs,
-      //   meta: { title: 'System Logs' }
-      // },
-      // {
-      //   path: 'settings',
-      //   name: 'AdminSettings',
-      //   component: AdminSettings,
-      //   meta: { title: 'System Settings' }
-      // },
-      // {
-      //   path: 'documents',
-      //   name: 'AdminDocuments',
-      //   component: AdminDocuments,
-      //   meta: { title: 'Documents Management' }
-      // }
+        path: 'organizations',
+        name: 'SuperAdminOrganizations',
+        component: SuperAdminOrganizations,
+        meta: { title: 'Organizations' }
+      }
     ]
   },
 
-  // Presidium routes
+  // =============================================
+  // ORG ROUTES — /org/:orgSlug
+  // =============================================
   {
-    path: '/presidium',
+    path: '/org/:orgSlug',
+    component: () => import('@/layouts/OrgLayout.vue'),
+    meta: { requiresAuth: true, requiresOrgAccess: true },
+    children: [
+      {
+        path: '',
+        name: 'OrgDashboard',
+        component: OrgDashboard,
+        meta: { title: 'Dashboard' }
+      },
+      {
+        path: 'events',
+        name: 'OrgEvents',
+        component: OrgEvents,
+        meta: { title: 'Events' }
+      },
+      {
+        path: 'events/:eventSlug',
+        name: 'OrgEventDetail',
+        component: OrgEventDetail,
+        meta: { title: 'Event Details' }
+      },
+      {
+        path: 'events/:eventSlug/participants',
+        name: 'EventParticipants',
+        component: EventParticipants,
+        meta: { title: 'Participants' }
+      },
+      {
+        path: 'events/:eventSlug/registration',
+        name: 'EventRegistration',
+        component: EventRegistration,
+        meta: { title: 'Registration Form' }
+      },
+      {
+        path: 'events/:eventSlug/applications',
+        name: 'EventApplications',
+        component: EventApplications,
+        meta: { title: 'Applications' }
+      },
+      {
+        path: 'events/:eventSlug/committees',
+        name: 'EventCommittees',
+        component: EventCommittees,
+        meta: { title: 'Committees' }
+      },
+      {
+        path: 'members',
+        name: 'OrgMembers',
+        component: OrgMembers,
+        meta: { title: 'Members' }
+      },
+      {
+        path: 'settings',
+        name: 'OrgSettings',
+        component: OrgSettings,
+        meta: { title: 'Settings' }
+      }
+    ]
+  },
+
+  // =============================================
+  // PRESIDIUM ROUTES — existing MUN views
+  // Now accessed as /session/:committeeId/presidium/...
+  // The committeeId resolves to event → org context
+  // =============================================
+  {
+    path: '/session/:committeeId/presidium',
     component: () => import('@/layouts/PresidiumLayout.vue'),
-    meta: { requiresAuth: true, roles: ['presidium'] },
+    meta: { requiresAuth: true, requiresPresidium: true },
     children: [
       {
         path: '',
@@ -151,12 +236,6 @@ const routes = [
         component: PresidiumDashboard,
         meta: { title: 'Presidium Dashboard' }
       },
-      // {
-      //   path: 'documents',
-      //   name: 'PresidiumDocuments',
-      //   component: PresidiumDocuments,
-      //   meta: { title: 'Document Review' }
-      // },
       {
         path: 'voting',
         name: 'PresidiumVoting',
@@ -190,11 +269,14 @@ const routes = [
     ]
   },
 
-  // Delegate routes
+  // =============================================
+  // DELEGATE ROUTES — existing MUN views
+  // Now accessed as /session/:committeeId/delegate/...
+  // =============================================
   {
-    path: '/delegate',
+    path: '/session/:committeeId/delegate',
     component: () => import('@/layouts/DelegateLayout.vue'),
-    meta: { requiresAuth: true, roles: ['delegate'] },
+    meta: { requiresAuth: true, requiresDelegate: true },
     children: [
       {
         path: '',
@@ -202,12 +284,6 @@ const routes = [
         component: DelegateDashboard,
         meta: { title: 'Delegate Dashboard' }
       },
-      // {
-      //   path: 'documents',
-      //   name: 'DelegateDocuments',
-      //   component: DelegateDocuments,
-      //   meta: { title: 'My Documents' }
-      // },
       {
         path: 'coalitions',
         name: 'DelegateCoalitions',
@@ -229,49 +305,73 @@ const routes = [
     ]
   },
 
-  // // Delegate routes
-  // {
-  //   path: '/shared',
-  //   component: () => import('@/layouts/SharedLayout.vue'),
-  //   meta: { requiresAuth: true, roles: ['admin', 'presidium', 'delegate'] },
-  //   children: [
-  //     {
-  //       path: '/profile',
-  //       name: 'Profile',
-  //       component: ProfileView,
-  //       meta: {
-  //         title: 'Profile',
-  //         requiresAuth: true
-  //       }
-  //     }
-  //   ]
-  // },
+  // =============================================
+  // SHARED ROUTES
+  // =============================================
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: ProfileView,
+    meta: {
+      title: 'Profile',
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/home',
+    name: 'UserHome',
+    component: UserHomeView,
+    meta: {
+      title: 'Home',
+      requiresAuth: true
+    }
+  },
 
-  // Root redirect
+  // =============================================
+  // ROOT REDIRECT
+  // =============================================
   {
     path: '/',
-    redirect: (to) => {
+    redirect: () => {
       const authStore = useAuthStore()
 
       if (!authStore.isAuthenticated) {
         return { name: 'Login' }
       }
 
-      // Redirect based on user role
-      switch (authStore.user?.role) {
-        case 'admin':
-          return { name: 'AdminDashboard' }
-        case 'presidium':
-          return { name: 'PresidiumDashboard' }
-        case 'delegate':
-          return { name: 'DelegateDashboard' }
-        default:
-          return { name: 'Login' }
-      }
+      return authStore.getDefaultRoute()
     }
   },
 
-  // 404 route
+  // =============================================
+  // LEGACY REDIRECTS (old routes → new locations)
+  // =============================================
+  {
+    path: '/admin',
+    redirect: () => {
+      const authStore = useAuthStore()
+      if (authStore.isSuperAdmin) {
+        return { name: 'SuperAdminDashboard' }
+      }
+      if (authStore.activeOrganization) {
+        return { name: 'OrgDashboard', params: { orgSlug: authStore.activeOrganization.slug } }
+      }
+      return { name: 'UserHome' }
+    }
+  },
+  // Old presidium/delegate routes redirect to login (user needs to enter via session URL now)
+  {
+    path: '/presidium',
+    redirect: { name: 'UserHome' }
+  },
+  {
+    path: '/delegate',
+    redirect: { name: 'UserHome' }
+  },
+
+  // =============================================
+  // 404
+  // =============================================
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -280,6 +380,9 @@ const routes = [
   }
 ]
 
+// =============================================
+// CREATE ROUTER
+// =============================================
 const router = createRouter({
   history: createWebHistory(),
   routes,
@@ -292,54 +395,68 @@ const router = createRouter({
   }
 })
 
-// Navigation guards
+// =============================================
+// NAVIGATION GUARD
+// =============================================
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   const appStore = useAppStore()
 
-  // Show loading for slow transitions
   appStore.setLoading(true)
 
   try {
-    // Check if route requires authentication
+    // ---- Auth required? ----
     if (to.meta.requiresAuth) {
-      // If we have a token but aren't authenticated yet, validate the session first
       const token = localStorage.getItem('mun_token')
-      if (token && !authStore.isAuthenticated) {
-        console.log('🍻 Token exists but needs revalidation. Proceeding...')
 
-        try {
-          await authStore.validateSession()
-        } catch (error) {
-          console.error('Session validation failed:', error)
-          // Remove invalid token
-          localStorage.removeItem('mun_token')
-        }
+      if (token && !authStore.isAuthenticated) {
+        // Token exists but not validated yet — validate now
+        await authStore.validateSession()
       }
 
-      // Now check authentication after validation
       if (!authStore.isAuthenticated) {
         return next({ name: 'Login', query: { redirect: to.fullPath } })
       }
 
-      // Check role permissions
-      if (to.meta.roles && !to.meta.roles.includes(authStore.user?.role)) {
+      // ---- SuperAdmin check ----
+      if (to.meta.requiresSuperAdmin && !authStore.isSuperAdmin) {
         return next({ name: 'NotFound' })
       }
 
-      // Check for new user language selection
-      if (to.meta.newUserOnly && authStore.user?.hasSelectedLanguage) {
-        return next({ name: authStore.getDashboardRoute() })
+      // ---- Org access check ----
+      if (to.meta.requiresOrgAccess) {
+        const orgSlug = to.params.orgSlug
+        const hasAccess = authStore.isSuperAdmin ||
+          authStore.allOrganizations.some(org => org.slug === orgSlug)
+
+        if (!hasAccess) {
+          return next({ name: 'NotFound' })
+        }
+
+        // Set active org from URL
+        const org = authStore.allOrganizations.find(o => o.slug === orgSlug)
+        if (org) {
+          authStore.setActiveOrg(org._id)
+        }
+      }
+
+      // ---- Presidium/Delegate checks (for MUN session views) ----
+      // These will be fully implemented when we wire up EventParticipant lookup.
+      // For now, just verify the user is authenticated.
+      // TODO: Check EventParticipant for committeeId and role
+      if (to.meta.requiresPresidium || to.meta.requiresDelegate) {
+        // Future: verify user has an EventParticipant record
+        // with the right role for this committeeId
+        // For now, allow any authenticated user through
       }
     }
 
-    // Hide auth pages from authenticated users
+    // ---- Hide auth pages from authenticated users ----
     if (to.meta.hideForAuthenticated && authStore.isAuthenticated) {
-      return next({ name: authStore.getDashboardRoute() })
+      return next(authStore.getDefaultRoute())
     }
 
     next()
-
   } catch (error) {
     console.error('Navigation error:', error)
     next({ name: 'Login' })

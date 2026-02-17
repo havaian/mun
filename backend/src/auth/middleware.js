@@ -1,92 +1,64 @@
-// backend/src/auth/middleware.js
 const jwt = require('jsonwebtoken');
 const { User } = require('./model');
 
-// Existing authenticateToken middleware - FIXED VERSION
+// Core authentication — verifies JWT, loads user
 const authenticateToken = async (req, res, next) => {
     try {
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
         if (!token) {
-            global.logger.warn('No token provided in Authorization header');
             return res.status(401).json({
-                error: 'Access denied. No token provided.'
+                error: 'Access denied. No token provided.',
+                code: 'NO_TOKEN'
             });
         }
-
-        // Debug log for JWT verification
-        global.logger.debug(`Attempting JWT verification with token: ${token.substring(0, 20)}...`);
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // Debug log for successful JWT decode
-        global.logger.debug(`JWT decoded successfully. User ID: ${decoded.userId}, Role: ${decoded.role}`);
-
-        // Get fresh user data to ensure current permissions
         const user = await User.findById(decoded.userId)
-            .select('-password')
+            .select('-password -verificationToken -verificationTokenExpires -resetPasswordToken -resetPasswordTokenExpires')
             .lean();
 
         if (!user) {
-            global.logger.warn(`User not found for ID: ${decoded.userId}`);
             return res.status(401).json({
-                error: 'Access denied. User not found.'
+                error: 'Access denied. User not found.',
+                code: 'USER_NOT_FOUND'
             });
         }
 
-        if (!user.isActive) {
-            global.logger.warn(`User is inactive: ${decoded.userId}`);
+        if (user.status !== 'active') {
             return res.status(401).json({
-                error: 'Access denied. User account is inactive.'
+                error: 'Access denied. Account is suspended.',
+                code: 'ACCOUNT_SUSPENDED'
             });
         }
 
-        // Set req.user with both decoded token data AND fresh user data
+        // Set req.user with user data from DB
         req.user = {
-            userId: decoded.userId || user._id,
-            role: decoded.role || user.role,
-            email: decoded.email || user.email,
-            committeeId: decoded.committeeId || user.committeeId,
-            sessionId: decoded.sessionId || user.sessionId,
-            // Add fields that might be in token but not in user
-            countryName: decoded.countryName || user.countryName,
-            presidiumRole: decoded.presidiumRole || user.presidiumRole,
-            specialRole: decoded.specialRole || user.specialRole,
-            // Include fresh user data
-            ...user
+            userId: user._id.toString(),
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            isSuperAdmin: user.isSuperAdmin || false,
+            status: user.status
         };
 
-        global.logger.debug(`Authentication successful for user: ${req.user.email || req.user.userId}`);
         next();
-
     } catch (error) {
-        global.logger.error('Token authentication error:', {
-            error: error.message,
-            name: error.name,
-            stack: error.stack
-        });
-
         if (error.name === 'TokenExpiredError') {
-            global.logger.warn('Token expired');
             return res.status(401).json({
                 error: 'Access denied. Token expired.',
                 code: 'TOKEN_EXPIRED'
             });
         } else if (error.name === 'JsonWebTokenError') {
-            global.logger.warn('Invalid JWT token');
             return res.status(401).json({
                 error: 'Access denied. Invalid token.',
                 code: 'INVALID_TOKEN'
             });
-        } else if (error.name === 'NotBeforeError') {
-            global.logger.warn('Token not active yet');
-            return res.status(401).json({
-                error: 'Access denied. Token not active.',
-                code: 'TOKEN_NOT_ACTIVE'
-            });
         }
 
+        global.logger.error('Token authentication error:', error);
         return res.status(401).json({
             error: 'Access denied. Token verification failed.',
             code: 'VERIFICATION_FAILED'
@@ -94,140 +66,157 @@ const authenticateToken = async (req, res, next) => {
     }
 };
 
-//  Flexible role-based authorization middleware
-const requireRoles = (...allowedRoles) => {
-    // Flatten the roles array in case arrays are passed
-    const roles = allowedRoles.flat();
-
-    return (req, res, next) => {
-        if (!req.user) {
-            return res.status(401).json({
-                error: 'Authentication required. User not found in request.'
-            });
-        }
-
-        // Check if user has any of the required roles
-        const userRole = req.user.role;
-        const hasRequiredRole = roles.includes(userRole);
-
-        if (!hasRequiredRole) {
-            global.logger.warn(`Access denied for user ${req.user.email || req.user._id}. Required roles: [${roles.join(', ')}], User role: ${userRole}`);
-
-            return res.status(403).json({
-                error: `Access denied. Required role(s): ${roles.join(' or ')}.`,
-                requiredRoles: roles,
-                userRole: userRole
-            });
-        }
-
-        // Log successful role authorization for audit
-        global.logger.info(`Role authorization successful: ${userRole} (${req.user.email || req.user._id}) accessing ${req.method} ${req.path}`);
-
-        next();
-    };
-};
-
-// Convenience middlewares for common role combinations
-const requireAdmin = requireRoles('admin');
-const requirePresidium = requireRoles('presidium');
-const requireAdminOrPresidium = requireRoles('admin', 'presidium');
-const requireDelegate = requireRoles('delegate');
-const requireAdminOrDelegate = requireRoles('admin', 'delegate');
-const requireAnyRole = requireRoles('admin', 'presidium', 'delegate');
-
-// Special middleware for committee-specific authorization
-const requireSameCommittee = (req, res, next) => {
+// Require SuperAdmin
+const requireSuperAdmin = (req, res, next) => {
     if (!req.user) {
-        return res.status(401).json({
-            error: 'Authentication required.'
-        });
+        return res.status(401).json({ error: 'Authentication required.' });
     }
 
-    // Admin can access any committee
-    if (req.user.role === 'admin') {
-        return next();
-    }
-
-    // For presidium and delegates, check if they belong to the same committee
-    const requestedCommitteeId = req.params.committeeId || req.params.id || req.body.committeeId;
-    const userCommitteeId = req.user.committeeId?.toString();
-
-    if (!userCommitteeId) {
+    if (!req.user.isSuperAdmin) {
         return res.status(403).json({
-            error: 'Access denied. User not assigned to any committee.'
-        });
-    }
-
-    if (requestedCommitteeId !== userCommitteeId) {
-        global.logger.warn(`Committee access denied for user ${req.user.email || req.user._id}. Requested: ${requestedCommitteeId}, Assigned: ${userCommitteeId}`);
-
-        return res.status(403).json({
-            error: 'Access denied. You can only access your assigned committee.',
-            assignedCommittee: userCommitteeId
+            error: 'Access denied. SuperAdmin privileges required.'
         });
     }
 
     next();
 };
 
-// Check if user can vote (excludes observers and special roles)
-const requireVotingRights = (req, res, next) => {
-    if (!req.user) {
-        return res.status(401).json({ error: 'Authentication required' });
-    }
+// Require Org Admin for a specific organization
+// Expects req.params.id or req.params.orgId to contain the organization ID
+const requireOrgAdmin = (orgIdParam = 'id') => {
+    return async (req, res, next) => {
+        if (!req.user) {
+            return res.status(401).json({ error: 'Authentication required.' });
+        }
 
-    // Admin and presidium always have access for testing/management
-    if (req.user.role === 'admin' || req.user.role === 'presidium') {
-        return next();
-    }
+        // SuperAdmin bypasses org admin check
+        if (req.user.isSuperAdmin) {
+            return next();
+        }
 
-    // Delegates must be regular countries (not observers or special roles)
-    if (req.user.role === 'delegate' &&
-        req.user.specialRole !== 'observer' &&
-        req.user.specialRole !== 'special') {
-        return next();
-    }
+        const orgId = req.params[orgIdParam] || req.params.id || req.body.organizationId;
+        if (!orgId) {
+            return res.status(400).json({ error: 'Organization ID required.' });
+        }
 
-    global.logger.warn(`Voting access denied for user: ${req.user.countryName || req.user.userId} (${req.user.role}/${req.user.specialRole})`);
-    return res.status(403).json({
-        error: 'No voting rights',
-        reason: 'Only regular country delegates can vote'
-    });
+        // Lazy-load to avoid circular dependency
+        const { Organization } = require('../organization/model');
+        const org = await Organization.findById(orgId).lean();
+
+        if (!org) {
+            return res.status(404).json({ error: 'Organization not found.' });
+        }
+
+        if (org.admin?.toString() !== req.user.userId) {
+            return res.status(403).json({
+                error: 'Access denied. Organization admin privileges required.'
+            });
+        }
+
+        // Attach org to request for downstream use
+        req.organization = org;
+        next();
+    };
 };
 
-// Optional authentication (allows both authenticated and non-authenticated access)
+// Require specific org-level permission
+// Checks OrgMembership for the given permission
+const requireOrgPermission = (permission, orgIdParam = 'id') => {
+    return async (req, res, next) => {
+        if (!req.user) {
+            return res.status(401).json({ error: 'Authentication required.' });
+        }
+
+        // SuperAdmin bypasses all permission checks
+        if (req.user.isSuperAdmin) {
+            return next();
+        }
+
+        const orgId = req.params[orgIdParam] || req.params.id || req.body.organizationId;
+        if (!orgId) {
+            return res.status(400).json({ error: 'Organization ID required.' });
+        }
+
+        // Lazy-load to avoid circular dependency
+        const { Organization } = require('../organization/model');
+        const org = await Organization.findById(orgId).lean();
+
+        if (!org) {
+            return res.status(404).json({ error: 'Organization not found.' });
+        }
+
+        // Org admin has all permissions implicitly
+        if (org.admin?.toString() === req.user.userId) {
+            req.organization = org;
+            return next();
+        }
+
+        // Check OrgMembership for specific permission
+        // OrgMembership model will be created in Phase 2
+        // For now, this will be a forward-compatible stub
+        try {
+            const { OrgMembership } = require('../org-membership/model');
+            const membership = await OrgMembership.findOne({
+                user: req.user.userId,
+                organization: orgId,
+                status: 'active'
+            }).lean();
+
+            if (!membership) {
+                return res.status(403).json({
+                    error: 'Access denied. Not a member of this organization.'
+                });
+            }
+
+            if (!membership.permissions.includes(permission)) {
+                return res.status(403).json({
+                    error: `Access denied. Missing permission: ${permission}`
+                });
+            }
+
+            req.organization = org;
+            req.orgMembership = membership;
+            next();
+        } catch (e) {
+            // OrgMembership module not yet created — only org admin and superadmin pass
+            return res.status(403).json({
+                error: 'Access denied. Organization admin privileges required.'
+            });
+        }
+    };
+};
+
+// Optional auth — sets req.user if token present, continues either way
 const optionalAuth = async (req, res, next) => {
     try {
         const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(" ")[1];
+        const token = authHeader && authHeader.split(' ')[1];
 
         if (!token) {
-            // No token provided, continue without authentication
             req.user = null;
             return next();
         }
 
-        // Token provided, try to authenticate
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.userId)
+            .select('-password')
+            .lean();
 
-        const user = await User.findById(decoded.userId);
-        if (user && user.isActive) {
+        if (user && user.status === 'active') {
             req.user = {
-                userId: decoded.userId,
-                role: decoded.role,
-                email: decoded.email,
-                countryName: decoded.countryName,
-                committeeId: decoded.committeeId,
-                presidiumRole: decoded.presidiumRole,
-                specialRole: decoded.specialRole,
-                sessionId: decoded.sessionId
+                userId: user._id.toString(),
+                email: user.email,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                isSuperAdmin: user.isSuperAdmin || false,
+                status: user.status
             };
+        } else {
+            req.user = null;
         }
 
         next();
-
     } catch (error) {
-        // Token invalid or expired, continue without authentication
         req.user = null;
         next();
     }
@@ -236,37 +225,21 @@ const optionalAuth = async (req, res, next) => {
 // Rate limiting middleware for auth endpoints
 const authRateLimit = require('express-rate-limit')({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // 5 attempts per 15 minutes
+    max: 10, // 10 attempts per 15 minutes
     message: {
         error: 'Too many authentication attempts, please try again later',
         retryAfter: '15 minutes'
     },
     standardHeaders: true,
     legacyHeaders: false,
-    // Only count failed requests
     skipSuccessfulRequests: true
 });
 
 module.exports = {
-    // Core middleware
     authenticateToken,
-    requireRoles,
-    requireSameCommittee,
-
-    // Convenience middlewares
-    requireAdmin,
-    requirePresidium,
-    requireAdminOrPresidium,
-    requireDelegate,
-    requireAdminOrDelegate,
-    requireAnyRole,
-
-    // Rate limit
-    authRateLimit,
-
-    // Require voting rights
-    requireVotingRights,
-
-    // Optional auth
-    optionalAuth
+    requireSuperAdmin,
+    requireOrgAdmin,
+    requireOrgPermission,
+    optionalAuth,
+    authRateLimit
 };

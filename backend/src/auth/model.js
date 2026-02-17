@@ -1,114 +1,120 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-// User schema for all types of users
+// User schema — platform-level account
+// Roles are NOT stored here. They are contextual:
+//   - Org-level: defined in OrgMembership
+//   - Event-level: defined in EventParticipant
 const userSchema = new mongoose.Schema({
-    // Role-based authentication
-    role: {
+    email: {
         type: String,
-        enum: ['admin', 'presidium', 'delegate'],
-        required: true
-    },
-
-    // For admin ONLY - traditional login
-    username: {
-        type: String,
-        sparse: true, // Allows multiple null values
+        required: true,
         unique: true,
-        required: function () { return this.role === 'admin'; }
+        lowercase: true,
+        trim: true
     },
 
     password: {
         type: String,
-        required: function () { return this.role === 'admin'; }
+        required: true
     },
 
-    // For presidium AND delegates - email binding after link access
-    email: {
+    firstName: {
         type: String,
-        sparse: true, // Allows multiple null values but ensures uniqueness when set
-        unique: true,
-        lowercase: true,
+        required: true,
         trim: true,
+        maxlength: 100
     },
 
-    // Login token for initial access (presidium AND delegates) - replaces qrToken
-    loginToken: {
+    lastName: {
         type: String,
-        sparse: true,
-        unique: true,
-        required: function () { return this.role === 'presidium' || this.role === 'delegate'; }
+        required: true,
+        trim: true,
+        maxlength: 100
     },
 
-    // Track if login token is active - replaces isQrActive
-    isActive: {
-        type: Boolean,
-        default: true
-    },
-
-    // Committee association
-    committeeId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Committee',
-        required: function () { return this.role !== 'admin'; }
-    },
-
-    // Country information for delegates
-    countryName: {
-        type: String,
-        required: function () { return this.role === 'delegate'; }
-    },
-
-    // Special roles for observers/special participants
-    specialRole: {
-        type: String,
-        enum: ['observer', 'special', null],
+    dateOfBirth: {
+        type: Date,
         default: null
     },
 
-    // Presidium role specification
-    presidiumRole: {
+    phone: {
         type: String,
-        enum: ['chairman', 'co-chairman', 'expert', 'secretary'],
-        required: function () { return this.role === 'presidium'; }
+        default: null,
+        trim: true
     },
 
-    // Session management
-    sessionId: {
+    institution: {
         type: String,
+        default: null,
+        trim: true,
+        maxlength: 200
+    },
+
+    languageProficiency: {
+        type: [String],
+        default: []  // e.g. ['en', 'ru', 'uz']
+    },
+
+    avatar: {
+        type: String,
+        default: null
+    },
+
+    // Platform-level superadmin flag (single god account)
+    isSuperAdmin: {
+        type: Boolean,
+        default: false
+    },
+
+    emailVerified: {
+        type: Boolean,
+        default: false
+    },
+
+    // For email verification / password reset
+    verificationToken: {
+        type: String,
+        default: null
+    },
+
+    verificationTokenExpires: {
+        type: Date,
+        default: null
+    },
+
+    resetPasswordToken: {
+        type: String,
+        default: null
+    },
+
+    resetPasswordTokenExpires: {
+        type: Date,
         default: null
     },
 
     lastLogin: {
         type: Date,
-        default: Date.now
+        default: null
     },
 
-    // Activity tracking
-    isActive: {
-        type: Boolean,
-        default: true
-    },
-
-    lastActivity: {
-        type: Date,
-        default: Date.now
+    status: {
+        type: String,
+        enum: ['active', 'suspended'],
+        default: 'active'
     }
 }, {
     timestamps: true,
     collection: 'users'
 });
 
-// Indexes for performance
-userSchema.index({ role: 1, committeeId: 1 });
-userSchema.index({ loginToken: 1 }, { sparse: true }); // was qrToken
-userSchema.index({ email: 1 }, { sparse: true });
-userSchema.index({ sessionId: 1 }, { sparse: true });
-userSchema.index({ presidiumRole: 1, committeeId: 1 });
+// Indexes
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ isSuperAdmin: 1 });
+userSchema.index({ status: 1 });
 
-// Hash password before saving (for admin only now)
+// Hash password before saving
 userSchema.pre('save', async function (next) {
-    // Only hash password if it's being modified and exists
     if (!this.isModified('password') || !this.password) {
         return next();
     }
@@ -122,41 +128,25 @@ userSchema.pre('save', async function (next) {
     }
 });
 
-// Method to compare passwords (admin only)
+// Compare passwords
 userSchema.methods.comparePassword = async function (candidatePassword) {
-    if (!this.password) {
-        return false;
-    }
+    if (!this.password) return false;
     return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Method to generate session ID
-userSchema.methods.generateSessionId = function () {
-    this.sessionId = require('crypto').randomBytes(32).toString('hex');
-    return this.sessionId;
-};
-
-// Method to check if user can vote
-userSchema.methods.canVote = function () {
-    return this.role === 'delegate' && this.specialRole !== 'observer' && this.specialRole !== 'special';
-};
-
-// Virtual for full name (country + role)
-userSchema.virtual('displayName').get(function () {
-    if (this.role === 'delegate') {
-        return this.countryName;
-    } else if (this.role === 'presidium') {
-        return `${this.presidiumRole} (Presidium)`;
-    } else {
-        return this.username;
-    }
+// Virtual for full name
+userSchema.virtual('fullName').get(function () {
+    return `${this.firstName} ${this.lastName}`;
 });
 
 // Transform output to hide sensitive data
 userSchema.methods.toJSON = function () {
     const user = this.toObject();
     delete user.password;
-    delete user.loginToken; // was qrToken
+    delete user.verificationToken;
+    delete user.verificationTokenExpires;
+    delete user.resetPasswordToken;
+    delete user.resetPasswordTokenExpires;
     delete user.__v;
     return user;
 };
@@ -199,7 +189,7 @@ const activeSessionSchema = new mongoose.Schema({
     collection: 'activeSessions'
 });
 
-// TTL index to automatically delete inactive sessions after 24 hours
+// TTL index to auto-delete inactive sessions after 24 hours
 activeSessionSchema.index({ lastActivity: 1 }, { expireAfterSeconds: 86400 });
 activeSessionSchema.index({ userId: 1 });
 activeSessionSchema.index({ sessionToken: 1 });

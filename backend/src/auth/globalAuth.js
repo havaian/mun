@@ -1,106 +1,64 @@
-// backend/src/auth/globalAuth.js
 const middleware = require('./middleware');
 
 /**
  * Setup global authentication methods
- * Call this early in your app startup (in app.js or server.js)
+ * Call this early in app startup (in index.js)
+ * 
+ * New permission model:
+ *   - SuperAdmin: platform-level god account
+ *   - Org Admin: per-organization admin (checked dynamically)
+ *   - Org Permissions: per-membership permissions (checked dynamically)
+ *   - Event roles: per-EventParticipant (Phase 3)
  */
 const setupGlobalAuth = () => {
-    // Create the global auth object
     global.auth = {
         // Core middleware
         token: middleware.authenticateToken,
-        sameCommittee: middleware.requireSameCommittee,
 
-        // Role requirements
-        require: {
-            // Single roles
-            admin: middleware.requireAdmin,
-            presidium: middleware.requirePresidium,
-            delegate: middleware.requireDelegate,
+        // Platform-level
+        superAdmin: middleware.requireSuperAdmin,
 
-            // Multiple role combinations
-            adminOrPresidium: middleware.requireAdminOrPresidium,
-            adminOrDelegate: middleware.requireAdminOrDelegate,
-            anyRole: middleware.requireAnyRole,
+        // Organization-level (dynamic — checks org ownership/membership)
+        orgAdmin: middleware.requireOrgAdmin,               // requireOrgAdmin('id') or requireOrgAdmin('orgId')
+        orgPermission: middleware.requireOrgPermission,     // requireOrgPermission('manage_members', 'orgId')
 
-            // Flexible role checker
-            roles: middleware.requireRoles,
-        },
+        // Optional auth
+        optionalAuth: middleware.optionalAuth,
 
-        // Convenience methods with cleaner syntax
-        admin: middleware.requireAdmin,
-        presidium: middleware.requirePresidium,
-        delegate: middleware.requireDelegate,
-
-        // Common combinations with short names
-        adminOrPresidium: middleware.requireAdminOrPresidium,
-        adminOrDelegate: middleware.requireAdminOrDelegate,
-        anyRole: middleware.requireAnyRole,
-
-        // Helper for custom role combinations
-        roles: (...roles) => middleware.requireRoles(...roles)
-    };
-
-    // Add some helpful utilities
-    global.auth.utils = {
-        // Check if user has specific role (for use in controllers)
-        hasRole: (user, ...allowedRoles) => {
-            if (!user || !user.role) return false;
-            return allowedRoles.flat().includes(user.role);
-        },
-
-        // Check if user can access committee
-        canAccessCommittee: (user, committeeId) => {
-            if (!user) return false;
-            if (user.role === 'admin') return true;
-            return user.committeeId?.toString() === committeeId;
-        },
-
-        // Get user role display name
-        getRoleDisplayName: (role) => {
-            const roleMap = {
-                'admin': 'Administrator',
-                'presidium': 'Presidium Member',
-                'delegate': 'Delegate'
-            };
-            return roleMap[role] || role;
-        },
-
+        // Rate limiting
         authRateLimit: middleware.authRateLimit,
-        requireVotingRights: middleware.requireVotingRights,
-        optionalAuth: middleware.optionalAuth
+
+        // Utility helpers
+        utils: {
+            isSuperAdmin: (user) => user?.isSuperAdmin === true
+        }
     };
 
-    global.logger.info('Global authentication middleware initialized');
+    global.logger.info('Global authentication middleware initialized (v2 — org-based)');
 
-    // Return the global auth object for convenience
     return global.auth;
 };
 
 /**
- * TypeScript-style documentation for better IDE support
- * 
  * Usage examples:
  * 
- * // Basic usage
- * router.get('/admin-only', global.auth.token, global.auth.admin, controller.func);
+ * // SuperAdmin only
+ * router.get('/orgs', global.auth.token, global.auth.superAdmin, controller.list);
  * 
- * // Multiple roles
- * router.get('/flexible', global.auth.token, global.auth.adminOrPresidium, controller.func);
+ * // Org admin (SuperAdmin also passes)
+ * router.put('/orgs/:id', global.auth.token, global.auth.orgAdmin(), controller.update);
  * 
- * // Custom role combinations
- * router.get('/custom', global.auth.token, global.auth.roles('admin', 'moderator'), controller.func);
+ * // Specific org permission
+ * router.post('/orgs/:orgId/events', global.auth.token, global.auth.orgPermission('manage_registration', 'orgId'), controller.create);
  * 
- * // In controllers
- * if (global.auth.utils.hasRole(req.user, 'admin', 'presidium')) {
- *     // User has admin or presidium role
- * }
+ * // Any authenticated user
+ * router.get('/profile', global.auth.token, controller.getProfile);
+ * 
+ * // Optional auth (public endpoints that benefit from knowing the user)
+ * router.get('/orgs/:slug', global.auth.optionalAuth, controller.getPublic);
  */
 
 module.exports = {
     setupGlobalAuth,
-
-    // Export middleware directly as well for flexibility
     ...middleware
 };

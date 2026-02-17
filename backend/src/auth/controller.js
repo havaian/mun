@@ -1,713 +1,413 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { User, ActiveSession } = require('./model');
+const crypto = require('crypto');
+const { User } = require('./model');
+const { Organization } = require('../organization/model');
 
-// Dynamic expiration calculation
-const calculateTokenExpiration = async (user) => {
-    // Admin always gets 24 hours
-    if (user.role === 'admin') {
-        return '24h';
-    }
-
-    // For presidium and delegates, use event end date
-    if (user.committeeId) {
-        try {
-            const { Committee } = require('../committee/model');
-            const { Event } = require('../event/model');
-
-            const committee = await Committee.findById(user.committeeId).lean();
-            if (committee && committee.eventId) {
-                const event = await Event.findById(committee.eventId).lean();
-                if (event && event.endDate) {
-                    const now = Date.now();
-                    const eventEndTime = new Date(event.endDate).getTime();
-
-                    // If event has ended, give 1 hour grace period
-                    const expirationTime = eventEndTime < now
-                        ? now + (60 * 60 * 1000) // 1 hour grace
-                        : eventEndTime;
-
-                    const secondsUntilExpiry = Math.floor((expirationTime - now) / 1000);
-
-                    // JWT library expects either string format or seconds
-                    if (secondsUntilExpiry > 0) {
-                        global.logger.info(`Token for ${user.role} will expire with event: ${new Date(expirationTime).toISOString()}`);
-                        return secondsUntilExpiry;
-                    }
-                }
-            }
-        } catch (error) {
-            global.logger.error('Error calculating dynamic expiration:', error);
-        }
-    }
-
-    // Fallback: 24 hours if no event found
-    global.logger.warn(`No event end date found for user ${user._id}, defaulting to 24h expiration`);
-    return '24h';
-};
-
-// Helper function to generate JWT token with dynamic expiration
-const generateToken = async (payload, user = null) => {
-    let expiration = '24h'; // default
-
-    if (user) {
-        expiration = await calculateTokenExpiration(user);
-    }
-
-    return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: expiration });
-};
-
-// Helper function to create active session
-const createActiveSession = async (userId, sessionToken, req) => {
-    // Deactivate other sessions for this user (single session per user)
-    await ActiveSession.updateMany(
-        { userId },
-        { $set: { isActive: false } }
-    );
-
-    // Create new session
-    const session = new ActiveSession({
-        userId,
-        sessionToken,
-        ipAddress: req.ip || req.connection.remoteAddress,
-        userAgent: req.get('User-Agent') || 'Unknown'
-    });
-
-    await session.save();
-    return session;
-};
-
-// Helper function to update committee country information
-const updateCommitteeCountry = async (committeeId, countryName, updateData) => {
-    const { Committee } = require('../committee/model');
-
-    const result = await Committee.updateOne(
+// Generate JWT token
+const generateToken = (user) => {
+    return jwt.sign(
         {
-            _id: committeeId,
-            'countries.name': countryName
-        },
-        {
-            $set: {
-                'countries.$.email': updateData.email,
-                'countries.$.registeredAt': updateData.registeredAt,
-                'countries.$.lastActivity': updateData.lastActivity
-            }
-        }
-    );
-
-    if (result.matchedCount === 0) {
-        throw new Error(`Committee or country not found: ${committeeId} / ${countryName}`);
-    }
-
-    if (result.modifiedCount === 0) {
-        global.logger.warn(`Committee country update matched but not modified: ${countryName}`);
-    }
-
-    return result;
-};
-
-// Admin login with standard 24h expiration
-const adminLogin = async (req, res) => {
-    try {
-        const { username, password } = req.body;
-
-        if (!username || !password) {
-            return res.status(400).json({
-                error: 'Username and password are required'
-            });
-        }
-
-        // Find admin user
-        const user = await User.findOne({
-            username: username.toLowerCase(),
-            role: 'admin'
-        });
-
-        if (!user) {
-            global.logger.warn(`Failed admin login attempt for username: ${username}`);
-            return res.status(401).json({
-                error: 'Invalid credentials'
-            });
-        }
-
-        // Check password
-        const isPasswordValid = await user.comparePassword(password);
-        if (!isPasswordValid) {
-            global.logger.warn(`Invalid password for admin: ${username}`);
-            return res.status(401).json({
-                error: 'Invalid credentials'
-            });
-        }
-
-        // Generate session
-        const sessionToken = user.generateSessionId();
-        user.lastLogin = new Date();
-        user.lastActivity = new Date();
-        await user.save();
-
-        // Create active session
-        await createActiveSession(user._id, sessionToken, req);
-
-        // Generate JWT (admin always gets 24h)
-        const tokenPayload = {
             userId: user._id,
-            role: user.role,
-            username: user.username,
-            sessionId: sessionToken
-        };
-
-        const token = await generateToken(tokenPayload, user);
-
-        global.logger.info(`Admin login successful: ${username}`);
-
-        res.json({
-            success: true,
-            token,
-            user: {
-                id: user._id,
-                username: user.username,
-                role: user.role
-            },
-            expiresIn: '24h'
-        });
-
-    } catch (error) {
-        global.logger.error('Admin login error:', error);
-        res.status(500).json({ error: 'Login failed' });
-    }
-};
-
-const refreshToken = async (req, res) => {
-    try {
-        const user = req.user;
-
-        // Generate new token with full expiration
-        const tokenPayload = {
-            userId: user.userId,
-            role: user.role,
             email: user.email,
-            committeeId: user.committeeId,
-            sessionId: user.sessionId
-        };
-
-        const newToken = await generateToken(tokenPayload, user);
-
-        global.logger.info(`Token refreshed for user: ${user.email}`);
-
-        res.json({
-            success: true,
-            token: newToken,
-            user: user,
-            message: 'Token refreshed successfully'
-        });
-
-    } catch (error) {
-        global.logger.error('Token refresh error:', error);
-        res.status(500).json({
-            error: 'Failed to refresh token',
-            message: error.message
-        });
-    }
+            isSuperAdmin: user.isSuperAdmin || false
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRY || '7d' }
+    );
 };
 
-// Link login with dynamic expiration
-const linkLogin = async (req, res) => {
+// Register new user
+const register = async (req, res) => {
     try {
-        const { token } = req.body;
+        const {
+            email,
+            password,
+            firstName,
+            lastName,
+            dateOfBirth,
+            phone,
+            institution,
+            languageProficiency
+        } = req.body;
 
-        if (!token) {
+        // Validate required fields
+        if (!email || !password || !firstName || !lastName) {
             return res.status(400).json({
-                error: 'Login token is required'
-            });
-        }
-
-        // Find user by login token (delegate OR presidium)
-        const user = await User.findOne({
-            loginToken: token,
-            isActive: true,
-            role: { $in: ['delegate', 'presidium'] }
-        }).populate('committeeId');
-
-        if (!user) {
-            return res.status(401).json({
-                error: 'Invalid or expired login link'
-            });
-        }
-
-        // Check if email is already bound (user has used this link before)
-        if (user.email) {
-            return res.status(200).json({
-                success: true,
-                requiresEmail: true,
-                message: 'Please enter your registered email to continue',
-                userType: user.role,
-                ...(user.role === 'delegate' && { countryName: user.countryName }),
-                ...(user.role === 'presidium' && { presidiumRole: user.presidiumRole }),
-                committee: {
-                    id: user.committeeId._id,
-                    name: user.committeeId.name
-                }
-            });
-        }
-
-        // If no email bound yet, allow email binding
-        return res.status(200).json({
-            success: true,
-            requiresEmail: true,
-            firstTime: true,
-            message: 'Welcome! Please enter your email address to complete registration',
-            loginToken: token,
-            userType: user.role,
-            ...(user.role === 'delegate' && { countryName: user.countryName }),
-            ...(user.role === 'presidium' && { presidiumRole: user.presidiumRole }),
-            committee: {
-                id: user.committeeId._id,
-                name: user.committeeId.name
-            }
-        });
-
-    } catch (error) {
-        global.logger.error('Link login error:', error);
-        res.status(500).json({ error: 'Link verification failed' });
-    }
-};
-
-// Email binding with dynamic expiration
-const bindEmail = async (req, res) => {
-    try {
-        const { token, email } = req.body;
-
-        if (!token || !email) {
-            return res.status(400).json({
-                error: 'Login token and email are required'
+                error: 'Email, password, first name, and last name are required'
             });
         }
 
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: 'Invalid email format' });
+        }
+
+        // Validate password strength
+        if (password.length < 8) {
             return res.status(400).json({
-                error: 'Invalid email format'
+                error: 'Password must be at least 8 characters long'
             });
         }
 
-        // Find user by login token first (delegate OR presidium)
-        const user = await User.findOne({
-            loginToken: token,
-            isActive: true,
-            role: { $in: ['delegate', 'presidium'] }
-        }).populate('committeeId');
-
-        if (!user) {
-            return res.status(401).json({
-                error: 'Invalid or expired login link'
-            });
+        // Check if user already exists
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
+        if (existingUser) {
+            return res.status(409).json({ error: 'An account with this email already exists' });
         }
 
-        // Check if email is already used within the same event
-        // Get the event ID from the user's committee
-        const eventId = user.committeeId.eventId;
-
-        // Find all committees in the same event
-        const { Committee } = require('../committee/model');
-        const eventCommittees = await Committee.find({ eventId }).select('_id');
-        const eventCommitteeIds = eventCommittees.map(c => c._id);
-
-        // Check if email is already used by any user in the same event
-        const existingUser = await User.findOne({
+        // Create user
+        const user = new User({
             email: email.toLowerCase(),
-            committeeId: { $in: eventCommitteeIds }
+            password,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            dateOfBirth: dateOfBirth || null,
+            phone: phone || null,
+            institution: institution?.trim() || null,
+            languageProficiency: languageProficiency || []
         });
 
-        if (existingUser) {
-            return res.status(409).json({
-                error: 'Email address is already registered to another account in this event'
-            });
-        }
-
-        // Bind email and generate session
-        user.email = email.toLowerCase();
-        user.lastLogin = new Date();
-        user.lastActivity = new Date();
-
-        // Generate session
-        const sessionToken = user.generateSessionId();
         await user.save();
 
-        // Update committee countries array for delegates
-        if (user.role === 'delegate' && user.countryName) {
-            try {
-                await updateCommitteeCountry(
-                    user.committeeId._id,
-                    user.countryName,
-                    {
-                        email: email.toLowerCase(),
-                        registeredAt: new Date(),
-                        lastActivity: new Date()
-                    }
-                );
-            } catch (committeeUpdateError) {
-                global.logger.error('Failed to update committee country:', committeeUpdateError);
-                // Rollback user changes
-                await User.updateOne(
-                    { _id: user._id },
-                    {
-                        $set: {
-                            email: null,
-                            sessionId: null
-                        }
-                    }
-                );
-                return res.status(500).json({
-                    error: 'Failed to complete registration',
-                    message: 'Committee update failed'
-                });
-            }
+        // Check if this user has any pending org admin invitations
+        await claimPendingInvitations(user);
+
+        // Check if this user has any pending org member invitations
+        try {
+            const { claimPendingMemberInvitations } = require('../invitation/controller');
+            await claimPendingMemberInvitations(user);
+        } catch (e) {
+            // Invitation module may not be loaded yet — non-fatal
+            global.logger.debug('Member invitation claim skipped:', e.message);
         }
 
-        // Create active session
-        await createActiveSession(user._id, sessionToken, req);
+        // Generate token
+        const token = generateToken(user);
 
-        // Generate JWT with role-specific data and dynamic expiration
-        const tokenData = {
-            userId: user._id,
-            role: user.role,
-            email: user.email,
-            committeeId: user.committeeId,
-            sessionId: sessionToken
-        };
+        // Update last login
+        user.lastLogin = new Date();
+        await user.save();
 
-        // Add role-specific data
-        if (user.role === 'delegate') {
-            tokenData.countryName = user.countryName;
-            tokenData.specialRole = user.specialRole;
-        } else if (user.role === 'presidium') {
-            tokenData.presidiumRole = user.presidiumRole;
-        }
+        global.logger.info(`New user registered: ${email}`);
 
-        const token_jwt = await generateToken(tokenData, user);
-        const expiration = await calculateTokenExpiration(user);
-
-        const userType = user.role === 'delegate' ?
-            user.countryName :
-            `${user.presidiumRole} (Presidium)`;
-
-        global.logger.info(`Email bound and login successful: ${userType} - ${email}, token expires: ${typeof expiration === 'string' ? expiration : new Date(Date.now() + expiration * 1000).toISOString()}`);
-
-        res.json({
+        res.status(201).json({
             success: true,
-            token: token_jwt,
-            user: {
-                id: user._id,
-                role: user.role,
-                email: user.email,
-                committeeId: user.committeeId,
-                ...(user.role === 'delegate' && {
-                    countryName: user.countryName,
-                    specialRole: user.specialRole
-                }),
-                ...(user.role === 'presidium' && {
-                    presidiumRole: user.presidiumRole
-                })
-            },
-            message: `Welcome, ${userType}!`,
-            expiresIn: expiration
+            token,
+            user: user.toJSON(),
+            message: 'Registration successful'
         });
-
     } catch (error) {
-        global.logger.error('Email binding error:', error);
-        res.status(500).json({ error: 'Email binding failed' });
+        global.logger.error('Registration error:', error);
+
+        if (error.code === 11000) {
+            return res.status(409).json({ error: 'An account with this email already exists' });
+        }
+
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({
+                error: 'Validation error',
+                details: error.message
+            });
+        }
+
+        res.status(500).json({ error: 'Registration failed' });
     }
 };
 
-// Email login with dynamic expiration
-const emailLogin = async (req, res) => {
+// Login with email + password
+const login = async (req, res) => {
     try {
-        const { email, loginToken } = req.body;
+        const { email, password } = req.body;
 
-        if (!email) {
-            return res.status(400).json({
-                error: 'Email address is required'
-            });
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Email and password are required' });
         }
 
-        let user;
-
-        if (loginToken) {
-            // If loginToken is provided, find user by token first
-            user = await User.findOne({
-                loginToken: loginToken,
-                role: { $in: ['delegate', 'presidium'] }
-            }).populate('committeeId');
-
-            if (!user) {
-                return res.status(401).json({
-                    error: 'Invalid login link'
-                });
-            }
-
-            // Check if the email matches the user found by token
-            if (!user.email || user.email !== email.toLowerCase()) {
-                return res.status(401).json({
-                    error: 'This email is not associated with this login link'
-                });
-            }
-        } else {
-            // If no loginToken provided, find user by email only
-            user = await User.findOne({
-                email: email.toLowerCase(),
-                role: { $in: ['delegate', 'presidium'] }
-            }).populate('committeeId');
-
-            if (!user) {
-                return res.status(401).json({
-                    error: 'No account found with this email address'
-                });
-            }
+        // Find user by email (include password for comparison)
+        const user = await User.findOne({ email: email.toLowerCase() });
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        // Generate session
-        const sessionToken = user.generateSessionId();
+        if (user.status !== 'active') {
+            return res.status(401).json({ error: 'Account is suspended' });
+        }
+
+        // Verify password
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Invalid email or password' });
+        }
+
+        // Generate token
+        const token = generateToken(user);
+
+        // Update last login
         user.lastLogin = new Date();
-        user.lastActivity = new Date();
         await user.save();
 
-        // Create active session
-        await createActiveSession(user._id, sessionToken, req);
-
-        // Generate JWT with dynamic expiration
-        const tokenData = {
-            userId: user._id,
-            role: user.role,
-            email: user.email,
-            committeeId: user.committeeId ? {
-                _id: user.committeeId._id,
-                name: user.committeeId.name,
-                type: user.committeeId.type,
-                eventId: user.committeeId.eventId
-            } : null,
-            sessionId: sessionToken
-        };
-
-        // Add role-specific data
-        if (user.role === 'delegate') {
-            tokenData.countryName = user.countryName;
-            tokenData.specialRole = user.specialRole;
-        } else if (user.role === 'presidium') {
-            tokenData.presidiumRole = user.presidiumRole;
-        }
-
-        const token = await generateToken(tokenData, user);
-        const expiration = await calculateTokenExpiration(user);
-
-        const userType = user.role === 'delegate' ?
-            user.countryName :
-            `${user.presidiumRole} (Presidium)`;
-
-        global.logger.info(`Email login successful: ${userType} - ${email}, token expires: ${typeof expiration === 'string' ? expiration : new Date(Date.now() + expiration * 1000).toISOString()}`);
+        global.logger.info(`User logged in: ${email}`);
 
         res.json({
             success: true,
             token,
-            user: {
-                id: user._id,
-                role: user.role,
-                email: user.email,
-                committeeId: user.committeeId,
-                ...(user.role === 'delegate' && {
-                    countryName: user.countryName,
-                    specialRole: user.specialRole
-                }),
-                ...(user.role === 'presidium' && {
-                    presidiumRole: user.presidiumRole
-                })
-            },
-            expiresIn: expiration
+            user: user.toJSON()
         });
-
     } catch (error) {
-        global.logger.error('Email login error:', error);
+        global.logger.error('Login error:', error);
         res.status(500).json({ error: 'Login failed' });
     }
 };
 
-// Logout
-const logout = async (req, res) => {
+// Get current user profile
+const getMe = async (req, res) => {
     try {
-        const userId = req.user.userId;
-        const sessionId = req.user.sessionId;
+        const user = await User.findById(req.user.userId).lean();
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
 
-        // Deactivate the current session
-        await ActiveSession.updateOne(
-            { userId, sessionToken: sessionId },
-            { $set: { isActive: false } }
-        );
+        // Remove sensitive fields
+        delete user.password;
+        delete user.verificationToken;
+        delete user.verificationTokenExpires;
+        delete user.resetPasswordToken;
+        delete user.resetPasswordTokenExpires;
+        delete user.__v;
 
-        global.logger.info(`User logged out: ${userId}`);
+        // Fetch organizations where user is admin
+        const adminOrgs = await Organization.find({ admin: user._id })
+            .select('name slug logo status')
+            .lean();
+
+        // Fetch org memberships
+        let memberOrgs = [];
+        try {
+            const { OrgMembership } = require('../org-membership/model');
+            const memberships = await OrgMembership.find({ user: user._id, status: 'active' })
+                .populate('organization', 'name slug logo status')
+                .lean();
+            memberOrgs = memberships.map(m => ({
+                ...m.organization,
+                permissions: m.permissions,
+                membershipId: m._id
+            }));
+        } catch (e) {
+            // OrgMembership module may not exist yet
+        }
+
+        // Fetch pending invitations
+        let pendingInvitations = [];
+        try {
+            const { OrgInvitation } = require('../invitation/model');
+            pendingInvitations = await OrgInvitation.find({
+                email: user.email,
+                status: 'pending',
+                expiresAt: { $gt: new Date() }
+            })
+                .populate('organization', 'name slug logo')
+                .lean();
+        } catch (e) {
+            // Invitation module may not exist yet
+        }
 
         res.json({
             success: true,
-            message: 'Logout successful'
+            user,
+            organizations: {
+                admin: adminOrgs,
+                member: memberOrgs
+            },
+            pendingInvitations
         });
-
     } catch (error) {
-        global.logger.error('Logout error:', error);
-        res.status(500).json({ error: 'Logout failed' });
+        global.logger.error('Get me error:', error);
+        res.status(500).json({ error: 'Failed to fetch profile' });
     }
 };
 
-// Session validation
-const validateSession = async (req, res) => {
+// Update current user profile
+const updateProfile = async (req, res) => {
     try {
-        // User data is already attached by auth middleware
-        const user = await User.findById(req.user.userId)
-            .populate('committeeId')
-            .select('-password -loginToken');
+        const updates = req.body;
+        const user = await User.findById(req.user.userId);
 
-        if (!user || !user.isActive) {
-            return res.status(401).json({
-                error: 'User account is inactive'
-            });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
         }
 
-        // Check if session is still active
-        const activeSession = await ActiveSession.findOne({
-            userId: user._id,
-            sessionToken: req.user.sessionId,
-            isActive: true
-        });
+        // Fields that can be updated by the user themselves
+        const allowedFields = [
+            'firstName', 'lastName', 'dateOfBirth', 'phone',
+            'institution', 'languageProficiency', 'avatar'
+        ];
 
-        if (!activeSession) {
-            return res.status(401).json({
-                error: 'Session has expired'
-            });
-        }
-
-        // Update last activity
-        user.lastActivity = new Date();
-        activeSession.lastActivity = new Date();
-
-        await Promise.all([user.save(), activeSession.save()]);
-
-        res.json({
-            success: true,
-            user: {
-                id: user._id,
-                role: user.role,
-                email: user.email,
-                username: user.username,
-                committeeId: user.committeeId,
-                countryName: user.countryName,
-                presidiumRole: user.presidiumRole,
-                specialRole: user.specialRole,
-                lastActivity: user.lastActivity
+        allowedFields.forEach(field => {
+            if (updates[field] !== undefined) {
+                user[field] = updates[field];
             }
         });
 
-    } catch (error) {
-        global.logger.error('Session validation error:', error);
-        res.status(500).json({
-            error: 'VALIDATION_ERROR'
-        });
-    }
-};
-
-// Check login link status
-const checkLinkStatus = async (req, res) => {
-    try {
-        const { token } = req.params;
-
-        const user = await User.findOne({
-            loginToken: token,
-            role: { $in: ['delegate', 'presidium'] }
-        }).populate('committeeId');
-
-        if (!user) {
-            return res.status(404).json({
-                error: 'Login link not found'
-            });
-        }
-
-        res.json({
-            success: true,
-            isActive: user.isActive,
-            isUsed: !user.isActive,
-            userType: user.role,
-            committeeId: user.committeeId._id,
-            committeeName: user.committeeId.name,
-            ...(user.role === 'delegate' && { countryName: user.countryName }),
-            ...(user.role === 'presidium' && { presidiumRole: user.presidiumRole })
-        });
-
-    } catch (error) {
-        global.logger.error('Link status check error:', error);
-        res.status(500).json({ error: 'Failed to check link status' });
-    }
-};
-
-// Login link reactivation
-const reactivateLink = async (req, res) => {
-    try {
-        const { userId } = req.body;
-
-        if (!userId) {
-            return res.status(400).json({
-                error: 'User ID is required'
-            });
-        }
-
-        // Find user
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({
-                error: 'User not found'
-            });
-        }
-
-        // Only allow reactivation for delegate and presidium users
-        if (!['delegate', 'presidium'].includes(user.role)) {
-            return res.status(400).json({
-                error: 'Link reactivation only available for delegates and presidium members'
-            });
-        }
-
-        // Reactivate login link and clear email
-        user.isActive = true;
-        user.email = null;
-        user.sessionId = null;
-
-        // Deactivate all sessions
-        await ActiveSession.updateMany(
-            { userId: user._id },
-            { $set: { isActive: false } }
-        );
-
         await user.save();
 
-        const userType = user.role === 'delegate' ? user.countryName : user.presidiumRole;
-        global.logger.info(`Login link reactivated for: ${userType} by admin ${req.user.userId}`);
+        global.logger.info(`Profile updated: ${user.email}`);
 
         res.json({
             success: true,
-            message: `Login link reactivated for ${userType}`,
-            loginToken: user.loginToken
+            user: user.toJSON()
+        });
+    } catch (error) {
+        global.logger.error('Update profile error:', error);
+        res.status(500).json({ error: 'Failed to update profile' });
+    }
+};
+
+// Change password
+const changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                error: 'Current password and new password are required'
+            });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({
+                error: 'New password must be at least 8 characters long'
+            });
+        }
+
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const isMatch = await user.comparePassword(currentPassword);
+        if (!isMatch) {
+            return res.status(401).json({ error: 'Current password is incorrect' });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        global.logger.info(`Password changed: ${user.email}`);
+
+        res.json({ success: true, message: 'Password changed successfully' });
+    } catch (error) {
+        global.logger.error('Change password error:', error);
+        res.status(500).json({ error: 'Failed to change password' });
+    }
+};
+
+// Request password reset (generates token, would send email)
+const requestPasswordReset = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        const user = await User.findOne({ email: email.toLowerCase() });
+
+        // Always return success to prevent email enumeration
+        if (!user) {
+            return res.json({
+                success: true,
+                message: 'If an account with that email exists, a reset link has been sent'
+            });
+        }
+
+        // Generate reset token
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+        await user.save();
+
+        // TODO: Send reset email
+        // For now, log the token (remove in production)
+        global.logger.info(`Password reset requested for ${email}. Token: ${resetToken}`);
+
+        res.json({
+            success: true,
+            message: 'If an account with that email exists, a reset link has been sent'
+        });
+    } catch (error) {
+        global.logger.error('Request password reset error:', error);
+        res.status(500).json({ error: 'Failed to process password reset request' });
+    }
+};
+
+// Reset password with token
+const resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.status(400).json({ error: 'Token and new password are required' });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({
+                error: 'New password must be at least 8 characters long'
+            });
+        }
+
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordTokenExpires: { $gt: new Date() }
         });
 
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid or expired reset token' });
+        }
+
+        user.password = newPassword;
+        user.resetPasswordToken = null;
+        user.resetPasswordTokenExpires = null;
+        await user.save();
+
+        global.logger.info(`Password reset completed for ${user.email}`);
+
+        res.json({ success: true, message: 'Password has been reset successfully' });
     } catch (error) {
-        global.logger.error('Link reactivation error:', error);
-        res.status(500).json({ error: 'Link reactivation failed' });
+        global.logger.error('Reset password error:', error);
+        res.status(500).json({ error: 'Failed to reset password' });
+    }
+};
+
+// Helper: Check and claim pending org admin invitations for a newly registered user
+const claimPendingInvitations = async (user) => {
+    try {
+        const pendingOrgs = await Organization.find({
+            'adminInvitation.email': user.email,
+            'adminInvitation.expiresAt': { $gt: new Date() }
+        });
+
+        for (const org of pendingOrgs) {
+            org.claimAdmin(user._id);
+            await org.save();
+            global.logger.info(`Pending org admin invitation claimed: ${user.email} → ${org.name}`);
+        }
+
+        if (pendingOrgs.length > 0) {
+            global.logger.info(`${pendingOrgs.length} pending invitation(s) claimed for ${user.email}`);
+        }
+    } catch (error) {
+        global.logger.error(`Failed to claim pending invitations for ${user.email}:`, error);
+        // Don't throw — registration should still succeed
     }
 };
 
 module.exports = {
-    adminLogin,
-    refreshToken,
-    linkLogin,
-    bindEmail,
-    emailLogin,
-    logout,
-    validateSession,
-    checkLinkStatus,
-    reactivateLink
+    register,
+    login,
+    getMe,
+    updateProfile,
+    changePassword,
+    requestPasswordReset,
+    resetPassword
 };

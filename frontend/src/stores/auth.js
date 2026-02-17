@@ -8,10 +8,24 @@ import { decodeJWT, getTokenRemainingTime, isTokenExpired } from '@/utils/jwt'
 export const useAuthStore = defineStore('auth', () => {
     const toast = useToast()
 
-    // State
+    // =============================================
+    // STATE
+    // =============================================
     const token = ref(localStorage.getItem('mun_token') || null)
     const user = ref(null)
     const isLoading = ref(false)
+
+    // Organizations the user belongs to
+    const organizations = ref({
+        admin: [],   // orgs where user is admin
+        member: []   // orgs where user is a member (with permissions)
+    })
+
+    // Pending org invitations
+    const pendingInvitations = ref([])
+
+    // Currently selected/active context
+    const activeOrgId = ref(localStorage.getItem('mun_active_org') || null)
 
     // Session validation cache
     const lastActivity = ref(Date.now())
@@ -24,41 +38,85 @@ export const useAuthStore = defineStore('auth', () => {
     // Retry configuration for network errors
     const RETRY_CONFIG = {
         maxRetries: 3,
-        retryDelay: 1000, // 1 second
+        retryDelay: 1000,
         backoffMultiplier: 2
     }
 
-    // Computed
+    // =============================================
+    // COMPUTED
+    // =============================================
     const isAuthenticated = computed(() => !!token.value && !!user.value)
-    const isAdmin = computed(() => user.value?.role === 'admin')
-    const isPresidium = computed(() => user.value?.role === 'presidium')
-    const isDelegate = computed(() => user.value?.role === 'delegate')
-    const userRole = computed(() => user.value?.role || null)
-    const committeeId = computed(() => user.value?.committeeId || null)
+    const isSuperAdmin = computed(() => user.value?.isSuperAdmin || false)
 
-    // Helper function to clear validation cache & promise
+    // All organizations the user has access to (admin + member)
+    const allOrganizations = computed(() => {
+        const adminOrgs = (organizations.value.admin || []).map(org => ({
+            ...org,
+            accessLevel: 'admin'
+        }))
+        const memberOrgs = (organizations.value.member || []).map(org => ({
+            ...org,
+            accessLevel: 'member'
+        }))
+        return [...adminOrgs, ...memberOrgs]
+    })
+
+    // Currently active organization (from localStorage selection or first available)
+    const activeOrganization = computed(() => {
+        if (!allOrganizations.value.length) return null
+
+        if (activeOrgId.value) {
+            const found = allOrganizations.value.find(
+                org => org._id === activeOrgId.value || org.slug === activeOrgId.value
+            )
+            if (found) return found
+        }
+
+        // Default to first org
+        return allOrganizations.value[0]
+    })
+
+    // Is the user an admin of the active org?
+    const isOrgAdmin = computed(() => {
+        if (isSuperAdmin.value) return true
+        if (!activeOrganization.value) return false
+        return activeOrganization.value.accessLevel === 'admin'
+    })
+
+    // Permissions in the active org (for members)
+    const orgPermissions = computed(() => {
+        if (isSuperAdmin.value || isOrgAdmin.value) return ['all']
+        if (!activeOrganization.value) return []
+        return activeOrganization.value.permissions || []
+    })
+
+    // Check if user has a specific org permission
+    const hasOrgPermission = (permission) => {
+        if (isSuperAdmin.value || isOrgAdmin.value) return true
+        return orgPermissions.value.includes(permission)
+    }
+
+    // Does this user have any org at all?
+    const hasOrganization = computed(() => allOrganizations.value.length > 0)
+
+    // User display name
+    const displayName = computed(() => {
+        if (!user.value) return ''
+        return `${user.value.firstName} ${user.value.lastName}`
+    })
+
+    // =============================================
+    // HELPER FUNCTIONS
+    // =============================================
     const _clearValidationCache = () => {
         _lastValidation.value = 0
         _validationCache.value = null
-        _validationPromise.value = null // Clear promise cache
-    }
-
-    // Helper function to format presidium role
-    const formatPresidiumRole = (role) => {
-        const roleMap = {
-            'chairman': 'Chairman',
-            'co-chairman': 'Co-Chairman',
-            'expert': 'Expert',
-            'secretary': 'Secretary'
-        }
-        return roleMap[role] || role
+        _validationPromise.value = null
     }
 
     // Determine if error should clear token
     const shouldClearTokenOnError = (error) => {
-        // Only clear token for actual auth failures, not network errors
         if (!error.response) {
-            // Network error (no response) - don't clear token
             console.warn('Network error during validation, retaining token')
             return false
         }
@@ -66,86 +124,132 @@ export const useAuthStore = defineStore('auth', () => {
         const status = error.response.status
         const errorCode = error.response.data?.code
 
-        // Clear token for actual authentication failures
         if (status === 401) {
-            if (errorCode === 'TOKEN_EXPIRED') {
-                console.warn('Token expired, clearing auth state')
+            if (errorCode === 'TOKEN_EXPIRED' || errorCode === 'INVALID_TOKEN') {
                 return true
             }
-            if (errorCode === 'INVALID_TOKEN') {
-                console.warn('Invalid token, clearing auth state')
-                return true
-            }
-            if (errorCode === 'VERIFICATION_FAILED') {
-                console.warn('Token verification failed, clearing auth state')
-                return true
-            }
-            // Generic 401
-            console.warn('Authentication failed, clearing auth state')
+            // Generic 401 — also clear
             return true
         }
 
-        // Don't clear token for server errors (5xx) or other non-auth issues
-        if (status >= 500) {
-            console.warn('Server error during validation, retaining token')
-            return false
-        }
-
-        // For other errors (4xx), clear token
-        return true
+        // 403 = authenticated but not authorized — don't clear token
+        return false
     }
 
-    // Retry logic for network operations
+    // Retry wrapper for network errors
     const retryOperation = async (operation, retries = RETRY_CONFIG.maxRetries) => {
+        let lastError
+        let delay = RETRY_CONFIG.retryDelay
+
         for (let attempt = 0; attempt <= retries; attempt++) {
             try {
                 return await operation()
             } catch (error) {
-                // If this is the last attempt, throw the error
-                if (attempt === retries) {
+                lastError = error
+
+                // Don't retry auth errors
+                if (error.response?.status === 401 || error.response?.status === 403) {
                     throw error
                 }
 
-                // Only retry on network errors or 5xx server errors
-                if (!error.response || error.response.status >= 500) {
-                    const delay = RETRY_CONFIG.retryDelay * Math.pow(RETRY_CONFIG.backoffMultiplier, attempt)
-                    console.warn(`Operation failed (attempt ${attempt + 1}), retrying in ${delay}ms...`)
-                    await new Promise(resolve => setTimeout(resolve, delay))
-                    continue
+                // Don't retry on last attempt
+                if (attempt === retries) break
+
+                // Wait before retrying
+                await new Promise(resolve => setTimeout(resolve, delay))
+                delay *= RETRY_CONFIG.backoffMultiplier
+            }
+        }
+
+        throw lastError
+    }
+
+    // =============================================
+    // ACTIONS
+    // =============================================
+
+    // Set auth data (used by login and register)
+    const setAuthData = async (newToken, userData) => {
+        token.value = newToken
+        localStorage.setItem('mun_token', newToken)
+        _clearValidationCache()
+
+        // If we got user data directly, set it
+        if (userData) {
+            user.value = userData
+        }
+
+        // Fetch full profile with org data
+        await fetchProfile()
+
+        // Initialize WebSocket
+        initializeWebSocket()
+    }
+
+    // Fetch profile + org data from /auth/me
+    const fetchProfile = async () => {
+        try {
+            const response = await apiMethods.auth.getMe()
+
+            if (response.data.success) {
+                user.value = response.data.user
+                organizations.value = response.data.organizations || { admin: [], member: [] }
+                pendingInvitations.value = response.data.pendingInvitations || []
+
+                // Auto-select first org if none selected
+                if (!activeOrgId.value && allOrganizations.value.length > 0) {
+                    setActiveOrg(allOrganizations.value[0]._id)
                 }
 
-                // Don't retry auth errors (4xx)
-                throw error
+                return true
             }
+
+            return false
+        } catch (error) {
+            console.error('Fetch profile error:', error)
+            return false
         }
     }
 
-    // Admin login
-    const adminLogin = async (credentials) => {
+    // Register
+    const register = async (data) => {
+        try {
+            isLoading.value = true
+
+            const response = await apiMethods.auth.register(data)
+
+            if (response.data.success) {
+                await setAuthData(response.data.token, response.data.user)
+                toast.success(`Welcome, ${user.value.firstName}!`)
+                return { success: true }
+            }
+
+            return { success: false, error: 'Registration failed' }
+        } catch (error) {
+            const message = error.response?.data?.error || 'Registration failed'
+            toast.error(message)
+            return { success: false, error: message }
+        } finally {
+            isLoading.value = false
+        }
+    }
+
+    // Login
+    const login = async (email, password) => {
         try {
             isLoading.value = true
 
             const response = await retryOperation(() =>
-                apiMethods.auth.adminLogin(credentials)
+                apiMethods.auth.login({ email, password })
             )
 
             if (response.data.success) {
-                token.value = response.data.token
-                user.value = response.data.user
-
-                localStorage.setItem('mun_token', token.value)
-
-                // Clear validation cache since we have new auth data
-                _clearValidationCache()
-
-                toast.success(`Welcome, ${user.value.username}!`)
-
-                setupTokenRefresh()
+                await setAuthData(response.data.token, response.data.user)
+                toast.success(`Welcome back, ${user.value.firstName}!`)
                 return { success: true }
             }
 
             return { success: false, error: 'Login failed' }
-
         } catch (error) {
             const message = error.response?.data?.error || 'Login failed'
             toast.error(message)
@@ -155,113 +259,23 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    const linkLogin = async (data) => {
-        try {
-            const response = await apiMethods.auth.linkLogin(data)
-            return { success: true, data: response.data }
-        } catch (error) {
-            return { success: false, error }
-        }
-    }
-
-    const bindEmail = async (data) => {
-        try {
-            isLoading.value = true
-            const response = await apiMethods.auth.bindEmail(data)
-
-            console.log('Bind email response:', response.data) // Debug log
-
-            if (response.data.success) {
-                await setAuthData(response.data.token, response.data.user)
-                return { success: true, data: response.data }
-            } else {
-                throw new Error(response.data.error || 'Email binding failed')
-            }
-        } catch (error) {
-            console.error('Bind email error:', error)
-            throw error // Re-throw so the component can handle it
-        } finally {
-            isLoading.value = false
-        }
-    }
-
-    const linkEmailLogin = async (data) => {
-        try {
-            isLoading.value = true
-            const response = await apiMethods.auth.emailLogin(data)
-
-            console.log('Link email login response:', response.data) // Debug log
-
-            if (response.data.success) {
-                await setAuthData(response.data.token, response.data.user)
-                return { success: true, data: response.data }
-            } else {
-                throw new Error(response.data.error || 'Login failed')
-            }
-        } catch (error) {
-            console.error('Link email login error:', error)
-            throw error // Re-throw so the component can handle it
-        } finally {
-            isLoading.value = false
-        }
-    }
-
-
-    // Email login with retry
-    const emailLogin = async (email, loginToken = null) => {
-        try {
-            isLoading.value = true
-
-            const response = await retryOperation(() =>
-                apiMethods.auth.emailLogin(email, loginToken)
-            )
-
-            if (response.data.success) {
-                token.value = response.data.token
-                user.value = response.data.user
-
-                localStorage.setItem('mun_token', token.value)
-
-                // Clear validation cache since we have new auth data
-                _clearValidationCache()
-
-                const userType = user.value.role === 'delegate' ?
-                    user.value.countryName :
-                    formatPresidiumRole(user.value.presidiumRole)
-
-                toast.success(`Welcome back, ${userType}!`)
-
-                return { success: true }
-            }
-
-            return { success: false, error: 'Login failed' }
-
-        } catch (error) {
-            const message = error.response?.data?.error || 'Login failed'
-            toast.error(message)
-            return { success: false, error: message }
-        } finally {
-            isLoading.value = false
-        }
-    }
-
-    // Logout function
+    // Logout
     const logout = async (showMessage = true) => {
         try {
-            if (token.value) {
-                // Don't retry logout - if it fails, still clear local state
-                await apiMethods.auth.logout()
-            }
-        } catch (error) {
-            console.warn('Logout API call failed:', error)
-        } finally {
             // Disconnect WebSocket
             disconnectWebSocket()
-
-            // Always clear local state regardless of API success
+        } catch (error) {
+            console.warn('Logout cleanup failed:', error)
+        } finally {
+            // Always clear local state
             token.value = null
             user.value = null
+            organizations.value = { admin: [], member: [] }
+            pendingInvitations.value = []
+            activeOrgId.value = null
+
             localStorage.removeItem('mun_token')
+            localStorage.removeItem('mun_active_org')
             _clearValidationCache()
 
             if (showMessage) {
@@ -270,41 +284,17 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    // Initialize WebSocket connection (call after successful login)
-    const initializeWebSocket = () => {
-        if (!token.value) {
-            console.warn('Cannot initialize WebSocket: no token')
-            return
-        }
-
-        try {
-            const wsStore = useWebSocketStore()
-
-            // Connect with current token
-            wsStore.connect(token.value)
-
-            console.log('✅ WebSocket initialized')
-        } catch (error) {
-            console.error('Failed to initialize WebSocket:', error)
-        }
+    // Set active organization context
+    const setActiveOrg = (orgId) => {
+        activeOrgId.value = orgId
+        localStorage.setItem('mun_active_org', orgId)
     }
 
-    // Disconnect WebSocket (call in logout)
-    const disconnectWebSocket = () => {
-        try {
-            const wsStore = useWebSocketStore()
-            wsStore.disconnect()
-            console.log('🔌 WebSocket disconnected')
-        } catch (error) {
-            console.error('Failed to disconnect WebSocket:', error)
-        }
-    }
-
-    // Session validation with smart error handling
+    // Session validation with caching
     const validateSession = async () => {
-        // Return cached result if still valid
         const now = Date.now()
 
+        // Check token expiry client-side first
         if (token.value && isTokenExpired(token.value)) {
             console.warn('Token expired client-side, logging out')
             await logout(false)
@@ -313,7 +303,6 @@ export const useAuthStore = defineStore('auth', () => {
 
         // Return cached result if still valid
         if (now - _lastValidation.value < VALIDATION_CACHE_DURATION && _validationCache.value !== null) {
-            console.log('📋 Returning cached validation result')
             return _validationCache.value
         }
 
@@ -323,9 +312,8 @@ export const useAuthStore = defineStore('auth', () => {
             return result
         }
 
-        // If validation is already in progress, return the existing promise
+        // If validation is already in progress, wait for it
         if (_validationPromise.value) {
-            console.log('⏳ Validation already in progress, waiting for existing call...')
             return await _validationPromise.value
         }
 
@@ -336,44 +324,39 @@ export const useAuthStore = defineStore('auth', () => {
             const result = await _validationPromise.value
             return result
         } finally {
-            // Clear the promise cache when done
             _validationPromise.value = null
         }
     }
 
-    // Separate function to perform the actual validation
     const performValidation = async () => {
-        console.log('🔍 Performing session validation...')
-        
         try {
             const response = await retryOperation(() =>
-                apiMethods.auth.validateSession()
+                apiMethods.auth.getMe()
             )
 
             if (response.data.success) {
                 user.value = response.data.user
+                organizations.value = response.data.organizations || { admin: [], member: [] }
+                pendingInvitations.value = response.data.pendingInvitations || []
+
+                // Auto-select org if needed
+                if (!activeOrgId.value && allOrganizations.value.length > 0) {
+                    setActiveOrg(allOrganizations.value[0]._id)
+                }
+
                 const result = { success: true, user: response.data.user }
-
-                // Update cache
-                const now = Date.now()
-                _lastValidation.value = now
+                _lastValidation.value = Date.now()
                 _validationCache.value = result
-
-                console.log('✅ Session validation successful')
                 return result
             } else {
-                // Session invalid according to server - clear auth data
-                console.warn('Session validation failed - server says invalid')
                 await logout(false)
                 const result = { success: false, error: 'Session invalid' }
                 _validationCache.value = result
                 return result
             }
-
         } catch (error) {
             console.error('Session validation error:', error)
 
-            // Only clear token for actual auth failures
             if (shouldClearTokenOnError(error)) {
                 await logout(false)
                 const result = {
@@ -383,14 +366,12 @@ export const useAuthStore = defineStore('auth', () => {
                 _validationCache.value = result
                 return result
             } else {
-                // Network/server error - keep token but return failure
-                const result = {
+                // Network/server error — keep token but return failure
+                return {
                     success: false,
                     error: 'Temporary validation error',
                     retainToken: true
                 }
-                // Don't cache network errors
-                return result
             }
         }
     }
@@ -401,7 +382,7 @@ export const useAuthStore = defineStore('auth', () => {
         sessionWarningShown.value = false
     }
 
-    // Initialize auth state with better error handling
+    // Initialize auth state
     const initializeAuth = async () => {
         if (!token.value) {
             return false
@@ -411,165 +392,145 @@ export const useAuthStore = defineStore('auth', () => {
             const validation = await validateSession()
 
             if (validation.success) {
+                initializeWebSocket()
                 return true
             }
 
-            // If validation failed but we should retain token, that's ok
             if (validation.retainToken) {
                 console.warn('Auth initialization failed temporarily, will retry later')
-                return true // Allow app to continue
+                return true
             }
 
-            // Token is actually invalid
             return false
-
         } catch (error) {
             console.error('Auth initialization error:', error)
-            // Don't clear token on initialization errors
-            return true // Allow app to continue, validation will retry later
+            return false
         }
     }
 
-    // Get dashboard route based on user role
-    const getDashboardRoute = () => {
-        if (!user.value?.role) return 'Login'
-
-        switch (user.value.role) {
-            case 'admin':
-                return 'AdminDashboard'
-            case 'presidium':
-                return 'PresidiumDashboard'
-            case 'delegate':
-                return 'DelegateDashboard'
-            default:
-                return 'Login'
-        }
-    }
-
-    // Check if user has specific permission
-    const hasPermission = (permission) => {
-        if (isAdmin.value) return true // Admin has all permissions
-
-        const permissions = {
-            'manage_committee': isPresidium.value,
-            'view_documents': isAuthenticated.value,
-            'create_motions': isDelegate.value,
-            'vote': isDelegate.value && user.value?.specialRole !== 'observer',
-            'manage_sessions': isPresidium.value,
-            'manage_users': isAdmin.value
+    // Determine where to route after login
+    const getDefaultRoute = () => {
+        if (isSuperAdmin.value) {
+            return { name: 'SuperAdminDashboard' }
         }
 
-        return permissions[permission] || false
-    }
-
-    // LEGACY METHODS: Keep for backward compatibility during transition
-    const qrLogin = async (qrToken) => {
-        console.warn('qrLogin is deprecated, use linkLogin instead')
-        return linkLogin(qrToken)
-    }
-
-    const getTokenInfo = computed(() => {
-        if (!token.value) return null
-
-        const payload = decodeJWT(token.value)
-        if (!payload) return null
-
-        return {
-            userId: payload.userId,
-            role: payload.role,
-            exp: payload.exp,
-            iat: payload.iat,
-            expiresAt: new Date(payload.exp * 1000),
-            issuedAt: new Date(payload.iat * 1000),
-            remainingMs: getTokenRemainingTime(token.value)
+        if (allOrganizations.value.length > 0) {
+            const org = activeOrganization.value
+            return { name: 'OrgDashboard', params: { orgSlug: org.slug } }
         }
-    })
 
-    const refreshToken = async () => {
+        // No orgs — go to a "welcome" or "no org" page
+        return { name: 'UserHome' }
+    }
+
+    // =============================================
+    // WEBSOCKET
+    // =============================================
+    const initializeWebSocket = () => {
+        if (!token.value) {
+            console.warn('Cannot initialize WebSocket: no token')
+            return
+        }
+
         try {
-            const response = await apiMethods.auth.refreshToken()
+            const wsStore = useWebSocketStore()
+            wsStore.connect(token.value)
+            console.log('✅ WebSocket initialized')
+        } catch (error) {
+            console.error('Failed to initialize WebSocket:', error)
+        }
+    }
+
+    const disconnectWebSocket = () => {
+        try {
+            const wsStore = useWebSocketStore()
+            wsStore.disconnect()
+            console.log('🔌 WebSocket disconnected')
+        } catch (error) {
+            console.error('Failed to disconnect WebSocket:', error)
+        }
+    }
+
+    // =============================================
+    // PROFILE UPDATES
+    // =============================================
+    const updateProfile = async (data) => {
+        try {
+            isLoading.value = true
+            const response = await apiMethods.auth.updateProfile(data)
 
             if (response.data.success) {
-                token.value = response.data.token
                 user.value = response.data.user
-                localStorage.setItem('mun_token', token.value)
-
-                console.log('Token refreshed successfully')
+                toast.success('Profile updated')
                 return { success: true }
             }
+
+            return { success: false, error: 'Update failed' }
         } catch (error) {
-            console.error('Token refresh error:', error)
-            return { success: false, error }
+            const message = error.response?.data?.error || 'Failed to update profile'
+            toast.error(message)
+            return { success: false, error: message }
+        } finally {
+            isLoading.value = false
         }
     }
 
-    const setupTokenRefresh = () => {
-        if (!token.value) return
+    const changePassword = async (currentPassword, newPassword) => {
+        try {
+            isLoading.value = true
+            const response = await apiMethods.auth.changePassword({ currentPassword, newPassword })
 
-        const remainingMs = getTokenRemainingTime(token.value)
-        if (remainingMs <= 0) return
+            if (response.data.success) {
+                toast.success('Password changed')
+                return { success: true }
+            }
 
-        // Refresh when 1 hour left (or 10% of time, whichever is less)
-        const oneHour = 60 * 60 * 1000
-        const tenPercent = remainingMs * 0.1
-        const refreshTime = remainingMs - Math.min(oneHour, tenPercent)
-
-        if (refreshTime > 0) {
-            setTimeout(async () => {
-                if (isAuthenticated.value) {
-                    await refreshToken()
-                    setupTokenRefresh() // Setup next refresh
-                }
-            }, refreshTime)
-
-            console.log(`Token refresh scheduled in ${Math.floor(refreshTime / 1000 / 60)} minutes`)
+            return { success: false, error: 'Password change failed' }
+        } catch (error) {
+            const message = error.response?.data?.error || 'Failed to change password'
+            toast.error(message)
+            return { success: false, error: message }
+        } finally {
+            isLoading.value = false
         }
     }
 
-    const setAuthData = async (tokenValue, userData) => {
-        token.value = tokenValue
-        user.value = userData
-        localStorage.setItem('mun_token', tokenValue)
-
-        // Clear validation cache
-        _clearValidationCache()
-
-        // Setup token refresh
-        setupTokenRefresh()
-    }
-
+    // =============================================
+    // RETURN
+    // =============================================
     return {
         // State
-        lastActivity,
-        token: computed(() => token.value),
-        user: computed(() => user.value),
-        isLoading: computed(() => isLoading.value),
+        token,
+        user,
+        isLoading,
+        organizations,
+        pendingInvitations,
+        activeOrgId,
 
         // Computed
         isAuthenticated,
-        isAdmin,
-        isPresidium,
-        isDelegate,
-        userRole,
-        committeeId,
+        isSuperAdmin,
+        allOrganizations,
+        activeOrganization,
+        isOrgAdmin,
+        orgPermissions,
+        hasOrganization,
+        displayName,
 
-        // Actions
-        refreshToken,
-        getTokenInfo,
-        updateActivity,
-        adminLogin,
-        linkLogin,
-        bindEmail,
-        linkEmailLogin,
-        emailLogin,
+        // Methods
+        hasOrgPermission,
+        register,
+        login,
         logout,
+        setActiveOrg,
         validateSession,
+        updateActivity,
         initializeAuth,
-        getDashboardRoute,
-        hasPermission,
-        setAuthData,
-
-        // LEGACY: Deprecated methods
-        qrLogin // Will show deprecation warning
+        getDefaultRoute,
+        fetchProfile,
+        updateProfile,
+        changePassword,
+        initializeWebSocket,
+        disconnectWebSocket,
     }
 })
