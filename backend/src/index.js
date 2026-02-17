@@ -266,6 +266,11 @@ process.on('unhandledRejection', (reason, promise) => {
   gracefulShutdown('unhandledRejection');
 });
 
+process.on('beforeExit', (code) => {
+    console.log(`[DEBUG] Process beforeExit with code: ${code}`);
+    console.trace();
+});
+
 // Start the server
 startServer();
 

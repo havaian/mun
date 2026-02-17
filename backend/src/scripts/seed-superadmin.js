@@ -51,7 +51,8 @@ const seed = async () => {
                 logger.info(`Existing user promoted to SuperAdmin: ${email}`);
             }
             await mongoose.disconnect();
-            process.exit(0);
+            console.log(`[DEBUG] gracefulShutdown triggered by: ${signal}`);
+            process.exit(1);
         }
 
         // Create superadmin
@@ -83,7 +84,8 @@ const seed = async () => {
         logger.info('');
 
         await mongoose.disconnect();
-        process.exit(0);
+        console.log(`[DEBUG] gracefulShutdown triggered by: ${signal}`);
+        process.exit(1);
     } catch (error) {
         logger.error('Seed failed:', error);
         await mongoose.disconnect();
