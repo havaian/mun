@@ -14,27 +14,10 @@
  * 
  * If the superadmin already exists, the script will skip creation.
  */
-
-require('dotenv').config();
-const mongoose = require('mongoose');
-
-// Minimal logger for seed script
-const logger = {
-    info: (...args) => console.log('[INFO]', ...args),
-    error: (...args) => console.error('[ERROR]', ...args),
-    warn: (...args) => console.warn('[WARN]', ...args)
-};
-global.logger = logger;
-
 const { User } = require('../auth/model');
-const crypto = require('crypto');
 
 const seed = async () => {
     try {
-        // Connect to MongoDB
-        await mongoose.connect(process.env.MONGODB_URI);
-        logger.info('Connected to MongoDB');
-
         const email = process.env.ADMIN_USER;
         const password = process.env.ADMIN_PASS;
 
@@ -44,11 +27,13 @@ const seed = async () => {
             if (existing.isSuperAdmin) {
                 logger.info(`SuperAdmin already exists: ${email}`);
                 logger.info('Skipping creation.');
+                return;
             } else {
                 // User exists but isn't superadmin — promote them
                 existing.isSuperAdmin = true;
                 await existing.save();
                 logger.info(`Existing user promoted to SuperAdmin: ${email}`);
+                return;
             }
         }
 
@@ -79,6 +64,7 @@ const seed = async () => {
         }
         logger.info('===========================================');
         logger.info('');
+        return;
     } catch (error) {
         logger.error('Seed failed:', error);
     }
