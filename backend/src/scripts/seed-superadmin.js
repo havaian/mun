@@ -26,7 +26,7 @@ const logger = {
 };
 global.logger = logger;
 
-const { User } = require('../auth/model');
+const { User } = require('../src/auth/model');
 const crypto = require('crypto');
 
 const seed = async () => {
@@ -35,8 +35,8 @@ const seed = async () => {
         await mongoose.connect(process.env.MONGODB_URI);
         logger.info('Connected to MongoDB');
 
-        const email = process.env.ADMIN_USER;
-        const password = process.env.ADMIN_PASS;
+        const email = (process.env.SUPERADMIN_EMAIL || 'admin@mun.uz').toLowerCase();
+        const password = process.env.SUPERADMIN_PASSWORD || crypto.randomBytes(16).toString('hex');
 
         // Check if superadmin already exists
         const existing = await User.findOne({ email });
@@ -51,7 +51,6 @@ const seed = async () => {
                 logger.info(`Existing user promoted to SuperAdmin: ${email}`);
             }
             await mongoose.disconnect();
-            logger.info(`[DEBUG] gracefulShutdown triggered by: ${signal}`);
             process.exit(1);
         }
 
@@ -84,7 +83,6 @@ const seed = async () => {
         logger.info('');
 
         await mongoose.disconnect();
-        logger.info(`[DEBUG] gracefulShutdown triggered by: ${signal}`);
         process.exit(1);
     } catch (error) {
         logger.error('Seed failed:', error);
