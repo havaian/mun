@@ -18,13 +18,8 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 
-// Minimal logger for seed script
-const logger = {
-    info: (...args) => console.log('[INFO]', ...args),
-    error: (...args) => console.error('[ERROR]', ...args),
-    warn: (...args) => console.warn('[WARN]', ...args)
-};
-global.logger = logger;
+const { setupGlobalLogger } = require('../logger/globalLogger');
+setupGlobalLogger();
 
 const { User } = require('../auth/model');
 const crypto = require('crypto');
@@ -33,7 +28,7 @@ const seed = async () => {
     try {
         // Connect to MongoDB
         await mongoose.connect(process.env.MONGODB_URI);
-        logger.info('Connected to MongoDB');
+        global.logger.info('Connected to MongoDB');
 
         const email = (process.env.SUPERADMIN_EMAIL || 'admin@mun.uz').toLowerCase();
         const password = process.env.SUPERADMIN_PASSWORD || crypto.randomBytes(16).toString('hex');
@@ -42,13 +37,13 @@ const seed = async () => {
         const existing = await User.findOne({ email });
         if (existing) {
             if (existing.isSuperAdmin) {
-                logger.info(`SuperAdmin already exists: ${email}`);
-                logger.info('Skipping creation.');
+                global.logger.info(`SuperAdmin already exists: ${email}`);
+                global.logger.info('Skipping creation.');
             } else {
                 // User exists but isn't superadmin — promote them
                 existing.isSuperAdmin = true;
                 await existing.save();
-                logger.info(`Existing user promoted to SuperAdmin: ${email}`);
+                global.logger.info(`Existing user promoted to SuperAdmin: ${email}`);
             }
             await mongoose.disconnect();
             process.exit(0);
@@ -67,25 +62,25 @@ const seed = async () => {
 
         await superAdmin.save();
 
-        logger.info('');
-        logger.info('===========================================');
-        logger.info('  SuperAdmin account created successfully');
-        logger.info('===========================================');
-        logger.info(`  Email:    ${email}`);
+        global.logger.info('');
+        global.logger.info('===========================================');
+        global.logger.info('  SuperAdmin account created successfully');
+        global.logger.info('===========================================');
+        global.logger.info(`  Email:    ${email}`);
         if (!process.env.SUPERADMIN_PASSWORD) {
-            logger.info(`  Password: ${password}`);
-            logger.info('');
-            logger.info('  ⚠️  SAVE THIS PASSWORD — it will not be shown again!');
+            global.logger.info(`  Password: ${password}`);
+            global.logger.info('');
+            global.logger.info('  ⚠️  SAVE THIS PASSWORD — it will not be shown again!');
         } else {
-            logger.info('  Password: (from SUPERADMIN_PASSWORD env var)');
+            global.logger.info('  Password: (from SUPERADMIN_PASSWORD env var)');
         }
-        logger.info('===========================================');
-        logger.info('');
+        global.logger.info('===========================================');
+        global.logger.info('');
 
         await mongoose.disconnect();
         process.exit(0);
     } catch (error) {
-        logger.error('Seed failed:', error);
+        global.logger.error('Seed failed:', error);
         await mongoose.disconnect();
         process.exit(1);
     }
