@@ -60,7 +60,7 @@
         </div>
 
         <!-- Create Modal -->
-        <ModalWrapper :show="showCreateModal" @close="showCreateModal = false">
+        <ModalWrapper :modelValue="showCreateModal" @close="showCreateModal = false">
             <template #title>Create Event</template>
             <template #default>
                 <form @submit.prevent="handleCreate" class="space-y-4">

@@ -65,7 +65,7 @@
         </div>
 
         <!-- Create/Edit Modal -->
-        <ModalWrapper :show="showCreateModal || !!editingOrg" @close="closeModal">
+        <ModalWrapper :modelValue="showCreateModal || !!editingOrg" @close="closeModal">
             <template #title>{{ editingOrg ? 'Edit Organization' : 'Create Organization' }}</template>
             <template #default>
                 <form @submit.prevent="handleSave" class="space-y-4">

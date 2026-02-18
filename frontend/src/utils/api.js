@@ -286,9 +286,16 @@ export const apiMethods = {
     // COUNTRIES
     // =============================================
     countries: {
-        getAll: () => api.get('/countries'),
-        getByCode: (code) => api.get(`/countries/${code}`),
+        getAll: (params = {}) => api.get('/countries', { params }),
+        getByCode: (code, params = {}) => api.get(`/countries/${code}`, { params }),
         search: (query) => api.get('/countries/search', { params: { q: query } }),
+        // Legacy methods — used by flags store and other old components
+        getFlag: (code) => api.get(`/countries/flags/${code}`),
+        getAllFlags: () => api.get('/countries/flags/all/batch'),
+        getAllFlagsBatch: () => api.get('/countries/flags/all/batch'),
+        getFlagsMetaInfo: () => api.get('/countries/flags/meta/info'),
+        getMetaHealth: () => api.get('/countries/meta/health'),
+        refreshCache: () => api.post('/countries/admin/refresh-flags'),
     },
 
     // =============================================

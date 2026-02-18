@@ -96,7 +96,7 @@
         <div v-else class="text-center py-12 text-mun-gray-500">Event not found.</div>
 
         <!-- Edit Modal -->
-        <ModalWrapper :show="showEditModal" @close="showEditModal = false">
+        <ModalWrapper :modelValue="showEditModal" @close="showEditModal = false">
             <template #title>Edit Event</template>
             <template #default>
                 <form @submit.prevent="handleEdit" class="space-y-4">

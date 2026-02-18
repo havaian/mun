@@ -106,6 +106,24 @@ export const useAuthStore = defineStore('auth', () => {
     })
 
     // =============================================
+    // LEGACY COMPAT — old stores (session, voting, admin) 
+    // and old components reference these properties.
+    // They map the old role-based model onto the new one.
+    // =============================================
+    const isAdmin = computed(() => user.value?.isSuperAdmin || false)
+    const isPresidium = computed(() => user.value?.role === 'presidium' || false)
+    const isDelegate = computed(() => user.value?.role === 'delegate' || false)
+    const userRole = computed(() => {
+        if (user.value?.isSuperAdmin) return 'admin'
+        return user.value?.role || null
+    })
+    const committeeId = computed(() => user.value?.committeeId || null)
+    const formatPresidiumRole = (role) => {
+        const map = { chairman: 'Chairman', 'co-chairman': 'Co-Chairman', expert: 'Expert', secretary: 'Secretary' }
+        return map[role] || role
+    }
+
+    // =============================================
     // HELPER FUNCTIONS
     // =============================================
     const _clearValidationCache = () => {
@@ -516,6 +534,14 @@ export const useAuthStore = defineStore('auth', () => {
         orgPermissions,
         hasOrganization,
         displayName,
+
+        // Legacy compat computeds — used by old stores/components
+        isAdmin,
+        isPresidium,
+        isDelegate,
+        userRole,
+        committeeId,
+        formatPresidiumRole,
 
         // Methods
         hasOrgPermission,
