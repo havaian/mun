@@ -134,11 +134,11 @@
         </div>
 
         <!-- System Health -->
-        <div class="mun-card p-6">
+        <!-- <div class="mun-card p-6">
             <h3 class="text-lg font-semibold text-mun-gray-900 mb-4">System Health</h3>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6"> -->
                 <!-- System Status -->
-                <div class="space-y-4">
+                <!-- <div class="space-y-4">
                     <h4 class="font-medium text-mun-gray-900">System Status</h4>
                     <div class="space-y-3">
                         <div class="flex items-center justify-between py-2">
@@ -168,10 +168,10 @@
                                 formatMemoryUsage(performanceMetrics.memoryUsage) }}</span>
                         </div>
                     </div>
-                </div>
+                </div> -->
 
                 <!-- Performance Metrics -->
-                <div class="space-y-4">
+                <!-- <div class="space-y-4">
                     <h4 class="font-medium text-mun-gray-900">Performance</h4>
                     <div class="space-y-3">
                         <div class="flex items-center justify-between py-2">
@@ -194,9 +194,9 @@
                                 }}</span>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
+                </div> -->
+            <!-- </div>
+        </div> -->
 
         <!-- Recent Activity -->
         <div class="mun-card">

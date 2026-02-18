@@ -139,7 +139,7 @@
             </nav>
 
             <!-- System Status (Admin only) -->
-            <div v-if="showSystemStatus && !sidebarCollapsed" class="border-t border-mun-gray-200 p-4">
+            <!-- <div v-if="showSystemStatus && !sidebarCollapsed" class="border-t border-mun-gray-200 p-4">
                 <div class="space-y-3">
                     <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wider">
                         System Status
@@ -171,7 +171,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> -->
 
             <!-- Current Status (Role-specific info) -->
             <div v-if="currentStatus && !sidebarCollapsed" class="border-t border-mun-gray-100 p-4">
