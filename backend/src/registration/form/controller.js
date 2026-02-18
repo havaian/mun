@@ -30,6 +30,7 @@ const upsertForm = async (req, res) => {
             pipelineStages,
             customFields,
             autoFilledFields,
+            deadline,
             status
         } = req.body;
 
@@ -63,9 +64,9 @@ const upsertForm = async (req, res) => {
         // Validate pipeline stages if provided
         if (pipelineStages) {
             for (const stage of pipelineStages) {
-                if (!PIPELINE_STAGES.includes(stage.stageKey)) {
+                if (!PIPELINE_STAGES.includes(stag)) {
                     return res.status(400).json({
-                        error: `Invalid pipeline stage: ${stage.stageKey}. Must be one of: ${PIPELINE_STAGES.join(', ')}`
+                        error: `Invalid pipeline stage: ${stage.stage}. Must be one of: ${PIPELINE_STAGES.join(', ')}`
                     });
                 }
             }
@@ -90,11 +91,12 @@ const upsertForm = async (req, res) => {
                 event: eventId,
                 committeePreferenceCount: committeePreferenceCount || 3,
                 pipelineStages: pipelineStages || [
-                    { stageKey: 'form_review', order: 1, isActive: true },
-                    { stageKey: 'final_decision', order: 2, isActive: true }
+                    { stage: 'form_review', order: 1, isActive: true },
+                    { stage: 'final_decision', order: 2, isActive: true }
                 ],
                 customFields: customFields || [],
                 autoFilledFields: autoFilledFields || ['firstName', 'lastName', 'dateOfBirth', 'email', 'institution', 'phone'],
+                deadline: deadline,
                 createdBy: req.user.userId,
                 status: status || 'draft'
             });

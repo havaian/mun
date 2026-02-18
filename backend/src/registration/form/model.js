@@ -72,7 +72,7 @@ const customFieldSchema = new mongoose.Schema({
 
 // Pipeline stage configuration
 const pipelineStageSchema = new mongoose.Schema({
-    stageKey: {
+    stage: {
         type: String,
         enum: PIPELINE_STAGES,
         required: true
@@ -118,8 +118,8 @@ const registrationFormSchema = new mongoose.Schema({
     pipelineStages: {
         type: [pipelineStageSchema],
         default: [
-            { stageKey: 'form_review', order: 1, isActive: true },
-            { stageKey: 'final_decision', order: 2, isActive: true }
+            { stage: 'form_review', order: 1, isActive: true },
+            { stage: 'final_decision', order: 2, isActive: true }
         ]
     },
 
@@ -164,7 +164,7 @@ registrationFormSchema.methods.getActiveStages = function () {
 // Get the first active stage key (what stage an application starts at after submission)
 registrationFormSchema.methods.getFirstReviewStage = function () {
     const activeStages = this.getActiveStages();
-    return activeStages.length > 0 ? activeStages[0].stageKey : 'final_decision';
+    return activeStages.length > 0 ? activeStages[0].stage : 'final_decision';
 };
 
 // Validate custom field IDs are unique within the form
