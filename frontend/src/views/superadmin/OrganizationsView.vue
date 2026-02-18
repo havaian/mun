@@ -79,7 +79,7 @@
                         <textarea v-model="formData.description" rows="3" class="input-field"
                             placeholder="Brief description"></textarea>
                     </div>
-                    <div v-if="!editingOrg">
+                    <div>
                         <label class="block text-sm font-medium text-mun-gray-700 mb-1">Admin Email</label>
                         <input v-model="formData.adminEmail" type="email" class="input-field"
                             placeholder="admin@example.com (optional — assign later)" />
