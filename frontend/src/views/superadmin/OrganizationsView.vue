@@ -150,20 +150,18 @@ const closeModal = () => {
 const handleSave = async () => {
     isSaving.value = true
     try {
+        const data = {
+            name: formData.name,
+            description: formData.description,
+            adminEmail: formData.adminEmail,
+        }
+
         if (editingOrg.value) {
-            await apiMethods.organizations.update(editingOrg.value._id, {
-                name: formData.name,
-                description: formData.description,
-            })
+            await apiMethods.organizations.update(editingOrg.value._id, data)
             toast.success('Organization updated')
         } else {
-            const payload = {
-                name: formData.name,
-                description: formData.description,
-            }
-            if (formData.adminEmail) payload.adminEmail = formData.adminEmail
 
-            await apiMethods.organizations.create(payload)
+            await apiMethods.organizations.create(data)
             toast.success('Organization created')
         }
         closeModal()
