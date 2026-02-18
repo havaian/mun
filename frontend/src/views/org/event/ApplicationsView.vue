@@ -104,7 +104,7 @@
         </template>
 
         <!-- Application detail modal -->
-        <ModalWrapper :modelValue="!!selectedApp" @close="selectedApp = null" size="lg">
+        <ModalWrapper :showDefaultFooter="false" :modelValue="!!selectedApp" @close="selectedApp = null" size="lg">
             <template #title>
                 Application — {{ selectedApp?.user?.firstName }} {{ selectedApp?.user?.lastName }}
             </template>

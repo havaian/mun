@@ -91,7 +91,7 @@
         </div>
 
         <!-- Create/Edit Modal -->
-        <ModalWrapper :modelValue="showFormModal" @close="closeFormModal">
+        <ModalWrapper :showDefaultFooter="false" :modelValue="showFormModal" @close="closeFormModal">
             <template #title>{{ editingCommittee ? 'Edit Committee' : 'Create Committee' }}</template>
             <template #default>
                 <form @submit.prevent="handleSave" class="space-y-4">
@@ -215,7 +215,8 @@
         </ModalWrapper>
 
         <!-- Country Manager Modal -->
-        <ModalWrapper :modelValue="!!countryManagerCommittee" @close="countryManagerCommittee = null" size="lg">
+        <ModalWrapper :showDefaultFooter="false" :modelValue="!!countryManagerCommittee"
+            @close="countryManagerCommittee = null" size="lg">
             <template #title>Manage Countries — {{ countryManagerCommittee?.acronym }}</template>
             <template #default>
                 <div class="space-y-4">

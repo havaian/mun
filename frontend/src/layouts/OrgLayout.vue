@@ -95,7 +95,7 @@ const navigationSections = computed(() => {
 })
 
 const userActions = computed(() => [
-    { label: 'Profile', action: () => router.push({ name: 'Profile' }) },
+    { name: 'Profile', label: 'Profile', to: '/profile' },
 ])
 
 const toggleSidebar = () => {

@@ -83,7 +83,7 @@
         </div>
 
         <!-- Invite Modal -->
-        <ModalWrapper :modelValue="showInviteModal" @close="showInviteModal = false">
+        <ModalWrapper :showDefaultFooter="false" :modelValue="showInviteModal" @close="showInviteModal = false">
             <template #title>Invite Member</template>
             <template #default>
                 <form @submit.prevent="handleInvite" class="space-y-4">
@@ -114,7 +114,7 @@
         </ModalWrapper>
 
         <!-- Edit Member Permissions Modal -->
-        <ModalWrapper :modelValue="!!editingMember" @close="editingMember = null">
+        <ModalWrapper :showDefaultFooter="false" :modelValue="!!editingMember" @close="editingMember = null">
             <template #title>Edit Permissions</template>
             <template #default>
                 <form @submit.prevent="handleUpdatePermissions" class="space-y-4">
