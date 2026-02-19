@@ -277,19 +277,19 @@ const getAllFlags = async (req, res) => {
         if (acceptsGzip) {
             const jsonString = JSON.stringify(responseData);
 
-            zlib.gzip(jsonString, (err, compressed) => {
+            zlib.gzip(jsonString, async (err, compressed) => {
                 if (err) {
                     global.logger.error('Compression error:', err);
-                    res.set(headers);
+                    await res.set(headers);
                     res.json(responseData);
                 } else {
                     headers['Content-Encoding'] = 'gzip';
-                    res.set(headers);
+                    await res.set(headers);
                     res.send(compressed); // Now sends compressed WRAPPED response
                 }
             });
         } else {
-            res.set(headers);
+            await res.set(headers);
             res.json(responseData);
         }
 
