@@ -64,7 +64,7 @@ const upsertForm = async (req, res) => {
         // Validate pipeline stages if provided
         if (pipelineStages) {
             for (const stage of pipelineStages) {
-                if (!PIPELINE_STAGES.includes(stag)) {
+                if (!PIPELINE_STAGES.includes(stage.stage)) {
                     return res.status(400).json({
                         error: `Invalid pipeline stage: ${stage.stage}. Must be one of: ${PIPELINE_STAGES.join(', ')}`
                     });
