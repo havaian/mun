@@ -102,9 +102,18 @@
                             <p class="text-mun-gray-500">Location</p>
                             <p class="font-medium text-mun-gray-900">{{ event.location }}</p>
                         </div>
+                        <div v-if="event.timezone">
+                            <p class="text-mun-gray-500">Timezone</p>
+                            <p class="font-medium text-mun-gray-900">{{ event.timezone }}</p>
+                        </div>
                         <div>
                             <p class="text-mun-gray-500">Slug</p>
                             <p class="font-mono text-xs text-mun-gray-700">{{ event.slug }}</p>
+                        </div>
+                        <div v-if="event.logo">
+                            <p class="text-mun-gray-500">Event Logo</p>
+                            <img :src="event.logo" alt="Event logo"
+                                class="mt-1 w-16 h-16 rounded-lg object-cover border border-mun-gray-200" />
                         </div>
                     </div>
                 </div>
@@ -136,29 +145,64 @@
         <ModalWrapper :showDefaultFooter="false" :modelValue="showEditModal" @close="showEditModal = false">
             <template #title>Edit Event</template>
             <template #default>
-                <form @submit.prevent="handleEdit" class="space-y-4">
+                <form @submit.prevent="handleEdit" class="space-y-5">
+                    <!-- Name -->
                     <div>
-                        <label class="block text-sm font-medium text-mun-gray-700 mb-1">Name</label>
-                        <input v-model="editForm.name" type="text" required class="input-field" />
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-1">Event Name *</label>
+                        <input v-model="editForm.name" type="text" required class="input-field"
+                            placeholder="e.g. TASHKENT MUN 2026" />
                     </div>
+
+                    <!-- Description -->
                     <div>
                         <label class="block text-sm font-medium text-mun-gray-700 mb-1">Description</label>
-                        <textarea v-model="editForm.description" rows="3" class="input-field"></textarea>
+                        <textarea v-model="editForm.description" rows="3" class="input-field"
+                            placeholder="Describe the event, its goals, and what participants can expect..."></textarea>
+                        <p class="text-xs text-mun-gray-400 mt-1">Shown on the public event page</p>
                     </div>
+
+                    <!-- Dates -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-sm font-medium text-mun-gray-700 mb-1">Start Date</label>
-                            <input v-model="editForm.startDate" type="date" class="input-field" />
+                            <label class="block text-sm font-medium text-mun-gray-700 mb-1">Start Date *</label>
+                            <input v-model="editForm.startDate" type="date" required class="input-field" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-mun-gray-700 mb-1">End Date</label>
-                            <input v-model="editForm.endDate" type="date" class="input-field" />
+                            <label class="block text-sm font-medium text-mun-gray-700 mb-1">End Date *</label>
+                            <input v-model="editForm.endDate" type="date" required class="input-field" />
                         </div>
                     </div>
+
+                    <!-- Location -->
                     <div>
                         <label class="block text-sm font-medium text-mun-gray-700 mb-1">Location</label>
-                        <input v-model="editForm.location" type="text" class="input-field" />
+                        <input v-model="editForm.location" type="text" class="input-field"
+                            placeholder="e.g. Hilton Tashkent City, Uzbekistan" />
                     </div>
+
+                    <!-- Logo URL -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-1">Event Logo URL</label>
+                        <input v-model="editForm.logo" type="url" class="input-field"
+                            placeholder="https://example.com/logo.png" />
+                        <p class="text-xs text-mun-gray-400 mt-1">Direct link to the event logo image</p>
+                        <!-- Logo preview -->
+                        <div v-if="editForm.logo" class="mt-2 flex items-center gap-3">
+                            <img :src="editForm.logo" alt="Logo preview"
+                                class="w-12 h-12 rounded-lg object-cover border border-mun-gray-200"
+                                @error="editForm.logo = ''" />
+                            <button type="button" @click="editForm.logo = ''"
+                                class="text-xs text-red-500 hover:text-red-700">Remove</button>
+                        </div>
+                    </div>
+
+                    <!-- Timezone -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-1">Timezone</label>
+                        <SleekSelect v-model="editForm.timezone" :options="timezoneOptions"
+                            placeholder="Select timezone" searchable size="md" container-class="w-full" />
+                    </div>
+
                     <div class="flex justify-end space-x-3 pt-2">
                         <AppButton variant="ghost" type="button" @click="showEditModal = false">Cancel</AppButton>
                         <AppButton type="submit" :disabled="isSaving">{{ isSaving ? 'Saving...' : 'Save' }}</AppButton>
@@ -200,7 +244,23 @@ const showEditModal = ref(false)
 const activeTab = ref('overview')
 const copiedField = ref(null)
 
-const editForm = reactive({ name: '', description: '', startDate: '', endDate: '', location: '' })
+const editForm = reactive({ name: '', description: '', startDate: '', endDate: '', location: '', logo: '', timezone: 'UTC' })
+
+const timezoneOptions = [
+    { label: 'UTC (GMT+0)', value: 'UTC' },
+    { label: 'Tashkent (GMT+5)', value: 'Asia/Tashkent' },
+    { label: 'Moscow (GMT+3)', value: 'Europe/Moscow' },
+    { label: 'London (GMT+0/+1)', value: 'Europe/London' },
+    { label: 'Berlin (GMT+1/+2)', value: 'Europe/Berlin' },
+    { label: 'New York (GMT-5/-4)', value: 'America/New_York' },
+    { label: 'Los Angeles (GMT-8/-7)', value: 'America/Los_Angeles' },
+    { label: 'Dubai (GMT+4)', value: 'Asia/Dubai' },
+    { label: 'Singapore (GMT+8)', value: 'Asia/Singapore' },
+    { label: 'Tokyo (GMT+9)', value: 'Asia/Tokyo' },
+    { label: 'Seoul (GMT+9)', value: 'Asia/Seoul' },
+    { label: 'Istanbul (GMT+3)', value: 'Europe/Istanbul' },
+    { label: 'Almaty (GMT+6)', value: 'Asia/Almaty' },
+]
 
 const tabs = [
     { id: 'overview', label: 'Overview' },
@@ -297,6 +357,8 @@ watch(showEditModal, (v) => {
         editForm.startDate = event.value.startDate?.split('T')[0] || ''
         editForm.endDate = event.value.endDate?.split('T')[0] || ''
         editForm.location = event.value.location || ''
+        editForm.logo = event.value.logo || ''
+        editForm.timezone = event.value.timezone || 'UTC'
     }
 })
 

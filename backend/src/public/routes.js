@@ -25,7 +25,7 @@ router.get('/events/:orgSlug/:eventSlug', async (req, res) => {
             organization: org._id,
             status: { $nin: ['draft'] }
         })
-            .select('name slug description startDate endDate location status statistics organization')
+            .select('name slug description location logo startDate endDate status statistics organization')
             .populate('organization', 'name slug logo')
             .lean();
 

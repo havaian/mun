@@ -31,6 +31,13 @@ const eventSchema = new mongoose.Schema({
         maxlength: 5000
     },
 
+    location: {
+        type: String,
+        default: null,
+        trim: true,
+        maxlength: 300
+    },
+
     logo: {
         type: String,
         default: null

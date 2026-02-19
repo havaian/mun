@@ -73,6 +73,7 @@ const createEvent = async (req, res) => {
         const {
             name,
             description,
+            location,
             startDate,
             endDate,
             timezone,
@@ -113,6 +114,7 @@ const createEvent = async (req, res) => {
             name: name.trim(),
             slug,
             description: description?.trim() || null,
+            location: location?.trim() || null,
             logo: logo || null,
             photos: photos || [],
             startDate: start,
@@ -181,7 +183,7 @@ const updateEvent = async (req, res) => {
 
         // Allowed fields
         const allowedFields = [
-            'name', 'description', 'startDate', 'endDate',
+            'name', 'description', 'location', 'startDate', 'endDate',
             'timezone', 'logo', 'photos'
         ];
 
