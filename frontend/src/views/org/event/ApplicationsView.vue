@@ -1,7 +1,7 @@
 <template>
-    <div class="p-6 lg:p-8 space-y-6">
-        <!-- Header -->
-        <div class="page-header p-6">
+    <div :class="embedded ? 'space-y-6' : 'p-6 lg:p-8 space-y-6'">
+        <!-- Header (standalone mode only) -->
+        <div v-if="!embedded" class="page-header p-6">
             <div>
                 <div class="flex items-center space-x-3 mb-1">
                     <router-link
@@ -82,7 +82,7 @@
                                         </span>
                                     </div>
                                     <span :class="stageClass(app.currentStage)">{{ formatStage(app.currentStage)
-                                        }}</span>
+                                    }}</span>
                                     <ChevronRightIcon class="w-4 h-4 text-mun-gray-400" />
                                 </div>
                             </div>
@@ -126,14 +126,14 @@
                         <h3 class="text-sm font-semibold text-mun-gray-700 mb-2">Applicant Information</h3>
                         <div class="grid grid-cols-2 gap-3 text-sm">
                             <div><span class="text-mun-gray-500">Name:</span> <span class="font-medium">{{
-                                    selectedApp.user?.firstName }} {{ selectedApp.user?.lastName }}</span></div>
+                                selectedApp.user?.firstName }} {{ selectedApp.user?.lastName }}</span></div>
                             <div><span class="text-mun-gray-500">Email:</span> <span class="font-medium">{{
-                                    selectedApp.user?.email }}</span></div>
+                                selectedApp.user?.email }}</span></div>
                             <div v-if="selectedApp.user?.phone"><span class="text-mun-gray-500">Phone:</span> <span
                                     class="font-medium">{{ selectedApp.user.phone }}</span></div>
                             <div v-if="selectedApp.user?.institution"><span
                                     class="text-mun-gray-500">Institution:</span> <span class="font-medium">{{
-                                    selectedApp.user.institution }}</span></div>
+                                        selectedApp.user.institution }}</span></div>
                         </div>
                     </div>
 
@@ -145,7 +145,7 @@
                                 class="flex items-center space-x-2 text-sm">
                                 <span
                                     class="w-5 h-5 rounded-full bg-mun-gray-200 flex items-center justify-center text-xs font-bold text-mun-gray-600">{{
-                                    i + 1 }}</span>
+                                        i + 1 }}</span>
                                 <span>{{ pref.committee?.name || pref.committee?.acronym || 'Unknown' }}</span>
                                 <span v-if="pref.country" class="text-mun-gray-400">— {{ pref.country }}</span>
                             </div>
@@ -324,6 +324,10 @@ import { useAuthStore } from '@/stores/auth'
 import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
 import { DocumentTextIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
+
+defineProps({
+    embedded: { type: Boolean, default: false }
+})
 
 const route = useRoute()
 const authStore = useAuthStore()

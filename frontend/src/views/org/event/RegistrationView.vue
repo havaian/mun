@@ -1,7 +1,7 @@
 <template>
-    <div class="p-6 lg:p-8 space-y-6">
-        <!-- Header -->
-        <div class="page-header p-6">
+    <div :class="embedded ? 'space-y-6' : 'p-6 lg:p-8 space-y-6'">
+        <!-- Header (standalone mode) -->
+        <div v-if="!embedded" class="page-header p-6">
             <div>
                 <div class="flex items-center space-x-3 mb-1">
                     <router-link
@@ -17,6 +17,13 @@
                     {{ isSaving ? 'Saving...' : 'Save Form' }}
                 </AppButton>
             </div>
+        </div>
+        <!-- Compact action bar (embedded mode) -->
+        <div v-else class="flex items-center justify-end space-x-3">
+            <span v-if="formData" :class="formStatusClass(formData.status)">{{ formData.status }}</span>
+            <AppButton @click="saveForm" :disabled="isSaving">
+                {{ isSaving ? 'Saving...' : 'Save Form' }}
+            </AppButton>
         </div>
 
         <div v-if="isLoading" class="flex justify-center py-12">
@@ -224,6 +231,10 @@ import { useToast } from '@/plugins/toast'
 import {
     PlusIcon, TrashIcon, ChevronUpIcon, ChevronDownIcon
 } from '@heroicons/vue/24/outline'
+
+defineProps({
+    embedded: { type: Boolean, default: false }
+})
 
 const route = useRoute()
 const authStore = useAuthStore()

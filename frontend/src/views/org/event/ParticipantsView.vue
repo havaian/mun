@@ -1,6 +1,7 @@
 <template>
-    <div class="p-6 lg:p-8 space-y-6">
-        <div class="page-header p-6">
+    <div :class="embedded ? 'space-y-6' : 'p-6 lg:p-8 space-y-6'">
+        <!-- Header (standalone mode) -->
+        <div v-if="!embedded" class="page-header p-6">
             <div>
                 <div class="flex items-center space-x-3 mb-1">
                     <router-link
@@ -11,6 +12,13 @@
                 <p class="text-sm text-mun-gray-500 mt-1">Manage event participants and their roles</p>
             </div>
             <AppButton v-if="canManage" @click="showAddModal = true">
+                <PlusIcon class="w-4 h-4 mr-2" />
+                Add Participant
+            </AppButton>
+        </div>
+        <!-- Compact action bar (embedded mode) -->
+        <div v-else-if="canManage" class="flex justify-end">
+            <AppButton @click="showAddModal = true">
                 <PlusIcon class="w-4 h-4 mr-2" />
                 Add Participant
             </AppButton>
@@ -67,6 +75,10 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { apiMethods } from '@/utils/api'
 import { PlusIcon } from '@heroicons/vue/24/outline'
+
+defineProps({
+    embedded: { type: Boolean, default: false }
+})
 
 const route = useRoute()
 const authStore = useAuthStore()

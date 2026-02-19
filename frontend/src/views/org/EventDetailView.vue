@@ -24,73 +24,86 @@
                 </div>
             </div>
 
-            <!-- Quick nav tabs -->
+            <!-- Tabs -->
             <div class="flex items-center space-x-1 bg-white rounded-xl border border-mun-gray-200 p-1">
-                <router-link v-for="tab in tabs" :key="tab.name" :to="tab.to" :class="[
+                <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id" :class="[
                     'px-4 py-2 text-sm font-medium rounded-lg transition-colors',
-                    $route.name === tab.name
+                    activeTab === tab.id
                         ? 'bg-mun-blue text-white'
                         : 'text-mun-gray-600 hover:bg-mun-gray-50'
                 ]">
                     {{ tab.label }}
-                </router-link>
+                </button>
             </div>
 
-            <!-- Stats grid -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
-                    <p class="text-sm font-medium text-mun-gray-500">Committees</p>
-                    <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalCommittees || 0 }}
-                    </p>
+            <!-- Tab content -->
+            <template v-if="activeTab === 'overview'">
+                <!-- Stats grid -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
+                        <p class="text-sm font-medium text-mun-gray-500">Committees</p>
+                        <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalCommittees || 0
+                            }}
+                        </p>
+                    </div>
+                    <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
+                        <p class="text-sm font-medium text-mun-gray-500">Participants</p>
+                        <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalParticipants || 0
+                            }}
+                        </p>
+                    </div>
+                    <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
+                        <p class="text-sm font-medium text-mun-gray-500">Applications</p>
+                        <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalApplications || 0
+                            }}
+                        </p>
+                    </div>
+                    <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
+                        <p class="text-sm font-medium text-mun-gray-500">Countries</p>
+                        <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalCountries || 0 }}
+                        </p>
+                    </div>
                 </div>
-                <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
-                    <p class="text-sm font-medium text-mun-gray-500">Participants</p>
-                    <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalParticipants || 0 }}
-                    </p>
-                </div>
-                <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
-                    <p class="text-sm font-medium text-mun-gray-500">Applications</p>
-                    <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalApplications || 0 }}
-                    </p>
-                </div>
-                <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
-                    <p class="text-sm font-medium text-mun-gray-500">Countries</p>
-                    <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalCountries || 0 }}</p>
-                </div>
-            </div>
 
-            <!-- Event details -->
-            <div class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-4">
-                <h2 class="text-lg font-semibold text-mun-gray-900">Details</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div v-if="event.startDate">
-                        <p class="text-mun-gray-500">Start Date</p>
-                        <p class="font-medium text-mun-gray-900">{{ formatDate(event.startDate) }}</p>
-                    </div>
-                    <div v-if="event.endDate">
-                        <p class="text-mun-gray-500">End Date</p>
-                        <p class="font-medium text-mun-gray-900">{{ formatDate(event.endDate) }}</p>
-                    </div>
-                    <div v-if="event.location">
-                        <p class="text-mun-gray-500">Location</p>
-                        <p class="font-medium text-mun-gray-900">{{ event.location }}</p>
-                    </div>
-                    <div>
-                        <p class="text-mun-gray-500">Slug</p>
-                        <p class="font-mono text-xs text-mun-gray-700">{{ event.slug }}</p>
+                <!-- Event details -->
+                <div class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-4">
+                    <h2 class="text-lg font-semibold text-mun-gray-900">Details</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div v-if="event.startDate">
+                            <p class="text-mun-gray-500">Start Date</p>
+                            <p class="font-medium text-mun-gray-900">{{ formatDate(event.startDate) }}</p>
+                        </div>
+                        <div v-if="event.endDate">
+                            <p class="text-mun-gray-500">End Date</p>
+                            <p class="font-medium text-mun-gray-900">{{ formatDate(event.endDate) }}</p>
+                        </div>
+                        <div v-if="event.location">
+                            <p class="text-mun-gray-500">Location</p>
+                            <p class="font-medium text-mun-gray-900">{{ event.location }}</p>
+                        </div>
+                        <div>
+                            <p class="text-mun-gray-500">Slug</p>
+                            <p class="font-mono text-xs text-mun-gray-700">{{ event.slug }}</p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Status change -->
-            <div v-if="canManage" class="bg-white rounded-xl border border-mun-gray-200 p-6">
-                <h2 class="text-lg font-semibold text-mun-gray-900 mb-4">Status Management</h2>
-                <div class="flex flex-wrap gap-2">
-                    <AppButton v-for="s in nextStatuses" :key="s" variant="ghost" size="sm" @click="changeStatus(s)">
-                        Move to {{ formatStatus(s) }}
-                    </AppButton>
+                <!-- Status change -->
+                <div v-if="canManage" class="bg-white rounded-xl border border-mun-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-mun-gray-900 mb-4">Status Management</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <AppButton v-for="s in nextStatuses" :key="s" variant="ghost" size="sm"
+                            @click="changeStatus(s)">
+                            Move to {{ formatStatus(s) }}
+                        </AppButton>
+                    </div>
                 </div>
-            </div>
+            </template>
+
+            <EventCommittees v-else-if="activeTab === 'committees'" :embedded="true" />
+            <EventParticipants v-else-if="activeTab === 'participants'" :embedded="true" />
+            <EventRegistration v-else-if="activeTab === 'registration'" :embedded="true" />
+            <EventApplications v-else-if="activeTab === 'applications'" :embedded="true" />
         </template>
 
         <div v-else class="text-center py-12 text-mun-gray-500">Event not found.</div>
@@ -140,6 +153,11 @@ import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
 import { PencilIcon } from '@heroicons/vue/24/outline'
 
+import EventCommittees from '@/views/org/event/CommitteesView.vue'
+import EventParticipants from '@/views/org/event/ParticipantsView.vue'
+import EventRegistration from '@/views/org/event/RegistrationView.vue'
+import EventApplications from '@/views/org/event/ApplicationsView.vue'
+
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
@@ -154,19 +172,17 @@ const isLoading = ref(true)
 const isSaving = ref(false)
 const event = ref(null)
 const showEditModal = ref(false)
+const activeTab = ref('overview')
 
 const editForm = reactive({ name: '', description: '', startDate: '', endDate: '', location: '' })
 
-const tabs = computed(() => {
-    const base = { orgSlug: orgSlug.value, eventSlug: eventSlug.value }
-    return [
-        { name: 'OrgEventDetail', label: 'Overview', to: { name: 'OrgEventDetail', params: base } },
-        { name: 'EventCommittees', label: 'Committees', to: { name: 'EventCommittees', params: base } },
-        { name: 'EventParticipants', label: 'Participants', to: { name: 'EventParticipants', params: base } },
-        { name: 'EventRegistration', label: 'Registration', to: { name: 'EventRegistration', params: base } },
-        { name: 'EventApplications', label: 'Applications', to: { name: 'EventApplications', params: base } },
-    ]
-})
+const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'committees', label: 'Committees' },
+    { id: 'participants', label: 'Participants' },
+    { id: 'registration', label: 'Registration' },
+    { id: 'applications', label: 'Applications' },
+]
 
 const STATUS_FLOW = {
     draft: ['published'],
