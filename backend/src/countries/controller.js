@@ -270,7 +270,7 @@ const getAllFlags = async (req, res) => {
             'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
             'ETag': `"all-flags-${Object.keys(allFlagsCache).length}"`,
             'X-Flag-Count': Object.keys(allFlagsCache).length.toString(),
-            'X-User-Role': req.user.role
+            // 'X-User-Role': req.user.role
         };
 
         // Send compressed response if client supports it
