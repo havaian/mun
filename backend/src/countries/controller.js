@@ -277,22 +277,21 @@ const getAllFlags = async (req, res) => {
         if (acceptsGzip) {
             const jsonString = JSON.stringify(responseData);
 
-            zlib.gzip(jsonString, async (err, compressed) => {
+            return zlib.gzip(jsonString, (err, compressed) => {
                 if (err) {
                     global.logger.error('Compression error:', err);
-                    await res.set(headers);
+                    res.set(headers);
                     res.json(responseData);
                 } else {
                     headers['Content-Encoding'] = 'gzip';
-                    await res.set(headers);
+                    res.set(headers);
                     res.send(compressed); // Now sends compressed WRAPPED response
                 }
             });
-        } else {
-            await res.set(headers);
-            res.json(responseData);
         }
 
+        res.set(headers);
+        res.json(responseData);
         global.logger.info(`Served batch flags to ${req.user.role}: ${Object.keys(allFlagsCache).length} flags`);
 
     } catch (error) {
