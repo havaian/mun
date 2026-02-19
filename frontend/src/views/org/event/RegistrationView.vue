@@ -17,22 +17,22 @@
                 <!-- Back link -->
                 <router-link
                     :to="{ name: 'PublicEvent', params: { orgSlug: $route.params.orgSlug, eventSlug: $route.params.eventSlug } }"
-                    class="text-sm text-mun-gray-400 hover:text-mun-gray-600 mb-6 inline-block">← Back to
-                    event</router-link>
+                    class="text-sm text-mun-gray-400 hover:text-mun-gray-600 mb-6 inline-block">← Back to event</router-link>
 
                 <h1 class="text-2xl font-bold text-mun-gray-900 mb-2">Register for {{ eventName }}</h1>
                 <p class="text-mun-gray-500 mb-8">Fill out the form below to apply for this event.</p>
 
                 <!-- Not authenticated -->
-                <div v-if="!isAuthenticated"
-                    class="bg-white rounded-xl border border-mun-gray-200 p-8 text-center space-y-4">
+                <div v-if="!isAuthenticated" class="bg-white rounded-xl border border-mun-gray-200 p-8 text-center space-y-4">
                     <p class="text-mun-gray-600">You need an account to register for this event.</p>
                     <div class="flex items-center justify-center gap-3">
-                        <router-link :to="{ name: 'Login', query: { redirect: $route.fullPath } }"
+                        <router-link
+                            :to="{ name: 'Login', query: { redirect: $route.fullPath } }"
                             class="px-5 py-2.5 bg-mun-blue text-white font-medium rounded-xl hover:bg-mun-blue-600 transition-colors">
                             Sign In
                         </router-link>
-                        <router-link :to="{ name: 'Register', query: { redirect: $route.fullPath } }"
+                        <router-link
+                            :to="{ name: 'Register', query: { redirect: $route.fullPath } }"
                             class="px-5 py-2.5 bg-white text-mun-gray-700 font-medium rounded-xl border border-mun-gray-200 hover:bg-mun-gray-50 transition-colors">
                             Create Account
                         </router-link>
@@ -45,8 +45,7 @@
                     <div class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-4">
                         <h2 class="text-lg font-semibold text-mun-gray-900">Committee Preferences</h2>
                         <p class="text-sm text-mun-gray-500">
-                            Select up to {{ formData?.committeePreferenceCount || 3 }} committees in order of
-                            preference.
+                            Select up to {{ formData?.committeePreferenceCount || 3 }} committees in order of preference.
                         </p>
 
                         <div v-if="committees.length === 0" class="text-sm text-mun-gray-400 py-4 text-center">
@@ -54,9 +53,7 @@
                         </div>
                         <div v-else class="space-y-2">
                             <div v-for="(pref, i) in preferences" :key="i" class="flex items-center gap-3">
-                                <span
-                                    class="w-6 h-6 rounded-full bg-mun-gray-200 flex items-center justify-center text-xs font-bold text-mun-gray-600">{{
-                                    i + 1 }}</span>
+                                <span class="w-6 h-6 rounded-full bg-mun-gray-200 flex items-center justify-center text-xs font-bold text-mun-gray-600">{{ i + 1 }}</span>
                                 <select v-model="preferences[i]" class="input-field flex-1 text-sm">
                                     <option value="">Select committee...</option>
                                     <option v-for="c in committees" :key="c._id" :value="c._id"
@@ -69,8 +66,7 @@
                     </div>
 
                     <!-- Custom fields -->
-                    <div v-if="formData?.customFields?.length"
-                        class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-4">
+                    <div v-if="formData?.customFields?.length" class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-4">
                         <h2 class="text-lg font-semibold text-mun-gray-900">Additional Information</h2>
                         <div v-for="field in formData.customFields" :key="field.fieldId" class="space-y-1">
                             <label class="block text-sm font-medium text-mun-gray-700">
@@ -78,11 +74,9 @@
                                 <span v-if="field.required" class="text-red-500">*</span>
                             </label>
                             <input v-if="field.type === 'text'" v-model="customResponses[field.fieldId]" type="text"
-                                :placeholder="field.placeholder" :required="field.required"
-                                class="input-field text-sm" />
+                                :placeholder="field.placeholder" :required="field.required" class="input-field text-sm" />
                             <textarea v-else-if="field.type === 'textarea'" v-model="customResponses[field.fieldId]"
-                                :placeholder="field.placeholder" :required="field.required" rows="3"
-                                class="input-field text-sm" />
+                                :placeholder="field.placeholder" :required="field.required" rows="3" class="input-field text-sm" />
                             <select v-else-if="field.type === 'select'" v-model="customResponses[field.fieldId]"
                                 :required="field.required" class="input-field text-sm">
                                 <option value="">Select...</option>

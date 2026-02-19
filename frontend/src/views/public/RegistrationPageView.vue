@@ -56,7 +56,7 @@
                             <div v-for="(pref, i) in preferences" :key="i" class="flex items-center gap-3">
                                 <span
                                     class="w-6 h-6 rounded-full bg-mun-gray-200 flex items-center justify-center text-xs font-bold text-mun-gray-600">{{
-                                    i + 1 }}</span>
+                                        i + 1 }}</span>
                                 <select v-model="preferences[i]" class="input-field flex-1 text-sm">
                                     <option value="">Select committee...</option>
                                     <option v-for="c in committees" :key="c._id" :value="c._id"

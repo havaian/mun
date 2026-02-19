@@ -5,6 +5,7 @@ const ORG_PERMISSIONS = [
     'manage_members',        // Add/remove org members, assign their permissions
     'manage_content',        // Edit org page info, logo, description, news
     'manage_event_content',  // Edit event pages, photos, descriptions
+    'manage_event_status',   // Change event status (publish, open/close registration, activate, complete)
     'manage_registration',   // Create/edit registration forms for events
     'review_applicants'      // Review registration applications, move through stages
 ];

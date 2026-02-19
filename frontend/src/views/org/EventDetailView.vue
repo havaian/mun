@@ -110,12 +110,15 @@
                 </div>
 
                 <!-- Status change -->
-                <div v-if="canManage" class="bg-white rounded-xl border border-mun-gray-200 p-6">
-                    <h2 class="text-lg font-semibold text-mun-gray-900 mb-4">Status Management</h2>
+                <div v-if="canChangeStatus && nextStatuses.length > 0"
+                    class="bg-white rounded-xl border border-mun-gray-200 p-6">
+                    <h2 class="text-lg font-semibold text-mun-gray-900 mb-3">Status Management</h2>
+                    <p class="text-xs text-mun-gray-400 mb-4">Current status: <span class="font-medium">{{
+                            formatStatus(event.status) }}</span></p>
                     <div class="flex flex-wrap gap-2">
                         <AppButton v-for="s in nextStatuses" :key="s" variant="ghost" size="sm"
                             @click="changeStatus(s)">
-                            Move to {{ formatStatus(s) }}
+                            → {{ formatStatus(s) }}
                         </AppButton>
                     </div>
                 </div>
@@ -188,6 +191,7 @@ const orgSlug = computed(() => route.params.orgSlug)
 const eventSlug = computed(() => route.params.eventSlug)
 const orgId = computed(() => authStore.activeOrganization?._id)
 const canManage = computed(() => authStore.isOrgAdmin || authStore.hasOrgPermission('manage_event_content'))
+const canChangeStatus = computed(() => authStore.isOrgAdmin || authStore.hasOrgPermission('manage_event_status'))
 
 const isLoading = ref(true)
 const isSaving = ref(false)
@@ -206,12 +210,13 @@ const tabs = [
     { id: 'applications', label: 'Applications' },
 ]
 
+// Flexible status flow — everything reversible except completed
 const STATUS_FLOW = {
     draft: ['published'],
     published: ['registration_open', 'draft'],
-    registration_open: ['registration_closed'],
+    registration_open: ['registration_closed', 'published'],
     registration_closed: ['active', 'registration_open'],
-    active: ['completed'],
+    active: ['completed', 'registration_open'],
     completed: [],
 }
 
@@ -228,7 +233,6 @@ const copyToClipboard = async (text, label) => {
         toast.success(`${label} copied!`)
         setTimeout(() => { copiedField.value = null }, 2000)
     } catch {
-        // Fallback for older browsers
         const textarea = document.createElement('textarea')
         textarea.value = text
         document.body.appendChild(textarea)

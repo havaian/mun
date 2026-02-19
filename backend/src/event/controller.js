@@ -231,39 +231,47 @@ const updateEventStatus = async (req, res) => {
             return res.status(404).json({ error: 'Event not found' });
         }
 
-        // Prevent completing event with active sessions
-        if (status === 'completed') {
-            try {
-                const Session = require('../session/model');
-                const { Committee } = require('../committee/model');
+        // Flexible status transitions — everything reversible except completed
+        const STATUS_FLOW = {
+            draft: ['published'],
+            published: ['registration_open', 'draft'],
+            registration_open: ['registration_closed', 'published'],
+            registration_closed: ['active', 'registration_open'],
+            active: ['completed', 'registration_open'],
+            completed: [],
+        };
 
-                const committees = await Committee.find({ event: event._id }).select('_id');
-                const committeeIds = committees.map(c => c._id);
-
-                if (committeeIds.length > 0) {
-                    const activeSessions = await Session.find({
-                        committeeId: { $in: committeeIds },
-                        status: { $in: ['active', 'paused'] }
-                    });
-
-                    if (activeSessions.length > 0) {
-                        return res.status(400).json({
-                            error: `Cannot complete event: ${activeSessions.length} active/paused session(s) remain`
-                        });
-                    }
-                }
-            } catch (e) {
-                // Session/Committee module may not be updated yet — allow completion
-                global.logger.warn('Could not check active sessions during event completion:', e.message);
-            }
+        const allowed = STATUS_FLOW[event.status] || [];
+        if (!allowed.includes(status)) {
+            return res.status(400).json({
+                error: `Cannot move from "${event.status}" to "${status}". Allowed transitions: ${allowed.join(', ') || 'none (event is completed)'}`
+            });
         }
 
+        const oldStatus = event.status;
         event.status = status;
         await event.save();
+        await event.populate('createdBy', 'firstName lastName email');
+        await event.populate('organization', 'name slug');
 
-        global.logger.info(`Event status changed: ${event.name} → ${status} by ${req.user.userId}`);
+        // Emit WebSocket event for real-time updates
+        if (global.io) {
+            global.io.emit('event-status-changed', {
+                eventId: event._id,
+                eventName: event.name,
+                oldStatus,
+                newStatus: status,
+                timestamp: new Date()
+            });
+        }
 
-        res.json({ success: true, event, message: `Event status updated to ${status}` });
+        global.logger.info(`Event status changed: ${event.name} from ${oldStatus} to ${status} by ${req.user.userId}`);
+
+        res.json({
+            success: true,
+            event,
+            message: `Event moved from ${oldStatus} to ${status}`
+        });
     } catch (error) {
         global.logger.error('Update event status error:', error);
         res.status(500).json({ error: 'Failed to update event status' });

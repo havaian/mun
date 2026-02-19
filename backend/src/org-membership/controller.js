@@ -369,6 +369,7 @@ const getPermissionDescription = (permission) => {
         'manage_members': 'Add/remove organization members and assign their permissions',
         'manage_content': 'Edit organization page, logo, description, and news',
         'manage_event_content': 'Edit event pages, photos, and descriptions',
+        'manage_event_status': 'Change event status (publish, open/close registration, activate, complete)',
         'manage_registration': 'Create and edit registration forms for events',
         'review_applicants': 'Review registration applications and move them through pipeline stages'
     };
