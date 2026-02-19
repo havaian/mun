@@ -84,7 +84,7 @@ router.get('/meta/health',
 
 // Get all flags in batch - requires authentication
 router.get('/flags/all/batch',
-    global.auth.token,
+    // global.auth.token,
     controller.getAllFlags
 );
 

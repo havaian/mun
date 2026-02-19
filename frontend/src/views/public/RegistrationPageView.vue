@@ -39,7 +39,7 @@
                     </div>
                 </div>
 
-                <!-- Registration form placeholder -->
+                <!-- Registration form -->
                 <div v-else class="space-y-6">
                     <!-- Committee preferences -->
                     <div class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-4">
@@ -132,7 +132,7 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
 const loadForm = async () => {
     isLoading.value = true
     try {
-        // Load event public info first
+        // Step 1: Load event info (always public, no auth needed)
         const eventRes = await apiMethods.events.getPublic(route.params.orgSlug, route.params.eventSlug)
         if (!eventRes.data.success) {
             error.value = 'Event not found.'
@@ -149,24 +149,22 @@ const loadForm = async () => {
             return
         }
 
-        // If authenticated, load the actual form
-        if (isAuthenticated.value && orgId.value) {
-            try {
-                const formRes = await apiMethods.registration.getPublicForm(orgId.value, ev._id)
-                if (formRes.data.success) {
-                    formData.value = formRes.data.form
-                    committees.value = formRes.data.committees || []
+        // Step 2: Load registration form (public endpoint, no auth needed)
+        try {
+            const regRes = await apiMethods.events.getPublicRegistration(route.params.orgSlug, route.params.eventSlug)
+            if (regRes.data.success) {
+                formData.value = regRes.data.form
+                committees.value = regRes.data.committees || []
 
-                    // Initialize preference slots
-                    const count = formData.value.committeePreferenceCount || 3
-                    preferences.value = Array(count).fill('')
-                }
-            } catch (e) {
-                if (e.response?.status === 404) {
-                    error.value = 'Registration form is not available yet.'
-                } else {
-                    throw e
-                }
+                // Initialize preference slots
+                const count = formData.value.committeePreferenceCount || 3
+                preferences.value = Array(count).fill('')
+            }
+        } catch (e) {
+            if (e.response?.status === 404) {
+                error.value = 'Registration form is not available yet.'
+            } else {
+                throw e
             }
         }
     } catch (e) {
