@@ -60,6 +60,12 @@ const AcceptInvitationView = () => import('@/views/shared/AcceptInvitationView.v
 const NotFoundView = () => import('@/views/NotFoundView.vue')
 
 // =============================================
+// PUBLIC VIEWS
+// =============================================
+const PublicEventPage = () => import('@/views/public/EventPageView.vue')
+const PublicRegistrationPage = () => import('@/views/public/RegistrationPageView.vue')
+
+// =============================================
 // ROUTES
 // =============================================
 const routes = [
@@ -367,6 +373,22 @@ const routes = [
   {
     path: '/delegate',
     redirect: { name: 'UserHome' }
+  },
+
+  // =============================================
+  // PUBLIC EVENT ROUTES (no auth required)
+  // =============================================
+  {
+      path: '/events/:orgSlug/:eventSlug',
+      name: 'PublicEvent',
+      component: PublicEventPage,
+      meta: { title: 'Event', requiresAuth: false }
+  },
+  {
+      path: '/events/:orgSlug/:eventSlug/register',
+      name: 'PublicRegistration',
+      component: PublicRegistrationPage,
+      meta: { title: 'Register', requiresAuth: false }
   },
 
   // =============================================

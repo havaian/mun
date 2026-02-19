@@ -31,6 +31,28 @@
         </div>
 
         <template v-else>
+            <!-- Registration link (shown when form is active) -->
+            <div v-if="formData && formData.status === 'active'"
+                class="bg-green-50 rounded-xl border border-green-200 p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-green-800">Registration Page</p>
+                        <p class="text-xs text-green-600 mt-0.5">Share this link for applicants to register</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <code
+                            class="text-xs bg-white text-green-700 px-3 py-1.5 rounded-lg border border-green-200 max-w-xs truncate hidden sm:block">
+                            {{ registrationUrl }}
+                        </code>
+                        <button @click="copyToClipboard(registrationUrl, 'Registration link')"
+                            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-green-700 bg-green-100 rounded-lg hover:bg-green-200 transition-colors">
+                            <ClipboardDocumentIcon class="w-4 h-4" />
+                            {{ copiedField === 'Registration link' ? 'Copied!' : 'Copy' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Form status & settings -->
             <div class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-4">
                 <h2 class="text-lg font-semibold text-mun-gray-900">General Settings</h2>
@@ -229,7 +251,7 @@ import { useAuthStore } from '@/stores/auth'
 import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
 import {
-    PlusIcon, TrashIcon, ChevronUpIcon, ChevronDownIcon
+    PlusIcon, TrashIcon, ChevronUpIcon, ChevronDownIcon, ClipboardDocumentIcon
 } from '@heroicons/vue/24/outline'
 
 defineProps({
@@ -240,6 +262,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 const toast = useToast()
 
+const orgSlug = computed(() => route.params.orgSlug)
 const orgId = computed(() => authStore.activeOrganization?._id)
 const eventSlug = computed(() => route.params.eventSlug)
 
@@ -247,6 +270,30 @@ const isLoading = ref(true)
 const isSaving = ref(false)
 const eventData = ref(null)
 const formData = ref(null) // existing form from API, if any
+const copiedField = ref(null)
+
+// Public registration URL
+const baseUrl = computed(() => window.location.origin)
+const registrationUrl = computed(() => `${baseUrl.value}/events/${orgSlug.value}/${eventSlug.value}/register`)
+
+const copyToClipboard = async (text, label) => {
+    try {
+        await navigator.clipboard.writeText(text)
+        copiedField.value = label
+        toast.success(`${label} copied!`)
+        setTimeout(() => { copiedField.value = null }, 2000)
+    } catch {
+        const textarea = document.createElement('textarea')
+        textarea.value = text
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+        copiedField.value = label
+        toast.success(`${label} copied!`)
+        setTimeout(() => { copiedField.value = null }, 2000)
+    }
+}
 
 const stageLabels = {
     form_review: 'Form Review',

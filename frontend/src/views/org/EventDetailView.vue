@@ -38,6 +38,27 @@
 
             <!-- Tab content -->
             <template v-if="activeTab === 'overview'">
+                <!-- Event page link -->
+                <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-mun-gray-700">Public Event Page</p>
+                            <p class="text-xs text-mun-gray-400 mt-0.5">Share this link for people to view the event</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <code
+                                class="text-xs bg-mun-gray-50 text-mun-gray-600 px-3 py-1.5 rounded-lg border border-mun-gray-200 max-w-xs truncate hidden sm:block">
+                                {{ eventPageUrl }}
+                            </code>
+                            <button @click="copyToClipboard(eventPageUrl, 'Event page link')"
+                                class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-mun-blue bg-mun-blue-50 rounded-lg hover:bg-mun-blue-100 transition-colors">
+                                <ClipboardDocumentIcon class="w-4 h-4" />
+                                {{ copiedField === 'Event page link' ? 'Copied!' : 'Copy' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Stats grid -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
@@ -151,7 +172,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
-import { PencilIcon } from '@heroicons/vue/24/outline'
+import { PencilIcon, ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
 
 import EventCommittees from '@/views/org/event/CommitteesView.vue'
 import EventParticipants from '@/views/org/event/ParticipantsView.vue'
@@ -173,6 +194,7 @@ const isSaving = ref(false)
 const event = ref(null)
 const showEditModal = ref(false)
 const activeTab = ref('overview')
+const copiedField = ref(null)
 
 const editForm = reactive({ name: '', description: '', startDate: '', endDate: '', location: '' })
 
@@ -194,6 +216,30 @@ const STATUS_FLOW = {
 }
 
 const nextStatuses = computed(() => STATUS_FLOW[event.value?.status] || [])
+
+// Public URLs
+const baseUrl = computed(() => window.location.origin)
+const eventPageUrl = computed(() => `${baseUrl.value}/events/${orgSlug.value}/${eventSlug.value}`)
+
+const copyToClipboard = async (text, label) => {
+    try {
+        await navigator.clipboard.writeText(text)
+        copiedField.value = label
+        toast.success(`${label} copied!`)
+        setTimeout(() => { copiedField.value = null }, 2000)
+    } catch {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea')
+        textarea.value = text
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+        copiedField.value = label
+        toast.success(`${label} copied!`)
+        setTimeout(() => { copiedField.value = null }, 2000)
+    }
+}
 
 const loadEvent = async () => {
     if (!orgId.value) return

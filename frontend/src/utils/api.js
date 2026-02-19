@@ -151,6 +151,7 @@ export const apiMethods = {
     events: {
         getAll: (orgId, params = {}) => api.get(`/organizations/${orgId}/events`, { params }),
         getById: (orgId, eventIdentifier) => api.get(`/organizations/${orgId}/events/${eventIdentifier}`),
+        getPublic: (orgSlug, eventSlug) => api.get(`/public/events/${orgSlug}/${eventSlug}`),
         create: (orgId, data) => api.post(`/organizations/${orgId}/events`, data),
         update: (orgId, eventId, data) => api.put(`/organizations/${orgId}/events/${eventId}`, data),
         updateStatus: (orgId, eventId, data) => api.put(`/organizations/${orgId}/events/${eventId}/status`, data),
