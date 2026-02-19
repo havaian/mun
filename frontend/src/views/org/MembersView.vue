@@ -166,7 +166,7 @@ const editingMember = ref(null)
 const editPermissions = ref([])
 
 const availablePermissions = [
-    'manage_members', 'manage_content', 'manage_event_content', 'manage_registration', 'review_applicants'
+    'manage_members', 'manage_content', 'manage_event_content', 'manage_event_status', 'manage_registration', 'review_applicants'
 ]
 
 const inviteForm = reactive({ email: '', permissions: [] })
