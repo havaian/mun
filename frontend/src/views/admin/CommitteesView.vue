@@ -109,18 +109,6 @@
                             { label: 'Very Large (50+)', value: 'xlarge' }
                         ]" @change="applyFilters" container-class="w-full" />
                     </div>
-
-                    <!-- Login Links filter instead of QR filter -->
-                    <div>
-                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">
-                            Has Login Links
-                        </label>
-                        <SleekSelect v-model="filters.hasLinks" :options="[
-                            { label: 'All', value: '' },
-                            { label: 'Generated', value: 'yes' },
-                            { label: 'Not Generated', value: 'no' }
-                        ]" @change="applyFilters" container-class="w-full" />
-                    </div>
                 </div>
             </div>
 
@@ -174,12 +162,6 @@
                     <span class="text-sm text-mun-gray-600">
                         {{ selectedCommittees.length }} selected
                     </span>
-
-                    <!-- Generate Links instead of Generate QR -->
-                    <button @click="bulkGenerateLinks" :disabled="isBulkGenerating" class="btn-un-secondary px-3 py-2">
-                        <LinkIcon class="w-4 h-4 mr-2" />
-                        Generate Links
-                    </button>
 
                     <button @click="bulkExport" class="btn-un-secondary px-3 py-2">
                         <DocumentArrowDownIcon class="w-4 h-4 mr-2" />
@@ -436,14 +418,10 @@
 
         <CommitteeDetailsModal v-model="showCommitteeDetails" :committee="selectedCommittee"
             :is-loading="isAutoOpeningCommittee" @close="closeCommitteeDetails" @edit="editCommitteeFromDetails"
-            @delete="deleteCommittee" @manage-countries="manageCountries" @generate-login-links="generateLoginLinks" />
+            @delete="deleteCommittee" @manage-countries="manageCountries"/>
 
         <CountryManagementModal v-model="showCountryManagement" :committee="selectedCommittee"
             @saved="handleCountriesUpdated" />
-
-        <!-- LoginLinksModal instead of QRGenerationModal -->
-        <LoginLinksModal v-model="showLoginLinksGeneration" :committee="selectedCommittee"
-            @generated="handleLinksGenerated" />
 
         <ConfirmationDialog v-model="showDeleteConfirm" :title="`Delete Committee: ${selectedCommittee?.name}`"
             :message="deleteConfirmMessage" confirm-text="Delete Committee" confirm-variant="danger"
@@ -485,7 +463,6 @@ import Pagination from '@/components/ui/Pagination.vue'
 import CreateEditCommitteeModal from '@/components/admin/CreateEditCommitteeModal.vue'
 import CommitteeDetailsModal from '@/components/admin/CommitteeDetailsModal.vue'
 import CountryManagementModal from '@/components/admin/CountryManagementModal.vue'
-import LoginLinksModal from '@/components/admin/LoginLinksModal.vue'
 import ConfirmationDialog from '@/components/ui/ConfirmationDialog.vue'
 
 const router = useRouter()
@@ -514,7 +491,6 @@ const showCreateCommittee = ref(false)
 const showEditCommittee = ref(false)
 const showCommitteeDetails = ref(false)
 const showCountryManagement = ref(false)
-const showLoginLinksGeneration = ref(false)
 const showDeleteConfirm = ref(false)
 
 // Auto-opening committee details
@@ -526,8 +502,7 @@ const filters = ref({
     eventId: '',
     type: '',
     status: '',
-    countryRange: '',
-    hasLinks: ''
+    countryRange: ''
 })
 
 // Pagination
@@ -556,12 +531,6 @@ const committeeStats = computed(() => [
         value: committees.value.reduce((total, c) => total + (c.countries?.length || 0), 0),
         icon: ClipboardDocumentIcon,
         color: 'purple'
-    },
-    {
-        title: 'Links Generated',
-        value: committees.value.filter(c => c.linksGenerated).length,
-        icon: LinkIcon,
-        color: 'orange'
     }
 ])
 
@@ -612,14 +581,6 @@ const filteredCommittees = computed(() => {
                 default:
                     return true
             }
-        })
-    }
-
-    if (filters.value.hasLinks) {
-        filtered = filtered.filter(committee => {
-            if (filters.value.hasLinks === 'yes') return committee.linksGenerated
-            if (filters.value.hasLinks === 'no') return !committee.linksGenerated
-            return true
         })
     }
 
@@ -947,57 +908,6 @@ const manageCountries = (committee) => {
     showCountryManagement.value = true
 }
 
-const generateLoginLinks = (committee) => {
-    selectedCommittee.value = committee
-    showLoginLinksGeneration.value = true
-}
-
-// Bulk actions
-const bulkGenerateLinks = async () => {
-    try {
-        isBulkGenerating.value = true
-
-        // Generate login links for selected committees
-        const promises = selectedCommittees.value.map(async (committeeId) => {
-            try {
-                await apiMethods.committees.generateLoginLinks(committeeId)
-                return { success: true, id: committeeId }
-            } catch (error) {
-                console.error(`Failed to generate links for committee ${committeeId}:`, error)
-                return { success: false, id: committeeId, error }
-            }
-        })
-
-        const results = await Promise.all(promises)
-        const successful = results.filter(r => r.success)
-        const failed = results.filter(r => !r.success)
-
-        if (successful.length > 0) {
-            // Update committees with links generated status
-            successful.forEach(result => {
-                const index = committees.value.findIndex(c => c._id === result.id)
-                if (index !== -1) {
-                    committees.value[index].linksGenerated = true
-                }
-            })
-
-            toast.success(`Login links generated for ${successful.length} committees`)
-        }
-
-        if (failed.length > 0) {
-            toast.error(`Failed to generate links for ${failed.length} committees`)
-        }
-
-        clearSelection()
-
-    } catch (error) {
-        console.error('Bulk generate links error:', error)
-        toast.error('Failed to generate login links')
-    } finally {
-        isBulkGenerating.value = false
-    }
-}
-
 const bulkExport = async () => {
     try {
         const response = await apiMethods.exports.exportCommitteesBulk(selectedCommittees.value.join(','))
@@ -1046,15 +956,6 @@ const handleCountriesUpdated = (updatedCommittee) => {
     }
     showCountryManagement.value = false
     toast.success('Countries updated successfully')
-}
-
-const handleLinksGenerated = (updatedCommittee) => {
-    const index = committees.value.findIndex(c => c._id === updatedCommittee._id)
-    if (index !== -1) {
-        committees.value[index] = updatedCommittee
-    }
-    showLoginLinksGeneration.value = false
-    toast.success('Login links generated successfully')
 }
 
 // Utility functions

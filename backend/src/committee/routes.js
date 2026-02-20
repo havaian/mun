@@ -207,27 +207,4 @@ router.put('/:committeeId/countries/:countryName/status',
     controller.updateCountryStatus
 );
 
-// ============================================
-// Login link management
-// ============================================
-
-// Generate delegate login links
-// Access: OrgAdmin only
-router.get('/:committeeId/login-links/delegates',
-    validateCommitteeId,
-    handleValidationErrors,
-    global.auth.orgAdmin('orgId'),
-    controller.generateDelegateLoginLinks
-);
-
-// Regenerate all login links
-// Access: OrgAdmin, or presidium in this committee
-router.post('/:committeeId/login-links/regenerate',
-    validateCommitteeId,
-    handleValidationErrors,
-    global.auth.participant('committeeId'),
-    global.auth.presidium,
-    controller.regenerateLoginLinks
-);
-
 module.exports = router;

@@ -55,15 +55,11 @@ const createCommittee = async (req, res) => {
 
         for (const role of presidiumRoles) {
             try {
-                // Generate unique tokens
-                const loginToken = crypto.randomBytes(32).toString('hex');
-
                 // Create presidium user WITHOUT email (will be bound during login)
                 const presidiumUser = new User({
                     role: 'presidium',
                     presidiumRole: role,
                     committeeId: committee._id,
-                    loginToken: loginToken,          // Add loginToken (required)
                     isActive: true,             // Use isActive instead of isQrActive
                     isActive: true
                     // No username, password, or email needed
@@ -82,8 +78,7 @@ const createCommittee = async (req, res) => {
                 // Store info for response
                 presidiumUsers.push({
                     role: role,
-                    userId: presidiumUser._id,
-                    loginToken: presidiumUser.loginToken  // Return loginToken instead of qrToken
+                    userId: presidiumUser._id
                 });
 
                 global.logger.info(`✅ Created and added presidium user: ${role} for committee ${committee.name}`);
@@ -107,7 +102,7 @@ const createCommittee = async (req, res) => {
             success: true,
             committee,
             presidiumUsers,  // Include the created presidium users
-            message: `Committee created successfully with ${presidiumUsers.length} presidium QR tokens`
+            message: 'Committee created successfully'
         });
 
     } catch (error) {
@@ -196,9 +191,7 @@ const getCommittees = async (req, res) => {
             const committeeObj = committee.toObject();
             return {
                 ...committeeObj,
-                countriesCount: committeeObj.countries?.length || 0,
-                // Check for login tokens instead of QR tokens
-                linksGenerated: committeeObj.countries?.some(country => country.loginToken) || false
+                countriesCount: committeeObj.countries?.length || 0
             };
         });
 
@@ -456,84 +449,6 @@ const getCountries = async (req, res) => {
     }
 };
 
-// Generate QR codes PDF for committee (presidium only)
-const generateQRCodes = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const committee = await Committee.findById(id)
-            .populate('eventId', 'name');
-
-        if (!committee) {
-            return res.status(404).json({ error: 'Committee not found' });
-        }
-
-        // Check permissions
-        if (req.user.role !== 'admin' &&
-            (req.user.role !== 'presidium' || req.user.committeeId?.toString() !== id)) {
-            return res.status(403).json({ error: 'Only presidium can generate QR codes' });
-        }
-
-        if (committee.countries.length === 0) {
-            return res.status(400).json({
-                error: 'No countries added to committee yet'
-            });
-        }
-
-        // Generate QR tokens if not already generated
-        committee.generateQRTokens();
-        await committee.save();
-
-        // Create QR codes directory if it doesn't exist
-        const qrDir = path.join(__dirname, '../../uploads/qr');
-        await fs.mkdir(qrDir, { recursive: true });
-
-        // Generate QR codes for each country
-        const qrCodes = [];
-
-        for (const country of committee.countries) {
-            const qrData = {
-                token: country.qrToken,
-                committee: committee.name,
-                country: country.name,
-                event: committee.eventId.name
-            };
-
-            const qrString = await QRCode.toString(JSON.stringify(qrData), {
-                type: 'svg',
-                width: 200,
-                margin: 2
-            });
-
-            qrCodes.push({
-                country: country.name,
-                qrString,
-                token: country.qrToken,
-                isObserver: country.isObserver,
-                specialRole: country.specialRole
-            });
-        }
-
-        // For now, return QR data as JSON (frontend can generate PDF)
-        // In production, you might want to generate PDF server-side
-        res.json({
-            success: true,
-            committee: {
-                name: committee.name,
-                event: committee.eventId.name
-            },
-            qrCodes,
-            message: 'QR codes generated successfully'
-        });
-
-        global.logger.info(`QR codes generated for committee ${committee.name} (${qrCodes.length} codes)`);
-
-    } catch (error) {
-        global.logger.error('Generate QR codes error:', error);
-        res.status(500).json({ error: 'Failed to generate QR codes' });
-    }
-};
-
 // Update presidium (admin only)
 const updatePresidium = async (req, res) => {
     try {
@@ -685,89 +600,6 @@ const restoreCommittee = async (req, res) => {
     }
 };
 
-// Generate presidium QR tokens for committee
-const generatePresidiumQRs = async (req, res) => {
-    try {
-        const { committeeId } = req.params;
-
-        // Find committee
-        const committee = await Committee.findById(committeeId);
-        if (!committee) {
-            return res.status(404).json({
-                error: 'Committee not found'
-            });
-        }
-
-        const presidiumRoles = ['chairman', 'co-chairman', 'expert', 'secretary'];
-        const createdUsers = [];
-        const errors = [];
-
-        for (const role of presidiumRoles) {
-            try {
-                // Check if presidium member already exists
-                const existingUser = await User.findOne({
-                    committeeId: committeeId,
-                    role: 'presidium',
-                    presidiumRole: role
-                });
-
-                if (existingUser) {
-                    // Update existing user to ensure QR token exists
-                    if (!existingUser.qrToken) {
-                        existingUser.qrToken = crypto.randomBytes(32).toString('hex');
-                        existingUser.isQrActive = true;
-                        await existingUser.save();
-                    }
-                    createdUsers.push({
-                        role: role,
-                        qrToken: existingUser.qrToken,
-                        status: 'updated'
-                    });
-                } else {
-                    // Create new presidium user
-                    const presidiumUser = new User({
-                        role: 'presidium',
-                        presidiumRole: role,
-                        committeeId: committeeId,
-                        qrToken: crypto.randomBytes(32).toString('hex'),
-                        isQrActive: true,
-                        isActive: true
-                    });
-
-                    await presidiumUser.save();
-                    createdUsers.push({
-                        role: role,
-                        qrToken: presidiumUser.qrToken,
-                        status: 'created'
-                    });
-                }
-
-                global.logger.info(`Presidium QR ${createdUsers[createdUsers.length - 1].status}: ${role} for committee ${committee.name}`);
-
-            } catch (error) {
-                global.logger.error(`Error creating presidium QR for ${role}:`, error);
-                errors.push({
-                    role: role,
-                    error: error.message
-                });
-            }
-        }
-
-        res.json({
-            success: true,
-            message: 'Presidium QR tokens generated successfully',
-            presidiumUsers: createdUsers,
-            errors: errors.length > 0 ? errors : undefined
-        });
-
-    } catch (error) {
-        global.logger.error('Generate presidium QRs error:', error);
-        res.status(500).json({
-            error: 'Failed to generate presidium QR tokens'
-        });
-    }
-};
-
 // Get presidium status for committee
 const getPresidiumStatus = async (req, res) => {
     try {
@@ -824,114 +656,36 @@ const getPresidiumStatus = async (req, res) => {
     }
 };
 
-// Reset presidium QR token (admin only)
-const resetPresidiumQR = async (req, res) => {
+const updateCountryStatus = async (req, res) => {
     try {
-        const { committeeId, role } = req.params;
+        const { id, countryName } = req.params;
+        const { status, specialRole } = req.body;
 
-        // Validate role
-        if (!['chairman', 'co-chairman', 'expert', 'secretary'].includes(role)) {
-            return res.status(400).json({
-                error: 'Invalid presidium role'
-            });
-        }
-
-        // Find presidium member
-        const presidiumUser = await User.findOne({
-            committeeId: committeeId,
-            role: 'presidium',
-            presidiumRole: role
-        });
-
-        if (!presidiumUser) {
-            return res.status(404).json({
-                error: `${role} not found for this committee`
-            });
-        }
-
-        // Reset user data
-        presidiumUser.qrToken = crypto.randomBytes(32).toString('hex');
-        presidiumUser.isQrActive = true;
-        presidiumUser.email = null;
-        presidiumUser.sessionId = null;
-
-        // Deactivate all sessions for this user
-        await ActiveSession.updateMany(
-            { userId: presidiumUser._id },
-            { $set: { isActive: false } }
-        );
-
-        await presidiumUser.save();
-
-        global.logger.info(`Reset QR for presidium ${role} in committee ${committeeId} by admin ${req.user.userId}`);
-
-        res.json({
-            success: true,
-            message: `QR code reset successfully for ${role}`,
-            newQRToken: presidiumUser.qrToken
-        });
-
-    } catch (error) {
-        global.logger.error('Reset presidium QR error:', error);
-        res.status(500).json({
-            error: 'Failed to reset presidium QR'
-        });
-    }
-};
-
-// Get QR tokens for PDF generation (admin only)
-const getCommitteeQRTokens = async (req, res) => {
-    try {
-        const { committeeId } = req.params;
-
-        // Get committee with countries
-        const committee = await Committee.findById(committeeId)
-            .select('name type countries')
-            .lean();
+        const { Committee } = require('./model');
+        const committee = await Committee.findById(id);
 
         if (!committee) {
-            return res.status(404).json({
-                error: 'Committee not found'
-            });
+            return res.status(404).json({ error: 'Committee not found' });
         }
 
-        // Get presidium members
-        const presidiumMembers = await User.find({
-            committeeId: committeeId,
-            role: 'presidium'
-        }).select('presidiumRole qrToken').lean();
+        const updates = {};
+        if (status !== undefined) updates.isActive = status === 'active';
+        if (specialRole !== undefined) updates.specialRole = specialRole;
 
-        // Format response
-        const qrTokens = {
-            committee: {
-                id: committee._id,
-                name: committee.name,
-                type: committee.type
-            },
-            presidium: presidiumMembers.map(member => ({
-                role: member.presidiumRole,
-                qrToken: member.qrToken
-            })),
-            delegates: committee.countries.map(country => ({
-                name: country.name,
-                qrToken: country.qrToken,
-                isObserver: country.isObserver,
-                specialRole: country.specialRole
-            }))
-        };
+        const country = committee.updateCountry(countryName, updates);
+        await committee.save();
 
         res.json({
             success: true,
-            qrTokens
+            country,
+            message: 'Country status updated successfully'
         });
 
     } catch (error) {
-        global.logger.error('Get committee QR tokens error:', error);
-        res.status(500).json({
-            error: 'Failed to get QR tokens'
-        });
+        global.logger.error('Update country status error:', error);
+        res.status(500).json({ error: 'Failed to update country status' });
     }
-};
+}
 
 module.exports = {
     createCommittee,
@@ -941,12 +695,9 @@ module.exports = {
     addCountries,
     removeCountry,
     getCountries,
-    generateQRCodes,
     updatePresidium,
     deleteCommittee,
     restoreCommittee,
-    generatePresidiumQRs,
     getPresidiumStatus,
-    resetPresidiumQR,
-    getCommitteeQRTokens
+    updateCountryStatus
 };

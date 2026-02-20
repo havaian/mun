@@ -309,12 +309,6 @@
                                     Manage Countries
                                 </AppButton>
 
-                                <!-- Login Links button (was Generate QR Codes) -->
-                                <AppButton @click="generateLoginLinks" variant="outline" size="sm" class="w-full">
-                                    <LinkIcon class="w-4 h-4 mr-2" />
-                                    Login Links
-                                </AppButton>
-
                                 <AppButton @click="viewSessions" variant="outline" size="sm" class="w-full">
                                     <ClockIcon class="w-4 h-4 mr-2" />
                                     View Sessions
@@ -365,8 +359,7 @@ const props = defineProps({
     }
 })
 
-// Updated emit events to use login links instead of QR
-const emit = defineEmits(['update:modelValue', 'edit', 'manage-countries', 'generate-login-links', 'view-sessions'])
+const emit = defineEmits(['update:modelValue', 'edit', 'manage-countries', 'view-sessions'])
 
 // Methods
 const formatCommitteeType = (type) => {
@@ -458,12 +451,6 @@ const editCommittee = () => {
 
 const manageCountries = () => {
     emit('manage-countries', props.committee)
-    closeModal()
-}
-
-// Generate login links instead of QR codes
-const generateLoginLinks = () => {
-    emit('generate-login-links', props.committee)
     closeModal()
 }
 

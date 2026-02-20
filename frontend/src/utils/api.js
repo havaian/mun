@@ -344,9 +344,6 @@ export const apiMethods = {
     // EXPORT — still flat, will migrate later
     // =============================================
     exports: {
-        delegateLinks: (committeeId, params = {}) => api.get(`/export/delegate-links/${committeeId}`, { params }),
-        presidiumLinks: (committeeId, params = {}) => api.get(`/export/presidium-links/${committeeId}`, { params }),
-        completeLinks: (committeeId, params = {}) => api.get(`/export/complete-links/${committeeId}`, { params }),
         statistics: (committeeId) => api.get(`/export/statistics/${committeeId}`),
         votingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`),
         resolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`),
