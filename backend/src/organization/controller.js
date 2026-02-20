@@ -171,8 +171,8 @@ const updateOrganization = async (req, res) => {
 
         // Fields that can be updated
         const allowedFields = [
-            'name', 'description', 'foundingDate', 'email',
-            'website', 'location', 'socialLinks', 'logo'
+            'name', 'description', 'foundingDate', 'email', 'phone',
+            'website', 'address', 'location', 'socialLinks', 'logo', 'photos'
         ];
 
         // SuperAdmin-only fields

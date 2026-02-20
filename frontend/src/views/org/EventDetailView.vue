@@ -64,20 +64,17 @@
                     <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
                         <p class="text-sm font-medium text-mun-gray-500">Committees</p>
                         <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalCommittees || 0
-                            }}
-                        </p>
+                        }}</p>
                     </div>
                     <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
                         <p class="text-sm font-medium text-mun-gray-500">Participants</p>
                         <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalParticipants || 0
-                            }}
-                        </p>
+                        }}</p>
                     </div>
                     <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
                         <p class="text-sm font-medium text-mun-gray-500">Applications</p>
                         <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalApplications || 0
-                            }}
-                        </p>
+                        }}</p>
                     </div>
                     <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
                         <p class="text-sm font-medium text-mun-gray-500">Countries</p>
@@ -112,8 +109,91 @@
                         </div>
                         <div v-if="event.logo">
                             <p class="text-mun-gray-500">Event Logo</p>
-                            <img :src="event.logo" alt="Event logo"
+                            <img :src="mediaUrl(event.logo)" alt="Event logo"
                                 class="mt-1 w-16 h-16 rounded-lg object-cover border border-mun-gray-200" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hero Image & Photos -->
+                <div v-if="canManage" class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-5">
+                    <h2 class="text-lg font-semibold text-mun-gray-900">Event Images</h2>
+
+                    <!-- Hero background image -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">Hero Background Image</label>
+                        <p class="text-xs text-mun-gray-400 mb-2">This becomes the background of the hero section on the
+                            public event page, with a blue overlay filter.</p>
+                        <div v-if="event.heroImage" class="relative rounded-xl overflow-hidden mb-2"
+                            style="aspect-ratio: 16/5;">
+                            <img :src="mediaUrl(event.heroImage)" alt="Hero background"
+                                class="w-full h-full object-cover" />
+                            <div
+                                class="absolute inset-0 bg-gradient-to-br from-mun-blue-900/70 via-mun-blue-800/60 to-mun-blue-950/70">
+                            </div>
+                            <div class="absolute top-3 right-3">
+                                <button @click="updateEventField('heroImage', null)"
+                                    class="px-3 py-1.5 bg-white/90 text-red-600 text-xs font-medium rounded-lg hover:bg-white transition-colors">
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                        <ImageUploader v-if="!event.heroImage" :model-value="null"
+                            @update:model-value="updateEventField('heroImage', $event)" />
+                    </div>
+
+                    <!-- Photo gallery -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">Event Photos</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                            <div v-for="(photo, i) in (event.photos || [])" :key="i"
+                                class="relative group aspect-square rounded-xl overflow-hidden bg-mun-gray-100">
+                                <img :src="mediaUrl(photo)" alt="" class="w-full h-full object-cover" />
+                                <button @click="removePhoto(i)"
+                                    class="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <XMarkIcon class="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                            <!-- Add photo button -->
+                            <ImageUploader :model-value="null" @update:model-value="addPhoto($event)" compact
+                                size-classes="w-full aspect-square" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sponsors -->
+                <div v-if="canManage" class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-mun-gray-900">Sponsors</h2>
+                        <AppButton variant="ghost" size="sm" @click="showSponsorModal = true">
+                            <PlusIcon class="w-4 h-4 mr-1" /> Add Sponsor
+                        </AppButton>
+                    </div>
+
+                    <div v-if="!event.sponsors?.length" class="text-center py-6 text-sm text-mun-gray-400">
+                        No sponsors added yet.
+                    </div>
+
+                    <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <div v-for="(sponsor, i) in event.sponsors" :key="i"
+                            class="group relative flex flex-col items-center p-4 border border-mun-gray-200 rounded-xl hover:border-mun-gray-300 transition-colors">
+                            <div v-if="sponsor.logo" class="w-16 h-16 rounded-lg overflow-hidden bg-mun-gray-50 mb-3">
+                                <img :src="mediaUrl(sponsor.logo)" :alt="sponsor.name"
+                                    class="w-full h-full object-contain" />
+                            </div>
+                            <div v-else
+                                class="w-16 h-16 rounded-lg bg-mun-gray-100 flex items-center justify-center mb-3">
+                                <BuildingOffice2Icon class="w-6 h-6 text-mun-gray-400" />
+                            </div>
+                            <p class="text-sm font-medium text-mun-gray-900 text-center">{{ sponsor.name }}</p>
+                            <a v-if="sponsor.website" :href="sponsor.website" target="_blank"
+                                class="text-xs text-mun-blue hover:underline mt-0.5 truncate max-w-full">
+                                {{ sponsor.website.replace(/^https?:\/\//, '') }}
+                            </a>
+                            <button @click="removeSponsor(i)"
+                                class="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <XMarkIcon class="w-3.5 h-3.5" />
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -123,7 +203,7 @@
                     class="bg-white rounded-xl border border-mun-gray-200 p-6">
                     <h2 class="text-lg font-semibold text-mun-gray-900 mb-3">Status Management</h2>
                     <p class="text-xs text-mun-gray-400 mb-4">Current status: <span class="font-medium">{{
-                            formatStatus(event.status) }}</span></p>
+                        formatStatus(event.status) }}</span></p>
                     <div class="flex flex-wrap gap-2">
                         <AppButton v-for="s in nextStatuses" :key="s" variant="ghost" size="sm"
                             @click="changeStatus(s)">
@@ -146,22 +226,17 @@
             <template #title>Edit Event</template>
             <template #default>
                 <form @submit.prevent="handleEdit" class="space-y-5">
-                    <!-- Name -->
                     <div>
                         <label class="block text-sm font-medium text-mun-gray-700 mb-1">Event Name *</label>
                         <input v-model="editForm.name" type="text" required class="input-field"
                             placeholder="e.g. TASHKENT MUN 2026" />
                     </div>
-
-                    <!-- Description -->
                     <div>
                         <label class="block text-sm font-medium text-mun-gray-700 mb-1">Description</label>
                         <textarea v-model="editForm.description" rows="3" class="input-field"
-                            placeholder="Describe the event, its goals, and what participants can expect..."></textarea>
+                            placeholder="Describe the event..."></textarea>
                         <p class="text-xs text-mun-gray-400 mt-1">Shown on the public event page</p>
                     </div>
-
-                    <!-- Dates -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-sm font-medium text-mun-gray-700 mb-1">Start Date *</label>
@@ -172,40 +247,49 @@
                             <input v-model="editForm.endDate" type="date" required class="input-field" />
                         </div>
                     </div>
-
-                    <!-- Location -->
                     <div>
                         <label class="block text-sm font-medium text-mun-gray-700 mb-1">Location</label>
                         <input v-model="editForm.location" type="text" class="input-field"
-                            placeholder="e.g. Hilton Tashkent City, Uzbekistan" />
+                            placeholder="e.g. Hilton Tashkent City" />
                     </div>
-
-                    <!-- Logo URL -->
                     <div>
-                        <label class="block text-sm font-medium text-mun-gray-700 mb-1">Event Logo URL</label>
-                        <input v-model="editForm.logo" type="url" class="input-field"
-                            placeholder="https://example.com/logo.png" />
-                        <p class="text-xs text-mun-gray-400 mt-1">Direct link to the event logo image</p>
-                        <!-- Logo preview -->
-                        <div v-if="editForm.logo" class="mt-2 flex items-center gap-3">
-                            <img :src="editForm.logo" alt="Logo preview"
-                                class="w-12 h-12 rounded-lg object-cover border border-mun-gray-200"
-                                @error="editForm.logo = ''" />
-                            <button type="button" @click="editForm.logo = ''"
-                                class="text-xs text-red-500 hover:text-red-700">Remove</button>
-                        </div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-1">Event Logo</label>
+                        <ImageUploader v-model="editForm.logo" size-classes="w-14 h-14" />
                     </div>
-
-                    <!-- Timezone -->
                     <div>
                         <label class="block text-sm font-medium text-mun-gray-700 mb-1">Timezone</label>
                         <SleekSelect v-model="editForm.timezone" :options="timezoneOptions"
                             placeholder="Select timezone" searchable size="md" container-class="w-full" />
                     </div>
-
                     <div class="flex justify-end space-x-3 pt-2">
                         <AppButton variant="ghost" type="button" @click="showEditModal = false">Cancel</AppButton>
                         <AppButton type="submit" :disabled="isSaving">{{ isSaving ? 'Saving...' : 'Save' }}</AppButton>
+                    </div>
+                </form>
+            </template>
+        </ModalWrapper>
+
+        <!-- Add Sponsor Modal -->
+        <ModalWrapper :showDefaultFooter="false" :modelValue="showSponsorModal" @close="showSponsorModal = false">
+            <template #title>Add Sponsor</template>
+            <template #default>
+                <form @submit.prevent="addSponsor" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-1">Sponsor Name *</label>
+                        <input v-model="sponsorForm.name" type="text" required class="input-field"
+                            placeholder="e.g. Coca-Cola Uzbekistan" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-1">Website</label>
+                        <input v-model="sponsorForm.website" type="url" class="input-field" placeholder="https://..." />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-1">Logo</label>
+                        <ImageUploader v-model="sponsorForm.logo" size-classes="w-14 h-14" compact />
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-2">
+                        <AppButton variant="ghost" type="button" @click="showSponsorModal = false">Cancel</AppButton>
+                        <AppButton type="submit">Add Sponsor</AppButton>
                     </div>
                 </form>
             </template>
@@ -219,7 +303,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
-import { PencilIcon, ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
+import { PencilIcon, ClipboardDocumentIcon, PlusIcon, XMarkIcon, BuildingOffice2Icon } from '@heroicons/vue/24/outline'
+import ImageUploader from '@/components/ui/ImageUploader.vue'
 
 import EventCommittees from '@/views/org/event/CommitteesView.vue'
 import EventParticipants from '@/views/org/event/ParticipantsView.vue'
@@ -241,10 +326,12 @@ const isLoading = ref(true)
 const isSaving = ref(false)
 const event = ref(null)
 const showEditModal = ref(false)
+const showSponsorModal = ref(false)
 const activeTab = ref('overview')
 const copiedField = ref(null)
 
 const editForm = reactive({ name: '', description: '', startDate: '', endDate: '', location: '', logo: '', timezone: 'UTC' })
+const sponsorForm = reactive({ name: '', website: '', logo: null })
 
 const timezoneOptions = [
     { label: 'UTC (GMT+0)', value: 'UTC' },
@@ -281,10 +368,15 @@ const STATUS_FLOW = {
 }
 
 const nextStatuses = computed(() => STATUS_FLOW[event.value?.status] || [])
-
-// Public URLs
 const baseUrl = computed(() => window.location.origin)
 const eventPageUrl = computed(() => `${baseUrl.value}/events/${orgSlug.value}/${eventSlug.value}`)
+
+const mediaUrl = (path) => {
+    if (!path) return ''
+    if (path.startsWith('http')) return path
+    const base = import.meta.env.VITE_API_URL || ''
+    return `${base}${path}`
+}
 
 const copyToClipboard = async (text, label) => {
     try {
@@ -310,14 +402,9 @@ const loadEvent = async () => {
     isLoading.value = true
     try {
         const res = await apiMethods.events.getById(orgId.value, eventSlug.value)
-        if (res.data.success) {
-            event.value = res.data.event
-        }
-    } catch (e) {
-        console.error('Failed to load event:', e)
-    } finally {
-        isLoading.value = false
-    }
+        if (res.data.success) { event.value = res.data.event }
+    } catch (e) { console.error('Failed to load event:', e) }
+    finally { isLoading.value = false }
 }
 
 const changeStatus = async (newStatus) => {
@@ -325,9 +412,7 @@ const changeStatus = async (newStatus) => {
         await apiMethods.events.updateStatus(orgId.value, event.value._id, { status: newStatus })
         toast.success(`Event moved to ${formatStatus(newStatus)}`)
         await loadEvent()
-    } catch (e) {
-        toast.error(e.response?.data?.error || 'Failed to update status')
-    }
+    } catch (e) { toast.error(e.response?.data?.error || 'Failed to update status') }
 }
 
 const handleEdit = async () => {
@@ -337,17 +422,51 @@ const handleEdit = async () => {
         if (res.data.success) {
             toast.success('Event updated')
             showEditModal.value = false
-            // If slug changed, redirect
             if (res.data.event.slug !== eventSlug.value) {
                 router.replace({ name: 'OrgEventDetail', params: { orgSlug: orgSlug.value, eventSlug: res.data.event.slug } })
             }
             await loadEvent()
         }
-    } catch (e) {
-        toast.error(e.response?.data?.error || 'Failed to update event')
-    } finally {
-        isSaving.value = false
-    }
+    } catch (e) { toast.error(e.response?.data?.error || 'Failed to update event') }
+    finally { isSaving.value = false }
+}
+
+// Quick-save a single field without opening the modal
+const updateEventField = async (field, value) => {
+    try {
+        const res = await apiMethods.events.update(orgId.value, event.value._id, { [field]: value })
+        if (res.data.success) { toast.success('Updated'); await loadEvent() }
+    } catch (e) { toast.error(e.response?.data?.error || 'Failed to update') }
+}
+
+const addPhoto = async (url) => {
+    if (!url) return
+    const photos = [...(event.value.photos || []), url]
+    await updateEventField('photos', photos)
+}
+
+const removePhoto = async (index) => {
+    const photos = [...(event.value.photos || [])]
+    photos.splice(index, 1)
+    await updateEventField('photos', photos)
+}
+
+const addSponsor = async () => {
+    if (!sponsorForm.name.trim()) return
+    const sponsors = [...(event.value.sponsors || []), {
+        name: sponsorForm.name.trim(),
+        website: sponsorForm.website.trim() || null,
+        logo: sponsorForm.logo || null
+    }]
+    await updateEventField('sponsors', sponsors)
+    showSponsorModal.value = false
+    Object.assign(sponsorForm, { name: '', website: '', logo: null })
+}
+
+const removeSponsor = async (index) => {
+    const sponsors = [...(event.value.sponsors || [])]
+    sponsors.splice(index, 1)
+    await updateEventField('sponsors', sponsors)
 }
 
 watch(showEditModal, (v) => {

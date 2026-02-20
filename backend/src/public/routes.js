@@ -6,6 +6,39 @@ const { RegistrationForm } = require('../registration/form/model');
 const { Committee } = require('../committee/model');
 
 // =============================================
+// PUBLIC ORGANIZATION PAGE — no auth required
+// GET /api/public/org/:orgSlug
+// =============================================
+router.get('/org/:orgSlug', async (req, res) => {
+    try {
+        const { orgSlug } = req.params;
+
+        const org = await Organization.findOne({ slug: orgSlug, status: 'active' })
+            .select('name slug description logo photos foundingDate email phone website address location socialLinks')
+            .lean();
+
+        if (!org) {
+            return res.status(404).json({ error: 'Organization not found' });
+        }
+
+        // Get published/active events for this org
+        const events = await Event.find({
+            organization: org._id,
+            status: { $nin: ['draft'] }
+        })
+            .select('name slug description logo startDate endDate status statistics')
+            .sort({ startDate: -1 })
+            .limit(20)
+            .lean();
+
+        res.json({ success: true, organization: org, events });
+    } catch (error) {
+        global.logger.error('Public org lookup error:', error);
+        res.status(500).json({ error: 'Failed to fetch organization' });
+    }
+});
+
+// =============================================
 // PUBLIC EVENT ENDPOINT — no auth required
 // GET /api/public/events/:orgSlug/:eventSlug
 // =============================================
@@ -13,8 +46,10 @@ router.get('/events/:orgSlug/:eventSlug', async (req, res) => {
     try {
         const { orgSlug, eventSlug } = req.params;
 
-        // Find org by slug
-        const org = await Organization.findOne({ slug: orgSlug }).select('_id name slug logo').lean();
+        // Find org by slug — include contacts info for event page
+        const org = await Organization.findOne({ slug: orgSlug })
+            .select('_id name slug logo email phone website address location socialLinks')
+            .lean();
         if (!org) {
             return res.status(404).json({ error: 'Organization not found' });
         }
@@ -25,13 +60,15 @@ router.get('/events/:orgSlug/:eventSlug', async (req, res) => {
             organization: org._id,
             status: { $nin: ['draft'] }
         })
-            .select('name slug description location logo startDate endDate status statistics organization')
-            .populate('organization', 'name slug logo')
+            .select('name slug description location logo heroImage photos sponsors startDate endDate status statistics organization')
             .lean();
 
         if (!event) {
             return res.status(404).json({ error: 'Event not found' });
         }
+
+        // Attach org data directly (no populate needed, we already have it)
+        event.organization = org;
 
         res.json({ success: true, event });
     } catch (error) {

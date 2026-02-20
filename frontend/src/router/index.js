@@ -376,19 +376,25 @@ const routes = [
   },
 
   // =============================================
-  // PUBLIC EVENT ROUTES (no auth required)
+  // PUBLIC PAGES (no auth)
   // =============================================
   {
-      path: '/events/:orgSlug/:eventSlug',
-      name: 'PublicEvent',
-      component: PublicEventPage,
-      meta: { title: 'Event', requiresAuth: false }
+    path: '/org/:orgSlug/public',
+    name: 'PublicOrg',
+    component: () => import('@/views/public/OrgPageView.vue'),
+    meta: { title: 'Organization', requiresAuth: false }
   },
   {
-      path: '/events/:orgSlug/:eventSlug/register',
-      name: 'PublicRegistration',
-      component: PublicRegistrationPage,
-      meta: { title: 'Register', requiresAuth: false }
+    path: '/events/:orgSlug/:eventSlug',
+    name: 'PublicEvent',
+    component: () => import('@/views/public/EventPageView.vue'),
+    meta: { title: 'Event', requiresAuth: false }
+  },
+  {
+    path: '/events/:orgSlug/:eventSlug/register',
+    name: 'PublicRegistration',
+    component: () => import('@/views/public/RegistrationPageView.vue'),
+    meta: { title: 'Registration', requiresAuth: false }
   },
 
   // =============================================

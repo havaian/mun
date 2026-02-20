@@ -30,6 +30,24 @@ const organizationSchema = new mongoose.Schema({
         default: null  // file path or URL
     },
 
+    photos: {
+        type: [String],
+        default: []
+    },
+
+    phone: {
+        type: String,
+        default: null,
+        trim: true
+    },
+
+    address: {
+        type: String,
+        default: null,
+        trim: true,
+        maxlength: 500
+    },
+
     foundingDate: {
         type: Date,
         default: null

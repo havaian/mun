@@ -48,6 +48,9 @@ const registrationRoutes = require('./registration/routes');
 // --- Public routes (no auth) ---
 const publicRoutes = require('./public/routes');
 
+// --- Media routes ---
+const mediaRoutes = require('./media/routes');
+
 // --- Existing modules (will need ref updates in Phase 2/3) ---
 // NOTE: These modules still reference the OLD User model shape (role, loginToken, etc.)
 // They will break until updated to use EventParticipant refs.
@@ -141,6 +144,9 @@ app.use('/api/organizations/:orgId/events/:eventId/registration', registrationRo
 
 // --- Public routes (no auth) ---
 app.use('/api/public', publicRoutes);
+
+// --- Media routes ---
+app.use('/api/media', mediaRoutes);
 
 // --- Existing routes (need Phase 2/3 middleware updates) ---
 app.use('/api/admin', adminRoutes);

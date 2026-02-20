@@ -48,6 +48,17 @@ const eventSchema = new mongoose.Schema({
         default: []
     },
 
+    heroImage: {
+        type: String,
+        default: null  // file path from media upload
+    },
+
+    sponsors: [{
+        name: { type: String, required: true, trim: true },
+        logo: { type: String, default: null },
+        website: { type: String, default: null, trim: true }
+    }],
+
     startDate: {
         type: Date,
         required: true

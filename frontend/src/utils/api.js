@@ -161,6 +161,36 @@ export const apiMethods = {
     },
 
     // =============================================
+    // MEDIA UPLOADS
+    // =============================================
+    media: {
+        upload: (file) => {
+            const formData = new FormData()
+            formData.append('file', file)
+            return api.post('/media/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            })
+        },
+        uploadMultiple: (files) => {
+            const formData = new FormData()
+            files.forEach(f => formData.append('files', f))
+            return api.post('/media/upload-multiple', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            })
+        },
+        delete: (filename) => api.delete(`/media/${filename}`),
+    },
+
+    // =============================================
+    // PUBLIC ENDPOINTS (no auth required)
+    // =============================================
+    public: {
+        getOrg: (orgSlug) => api.get(`/public/org/${orgSlug}`),
+        getEvent: (orgSlug, eventSlug) => api.get(`/public/events/${orgSlug}/${eventSlug}`),
+        getRegistration: (orgSlug, eventSlug) => api.get(`/public/events/${orgSlug}/${eventSlug}/registration`),
+    },
+
+    // =============================================
     // PARTICIPANTS — /api/organizations/:orgId/events/:eventId/participants
     // =============================================
     participants: {
