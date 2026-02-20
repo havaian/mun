@@ -124,6 +124,102 @@ const createCommittee = async (req, res) => {
     }
 };
 
+// Get all committees
+const getCommittees = async (req, res) => {
+    try {
+        const {
+            page = 1,
+            limit = 20,
+            status,
+            eventId,
+            search
+        } = req.query;
+
+        const { Committee } = require('./model');
+
+        // Build filter based on user role
+        const filter = {};
+
+        // Admin can see all committees
+        // Presidium/delegates can only see committees they're part of
+        if (req.user.role !== 'admin') {
+            if (req.user.committeeId) {
+                filter._id = req.user.committeeId;
+            } else {
+                // User not assigned to any committee
+                return res.json({
+                    success: true,
+                    committees: [],
+                    pagination: {
+                        currentPage: parseInt(page),
+                        totalPages: 0,
+                        total: 0,
+                        hasNext: false,
+                        hasPrev: false
+                    }
+                });
+            }
+        }
+
+        // Apply filters
+        if (status) {
+            filter.status = status;
+        }
+
+        if (eventId) {
+            filter.eventId = eventId;
+        }
+
+        // Search filter
+        if (search) {
+            filter.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        const skip = (page - 1) * limit;
+        const limitNum = parseInt(limit);
+
+        // Execute query with population
+        const committees = await Committee.find(filter)
+            .select('name description type status language eventId countries presidium createdAt updatedAt')
+            .populate('eventId', 'name status')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limitNum);
+
+        const total = await Committee.countDocuments(filter);
+
+        // Add computed fields
+        const committeesWithCounts = committees.map(committee => {
+            const committeeObj = committee.toObject();
+            return {
+                ...committeeObj,
+                countriesCount: committeeObj.countries?.length || 0,
+                // Check for login tokens instead of QR tokens
+                linksGenerated: committeeObj.countries?.some(country => country.loginToken) || false
+            };
+        });
+
+        res.json({
+            success: true,
+            committees: committeesWithCounts,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(total / limitNum),
+                total: total,
+                hasNext: skip + committees.length < total,
+                hasPrev: page > 1
+            }
+        });
+
+    } catch (error) {
+        global.logger.error('Get all committees error:', error);
+        res.status(500).json({ error: 'Failed to fetch committees' });
+    }
+};
+
 // Get committee by ID
 const getCommittee = async (req, res) => {
     try {
@@ -839,6 +935,7 @@ const getCommitteeQRTokens = async (req, res) => {
 
 module.exports = {
     createCommittee,
+    getCommittees,
     getCommittee,
     updateCommittee,
     addCountries,
