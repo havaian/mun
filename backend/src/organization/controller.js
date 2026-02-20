@@ -161,12 +161,22 @@ const updateOrganization = async (req, res) => {
             return res.status(404).json({ error: 'Organization not found' });
         }
 
-        // Check permissions: SuperAdmin can update any org, Org Admin can update their own
+        // Check permissions: SuperAdmin, Org Admin, or manage_content permission
         const isSuperAdmin = req.user.isSuperAdmin;
         const isOrgAdmin = organization.admin?.toString() === req.user.userId;
 
         if (!isSuperAdmin && !isOrgAdmin) {
-            return res.status(403).json({ error: 'Access denied' });
+            // Check if user has manage_content permission via OrgMembership
+            const { OrgMembership } = require('../org-membership/model');
+            const membership = await OrgMembership.findOne({
+                user: req.user.userId,
+                organization: id,
+                status: 'active'
+            }).lean();
+
+            if (!membership || !membership.permissions.includes('manage_content')) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
         }
 
         // Fields that can be updated
