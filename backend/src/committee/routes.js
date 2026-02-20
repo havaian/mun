@@ -118,7 +118,7 @@ router.get('/',
 // Create committee
 // Access: OrgAdmin only (committee creation is an admin action)
 router.post('/',
-    global.auth.orgAdmin('orgId'),
+    global.auth.orgPermission('manage_event_content', 'orgId'),
     validateCommitteeCreation,
     handleValidationErrors,
     controller.createCommittee
