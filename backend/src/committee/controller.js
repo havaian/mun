@@ -13,6 +13,7 @@ const createCommittee = async (req, res) => {
         const {
             eventId,
             name,
+            acronym,
             type,
             description,
             language = 'english'
