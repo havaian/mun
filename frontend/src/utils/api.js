@@ -82,6 +82,16 @@ api.interceptors.response.use(
 )
 
 // =============================================
+// URL HELPERS
+// =============================================
+
+// Build org-scoped event base: /organizations/:orgId/events/:eventId
+const eventBase = (orgId, eventId) => `/organizations/${orgId}/events/${eventId}`
+
+// Build committee-scoped base: /organizations/:orgId/events/:eventId/committees/:committeeId
+const committeeBase = (orgId, eventId, committeeId) => `${eventBase(orgId, eventId)}/committees/${committeeId}`
+
+// =============================================
 // API METHODS — organized by module
 // =============================================
 
@@ -194,13 +204,13 @@ export const apiMethods = {
     // PARTICIPANTS — /api/organizations/:orgId/events/:eventId/participants
     // =============================================
     participants: {
-        getAll: (orgId, eventId, params = {}) => api.get(`/organizations/${orgId}/events/${eventId}/participants`, { params }),
-        getById: (orgId, eventId, participantId) => api.get(`/organizations/${orgId}/events/${eventId}/participants/${participantId}`),
-        add: (orgId, eventId, data) => api.post(`/organizations/${orgId}/events/${eventId}/participants`, data),
-        update: (orgId, eventId, participantId, data) => api.put(`/organizations/${orgId}/events/${eventId}/participants/${participantId}`, data),
-        remove: (orgId, eventId, participantId) => api.delete(`/organizations/${orgId}/events/${eventId}/participants/${participantId}`),
-        getByCommittee: (orgId, eventId) => api.get(`/organizations/${orgId}/events/${eventId}/participants/by-committee`),
-        getMyParticipation: (orgId, eventId) => api.get(`/organizations/${orgId}/events/${eventId}/participants/me`),
+        getAll: (orgId, eventId, params = {}) => api.get(`${eventBase(orgId, eventId)}/participants`, { params }),
+        getById: (orgId, eventId, participantId) => api.get(`${eventBase(orgId, eventId)}/participants/${participantId}`),
+        add: (orgId, eventId, data) => api.post(`${eventBase(orgId, eventId)}/participants`, data),
+        update: (orgId, eventId, participantId, data) => api.put(`${eventBase(orgId, eventId)}/participants/${participantId}`, data),
+        remove: (orgId, eventId, participantId) => api.delete(`${eventBase(orgId, eventId)}/participants/${participantId}`),
+        getByCommittee: (orgId, eventId) => api.get(`${eventBase(orgId, eventId)}/participants/by-committee`),
+        getMyParticipation: (orgId, eventId) => api.get(`${eventBase(orgId, eventId)}/participants/me`),
     },
 
     // =============================================
@@ -208,120 +218,224 @@ export const apiMethods = {
     // =============================================
     registration: {
         // Form management (moderators)
-        getForm: (orgId, eventId) => api.get(`/organizations/${orgId}/events/${eventId}/registration/form`),
-        upsertForm: (orgId, eventId, data) => api.put(`/organizations/${orgId}/events/${eventId}/registration/form`, data),
-        getFormOptions: (orgId, eventId) => api.get(`/organizations/${orgId}/events/${eventId}/registration/form/options`),
+        getForm: (orgId, eventId) => api.get(`${eventBase(orgId, eventId)}/registration/form`),
+        upsertForm: (orgId, eventId, data) => api.put(`${eventBase(orgId, eventId)}/registration/form`, data),
+        getFormOptions: (orgId, eventId) => api.get(`${eventBase(orgId, eventId)}/registration/form/options`),
 
         // Public form (applicants)
-        getPublicForm: (orgId, eventId) => api.get(`/organizations/${orgId}/events/${eventId}/registration/form/public`),
+        getPublicForm: (orgId, eventId) => api.get(`${eventBase(orgId, eventId)}/registration/form/public`),
 
         // Applications — applicant
-        submit: (orgId, eventId, data) => api.post(`/organizations/${orgId}/events/${eventId}/registration/applications`, data),
-        getMyApplication: (orgId, eventId) => api.get(`/organizations/${orgId}/events/${eventId}/registration/applications/me`),
-        withdraw: (orgId, eventId) => api.post(`/organizations/${orgId}/events/${eventId}/registration/applications/me/withdraw`),
+        submit: (orgId, eventId, data) => api.post(`${eventBase(orgId, eventId)}/registration/applications`, data),
+        getMyApplication: (orgId, eventId) => api.get(`${eventBase(orgId, eventId)}/registration/applications/me`),
+        withdraw: (orgId, eventId) => api.post(`${eventBase(orgId, eventId)}/registration/applications/me/withdraw`),
 
         // Applications — moderator
-        getApplications: (orgId, eventId, params = {}) => api.get(`/organizations/${orgId}/events/${eventId}/registration/applications`, { params }),
-        getApplication: (orgId, eventId, appId) => api.get(`/organizations/${orgId}/events/${eventId}/registration/applications/${appId}`),
-        moveToStage: (orgId, eventId, appId, data) => api.post(`/organizations/${orgId}/events/${eventId}/registration/applications/${appId}/move`, data),
-        returnForRevision: (orgId, eventId, appId, data) => api.post(`/organizations/${orgId}/events/${eventId}/registration/applications/${appId}/return`, data),
-        accept: (orgId, eventId, appId, data) => api.post(`/organizations/${orgId}/events/${eventId}/registration/applications/${appId}/accept`, data),
-        reject: (orgId, eventId, appId, data) => api.post(`/organizations/${orgId}/events/${eventId}/registration/applications/${appId}/reject`, data),
-        addNote: (orgId, eventId, appId, data) => api.post(`/organizations/${orgId}/events/${eventId}/registration/applications/${appId}/notes`, data),
-        updateInterview: (orgId, eventId, appId, data) => api.put(`/organizations/${orgId}/events/${eventId}/registration/applications/${appId}/interview`, data),
-        verifyPayment: (orgId, eventId, appId, data) => api.post(`/organizations/${orgId}/events/${eventId}/registration/applications/${appId}/payment/verify`, data),
+        getApplications: (orgId, eventId, params = {}) => api.get(`${eventBase(orgId, eventId)}/registration/applications`, { params }),
+        getApplication: (orgId, eventId, appId) => api.get(`${eventBase(orgId, eventId)}/registration/applications/${appId}`),
+        moveToStage: (orgId, eventId, appId, data) => api.post(`${eventBase(orgId, eventId)}/registration/applications/${appId}/move`, data),
+        returnForRevision: (orgId, eventId, appId, data) => api.post(`${eventBase(orgId, eventId)}/registration/applications/${appId}/return`, data),
+        accept: (orgId, eventId, appId, data) => api.post(`${eventBase(orgId, eventId)}/registration/applications/${appId}/accept`, data),
+        reject: (orgId, eventId, appId, data) => api.post(`${eventBase(orgId, eventId)}/registration/applications/${appId}/reject`, data),
+        addNote: (orgId, eventId, appId, data) => api.post(`${eventBase(orgId, eventId)}/registration/applications/${appId}/notes`, data),
+        updateInterview: (orgId, eventId, appId, data) => api.put(`${eventBase(orgId, eventId)}/registration/applications/${appId}/interview`, data),
+        verifyPayment: (orgId, eventId, appId, data) => api.post(`${eventBase(orgId, eventId)}/registration/applications/${appId}/payment/verify`, data),
     },
 
     // =============================================
-    // COMMITTEES — will be rewired to org-scoped in later phase
-    // Currently still using old flat routes for session/voting/etc.
-    // These are kept for presidium/delegate views that aren't migrated yet.
+    // COMMITTEES — /api/organizations/:orgId/events/:eventId/committees
     // =============================================
     committees: {
-        getAll: (params = {}) => api.get('/committees', { params }),
-        getById: (id) => api.get(`/committees/${id}`),
-        create: (data) => api.post('/committees', data),
-        update: (id, data) => api.put(`/committees/${id}`, data),
-        delete: (id) => api.delete(`/committees/${id}`),
+        getAll: (orgId, eventId, params = {}) => api.get(`${eventBase(orgId, eventId)}/committees`, { params }),
+        getById: (orgId, eventId, committeeId) => api.get(`${eventBase(orgId, eventId)}/committees/${committeeId}`),
+        create: (orgId, eventId, data) => api.post(`${eventBase(orgId, eventId)}/committees`, data),
+        update: (orgId, eventId, committeeId, data) => api.put(`${eventBase(orgId, eventId)}/committees/${committeeId}`, data),
+        delete: (orgId, eventId, committeeId) => api.delete(`${eventBase(orgId, eventId)}/committees/${committeeId}`),
+
+        // Country management
+        getCountries: (orgId, eventId, committeeId) => api.get(`${eventBase(orgId, eventId)}/committees/${committeeId}/countries`),
+        addCountries: (orgId, eventId, committeeId, data) => api.put(`${eventBase(orgId, eventId)}/committees/${committeeId}/countries`, data),
+        removeCountry: (orgId, eventId, committeeId, countryName) => api.delete(`${eventBase(orgId, eventId)}/committees/${committeeId}/countries/${encodeURIComponent(countryName)}`),
+        updateCountryStatus: (orgId, eventId, committeeId, countryName, data) => api.put(`${eventBase(orgId, eventId)}/committees/${committeeId}/countries/${encodeURIComponent(countryName)}/status`, data),
+
+        // Login links
+        getLoginLinks: (orgId, eventId, committeeId, params = {}) => api.get(`${eventBase(orgId, eventId)}/committees/${committeeId}/login-links`, { params }),
+        regenerateLoginLinks: (orgId, eventId, committeeId, data = {}) => api.post(`${eventBase(orgId, eventId)}/committees/${committeeId}/login-links/regenerate`, data),
     },
 
     // =============================================
-    // SESSIONS — still flat, will migrate later
+    // SESSIONS — /api/organizations/:orgId/events/:eventId/committees/:committeeId/sessions
     // =============================================
     sessions: {
-        getAll: (committeeId) => api.get(`/sessions/committee/${committeeId}`),
-        getById: (id) => api.get(`/sessions/${id}`),
-        create: (data) => api.post('/sessions', data),
-        update: (id, data) => api.put(`/sessions/${id}`, data),
-        updateStatus: (id, data) => api.put(`/sessions/${id}/status`, data),
+        getAll: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/sessions`, { params }),
+        create: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/sessions`, data),
+        start: (orgId, eventId, committeeId, sessionId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/sessions/${sessionId}/start`),
+        end: (orgId, eventId, committeeId, sessionId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/sessions/${sessionId}/end`),
     },
 
     // =============================================
-    // VOTING — still flat, will migrate later
-    // =============================================
-    voting: {
-        getAll: (committeeId) => api.get(`/voting/committee/${committeeId}`),
-        getById: (id) => api.get(`/voting/${id}`),
-        create: (data) => api.post('/voting', data),
-        castVote: (id, data) => api.post(`/voting/${id}/vote`, data),
-        closeVoting: (id) => api.put(`/voting/${id}/close`),
-    },
-
-    // =============================================
-    // DOCUMENTS — still flat, will migrate later
+    // DOCUMENTS — /api/organizations/:orgId/events/:eventId/committees/:committeeId/documents
     // =============================================
     documents: {
-        getAll: (committeeId) => api.get(`/documents/committee/${committeeId}`),
-        getById: (id) => api.get(`/documents/${id}`),
-        create: (data) => api.post('/documents', data),
-        update: (id, data) => api.put(`/documents/${id}`, data),
+        getAll: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/documents`, { params }),
+
+        // Position papers (delegates)
+        uploadPositionPaper: (orgId, eventId, committeeId, formData) => api.post(`${committeeBase(orgId, eventId, committeeId)}/documents/position-papers`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        }),
+        getPositionPaper: (orgId, eventId, committeeId, countryName) => api.get(`${committeeBase(orgId, eventId, committeeId)}/documents/position-papers/${encodeURIComponent(countryName)}`),
+
+        // Public documents (presidium)
+        uploadPublic: (orgId, eventId, committeeId, formData) => api.post(`${committeeBase(orgId, eventId, committeeId)}/documents/public`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        }),
+        updatePublic: (orgId, eventId, committeeId, docId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/documents/public/${docId}`, data),
+        deletePublic: (orgId, eventId, committeeId, docId) => api.delete(`${committeeBase(orgId, eventId, committeeId)}/documents/public/${docId}`),
     },
 
     // =============================================
-    // RESOLUTIONS — still flat, will migrate later
+    // RESOLUTIONS — /api/organizations/:orgId/events/:eventId/committees/:committeeId/resolutions
     // =============================================
     resolutions: {
-        getAll: (committeeId) => api.get(`/resolutions/committee/${committeeId}`),
-        getById: (id) => api.get(`/resolutions/${id}`),
-        create: (data) => api.post('/resolutions', data),
-        update: (id, data) => api.put(`/resolutions/${id}`, data),
+        // Coalitions
+        createCoalition: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/resolutions/coalitions`, data),
+        getCoalitions: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/resolutions/coalitions`, { params }),
+        getCoalition: (orgId, eventId, committeeId, coalitionId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/resolutions/coalitions/${coalitionId}`),
+        respondToInvitation: (orgId, eventId, committeeId, coalitionId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/resolutions/coalitions/${coalitionId}/respond`, data),
+        activateCoalition: (orgId, eventId, committeeId, coalitionId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/resolutions/coalitions/${coalitionId}/activate`),
+        leaveCoalition: (orgId, eventId, committeeId, coalitionId) => api.delete(`${committeeBase(orgId, eventId, committeeId)}/resolutions/coalitions/${coalitionId}/leave`),
+
+        // Resolutions
+        submit: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/resolutions`, data),
+        getAll: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/resolutions`, { params }),
+        getById: (orgId, eventId, committeeId, resolutionId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/resolutions/detail/${resolutionId}`),
+        review: (orgId, eventId, committeeId, resolutionId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/resolutions/${resolutionId}/review`, data),
+        submitNewVersion: (orgId, eventId, committeeId, resolutionId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/resolutions/${resolutionId}/new-version`, data),
+        getVersions: (orgId, eventId, committeeId, resolutionId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/resolutions/${resolutionId}/versions`),
+        submitPresidiumDraft: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/resolutions/presidium-draft`, data),
     },
 
     // =============================================
-    // MESSAGING — still flat, will migrate later
+    // VOTING — /api/organizations/:orgId/events/:eventId/committees/:committeeId/voting
     // =============================================
-    messaging: {
-        getAll: (committeeId, params = {}) => api.get(`/messages/committee/${committeeId}`, { params }),
-        send: (data) => api.post('/messages', data),
-        updateStatus: (id, data) => api.put(`/messages/${id}/status`, data),
+    voting: {
+        getAll: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/voting`, { params }),
+        getById: (orgId, eventId, committeeId, votingId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}`),
+        create: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/voting`, data),
+        start: (orgId, eventId, committeeId, votingId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/start`),
+        complete: (orgId, eventId, committeeId, votingId, data = {}) => api.put(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/complete`, data),
+        cancel: (orgId, eventId, committeeId, votingId, data) => api.delete(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}`, { data }),
+        getStatus: (orgId, eventId, committeeId, votingId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/status`),
+        getRollCallOrder: (orgId, eventId, committeeId, votingId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/roll-call-order`),
+        getEligibleVoters: (orgId, eventId, committeeId, votingId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/eligible-voters`),
+
+        // Delegate actions
+        castVote: (orgId, eventId, committeeId, votingId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/vote`, data),
+        skipVote: (orgId, eventId, committeeId, votingId) => api.post(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/skip`),
     },
 
     // =============================================
-    // STATISTICS — still flat, will migrate later
+    // TIMERS — /api/organizations/:orgId/events/:eventId/committees/:committeeId/timers
+    // =============================================
+    timers: {
+        getAll: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/timers`, { params }),
+        getById: (orgId, eventId, committeeId, timerId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}`),
+        create: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/timers`, data),
+        start: (orgId, eventId, committeeId, timerId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}/start`),
+        pause: (orgId, eventId, committeeId, timerId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}/pause`),
+        resume: (orgId, eventId, committeeId, timerId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}/resume`),
+        complete: (orgId, eventId, committeeId, timerId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}/complete`),
+        extend: (orgId, eventId, committeeId, timerId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}/extend`, data),
+        cancel: (orgId, eventId, committeeId, timerId, data = {}) => api.delete(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}`, { data }),
+    },
+
+    // =============================================
+    // PROCEDURE — /api/organizations/:orgId/events/:eventId/committees/:committeeId/procedure
+    // =============================================
+    procedure: {
+        // Motions
+        submitMotion: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions`, data),
+        supportMotion: (orgId, eventId, committeeId, motionId) => api.post(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions/${motionId}/support`),
+        reviewMotion: (orgId, eventId, committeeId, motionId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions/${motionId}/review`, data),
+        getSessionMotions: (orgId, eventId, committeeId, sessionId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions/session/${sessionId}`, { params }),
+        getMotion: (orgId, eventId, committeeId, motionId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions/${motionId}`),
+        getMotionQueue: (orgId, eventId, committeeId, sessionId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions/session/${sessionId}/queue`),
+
+        // Questions
+        submitQuestion: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/procedure/questions`, data),
+        answerQuestion: (orgId, eventId, committeeId, questionId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/procedure/questions/${questionId}/answer`, data),
+        getSessionQuestions: (orgId, eventId, committeeId, sessionId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/procedure/questions/session/${sessionId}`, { params }),
+        bulkReviewQuestions: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/procedure/questions/bulk-review`, data),
+    },
+
+    // =============================================
+    // MESSAGING — /api/organizations/:orgId/events/:eventId/committees/:committeeId/messages
+    // =============================================
+    messages: {
+        // Conversations
+        createBilateral: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/bilateral`, data),
+        createGroup: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/group`, data),
+        getUserConversations: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/messages`, { params }),
+
+        // Committee-wide channels
+        getCommitteeConversation: (orgId, eventId, committeeId, channelType) => api.get(`${committeeBase(orgId, eventId, committeeId)}/messages/channel/${channelType}`),
+        sendCommitteeMessage: (orgId, eventId, committeeId, channelType, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/channel/${channelType}`, data),
+
+        // Single conversation
+        getConversation: (orgId, eventId, committeeId, conversationId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}`, { params }),
+
+        // Message operations
+        sendMessage: (orgId, eventId, committeeId, conversationId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/messages`, data),
+        editMessage: (orgId, eventId, committeeId, conversationId, messageId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/messages/${messageId}`, data),
+        markAsRead: (orgId, eventId, committeeId, conversationId, data = {}) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/read`, data),
+
+        // Participant management
+        addParticipant: (orgId, eventId, committeeId, conversationId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/participants`, data),
+        leaveConversation: (orgId, eventId, committeeId, conversationId) => api.delete(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/leave`),
+        archiveConversation: (orgId, eventId, committeeId, conversationId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/archive`, data),
+    },
+
+    // =============================================
+    // STATISTICS — /api/organizations/:orgId/events/:eventId/committees/:committeeId/statistics
     // =============================================
     statistics: {
-        getCommittee: (committeeId) => api.get(`/statistics/committee/${committeeId}`),
+        getCommittee: (orgId, eventId, committeeId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/statistics`),
+        getDelegateStats: (orgId, eventId, committeeId, email) => api.get(`${committeeBase(orgId, eventId, committeeId)}/statistics/delegate/${encodeURIComponent(email)}`),
+        getMyStats: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/statistics/my-stats`, { params }),
+        getRankings: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/statistics/rankings`, { params }),
+        getActivityFeed: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/statistics/activity`, { params }),
+        recalculate: (orgId, eventId, committeeId) => api.post(`${committeeBase(orgId, eventId, committeeId)}/statistics/recalculate`),
+        awardAchievement: (orgId, eventId, committeeId, email, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/statistics/delegate/${encodeURIComponent(email)}/achievement`, data),
+        getAchievements: (orgId, eventId, committeeId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/statistics/achievements`),
+        getParticipationAnalytics: (orgId, eventId, committeeId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/statistics/analytics/participation`),
+        exportCsv: (orgId, eventId, committeeId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/statistics/export`, { responseType: 'blob' }),
     },
 
     // =============================================
-    // TIMER — still flat, will migrate later
+    // PRESENTATION — /api/organizations/:orgId/events/:eventId/committees/:committeeId/presentation
     // =============================================
-    timer: {
-        get: (committeeId) => api.get(`/timer/committee/${committeeId}`),
-        start: (data) => api.post('/timer/start', data),
-        pause: (id) => api.put(`/timer/${id}/pause`),
-        resume: (id) => api.put(`/timer/${id}/resume`),
-        stop: (id) => api.put(`/timer/${id}/stop`),
+    presentation: {
+        getDisplayData: (orgId, eventId, committeeId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/presentation`),
+        announce: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/presentation/announce`, data),
     },
 
     // =============================================
-    // COUNTRIES
+    // EXPORT — /api/organizations/:orgId/events/:eventId/committees/:committeeId/export
+    // =============================================
+    exports: {
+        getDelegateLinks: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/export/delegate-links`, { params }),
+        getPresidiumLinks: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/export/presidium-links`, { params }),
+        getCompleteLinks: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/export/complete-links`, { params }),
+    },
+
+    // =============================================
+    // COUNTRIES (general resource — not committee-scoped)
     // =============================================
     countries: {
         getAll: (params = {}) => api.get('/countries', { params }),
         getByCode: (code, params = {}) => api.get(`/countries/${code}`, { params }),
         search: (query) => api.get('/countries/search', { params: { q: query } }),
-        // Legacy methods — used by flags store and other old components
+        // Flags
         getFlag: (code) => api.get(`/countries/flags/${code}`),
         getAllFlags: () => api.get('/countries/flags/all/batch'),
         getAllFlagsBatch: () => api.get('/countries/flags/all/batch'),
@@ -331,23 +445,21 @@ export const apiMethods = {
     },
 
     // =============================================
-    // ADMIN (old flat routes — kept for backward compat during migration)
+    // ADMIN (platform-level, SuperAdmin only)
     // =============================================
     admin: {
         getDashboardStats: () => api.get('/admin/dashboard/stats'),
         getRecentActivity: (params = {}) => api.get('/admin/dashboard/activity', { params }),
         getSystemHealth: () => api.get('/admin/system/health'),
         clearCaches: () => api.post('/admin/system/clear-cache'),
-    },
-
-    // =============================================
-    // EXPORT — still flat, will migrate later
-    // =============================================
-    exports: {
-        statistics: (committeeId) => api.get(`/export/statistics/${committeeId}`),
-        votingResults: (committeeId) => api.get(`/export/voting-results/${committeeId}`),
-        resolutions: (committeeId) => api.get(`/export/resolutions/${committeeId}`),
-        committeeReport: (committeeId) => api.get(`/export/committee-report/${committeeId}`),
+        getPerformanceMetrics: () => api.get('/admin/performance/metrics'),
+        getResponseTimes: (params = {}) => api.get('/admin/performance/response-times', { params }),
+        exportConfig: () => api.get('/admin/export/config'),
+        databaseMaintenance: (data) => api.post('/admin/maintenance/database', data),
+        createBackup: (data = {}) => api.post('/admin/maintenance/backup', data),
+        getUserEngagement: (params = {}) => api.get('/admin/analytics/user-engagement', { params }),
+        getUsagePatterns: (params = {}) => api.get('/admin/analytics/usage-patterns', { params }),
+        bulkGenerateQR: (data) => api.post('/admin/committees/bulk-qr', data),
     },
 }
 
