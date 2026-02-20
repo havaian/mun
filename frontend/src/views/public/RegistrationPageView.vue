@@ -337,9 +337,13 @@ const loadForm = async () => {
 const submitApplication = async () => {
     if (!eventId.value || !orgId.value) return
 
+    // Fix: extract just the value (ID) from SleekSelect option objects
     const committeePreferences = preferences.value
-        .filter(id => id)
-        .map((committeeId, index) => ({ committee: committeeId, priority: index + 1 }))
+        .filter(v => v)
+        .map((val, index) => ({
+            committee: typeof val === 'object' ? val.value || val : val,
+            priority: index + 1
+        }))
 
     if (committeePreferences.length === 0 && committees.value.length > 0) {
         toast.error('Please select at least one committee preference.')
@@ -350,7 +354,6 @@ const submitApplication = async () => {
     if (formData.value?.customFields) {
         for (const field of formData.value.customFields) {
             if (!field.required) continue
-
             if (field.type === 'file') {
                 if (!fileUploads[field.fieldId]) {
                     toast.error(`"${field.label}" is required.`)
@@ -367,27 +370,32 @@ const submitApplication = async () => {
 
     isSubmitting.value = true
     try {
-        const hasFiles = Object.keys(fileUploads).length > 0
-
-        let res
-        if (hasFiles) {
-            // Use FormData when files are present
-            const fd = new FormData()
-            fd.append('committeePreferences', JSON.stringify(committeePreferences))
-            fd.append('customFieldResponses', JSON.stringify(customResponses))
-
-            // Append each file with its fieldId as the key
-            for (const [fieldId, file] of Object.entries(fileUploads)) {
-                fd.append(`file_${fieldId}`, file)
+        // Upload files first, store URLs in customResponses
+        const resolvedResponses = { ...customResponses }
+        for (const [fieldId, file] of Object.entries(fileUploads)) {
+            try {
+                const uploadRes = await apiMethods.media.upload(file)
+                if (uploadRes.data.success) {
+                    resolvedResponses[fieldId] = uploadRes.data.url || uploadRes.data.file?.url
+                }
+            } catch (e) {
+                toast.error(`Failed to upload file for "${formData.value.customFields.find(f => f.fieldId === fieldId)?.label || fieldId}"`)
+                return
             }
-
-            res = await apiMethods.registration.submit(orgId.value, eventId.value, fd)
-        } else {
-            res = await apiMethods.registration.submit(orgId.value, eventId.value, {
-                committeePreferences,
-                customFieldResponses: customResponses,
-            })
         }
+
+        // Fix: extract plain value from SleekSelect objects in custom responses too
+        for (const [key, val] of Object.entries(resolvedResponses)) {
+            if (val && typeof val === 'object' && val.value !== undefined) {
+                resolvedResponses[key] = val.value
+            }
+        }
+
+        // Send as plain JSON — no FormData needed
+        const res = await apiMethods.registration.submit(orgId.value, eventId.value, {
+            committeePreferences,
+            customFieldResponses: resolvedResponses,
+        })
 
         if (res.data.success) {
             toast.success('Application submitted successfully!')
