@@ -257,10 +257,6 @@ export const apiMethods = {
         addCountries: (orgId, eventId, committeeId, data) => api.put(`${eventBase(orgId, eventId)}/committees/${committeeId}/countries`, data),
         removeCountry: (orgId, eventId, committeeId, countryName) => api.delete(`${eventBase(orgId, eventId)}/committees/${committeeId}/countries/${encodeURIComponent(countryName)}`),
         updateCountryStatus: (orgId, eventId, committeeId, countryName, data) => api.put(`${eventBase(orgId, eventId)}/committees/${committeeId}/countries/${encodeURIComponent(countryName)}/status`, data),
-
-        // Login links
-        getLoginLinks: (orgId, eventId, committeeId, params = {}) => api.get(`${eventBase(orgId, eventId)}/committees/${committeeId}/login-links`, { params }),
-        regenerateLoginLinks: (orgId, eventId, committeeId, data = {}) => api.post(`${eventBase(orgId, eventId)}/committees/${committeeId}/login-links/regenerate`, data),
     },
 
     // =============================================
@@ -417,15 +413,6 @@ export const apiMethods = {
     presentation: {
         getDisplayData: (orgId, eventId, committeeId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/presentation`),
         announce: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/presentation/announce`, data),
-    },
-
-    // =============================================
-    // EXPORT — /api/organizations/:orgId/events/:eventId/committees/:committeeId/export
-    // =============================================
-    exports: {
-        getDelegateLinks: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/export/delegate-links`, { params }),
-        getPresidiumLinks: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/export/presidium-links`, { params }),
-        getCompleteLinks: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/export/complete-links`, { params }),
     },
 
     // =============================================

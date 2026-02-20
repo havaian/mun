@@ -27,10 +27,7 @@ const route = useRoute()
 // Set page title based on route
 onMounted(() => {
   const titleMap = {
-    'Login': 'Sign In',
-    'QRLogin': 'QR Code Login',
-    'EmailBinding': 'Complete Registration',
-    'LanguageSelection': 'Select Language'
+    'Login': 'Sign In'
   }
   
   const pageTitle = titleMap[route.name] || 'Authentication'

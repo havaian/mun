@@ -326,6 +326,8 @@ const countryManagerCommittee = ref(null)
 const countrySearch = ref('')
 const countrySearchResults = ref([])
 
+const eventId = computed(() => eventData.value?._id)
+
 const defaultSettings = () => ({
     votingSettings: { requireMajority: true, allowAbstentions: true, vetoEnabled: false, secretBallot: false },
     debateSettings: { speakersList: true, pointsOfOrder: true, rightOfReply: true },
@@ -355,7 +357,7 @@ const loadData = async () => {
         const eventRes = await apiMethods.events.getById(orgId.value, eventSlug.value)
         if (eventRes.data.success) {
             eventData.value = eventRes.data.event
-            const committeesRes = await apiMethods.committees.getAll({ eventId: eventData.value._id })
+            const committeesRes = await apiMethods.committees.getAll(orgId.value, eventData.value._id)
             if (committeesRes.data.success) {
                 committees.value = committeesRes.data.committees || []
             }
@@ -409,12 +411,9 @@ const handleSave = async () => {
         }
         if (editingCommittee.value) {
             payload.status = form.status
-            await apiMethods.committees.update(editingCommittee.value._id, payload)
-            toast.success('Committee updated')
+            await apiMethods.committees.update(orgId.value, eventId.value, editingCommittee.value._id, payload)
         } else {
-            payload.event = eventData.value._id
-            await apiMethods.committees.create(payload)
-            toast.success('Committee created')
+            await apiMethods.committees.create(orgId.value, eventId.value, payload)
         }
         closeFormModal()
         await loadData()
@@ -469,7 +468,7 @@ const removeCountryFromCommittee = (code) => {
 const saveCountries = async () => {
     isSavingCountries.value = true
     try {
-        await apiMethods.committees.update(countryManagerCommittee.value._id, { countries: countryManagerCommittee.value.countries })
+        await apiMethods.committees.update(orgId.value, eventId.value, countryManagerCommittee.value._id, { countries: countryManagerCommittee.value.countries })
         toast.success('Countries updated')
         countryManagerCommittee.value = null
         await loadData()
