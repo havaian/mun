@@ -38,6 +38,13 @@ const eventSchema = new mongoose.Schema({
         maxlength: 300
     },
 
+    mapUrl: {
+        type: String,
+        default: null,
+        trim: true,
+        maxlength: 500
+    },
+
     logo: {
         type: String,
         default: null

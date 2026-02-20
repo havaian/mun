@@ -14,7 +14,8 @@
                         <span class="text-mun-gray-300">/</span>
                     </div>
                     <h1 class="text-2xl font-bold text-mun-gray-900">{{ event.name }}</h1>
-                    <p v-if="event.description" class="text-sm text-mun-gray-500 mt-1">{{ event.description }}</p>
+                    <p v-if="event.description" class="text-sm text-mun-gray-500 mt-1 line-clamp-2">{{
+                        stripHtml(event.description) }}</p>
                 </div>
                 <div class="flex items-center space-x-3">
                     <span :class="statusClass(event.status)">{{ formatStatus(event.status) }}</span>
@@ -64,17 +65,17 @@
                     <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
                         <p class="text-sm font-medium text-mun-gray-500">Committees</p>
                         <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalCommittees || 0
-                        }}</p>
+                            }}</p>
                     </div>
                     <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
                         <p class="text-sm font-medium text-mun-gray-500">Participants</p>
                         <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalParticipants || 0
-                        }}</p>
+                            }}</p>
                     </div>
                     <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
                         <p class="text-sm font-medium text-mun-gray-500">Applications</p>
                         <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalApplications || 0
-                        }}</p>
+                            }}</p>
                     </div>
                     <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
                         <p class="text-sm font-medium text-mun-gray-500">Countries</p>
@@ -203,7 +204,7 @@
                     class="bg-white rounded-xl border border-mun-gray-200 p-6">
                     <h2 class="text-lg font-semibold text-mun-gray-900 mb-3">Status Management</h2>
                     <p class="text-xs text-mun-gray-400 mb-4">Current status: <span class="font-medium">{{
-                        formatStatus(event.status) }}</span></p>
+                            formatStatus(event.status) }}</span></p>
                     <div class="flex flex-wrap gap-2">
                         <AppButton v-for="s in nextStatuses" :key="s" variant="ghost" size="sm"
                             @click="changeStatus(s)">
@@ -233,9 +234,9 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-mun-gray-700 mb-1">Description</label>
-                        <textarea v-model="editForm.description" rows="3" class="input-field"
-                            placeholder="Describe the event..."></textarea>
-                        <p class="text-xs text-mun-gray-400 mt-1">Shown on the public event page</p>
+                        <RichTextEditor v-model="editForm.description" placeholder="Describe the event..." />
+                        <p class="text-xs text-mun-gray-400 mt-1">Shown on the public event page. Supports rich text
+                            formatting.</p>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
@@ -251,6 +252,12 @@
                         <label class="block text-sm font-medium text-mun-gray-700 mb-1">Location</label>
                         <input v-model="editForm.location" type="text" class="input-field"
                             placeholder="e.g. Hilton Tashkent City" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-1">Map Link</label>
+                        <input v-model="editForm.mapUrl" type="url" class="input-field"
+                            placeholder="https://maps.google.com/..." />
+                        <p class="text-xs text-mun-gray-400 mt-1">Google Maps link shown on public event page</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-mun-gray-700 mb-1">Event Logo</label>
@@ -305,6 +312,7 @@ import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
 import { PencilIcon, ClipboardDocumentIcon, PlusIcon, XMarkIcon, BuildingOffice2Icon } from '@heroicons/vue/24/outline'
 import ImageUploader from '@/components/ui/ImageUploader.vue'
+import RichTextEditor from '@/components/ui/RichTextEditor.vue'
 
 import EventCommittees from '@/views/org/event/CommitteesView.vue'
 import EventParticipants from '@/views/org/event/ParticipantsView.vue'
@@ -330,7 +338,7 @@ const showSponsorModal = ref(false)
 const activeTab = ref('overview')
 const copiedField = ref(null)
 
-const editForm = reactive({ name: '', description: '', startDate: '', endDate: '', location: '', logo: '', timezone: 'UTC' })
+const editForm = reactive({ name: '', description: '', startDate: '', endDate: '', location: '', mapUrl: '', logo: '', timezone: 'UTC' })
 const sponsorForm = reactive({ name: '', website: '', logo: null })
 
 const timezoneOptions = [
@@ -476,12 +484,14 @@ watch(showEditModal, (v) => {
         editForm.startDate = event.value.startDate?.split('T')[0] || ''
         editForm.endDate = event.value.endDate?.split('T')[0] || ''
         editForm.location = event.value.location || ''
+        editForm.mapUrl = event.value.mapUrl || ''
         editForm.logo = event.value.logo || ''
         editForm.timezone = event.value.timezone || 'UTC'
     }
 })
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''
+const stripHtml = (html) => html ? html.replace(/<[^>]*>/g, '').substring(0, 200) : ''
 const formatStatus = (s) => s?.replace(/_/g, ' ') || ''
 const statusClass = (status) => {
     const m = {

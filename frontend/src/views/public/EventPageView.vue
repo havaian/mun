@@ -22,9 +22,12 @@
 
         <!-- Event content -->
         <template v-else-if="event">
+            <!-- MUN.UZ top bar -->
+            <MunBrand variant="top" />
+
             <!-- Hero Section -->
             <section class="relative overflow-hidden">
-                <!-- Background: either uploaded hero image with overlay, or gradient -->
+                <!-- Background: uploaded hero image with overlay, or gradient -->
                 <div v-if="event.heroImage" class="absolute inset-0">
                     <img :src="mediaUrl(event.heroImage)" alt="" class="w-full h-full object-cover" />
                     <div
@@ -34,7 +37,7 @@
                 <div v-else
                     class="absolute inset-0 bg-gradient-to-br from-mun-blue-900 via-mun-blue-800 to-mun-blue-950"></div>
 
-                <!-- Decorative elements -->
+                <!-- Decorative -->
                 <div class="absolute inset-0 overflow-hidden pointer-events-none">
                     <div class="absolute inset-0 opacity-[0.04]"
                         style="background-image: linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px); background-size: 60px 60px;">
@@ -68,36 +71,27 @@
 
                     <!-- Event title -->
                     <h1
-                        class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight mb-6">
+                        class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight mb-8">
                         {{ event.name }}
                     </h1>
 
-                    <!-- Description -->
-                    <p v-if="event.description"
-                        class="text-lg sm:text-xl text-mun-blue-100/80 max-w-2xl leading-relaxed mb-10">
-                        {{ event.description }}
-                    </p>
-
-                    <!-- Meta info -->
+                    <!-- Meta info — no background squares on icons -->
                     <div class="flex flex-wrap items-center gap-6 mb-12">
-                        <div v-if="event.startDate" class="flex items-center gap-2.5 text-white/70">
-                            <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center">
-                                <CalendarIcon class="w-4.5 h-4.5 text-mun-blue-200" />
-                            </div>
+                        <div v-if="event.startDate" class="flex items-center gap-2.5">
+                            <CalendarIcon class="w-5 h-5 text-white/60 flex-shrink-0" />
                             <div>
                                 <p class="text-xs text-white/40 uppercase tracking-wider">Date</p>
                                 <p class="text-sm font-medium text-white">
                                     {{ formatDate(event.startDate) }}
-                                    <template v-if="event.endDate && event.endDate !== event.startDate">
+                                    <template
+                                        v-if="event.endDate && formatDate(event.endDate) !== formatDate(event.startDate)">
                                         — {{ formatDate(event.endDate) }}
                                     </template>
                                 </p>
                             </div>
                         </div>
-                        <div v-if="event.location" class="flex items-center gap-2.5 text-white/70">
-                            <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center">
-                                <MapPinIcon class="w-4.5 h-4.5 text-mun-blue-200" />
-                            </div>
+                        <div v-if="event.location" class="flex items-center gap-2.5">
+                            <MapPinIcon class="w-5 h-5 text-white/60 flex-shrink-0" />
                             <div>
                                 <p class="text-xs text-white/40 uppercase tracking-wider">Location</p>
                                 <p class="text-sm font-medium text-white">{{ event.location }}</p>
@@ -128,16 +122,16 @@
                         </span>
                     </div>
 
-                    <!-- Sponsor logos in hero -->
-                    <div v-if="event.sponsors?.length" class="flex flex-wrap items-center gap-4">
-                        <span class="text-xs text-white/30 uppercase tracking-wider mr-2">Supported by</span>
-                        <a v-for="(sponsor, i) in event.sponsors" :key="i" :href="sponsor.website || '#'"
+                    <!-- Sponsor logos in hero — white bg pills -->
+                    <div v-if="event.sponsors?.length" class="flex flex-wrap items-center gap-3">
+                        <span class="text-xs text-white/30 uppercase tracking-wider mr-1">Supported by</span>
+                        <a v-for="(sponsor, i) in event.sponsors" :key="i" :href="sponsor.website || undefined"
                             :target="sponsor.website ? '_blank' : undefined"
-                            :class="['block', sponsor.website ? 'cursor-pointer' : 'cursor-default']"
+                            :class="['flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10', sponsor.website ? 'hover:bg-white/20 cursor-pointer' : 'cursor-default']"
                             :title="sponsor.name">
                             <img v-if="sponsor.logo" :src="mediaUrl(sponsor.logo)" :alt="sponsor.name"
-                                class="h-8 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity brightness-0 invert" />
-                            <span v-else class="text-xs text-white/50 font-medium">{{ sponsor.name }}</span>
+                                class="h-5 w-auto object-contain" />
+                            <span class="text-xs text-white/70 font-medium">{{ sponsor.name }}</span>
                         </a>
                     </div>
                 </div>
@@ -177,21 +171,37 @@
                 </div>
             </section>
 
-            <!-- Photos gallery -->
-            <section v-if="event.photos?.length" class="max-w-5xl mx-auto px-6 py-16">
+            <!-- Description section — moved out of hero -->
+            <section v-if="event.description" class="max-w-5xl mx-auto px-6 py-12 lg:py-16">
+                <h2 class="text-2xl font-bold text-mun-gray-900 mb-6">About</h2>
+                <!-- Rich text HTML or plain text -->
+                <RichTextContent v-if="isHtml(event.description)" :content="event.description" />
+                <p v-else class="text-mun-gray-600 leading-relaxed whitespace-pre-line">{{ event.description }}</p>
+
+                <!-- Map link -->
+                <a v-if="event.mapUrl" :href="event.mapUrl" target="_blank"
+                    class="inline-flex items-center gap-2 mt-6 px-4 py-2.5 bg-mun-gray-50 border border-mun-gray-200 rounded-xl text-sm text-mun-gray-700 hover:border-mun-blue-200 hover:text-mun-blue transition-colors">
+                    <MapPinIcon class="w-4 h-4" />
+                    View on map
+                </a>
+            </section>
+
+            <!-- Photos gallery with lightbox -->
+            <section v-if="event.photos?.length" class="max-w-5xl mx-auto px-6 pb-12 lg:pb-16">
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                    <div v-for="(photo, i) in event.photos" :key="i"
-                        class="aspect-[4/3] rounded-xl overflow-hidden bg-mun-gray-100">
+                    <button v-for="(photo, i) in event.photos" :key="i" @click="lightboxIndex = i"
+                        class="aspect-[4/3] rounded-xl overflow-hidden bg-mun-gray-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-mun-blue focus:ring-offset-2">
                         <img :src="mediaUrl(photo)" alt="" class="w-full h-full object-cover" />
-                    </div>
+                    </button>
                 </div>
             </section>
 
             <!-- Sponsors section -->
-            <section v-if="event.sponsors?.length" class="max-w-5xl mx-auto px-6 py-12 lg:py-16">
+            <section v-if="event.sponsors?.length"
+                class="max-w-5xl mx-auto px-6 py-12 lg:py-16 border-t border-mun-gray-100">
                 <h2 class="text-2xl font-bold text-mun-gray-900 text-center mb-10">Our Sponsors</h2>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
-                    <a v-for="(sponsor, i) in event.sponsors" :key="i" :href="sponsor.website || '#'"
+                    <a v-for="(sponsor, i) in event.sponsors" :key="i" :href="sponsor.website || undefined"
                         :target="sponsor.website ? '_blank' : undefined" :class="[
                             'flex flex-col items-center p-6 rounded-2xl border border-mun-gray-200 transition-all',
                             sponsor.website ? 'hover:border-mun-blue-200 hover:shadow-lg cursor-pointer' : ''
@@ -220,10 +230,11 @@
                             <EnvelopeIcon class="w-4 h-4" />
                             {{ orgData.email }}
                         </a>
-                        <span v-if="orgData.phone" class="flex items-center gap-2 text-mun-gray-600">
+                        <a v-if="orgData.phone" :href="'tel:' + orgData.phone"
+                            class="flex items-center gap-2 text-mun-gray-600 hover:text-mun-blue transition-colors">
                             <PhoneIcon class="w-4 h-4" />
                             {{ orgData.phone }}
-                        </span>
+                        </a>
                         <a v-if="orgData.website" :href="orgData.website" target="_blank"
                             class="flex items-center gap-2 text-mun-gray-600 hover:text-mun-blue transition-colors">
                             <GlobeAltIcon class="w-4 h-4" />
@@ -234,30 +245,30 @@
                             {{ orgData.address }}
                         </span>
                     </div>
-                    <!-- Social links -->
-                    <div v-if="Object.keys(activeSocials).length" class="flex items-center gap-3 mt-4">
+                    <!-- Social links with brand icons -->
+                    <div v-if="Object.keys(activeSocials).length" class="flex items-center gap-3 mt-5">
                         <a v-for="(url, platform) in activeSocials" :key="platform" :href="url" target="_blank"
-                            class="w-9 h-9 rounded-lg bg-mun-gray-100 hover:bg-mun-blue hover:text-white flex items-center justify-center text-mun-gray-500 transition-colors text-xs font-bold uppercase">
-                            {{ platform.charAt(0) }}
+                            class="w-9 h-9 rounded-lg bg-mun-gray-100 hover:bg-mun-blue hover:text-white flex items-center justify-center text-mun-gray-500 transition-colors">
+                            <SocialIcon :name="platform" class="w-4 h-4" />
                         </a>
                     </div>
                 </div>
             </section>
 
             <!-- Footer -->
-            <footer class="border-t border-mun-gray-100">
-                <div class="max-w-5xl mx-auto px-6 py-8 flex items-center justify-between">
-                    <p class="text-xs text-mun-gray-400">
-                        Hosted by
-                        <router-link :to="{ name: 'PublicOrg', params: { orgSlug: $route.params.orgSlug } }"
-                            class="font-medium text-mun-gray-500 hover:text-mun-blue transition-colors">
-                            {{ orgName }}
-                        </router-link>
-                    </p>
-                    <p class="text-xs text-mun-gray-300">Powered by MUN.UZ</p>
-                </div>
-            </footer>
+            <MunBrand variant="footer">
+                <p class="text-xs text-mun-gray-400">
+                    Hosted by
+                    <router-link :to="{ name: 'PublicOrg', params: { orgSlug: $route.params.orgSlug } }"
+                        class="font-medium text-mun-gray-500 hover:text-mun-blue transition-colors">
+                        {{ orgName }}
+                    </router-link>
+                </p>
+            </MunBrand>
         </template>
+
+        <!-- Lightbox -->
+        <PhotoLightbox v-model="lightboxIndex" :photos="lightboxPhotos" />
     </div>
 </template>
 
@@ -269,6 +280,10 @@ import {
     CalendarIcon, MapPinIcon, ArrowRightIcon, ArrowLeftIcon, ExclamationTriangleIcon,
     EnvelopeIcon, PhoneIcon, GlobeAltIcon
 } from '@heroicons/vue/24/outline'
+import SocialIcon from '@/components/ui/SocialIcon.vue'
+import PhotoLightbox from '@/components/ui/PhotoLightbox.vue'
+import MunBrand from '@/components/ui/MunBrand.vue'
+import RichTextContent from '@/components/ui/RichTextContent.vue'
 
 const route = useRoute()
 
@@ -278,6 +293,7 @@ const orgName = ref('')
 const orgLogo = ref(null)
 const orgData = ref({})
 const error = ref(null)
+const lightboxIndex = ref(null)
 
 const orgInitials = computed(() => {
     if (!orgName.value) return ''
@@ -305,12 +321,17 @@ const activeSocials = computed(() => {
     return active
 })
 
+const lightboxPhotos = computed(() => (event.value?.photos || []).map(p => mediaUrl(p)))
+
 const mediaUrl = (path) => {
     if (!path) return ''
     if (path.startsWith('http')) return path
     const base = import.meta.env.VITE_API_URL || ''
     return `${base}${path}`
 }
+
+// Detect if description contains HTML tags
+const isHtml = (text) => /<[a-z][\s\S]*>/i.test(text)
 
 const loadEvent = async () => {
     isLoading.value = true

@@ -60,9 +60,10 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-mun-gray-700 mb-1">Description</label>
-                            <textarea v-model="form.description" rows="3" class="input-field"
-                                placeholder="Tell people about your organization..."></textarea>
-                            <p class="text-xs text-mun-gray-400 mt-1">Shown on your public organization page</p>
+                            <RichTextEditor v-model="form.description"
+                                placeholder="Tell people about your organization..." />
+                            <p class="text-xs text-mun-gray-400 mt-1">Shown on your public organization page. Supports
+                                rich text formatting.</p>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-mun-gray-700 mb-1">Founding Date</label>
@@ -160,6 +161,12 @@
                             <p class="text-mun-gray-500">Country</p>
                             <p class="text-mun-gray-900">{{ org.location?.country || '—' }}</p>
                         </div>
+                        <div class="sm:col-span-2">
+                            <p class="text-mun-gray-500">Map Link</p>
+                            <a v-if="org.mapUrl" :href="org.mapUrl" target="_blank"
+                                class="text-mun-blue hover:underline break-all text-sm">{{ org.mapUrl }}</a>
+                            <p v-else class="text-mun-gray-900">—</p>
+                        </div>
                     </div>
                 </template>
 
@@ -196,6 +203,13 @@
                                 <label class="block text-sm font-medium text-mun-gray-700 mb-1">Country</label>
                                 <input v-model="form.location.country" type="text" class="input-field"
                                     placeholder="Uzbekistan" />
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-medium text-mun-gray-700 mb-1">Map Link</label>
+                                <input v-model="form.mapUrl" type="url" class="input-field"
+                                    placeholder="https://maps.google.com/..." />
+                                <p class="text-xs text-mun-gray-400 mt-1">Google Maps or similar link shown on public
+                                    page</p>
                             </div>
                         </div>
                         <div class="flex justify-end gap-3 pt-1">
@@ -285,6 +299,7 @@ import {
     PencilIcon, XMarkIcon, ArrowTopRightOnSquareIcon, ClipboardDocumentIcon
 } from '@heroicons/vue/24/outline'
 import ImageUploader from '@/components/ui/ImageUploader.vue'
+import RichTextEditor from '@/components/ui/RichTextEditor.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -316,6 +331,7 @@ const form = reactive({
     phone: '',
     website: '',
     address: '',
+    mapUrl: '',
     location: { city: '', country: '' },
     socialLinks: {
         telegram: '',
@@ -377,6 +393,7 @@ const startEdit = (section) => {
         form.phone = org.value.phone || ''
         form.website = org.value.website || ''
         form.address = org.value.address || ''
+        form.mapUrl = org.value.mapUrl || ''
         form.location.city = org.value.location?.city || ''
         form.location.country = org.value.location?.country || ''
     } else if (section === 'social') {
@@ -411,6 +428,7 @@ const saveSection = async (section) => {
                 phone: form.phone || null,
                 website: form.website || null,
                 address: form.address || null,
+                mapUrl: form.mapUrl || null,
                 location: {
                     city: form.location.city || null,
                     country: form.location.country || null

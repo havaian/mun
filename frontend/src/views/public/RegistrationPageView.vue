@@ -22,16 +22,23 @@
         </div>
 
         <template v-else>
+            <!-- MUN.UZ top bar -->
+            <MunBrand variant="top" />
+
             <!-- Header bar -->
             <header class="bg-white border-b border-mun-gray-200 sticky top-0 z-30">
-                <div class="max-w-2xl mx-auto px-6 py-4 flex items-center justify-between">
+                <div class="max-w-2xl mx-auto px-6 py-3 flex items-center justify-between">
                     <router-link
                         :to="{ name: 'PublicEvent', params: { orgSlug: $route.params.orgSlug, eventSlug: $route.params.eventSlug } }"
                         class="flex items-center gap-2 text-sm text-mun-gray-500 hover:text-mun-gray-700 transition-colors">
                         <ArrowLeftIcon class="w-4 h-4" />
                         <span class="hidden sm:inline">Back to event</span>
                     </router-link>
-                    <span class="text-sm font-medium text-mun-gray-900 truncate max-w-xs">{{ eventName }}</span>
+                    <div class="flex items-center gap-2.5">
+                        <img v-if="eventLogo" :src="mediaUrl(eventLogo)" :alt="eventName"
+                            class="w-7 h-7 rounded-lg object-cover" />
+                        <span class="text-sm font-medium text-mun-gray-900 truncate max-w-xs">{{ eventName }}</span>
+                    </div>
                 </div>
             </header>
 
@@ -182,11 +189,7 @@
             </div>
 
             <!-- Footer -->
-            <footer class="border-t border-mun-gray-100 mt-16">
-                <div class="max-w-2xl mx-auto px-6 py-6 text-center">
-                    <p class="text-xs text-mun-gray-300">Powered by MUN.UZ</p>
-                </div>
-            </footer>
+            <MunBrand variant="footer" :left-text="eventName" class="mt-16" />
         </template>
     </div>
 </template>
@@ -201,6 +204,7 @@ import {
     ArrowLeftIcon, UserIcon, ExclamationTriangleIcon,
     DocumentIcon, XMarkIcon, ArrowUpTrayIcon
 } from '@heroicons/vue/24/outline'
+import MunBrand from '@/components/ui/MunBrand.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -211,6 +215,7 @@ const isLoading = ref(true)
 const isSubmitting = ref(false)
 const error = ref(null)
 const eventName = ref('')
+const eventLogo = ref(null)
 const eventId = ref(null)
 const orgId = ref(null)
 const formData = ref(null)
@@ -221,6 +226,13 @@ const fileUploads = reactive({})
 const dragOver = reactive({})
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+
+const mediaUrl = (path) => {
+    if (!path) return ''
+    if (path.startsWith('http')) return path
+    const base = import.meta.env.VITE_API_URL || ''
+    return `${base}${path}`
+}
 
 // Build committee options for SleekSelect, excluding already-selected ones
 const getCommitteeOptions = (currentIndex) => {
@@ -287,6 +299,7 @@ const loadForm = async () => {
 
         const ev = eventRes.data.event
         eventName.value = ev.name
+        eventLogo.value = ev.logo || ev.organization?.logo || null
         eventId.value = ev._id
         orgId.value = ev.organization?._id
 

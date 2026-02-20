@@ -14,6 +14,9 @@
         </div>
 
         <template v-else-if="org">
+            <!-- MUN.UZ top bar -->
+            <MunBrand variant="top" />
+
             <!-- Hero -->
             <section class="relative overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-mun-blue-900 via-mun-blue-800 to-mun-blue-950">
@@ -44,15 +47,12 @@
 
                         <div class="flex-1">
                             <h1
-                                class="text-4xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight mb-3">
+                                class="text-4xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight mb-4">
                                 {{ org.name }}
                             </h1>
-                            <p v-if="org.description" class="text-lg text-mun-blue-100/80 max-w-2xl leading-relaxed">
-                                {{ org.description }}
-                            </p>
 
                             <!-- Quick info -->
-                            <div class="flex flex-wrap items-center gap-5 mt-6">
+                            <div class="flex flex-wrap items-center gap-5 mt-2">
                                 <div v-if="org.foundingDate" class="flex items-center gap-2 text-white/60">
                                     <CalendarIcon class="w-4 h-4" />
                                     <span class="text-sm">Founded {{ new Date(org.foundingDate).getFullYear() }}</span>
@@ -81,37 +81,52 @@
                         <EnvelopeIcon class="w-4 h-4" />
                         {{ org.email }}
                     </a>
-                    <span v-if="org.phone" class="flex items-center gap-2 text-sm text-mun-gray-600">
+                    <a v-if="org.phone" :href="'tel:' + org.phone"
+                        class="flex items-center gap-2 text-sm text-mun-gray-600 hover:text-mun-blue transition-colors">
                         <PhoneIcon class="w-4 h-4" />
                         {{ org.phone }}
-                    </span>
+                    </a>
                     <span v-if="org.address" class="flex items-center gap-2 text-sm text-mun-gray-600">
                         <BuildingOfficeIcon class="w-4 h-4" />
                         {{ org.address }}
                     </span>
                     <div class="flex-1"></div>
-                    <!-- Social links -->
-                    <div class="flex items-center gap-3">
+                    <!-- Social links with brand icons -->
+                    <div class="flex items-center gap-2.5">
                         <a v-for="(url, platform) in activeSocials" :key="platform" :href="url" target="_blank"
-                            class="w-8 h-8 rounded-lg bg-mun-gray-200 hover:bg-mun-blue hover:text-white flex items-center justify-center text-mun-gray-500 transition-colors text-xs font-bold uppercase">
-                            {{ platform.charAt(0) }}
+                            class="w-8 h-8 rounded-lg bg-mun-gray-200 hover:bg-mun-blue hover:text-white flex items-center justify-center text-mun-gray-500 transition-colors">
+                            <SocialIcon :name="platform" class="w-3.5 h-3.5" />
                         </a>
                     </div>
                 </div>
             </section>
 
-            <!-- Photos -->
-            <section v-if="org.photos?.length" class="max-w-5xl mx-auto px-6 py-12">
+            <!-- About / Description — rich text support -->
+            <section v-if="org.description" class="max-w-5xl mx-auto px-6 py-12 lg:py-16">
+                <h2 class="text-2xl font-bold text-mun-gray-900 mb-6">About</h2>
+                <RichTextContent v-if="isHtml(org.description)" :content="org.description" />
+                <p v-else class="text-mun-gray-600 leading-relaxed whitespace-pre-line">{{ org.description }}</p>
+
+                <!-- Map link -->
+                <a v-if="org.mapUrl" :href="org.mapUrl" target="_blank"
+                    class="inline-flex items-center gap-2 mt-6 px-4 py-2.5 bg-mun-gray-50 border border-mun-gray-200 rounded-xl text-sm text-mun-gray-700 hover:border-mun-blue-200 hover:text-mun-blue transition-colors">
+                    <MapPinIcon class="w-4 h-4" />
+                    View on map
+                </a>
+            </section>
+
+            <!-- Photos with lightbox -->
+            <section v-if="org.photos?.length" class="max-w-5xl mx-auto px-6 pb-12">
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                    <div v-for="(photo, i) in org.photos" :key="i"
-                        class="aspect-[4/3] rounded-xl overflow-hidden bg-mun-gray-100">
+                    <button v-for="(photo, i) in org.photos" :key="i" @click="lightboxIndex = i"
+                        class="aspect-[4/3] rounded-xl overflow-hidden bg-mun-gray-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-mun-blue focus:ring-offset-2">
                         <img :src="mediaUrl(photo)" alt="" class="w-full h-full object-cover" />
-                    </div>
+                    </button>
                 </div>
             </section>
 
             <!-- Events -->
-            <section class="max-w-5xl mx-auto px-6 py-12 lg:py-16">
+            <section class="max-w-5xl mx-auto px-6 py-12 lg:py-16 border-t border-mun-gray-100">
                 <h2 class="text-2xl font-bold text-mun-gray-900 mb-8">Events</h2>
 
                 <div v-if="events.length === 0" class="text-center py-12 text-mun-gray-400">
@@ -122,7 +137,6 @@
                     <router-link v-for="ev in events" :key="ev._id"
                         :to="{ name: 'PublicEvent', params: { orgSlug: $route.params.orgSlug, eventSlug: ev.slug } }"
                         class="group flex items-center gap-5 bg-white rounded-xl border border-mun-gray-200 p-5 hover:border-mun-blue-200 hover:shadow-md transition-all">
-                        <!-- Event logo -->
                         <div v-if="ev.logo" class="w-14 h-14 rounded-xl overflow-hidden bg-mun-gray-50 flex-shrink-0">
                             <img :src="mediaUrl(ev.logo)" :alt="ev.name" class="w-full h-full object-cover" />
                         </div>
@@ -136,8 +150,9 @@
                                 class="text-lg font-semibold text-mun-gray-900 group-hover:text-mun-blue transition-colors truncate">
                                 {{ ev.name }}
                             </h3>
-                            <p v-if="ev.description" class="text-sm text-mun-gray-500 mt-0.5 line-clamp-1">{{
-                                ev.description }}</p>
+                            <p v-if="ev.description" class="text-sm text-mun-gray-500 mt-0.5 line-clamp-1">
+                                {{ stripHtml(ev.description) }}
+                            </p>
                             <div class="flex items-center gap-4 mt-2">
                                 <span v-if="ev.startDate" class="text-xs text-mun-gray-400">
                                     {{ formatDate(ev.startDate) }}
@@ -156,13 +171,11 @@
             </section>
 
             <!-- Footer -->
-            <footer class="border-t border-mun-gray-100">
-                <div class="max-w-5xl mx-auto px-6 py-8 flex items-center justify-between">
-                    <p class="text-xs text-mun-gray-400">{{ org.name }}</p>
-                    <p class="text-xs text-mun-gray-300">Powered by MUN.UZ</p>
-                </div>
-            </footer>
+            <MunBrand variant="footer" :left-text="org.name" />
         </template>
+
+        <!-- Lightbox -->
+        <PhotoLightbox v-model="lightboxIndex" :photos="lightboxPhotos" />
     </div>
 </template>
 
@@ -174,6 +187,10 @@ import {
     CalendarIcon, MapPinIcon, GlobeAltIcon, ArrowRightIcon,
     EnvelopeIcon, PhoneIcon, BuildingOfficeIcon
 } from '@heroicons/vue/24/outline'
+import SocialIcon from '@/components/ui/SocialIcon.vue'
+import PhotoLightbox from '@/components/ui/PhotoLightbox.vue'
+import MunBrand from '@/components/ui/MunBrand.vue'
+import RichTextContent from '@/components/ui/RichTextContent.vue'
 
 const route = useRoute()
 
@@ -181,6 +198,7 @@ const isLoading = ref(true)
 const error = ref(null)
 const org = ref(null)
 const events = ref([])
+const lightboxIndex = ref(null)
 
 const orgInitials = computed(() => {
     if (!org.value?.name) return ''
@@ -200,11 +218,21 @@ const activeSocials = computed(() => {
     return active
 })
 
+const lightboxPhotos = computed(() => (org.value?.photos || []).map(p => mediaUrl(p)))
+
 const mediaUrl = (path) => {
     if (!path) return ''
     if (path.startsWith('http')) return path
     const base = import.meta.env.VITE_API_URL || ''
     return `${base}${path}`
+}
+
+const isHtml = (text) => /<[a-z][\s\S]*>/i.test(text)
+
+// Strip HTML tags for preview text
+const stripHtml = (html) => {
+    if (!html) return ''
+    return html.replace(/<[^>]*>/g, '').substring(0, 200)
 }
 
 const loadOrg = async () => {
@@ -226,12 +254,16 @@ const loadOrg = async () => {
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''
 
-const eventStatusClass = (s) => ({
-    'bg-green-100 text-green-700': s === 'registration_open',
-    'bg-mun-blue-100 text-mun-blue-700': s === 'active',
-    'bg-yellow-100 text-yellow-700': s === 'registration_closed',
-    'bg-mun-gray-100 text-mun-gray-600': s === 'completed' || s === 'published',
-}[true] || 'bg-mun-gray-100 text-mun-gray-600')
+const eventStatusClass = (s) => {
+    const map = {
+        registration_open: 'bg-green-100 text-green-700',
+        active: 'bg-mun-blue-100 text-mun-blue-700',
+        registration_closed: 'bg-yellow-100 text-yellow-700',
+        completed: 'bg-mun-gray-100 text-mun-gray-600',
+        published: 'bg-blue-100 text-blue-700',
+    }
+    return map[s] || 'bg-mun-gray-100 text-mun-gray-600'
+}
 
 onMounted(() => loadOrg())
 </script>
