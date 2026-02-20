@@ -58,7 +58,7 @@ const committeePreferenceSchema = new mongoose.Schema({
         required: true
     },
 
-    rank: {
+    priority: {
         type: Number,
         required: true,
         min: 1,
