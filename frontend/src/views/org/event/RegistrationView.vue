@@ -87,7 +87,7 @@
 
                     <!-- Submit -->
                     <div class="flex justify-end">
-                        <button @click="submitApplication" :disabled="isSubmitting"
+                        <button
                             class="px-6 py-3 bg-mun-blue text-white font-semibold rounded-xl hover:bg-mun-blue-600 transition-colors disabled:opacity-50">
                             {{ isSubmitting ? 'Submitting...' : 'Submit Application' }}
                         </button>
@@ -166,35 +166,6 @@ const loadForm = async () => {
         console.error('Failed to load registration:', e)
     } finally {
         isLoading.value = false
-    }
-}
-
-const submitApplication = async () => {
-    if (!eventId.value || !orgId.value) return
-
-    const committeePreferences = preferences.value
-        .filter(id => id)
-        .map((committeeId, index) => ({ committee: committeeId, priority: index + 1 }))
-
-    if (committeePreferences.length === 0) {
-        toast.error('Please select at least one committee preference.')
-        return
-    }
-
-    isSubmitting.value = true
-    try {
-        const res = await apiMethods.registration.submit(orgId.value, eventId.value, {
-            committeePreferences,
-            customFieldResponses: customResponses,
-        })
-        if (res.data.success) {
-            toast.success('Application submitted successfully!')
-            router.push({ name: 'PublicEvent', params: { orgSlug: route.params.orgSlug, eventSlug: route.params.eventSlug } })
-        }
-    } catch (e) {
-        toast.error(e.response?.data?.error || 'Failed to submit application')
-    } finally {
-        isSubmitting.value = false
     }
 }
 
