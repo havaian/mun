@@ -226,7 +226,14 @@ export const apiMethods = {
         getPublicForm: (orgId, eventId) => api.get(`${eventBase(orgId, eventId)}/registration/form/public`),
 
         // Applications — applicant
-        submit: (orgId, eventId, data) => api.post(`${eventBase(orgId, eventId)}/registration/applications`, data),
+        submit: (orgId, eventId, data) => {
+            const isFormData = data instanceof FormData
+            return api.post(
+                `${eventBase(orgId, eventId)}/registration/applications`,
+                data,
+                isFormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : {}
+            )
+        },
         getMyApplication: (orgId, eventId) => api.get(`${eventBase(orgId, eventId)}/registration/applications/me`),
         withdraw: (orgId, eventId) => api.post(`${eventBase(orgId, eventId)}/registration/applications/me/withdraw`),
 

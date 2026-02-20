@@ -367,11 +367,28 @@ const submitApplication = async () => {
 
     isSubmitting.value = true
     try {
-        // TODO: handle file uploads via FormData when backend supports it
-        const res = await apiMethods.registration.submit(orgId.value, eventId.value, {
-            committeePreferences,
-            customFieldResponses: customResponses,
-        })
+        const hasFiles = Object.keys(fileUploads).length > 0
+
+        let res
+        if (hasFiles) {
+            // Use FormData when files are present
+            const fd = new FormData()
+            fd.append('committeePreferences', JSON.stringify(committeePreferences))
+            fd.append('customFieldResponses', JSON.stringify(customResponses))
+
+            // Append each file with its fieldId as the key
+            for (const [fieldId, file] of Object.entries(fileUploads)) {
+                fd.append(`file_${fieldId}`, file)
+            }
+
+            res = await apiMethods.registration.submit(orgId.value, eventId.value, fd)
+        } else {
+            res = await apiMethods.registration.submit(orgId.value, eventId.value, {
+                committeePreferences,
+                customFieldResponses: customResponses,
+            })
+        }
+
         if (res.data.success) {
             toast.success('Application submitted successfully!')
             router.push({
