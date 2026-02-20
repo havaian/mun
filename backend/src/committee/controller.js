@@ -40,8 +40,9 @@ const createCommittee = async (req, res) => {
         }
 
         const committee = new Committee({
-            eventId,
+            event: eventId,
             name: name.trim(),
+            acronym: acronym?.trim(),
             type,
             description: description?.trim(),
             language
