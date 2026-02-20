@@ -54,7 +54,7 @@ const validateCommitteeCreation = [
         .withMessage('Acronym cannot exceed 20 characters'),
     body('type')
         .optional()
-        .isIn(['general_assembly', 'security_council', 'ecosoc', 'specialized', 'crisis', 'other'])
+        .isIn(['GA', 'SC', 'ECOSOC', 'HRC', 'other'])
         .withMessage('Invalid committee type')
 ];
 
