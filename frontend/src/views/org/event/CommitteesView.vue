@@ -408,6 +408,7 @@ const handleSave = async () => {
             name: form.name, acronym: form.acronym, type: form.type,
             topic: form.topic || undefined, description: form.description || undefined,
             language: form.language, settings: form.settings,
+            eventId: eventId.value,
         }
         if (editingCommittee.value) {
             payload.status = form.status
