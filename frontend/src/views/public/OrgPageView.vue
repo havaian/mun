@@ -14,11 +14,10 @@
         </div>
 
         <template v-else-if="org">
-            <!-- MUN.UZ top bar -->
-            <MunBrand variant="top" />
-
             <!-- Hero — with optional background image -->
             <section class="relative overflow-hidden">
+                <!-- MUN.UZ top bar (overlays hero) -->
+                <MunBrand variant="top" transparent />
                 <div v-if="org.heroImage" class="absolute inset-0">
                     <img :src="mediaUrl(org.heroImage)" alt="" class="w-full h-full object-cover" />
                     <div
@@ -41,7 +40,7 @@
                 </div>
 
                 <div class="relative max-w-5xl mx-auto px-6 pt-16 pb-20 lg:pt-24 lg:pb-28">
-                    <div class="flex flex-col sm:flex-row items-start gap-6">
+                    <div class="flex flex-col sm:flex-row items-center gap-6">
                         <!-- Logo -->
                         <div v-if="org.logo"
                             class="w-20 h-20 rounded-2xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl flex-shrink-0">
@@ -54,27 +53,9 @@
 
                         <div class="flex-1">
                             <h1
-                                class="text-4xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight mb-4">
+                                class="text-4xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight">
                                 {{ org.name }}
                             </h1>
-
-                            <!-- Quick info pills -->
-                            <div class="flex flex-wrap items-center gap-5 mt-2">
-                                <div v-if="org.foundingDate" class="flex items-center gap-2 text-white/60">
-                                    <CalendarIcon class="w-4 h-4" />
-                                    <span class="text-sm">Founded {{ new Date(org.foundingDate).getFullYear() }}</span>
-                                </div>
-                                <div v-if="org.location?.city" class="flex items-center gap-2 text-white/60">
-                                    <MapPinIcon class="w-4 h-4" />
-                                    <span class="text-sm">{{ [org.location.city,
-                                        org.location.country].filter(Boolean).join(', ') }}</span>
-                                </div>
-                                <a v-if="org.website" :href="org.website" target="_blank"
-                                    class="flex items-center gap-2 text-white/60 hover:text-white transition-colors">
-                                    <GlobeAltIcon class="w-4 h-4" />
-                                    <span class="text-sm">Website</span>
-                                </a>
-                            </div>
                         </div>
                     </div>
                 </div>

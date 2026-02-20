@@ -22,11 +22,10 @@
 
         <!-- Event content -->
         <template v-else-if="event">
-            <!-- MUN.UZ top bar -->
-            <MunBrand variant="top" />
-
             <!-- Hero Section -->
             <section class="relative overflow-hidden">
+                <!-- MUN.UZ top bar (overlays hero) -->
+                <MunBrand variant="top" transparent />
                 <!-- Background: hero image with REDUCED overlay -->
                 <div v-if="event.heroImage" class="absolute inset-0">
                     <img :src="mediaUrl(event.heroImage)" alt="" class="w-full h-full object-cover" />

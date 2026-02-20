@@ -1,13 +1,17 @@
 <template>
     <!-- Top bar variant -->
-    <div v-if="variant === 'top'" class="bg-mun-blue-950 border-b border-white/5">
+    <div v-if="variant === 'top'" :class="[
+        transparent
+            ? 'absolute top-0 left-0 right-0 z-20'
+            : 'bg-mun-blue-950 border-b border-white/5'
+    ]">
         <div class="max-w-5xl mx-auto px-6 py-2 flex items-center justify-between">
             <a href="https://mun.uz" target="_blank" rel="noopener"
-                class="flex items-center gap-2 text-white/50 hover:text-white/80 transition-colors">
+                class="flex items-center gap-2 text-white hover:text-white/80 transition-colors">
                 <span class="text-xs font-bold tracking-wider">MUN.UZ</span>
             </a>
             <a href="https://mun.uz" target="_blank" rel="noopener"
-                class="text-[10px] text-white/30 hover:text-white/60 transition-colors">
+                class="text-[10px] text-white hover:text-white/60 transition-colors">
                 Conference Management Platform
             </a>
         </div>
@@ -31,6 +35,7 @@
 <script setup>
 defineProps({
     variant: { type: String, default: 'footer' }, // 'top' | 'footer'
+    transparent: { type: Boolean, default: false },
     leftText: { type: String, default: '' }
 })
 </script>
