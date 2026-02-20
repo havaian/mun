@@ -1,228 +1,307 @@
 <template>
     <div class="p-6 lg:p-8 space-y-6">
+        <!-- Header -->
+        <div class="page-header p-6">
+            <div>
+                <h1 class="text-2xl font-bold text-mun-gray-900">Event Settings</h1>
+                <p class="text-sm text-mun-gray-500 mt-1">Manage your event's profile and public page</p>
+            </div>
+        </div>
+
         <div v-if="isLoading" class="flex justify-center py-12">
             <LoadingSpinner class="w-8 h-8" />
         </div>
 
         <template v-else-if="event">
-            <!-- Header -->
-            <div class="page-header p-6">
-                <div>
-                    <div class="flex items-center space-x-3 mb-1">
-                        <router-link :to="{ name: 'OrgEvents' }"
-                            class="text-sm text-mun-gray-400 hover:text-mun-gray-600">Events</router-link>
-                        <span class="text-mun-gray-300">/</span>
+            <!-- ========== Public page link bar ========== -->
+            <section class="bg-white rounded-xl border border-mun-gray-200 p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-mun-gray-700">Public Event Page</p>
+                        <p class="text-xs text-mun-gray-400 mt-0.5">Share this link for people to view the event</p>
                     </div>
-                    <h1 class="text-2xl font-bold text-mun-gray-900">{{ event.name }}</h1>
-                    <p v-if="event.description" class="text-sm text-mun-gray-500 mt-1 line-clamp-2">{{
-                        stripHtml(event.description) }}</p>
+                    <div class="flex items-center space-x-2">
+                        <code
+                            class="text-xs bg-mun-gray-50 text-mun-gray-600 px-3 py-1.5 rounded-lg border border-mun-gray-200 max-w-xs truncate hidden sm:block">
+                            {{ eventPageUrl }}
+                        </code>
+                        <button @click="copyLink(eventPageUrl)"
+                            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-mun-blue bg-mun-blue-50 rounded-lg hover:bg-mun-blue-100 transition-colors">
+                            <ClipboardDocumentIcon class="w-4 h-4" />
+                            {{ copiedField === 'link' ? 'Copied!' : 'Copy' }}
+                        </button>
+                        <a :href="eventPageUrl" target="_blank"
+                            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-mun-gray-600 bg-mun-gray-50 rounded-lg hover:bg-mun-gray-100 transition-colors">
+                            <ArrowTopRightOnSquareIcon class="w-4 h-4" />
+                            Open
+                        </a>
+                    </div>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <span :class="statusClass(event.status)">{{ formatStatus(event.status) }}</span>
+            </section>
+
+            <!-- ========== General Information ========== -->
+            <section class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-5">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-mun-gray-900">General Information</h2>
                     <AppButton v-if="canManage" variant="ghost" size="sm" @click="showEditModal = true">
                         <PencilIcon class="w-4 h-4 mr-1" /> Edit
                     </AppButton>
                 </div>
-            </div>
 
-            <!-- Tabs -->
-            <div class="flex items-center space-x-1 bg-white rounded-xl border border-mun-gray-200 p-1">
-                <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id" :class="[
-                    'px-4 py-2 text-sm font-medium rounded-lg transition-colors',
-                    activeTab === tab.id
-                        ? 'bg-mun-blue text-white'
-                        : 'text-mun-gray-600 hover:bg-mun-gray-50'
-                ]">
-                    {{ tab.label }}
-                </button>
-            </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                    <div>
+                        <p class="text-mun-gray-500">Name</p>
+                        <p class="font-medium text-mun-gray-900">{{ event.name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-mun-gray-500">Slug</p>
+                        <p class="font-mono text-xs text-mun-gray-700">{{ event.slug }}</p>
+                    </div>
+                    <div>
+                        <p class="text-mun-gray-500">Status</p>
+                        <span :class="statusBadgeClass(event.status)">{{ formatStatus(event.status) }}</span>
+                    </div>
+                    <div v-if="event.startDate">
+                        <p class="text-mun-gray-500">Start Date</p>
+                        <p class="text-mun-gray-900">{{ formatDate(event.startDate) }}</p>
+                    </div>
+                    <div v-if="event.endDate">
+                        <p class="text-mun-gray-500">End Date</p>
+                        <p class="text-mun-gray-900">{{ formatDate(event.endDate) }}</p>
+                    </div>
+                    <div v-if="event.timezone">
+                        <p class="text-mun-gray-500">Timezone</p>
+                        <p class="text-mun-gray-900">{{ event.timezone }}</p>
+                    </div>
+                    <div v-if="event.location">
+                        <p class="text-mun-gray-500">Location</p>
+                        <p class="text-mun-gray-900">{{ event.location }}</p>
+                    </div>
+                    <div v-if="event.mapUrl">
+                        <p class="text-mun-gray-500">Map Link</p>
+                        <a :href="event.mapUrl" target="_blank"
+                            class="text-mun-blue hover:underline break-all text-sm">View on map ↗</a>
+                    </div>
+                    <div v-if="event.logo">
+                        <p class="text-mun-gray-500">Logo</p>
+                        <img :src="mediaUrl(event.logo)" alt="Event logo"
+                            class="mt-1 w-14 h-14 rounded-lg object-cover border border-mun-gray-200" />
+                    </div>
+                </div>
 
-            <!-- Tab content -->
-            <template v-if="activeTab === 'overview'">
-                <!-- Event page link -->
+                <!-- Description rendered as rich text -->
+                <div v-if="event.description">
+                    <p class="text-sm text-mun-gray-500 mb-2">Description</p>
+                    <div class="bg-mun-gray-50 rounded-xl border border-mun-gray-100 p-4">
+                        <RichTextContent v-if="isHtml(event.description)" :content="event.description" />
+                        <p v-else class="text-sm text-mun-gray-700 whitespace-pre-line">{{ event.description }}</p>
+                    </div>
+                </div>
+                <div v-else class="text-sm text-mun-gray-400 italic">No description set</div>
+            </section>
+
+            <!-- ========== Stats ========== -->
+            <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-mun-gray-700">Public Event Page</p>
-                            <p class="text-xs text-mun-gray-400 mt-0.5">Share this link for people to view the event</p>
+                    <p class="text-sm font-medium text-mun-gray-500">Committees</p>
+                    <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalCommittees || 0 }}
+                    </p>
+                </div>
+                <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
+                    <p class="text-sm font-medium text-mun-gray-500">Participants</p>
+                    <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalParticipants || 0 }}
+                    </p>
+                </div>
+                <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
+                    <p class="text-sm font-medium text-mun-gray-500">Applications</p>
+                    <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalApplications || 0 }}
+                    </p>
+                </div>
+                <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
+                    <p class="text-sm font-medium text-mun-gray-500">Countries</p>
+                    <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalCountries || 0 }}</p>
+                </div>
+            </section>
+
+            <!-- ========== Event Images ========== -->
+            <section v-if="canManage" class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-5">
+                <h2 class="text-lg font-semibold text-mun-gray-900">Event Images</h2>
+
+                <!-- Hero background image -->
+                <div>
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">Hero Background Image</label>
+                    <p class="text-xs text-mun-gray-400 mb-2">Background of the hero section on the public event page,
+                        shown with a blue overlay.</p>
+                    <div v-if="event.heroImage" class="relative rounded-xl overflow-hidden mb-2"
+                        style="aspect-ratio: 16/5;">
+                        <img :src="mediaUrl(event.heroImage)" alt="Hero background"
+                            class="w-full h-full object-cover" />
+                        <div
+                            class="absolute inset-0 bg-gradient-to-br from-mun-blue-900/55 via-mun-blue-800/45 to-mun-blue-950/55 flex items-center justify-center">
+                            <span class="text-white/60 text-sm font-medium">Hero preview</span>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <code
-                                class="text-xs bg-mun-gray-50 text-mun-gray-600 px-3 py-1.5 rounded-lg border border-mun-gray-200 max-w-xs truncate hidden sm:block">
-                                {{ eventPageUrl }}
-                            </code>
-                            <button @click="copyToClipboard(eventPageUrl, 'Event page link')"
-                                class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-mun-blue bg-mun-blue-50 rounded-lg hover:bg-mun-blue-100 transition-colors">
-                                <ClipboardDocumentIcon class="w-4 h-4" />
-                                {{ copiedField === 'Event page link' ? 'Copied!' : 'Copy' }}
-                            </button>
-                        </div>
+                        <button @click="updateEventField('heroImage', null)"
+                            class="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors">
+                            <XMarkIcon class="w-4 h-4" />
+                        </button>
                     </div>
+                    <ImageUploader v-if="!event.heroImage" :model-value="null"
+                        @update:model-value="updateEventField('heroImage', $event)" />
                 </div>
 
-                <!-- Stats grid -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
-                        <p class="text-sm font-medium text-mun-gray-500">Committees</p>
-                        <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalCommittees || 0
-                            }}</p>
-                    </div>
-                    <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
-                        <p class="text-sm font-medium text-mun-gray-500">Participants</p>
-                        <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalParticipants || 0
-                            }}</p>
-                    </div>
-                    <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
-                        <p class="text-sm font-medium text-mun-gray-500">Applications</p>
-                        <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalApplications || 0
-                            }}</p>
-                    </div>
-                    <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
-                        <p class="text-sm font-medium text-mun-gray-500">Countries</p>
-                        <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalCountries || 0 }}
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Event details -->
-                <div class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-4">
-                    <h2 class="text-lg font-semibold text-mun-gray-900">Details</h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                        <div v-if="event.startDate">
-                            <p class="text-mun-gray-500">Start Date</p>
-                            <p class="font-medium text-mun-gray-900">{{ formatDate(event.startDate) }}</p>
-                        </div>
-                        <div v-if="event.endDate">
-                            <p class="text-mun-gray-500">End Date</p>
-                            <p class="font-medium text-mun-gray-900">{{ formatDate(event.endDate) }}</p>
-                        </div>
-                        <div v-if="event.location">
-                            <p class="text-mun-gray-500">Location</p>
-                            <p class="font-medium text-mun-gray-900">{{ event.location }}</p>
-                        </div>
-                        <div v-if="event.timezone">
-                            <p class="text-mun-gray-500">Timezone</p>
-                            <p class="font-medium text-mun-gray-900">{{ event.timezone }}</p>
-                        </div>
-                        <div>
-                            <p class="text-mun-gray-500">Slug</p>
-                            <p class="font-mono text-xs text-mun-gray-700">{{ event.slug }}</p>
-                        </div>
-                        <div v-if="event.logo">
-                            <p class="text-mun-gray-500">Event Logo</p>
-                            <img :src="mediaUrl(event.logo)" alt="Event logo"
-                                class="mt-1 w-16 h-16 rounded-lg object-cover border border-mun-gray-200" />
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Hero Image & Photos -->
-                <div v-if="canManage" class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-5">
-                    <h2 class="text-lg font-semibold text-mun-gray-900">Event Images</h2>
-
-                    <!-- Hero background image -->
-                    <div>
-                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">Hero Background Image</label>
-                        <p class="text-xs text-mun-gray-400 mb-2">This becomes the background of the hero section on the
-                            public event page, with a blue overlay filter.</p>
-                        <div v-if="event.heroImage" class="relative rounded-xl overflow-hidden mb-2"
-                            style="aspect-ratio: 16/5;">
-                            <img :src="mediaUrl(event.heroImage)" alt="Hero background"
-                                class="w-full h-full object-cover" />
-                            <div
-                                class="absolute inset-0 bg-gradient-to-br from-mun-blue-900/70 via-mun-blue-800/60 to-mun-blue-950/70">
-                            </div>
-                            <div class="absolute top-3 right-3">
-                                <button @click="updateEventField('heroImage', null)"
-                                    class="px-3 py-1.5 bg-white/90 text-red-600 text-xs font-medium rounded-lg hover:bg-white transition-colors">
-                                    Remove
-                                </button>
-                            </div>
-                        </div>
-                        <ImageUploader v-if="!event.heroImage" :model-value="null"
-                            @update:model-value="updateEventField('heroImage', $event)" />
-                    </div>
-
-                    <!-- Photo gallery -->
-                    <div>
-                        <label class="block text-sm font-medium text-mun-gray-700 mb-2">Event Photos</label>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-                            <div v-for="(photo, i) in (event.photos || [])" :key="i"
-                                class="relative group aspect-square rounded-xl overflow-hidden bg-mun-gray-100">
-                                <img :src="mediaUrl(photo)" alt="" class="w-full h-full object-cover" />
-                                <button @click="removePhoto(i)"
-                                    class="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <XMarkIcon class="w-3.5 h-3.5" />
-                                </button>
-                            </div>
-                            <!-- Add photo button -->
-                            <ImageUploader :model-value="null" @update:model-value="addPhoto($event)" compact
-                                size-classes="w-full aspect-square" />
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sponsors -->
-                <div v-if="canManage" class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-lg font-semibold text-mun-gray-900">Sponsors</h2>
-                        <AppButton variant="ghost" size="sm" @click="showSponsorModal = true">
-                            <PlusIcon class="w-4 h-4 mr-1" /> Add Sponsor
-                        </AppButton>
-                    </div>
-
-                    <div v-if="!event.sponsors?.length" class="text-center py-6 text-sm text-mun-gray-400">
-                        No sponsors added yet.
-                    </div>
-
-                    <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                        <div v-for="(sponsor, i) in event.sponsors" :key="i"
-                            class="group relative flex flex-col items-center p-4 border border-mun-gray-200 rounded-xl hover:border-mun-gray-300 transition-colors">
-                            <div v-if="sponsor.logo" class="w-16 h-16 rounded-lg overflow-hidden bg-mun-gray-50 mb-3">
-                                <img :src="mediaUrl(sponsor.logo)" :alt="sponsor.name"
-                                    class="w-full h-full object-contain" />
-                            </div>
-                            <div v-else
-                                class="w-16 h-16 rounded-lg bg-mun-gray-100 flex items-center justify-center mb-3">
-                                <BuildingOffice2Icon class="w-6 h-6 text-mun-gray-400" />
-                            </div>
-                            <p class="text-sm font-medium text-mun-gray-900 text-center">{{ sponsor.name }}</p>
-                            <a v-if="sponsor.website" :href="sponsor.website" target="_blank"
-                                class="text-xs text-mun-blue hover:underline mt-0.5 truncate max-w-full">
-                                {{ sponsor.website.replace(/^https?:\/\//, '') }}
-                            </a>
-                            <button @click="removeSponsor(i)"
+                <!-- Photo gallery -->
+                <div>
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">Event Photos</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                        <div v-for="(photo, i) in (event.photos || [])" :key="i"
+                            class="relative group aspect-square rounded-xl overflow-hidden bg-mun-gray-100">
+                            <img :src="mediaUrl(photo)" alt="" class="w-full h-full object-cover" />
+                            <button @click="removePhoto(i)"
                                 class="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <XMarkIcon class="w-3.5 h-3.5" />
                             </button>
                         </div>
+                        <ImageUploader :model-value="null" @update:model-value="addPhoto($event)" compact
+                            size-classes="w-full aspect-square" />
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== Sponsors ========== -->
+            <section v-if="canManage" class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-mun-gray-900">Sponsors</h2>
+                    <AppButton variant="ghost" size="sm" @click="showSponsorModal = true">
+                        <PlusIcon class="w-4 h-4 mr-1" /> Add Sponsor
+                    </AppButton>
+                </div>
+
+                <div v-if="!event.sponsors?.length" class="text-center py-6 text-sm text-mun-gray-400">
+                    No sponsors added yet.
+                </div>
+
+                <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div v-for="(sponsor, i) in event.sponsors" :key="i"
+                        class="group relative flex flex-col items-center p-4 border border-mun-gray-200 rounded-xl hover:border-mun-gray-300 transition-colors">
+                        <div v-if="sponsor.logo" class="w-16 h-16 rounded-lg overflow-hidden bg-mun-gray-50 mb-3">
+                            <img :src="mediaUrl(sponsor.logo)" :alt="sponsor.name"
+                                class="w-full h-full object-contain" />
+                        </div>
+                        <div v-else class="w-16 h-16 rounded-lg bg-mun-gray-100 flex items-center justify-center mb-3">
+                            <BuildingOffice2Icon class="w-6 h-6 text-mun-gray-400" />
+                        </div>
+                        <p class="text-sm font-medium text-mun-gray-900 text-center">{{ sponsor.name }}</p>
+                        <a v-if="sponsor.website" :href="sponsor.website" target="_blank"
+                            class="text-xs text-mun-blue hover:underline mt-0.5 truncate max-w-full">
+                            {{ sponsor.website.replace(/^https?:\/\//, '') }}
+                        </a>
+                        <button @click="removeSponsor(i)"
+                            class="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <XMarkIcon class="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== Status Management — visual pipeline ========== -->
+            <section v-if="canChangeStatus" class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-5">
+                <div>
+                    <h2 class="text-lg font-semibold text-mun-gray-900">Event Lifecycle</h2>
+                    <p class="text-sm text-mun-gray-500 mt-1">Move your event through each stage. You can only advance
+                        to the next step or go back one step.</p>
+                </div>
+
+                <!-- Visual pipeline -->
+                <div class="flex flex-col sm:flex-row items-stretch gap-0">
+                    <div v-for="(stage, idx) in LIFECYCLE_STAGES" :key="stage.key" class="flex-1 relative">
+                        <!-- Connector line (between steps) -->
+                        <div v-if="idx > 0"
+                            class="hidden sm:block absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-0.5"
+                            :class="stageIndex(event.status) >= idx ? 'bg-mun-blue' : 'bg-mun-gray-200'"></div>
+
+                        <button @click="handleStageClick(stage.key)" :disabled="!canMoveTo(stage.key)" :class="[
+                            'w-full px-3 py-4 text-center border-2 transition-all relative',
+                            idx === 0 ? 'rounded-t-xl sm:rounded-l-xl sm:rounded-tr-none' : '',
+                            idx === LIFECYCLE_STAGES.length - 1 ? 'rounded-b-xl sm:rounded-r-xl sm:rounded-bl-none' : '',
+                            event.status === stage.key
+                                ? 'border-mun-blue bg-mun-blue-50 ring-1 ring-mun-blue/30'
+                                : stageIndex(event.status) > idx
+                                    ? 'border-mun-blue/30 bg-mun-blue-50/30'
+                                    : 'border-mun-gray-200 bg-white',
+                            canMoveTo(stage.key) && event.status !== stage.key
+                                ? 'hover:border-mun-blue-300 hover:bg-mun-blue-50/50 cursor-pointer'
+                                : event.status === stage.key ? 'cursor-default' : 'cursor-not-allowed opacity-50',
+                        ]">
+                            <!-- Step number -->
+                            <div class="flex items-center justify-center mb-1.5">
+                                <span v-if="stageIndex(event.status) > idx"
+                                    class="w-6 h-6 rounded-full bg-mun-blue text-white text-xs font-bold flex items-center justify-center">
+                                    ✓
+                                </span>
+                                <span v-else :class="[
+                                    'w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center',
+                                    event.status === stage.key
+                                        ? 'bg-mun-blue text-white'
+                                        : 'bg-mun-gray-200 text-mun-gray-500'
+                                ]">
+                                    {{ idx + 1 }}
+                                </span>
+                            </div>
+                            <p class="text-xs font-semibold"
+                                :class="event.status === stage.key ? 'text-mun-blue' : stageIndex(event.status) > idx ? 'text-mun-blue/70' : 'text-mun-gray-500'">
+                                {{ stage.label }}
+                            </p>
+                            <p class="text-[10px] mt-0.5 leading-tight"
+                                :class="event.status === stage.key ? 'text-mun-blue/70' : 'text-mun-gray-400'">
+                                {{ stage.hint }}
+                            </p>
+                            <!-- Current marker -->
+                            <div v-if="event.status === stage.key"
+                                class="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-mun-blue text-white text-[9px] font-bold uppercase tracking-wider rounded-full whitespace-nowrap">
+                                Current
+                            </div>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Status change -->
-                <div v-if="canChangeStatus && nextStatuses.length > 0"
-                    class="bg-white rounded-xl border border-mun-gray-200 p-6">
-                    <h2 class="text-lg font-semibold text-mun-gray-900 mb-3">Status Management</h2>
-                    <p class="text-xs text-mun-gray-400 mb-4">Current status: <span class="font-medium">{{
-                            formatStatus(event.status) }}</span></p>
-                    <div class="flex flex-wrap gap-2">
-                        <AppButton v-for="s in nextStatuses" :key="s" variant="ghost" size="sm"
-                            @click="changeStatus(s)">
-                            → {{ formatStatus(s) }}
-                        </AppButton>
-                    </div>
+                <!-- Action hint -->
+                <div v-if="nextStatuses.length > 0" class="flex items-center gap-3 p-3 bg-mun-blue-50 rounded-xl">
+                    <InformationCircleIcon class="w-5 h-5 text-mun-blue flex-shrink-0" />
+                    <p class="text-sm text-mun-blue-700">
+                        <template v-if="nextStatuses.length === 1">
+                            Next step: click <strong>{{ stageLabelFor(nextStatuses[0]) }}</strong> above to advance.
+                        </template>
+                        <template v-else>
+                            You can move to:
+                            <strong v-for="(s, i) in nextStatuses" :key="s">{{ stageLabelFor(s) }}<template
+                                    v-if="i < nextStatuses.length - 1">, </template></strong>
+                        </template>
+                    </p>
                 </div>
-            </template>
+                <div v-else-if="event.status === 'completed'"
+                    class="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
+                    <CheckCircleIcon class="w-5 h-5 text-green-600 flex-shrink-0" />
+                    <p class="text-sm text-green-700">This event has been completed. No further status changes
+                        available.</p>
+                </div>
+            </section>
 
-            <EventCommittees v-else-if="activeTab === 'committees'" :embedded="true" />
-            <EventParticipants v-else-if="activeTab === 'participants'" :embedded="true" />
-            <EventRegistration v-else-if="activeTab === 'registration'" :embedded="true" />
-            <EventApplications v-else-if="activeTab === 'applications'" :embedded="true" />
+            <!-- ========== Quick nav to sub-pages ========== -->
+            <section class="bg-white rounded-xl border border-mun-gray-200 p-5">
+                <h2 class="text-sm font-semibold text-mun-gray-500 uppercase tracking-wider mb-3">Manage</h2>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <router-link v-for="nav in navLinks" :key="nav.name" :to="nav.to"
+                        class="flex flex-col items-center gap-2 p-4 rounded-xl border border-mun-gray-200 hover:border-mun-blue-200 hover:bg-mun-blue-50/30 transition-colors text-center">
+                        <component :is="nav.icon" class="w-6 h-6 text-mun-gray-400" />
+                        <span class="text-sm font-medium text-mun-gray-700">{{ nav.label }}</span>
+                    </router-link>
+                </div>
+            </section>
         </template>
 
         <div v-else class="text-center py-12 text-mun-gray-500">Event not found.</div>
 
-        <!-- Edit Modal -->
+        <!-- ========== Edit Modal ========== -->
         <ModalWrapper :showDefaultFooter="false" :modelValue="showEditModal" @close="showEditModal = false">
             <template #title>Edit Event</template>
             <template #default>
@@ -276,7 +355,7 @@
             </template>
         </ModalWrapper>
 
-        <!-- Add Sponsor Modal -->
+        <!-- ========== Add Sponsor Modal ========== -->
         <ModalWrapper :showDefaultFooter="false" :modelValue="showSponsorModal" @close="showSponsorModal = false">
             <template #title>Add Sponsor</template>
             <template #default>
@@ -310,14 +389,16 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
-import { PencilIcon, ClipboardDocumentIcon, PlusIcon, XMarkIcon, BuildingOffice2Icon } from '@heroicons/vue/24/outline'
+import {
+    PencilIcon, ClipboardDocumentIcon, PlusIcon, XMarkIcon,
+    BuildingOffice2Icon, ArrowTopRightOnSquareIcon,
+    InformationCircleIcon, CheckCircleIcon,
+    RectangleGroupIcon, UserGroupIcon, ClipboardDocumentListIcon, DocumentTextIcon
+} from '@heroicons/vue/24/outline'
 import ImageUploader from '@/components/ui/ImageUploader.vue'
 import RichTextEditor from '@/components/ui/RichTextEditor.vue'
-
-import EventCommittees from '@/views/org/event/CommitteesView.vue'
-import EventParticipants from '@/views/org/event/ParticipantsView.vue'
-import EventRegistration from '@/views/org/event/RegistrationView.vue'
-import EventApplications from '@/views/org/event/ApplicationsView.vue'
+import RichTextContent from '@/components/ui/RichTextContent.vue'
+import SleekSelect from '@/components/ui/SleekSelect.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -335,7 +416,6 @@ const isSaving = ref(false)
 const event = ref(null)
 const showEditModal = ref(false)
 const showSponsorModal = ref(false)
-const activeTab = ref('overview')
 const copiedField = ref(null)
 
 const editForm = reactive({ name: '', description: '', startDate: '', endDate: '', location: '', mapUrl: '', logo: '', timezone: 'UTC' })
@@ -357,13 +437,18 @@ const timezoneOptions = [
     { label: 'Almaty (GMT+6)', value: 'Asia/Almaty' },
 ]
 
-const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'committees', label: 'Committees' },
-    { id: 'participants', label: 'Participants' },
-    { id: 'registration', label: 'Registration' },
-    { id: 'applications', label: 'Applications' },
+// ========== Status lifecycle ==========
+const LIFECYCLE_STAGES = [
+    { key: 'draft', label: 'Draft', hint: 'Setting up event' },
+    { key: 'published', label: 'Published', hint: 'Visible, not yet open' },
+    { key: 'registration_open', label: 'Registration Open', hint: 'Accepting applications' },
+    { key: 'registration_closed', label: 'Reg. Closed', hint: 'Review applications' },
+    { key: 'active', label: 'Active', hint: 'Event is live' },
+    { key: 'completed', label: 'Completed', hint: 'Event finished' },
 ]
+
+const stageIndex = (status) => LIFECYCLE_STAGES.findIndex(s => s.key === status)
+const stageLabelFor = (status) => LIFECYCLE_STAGES.find(s => s.key === status)?.label || status
 
 // Flexible status flow — everything reversible except completed
 const STATUS_FLOW = {
@@ -376,35 +461,48 @@ const STATUS_FLOW = {
 }
 
 const nextStatuses = computed(() => STATUS_FLOW[event.value?.status] || [])
+const canMoveTo = (targetStatus) => nextStatuses.value.includes(targetStatus)
+
+const handleStageClick = async (targetStatus) => {
+    if (!canMoveTo(targetStatus)) return
+    // Confirm if going backward
+    const currentIdx = stageIndex(event.value.status)
+    const targetIdx = stageIndex(targetStatus)
+    if (targetIdx < currentIdx) {
+        if (!confirm(`Move back to "${stageLabelFor(targetStatus)}"? This will revert the event status.`)) return
+    }
+    await changeStatus(targetStatus)
+}
+
+// ========== Navigation links ==========
+const navLinks = computed(() => {
+    const base = { orgSlug: orgSlug.value, eventSlug: eventSlug.value }
+    return [
+        { name: 'EventCommittees', label: 'Committees', icon: RectangleGroupIcon, to: { name: 'EventCommittees', params: base } },
+        { name: 'EventParticipants', label: 'Participants', icon: UserGroupIcon, to: { name: 'EventParticipants', params: base } },
+        { name: 'EventRegistration', label: 'Registration', icon: ClipboardDocumentListIcon, to: { name: 'EventRegistration', params: base } },
+        { name: 'EventApplications', label: 'Applications', icon: DocumentTextIcon, to: { name: 'EventApplications', params: base } },
+    ]
+})
+
+// ========== Helpers ==========
 const baseUrl = computed(() => window.location.origin)
 const eventPageUrl = computed(() => `${baseUrl.value}/events/${orgSlug.value}/${eventSlug.value}`)
+
+const isHtml = (text) => /<[a-z][\s\S]*>/i.test(text)
 
 const mediaUrl = (path) => {
     if (!path) return ''
     if (path.startsWith('http')) return path
-    const base = import.meta.env.VITE_API_URL || ''
-    return `${base}${path}`
+    return `${import.meta.env.VITE_API_URL || ''}${path}`
 }
 
-const copyToClipboard = async (text, label) => {
-    try {
-        await navigator.clipboard.writeText(text)
-        copiedField.value = label
-        toast.success(`${label} copied!`)
-        setTimeout(() => { copiedField.value = null }, 2000)
-    } catch {
-        const textarea = document.createElement('textarea')
-        textarea.value = text
-        document.body.appendChild(textarea)
-        textarea.select()
-        document.execCommand('copy')
-        document.body.removeChild(textarea)
-        copiedField.value = label
-        toast.success(`${label} copied!`)
-        setTimeout(() => { copiedField.value = null }, 2000)
-    }
+const copyLink = async (text) => {
+    try { await navigator.clipboard.writeText(text) } catch { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t) }
+    copiedField.value = 'link'; toast.success('Link copied!'); setTimeout(() => { copiedField.value = null }, 2000)
 }
 
+// ========== Data loading ==========
 const loadEvent = async () => {
     if (!orgId.value) return
     isLoading.value = true
@@ -418,7 +516,7 @@ const loadEvent = async () => {
 const changeStatus = async (newStatus) => {
     try {
         await apiMethods.events.updateStatus(orgId.value, event.value._id, { status: newStatus })
-        toast.success(`Event moved to ${formatStatus(newStatus)}`)
+        toast.success(`Event moved to ${stageLabelFor(newStatus)}`)
         await loadEvent()
     } catch (e) { toast.error(e.response?.data?.error || 'Failed to update status') }
 }
@@ -439,52 +537,28 @@ const handleEdit = async () => {
     finally { isSaving.value = false }
 }
 
-// Quick-save a single field without opening the modal (no full reload to preserve focus)
+// Quick-save a single field without full reload (preserves scroll + focus)
 const updateEventField = async (field, value) => {
     try {
         const res = await apiMethods.events.update(orgId.value, event.value._id, { [field]: value })
         if (res.data.success) {
-            // Update local state directly instead of calling loadEvent()
-            // This avoids isLoading=true → full remount → lost focus / scroll position
-            if (res.data.event) {
-                event.value = res.data.event
-            } else {
-                event.value[field] = value
-            }
+            if (res.data.event) { event.value = res.data.event } else { event.value[field] = value }
             toast.success('Updated')
         }
     } catch (e) { toast.error(e.response?.data?.error || 'Failed to update') }
 }
 
-const addPhoto = async (url) => {
-    if (!url) return
-    const photos = [...(event.value.photos || []), url]
-    await updateEventField('photos', photos)
-}
-
-const removePhoto = async (index) => {
-    const photos = [...(event.value.photos || [])]
-    photos.splice(index, 1)
-    await updateEventField('photos', photos)
-}
+const addPhoto = async (url) => { if (!url) return; await updateEventField('photos', [...(event.value.photos || []), url]) }
+const removePhoto = async (index) => { const p = [...(event.value.photos || [])]; p.splice(index, 1); await updateEventField('photos', p) }
 
 const addSponsor = async () => {
     if (!sponsorForm.name.trim()) return
-    const sponsors = [...(event.value.sponsors || []), {
-        name: sponsorForm.name.trim(),
-        website: sponsorForm.website.trim() || null,
-        logo: sponsorForm.logo || null
-    }]
+    const sponsors = [...(event.value.sponsors || []), { name: sponsorForm.name.trim(), website: sponsorForm.website.trim() || null, logo: sponsorForm.logo || null }]
     await updateEventField('sponsors', sponsors)
     showSponsorModal.value = false
     Object.assign(sponsorForm, { name: '', website: '', logo: null })
 }
-
-const removeSponsor = async (index) => {
-    const sponsors = [...(event.value.sponsors || [])]
-    sponsors.splice(index, 1)
-    await updateEventField('sponsors', sponsors)
-}
+const removeSponsor = async (index) => { const s = [...(event.value.sponsors || [])]; s.splice(index, 1); await updateEventField('sponsors', s) }
 
 watch(showEditModal, (v) => {
     if (v && event.value) {
@@ -500,9 +574,8 @@ watch(showEditModal, (v) => {
 })
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''
-const stripHtml = (html) => html ? html.replace(/<[^>]*>/g, '').substring(0, 200) : ''
 const formatStatus = (s) => s?.replace(/_/g, ' ') || ''
-const statusClass = (status) => {
+const statusBadgeClass = (status) => {
     const m = {
         draft: 'px-2 py-1 text-xs font-medium rounded-full bg-mun-gray-100 text-mun-gray-600',
         published: 'px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700',

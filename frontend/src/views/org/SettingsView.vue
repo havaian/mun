@@ -6,13 +6,6 @@
                 <h1 class="text-2xl font-bold text-mun-gray-900">Organization Settings</h1>
                 <p class="text-sm text-mun-gray-500 mt-1">Manage your organization's profile and public page</p>
             </div>
-            <div class="flex items-center space-x-3">
-                <a v-if="org" :href="publicPageUrl" target="_blank"
-                    class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-mun-blue bg-mun-blue-50 rounded-lg hover:bg-mun-blue-100 transition-colors">
-                    <ArrowTopRightOnSquareIcon class="w-4 h-4" />
-                    Public Page
-                </a>
-            </div>
         </div>
 
         <div v-if="isLoading" class="flex justify-center py-12">
@@ -20,6 +13,32 @@
         </div>
 
         <template v-else-if="org">
+            <!-- Public page link bar -->
+            <section class="bg-white rounded-xl border border-mun-gray-200 p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-mun-gray-700">Public Organization Page</p>
+                        <p class="text-xs text-mun-gray-400 mt-0.5">Anyone can view this page</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <code
+                            class="text-xs bg-mun-gray-50 text-mun-gray-600 px-3 py-1.5 rounded-lg border border-mun-gray-200 max-w-xs truncate hidden sm:block">
+                            {{ publicPageUrl }}
+                        </code>
+                        <button @click="copyLink"
+                            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-mun-blue bg-mun-blue-50 rounded-lg hover:bg-mun-blue-100 transition-colors">
+                            <ClipboardDocumentIcon class="w-4 h-4" />
+                            {{ copied ? 'Copied!' : 'Copy' }}
+                        </button>
+                        <a :href="publicPageUrl" target="_blank"
+                            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-mun-gray-600 bg-mun-gray-50 rounded-lg hover:bg-mun-gray-100 transition-colors">
+                            <ArrowTopRightOnSquareIcon class="w-4 h-4" />
+                            Open
+                        </a>
+                    </div>
+                </div>
+            </section>
+
             <!-- General Info -->
             <section class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-5">
                 <div class="flex items-center justify-between">
@@ -40,15 +59,20 @@
                             <p class="text-mun-gray-500">Slug</p>
                             <p class="font-mono text-xs text-mun-gray-700">{{ org.slug }}</p>
                         </div>
-                        <div class="sm:col-span-2">
-                            <p class="text-mun-gray-500">Description</p>
-                            <p class="text-mun-gray-900">{{ org.description || '—' }}</p>
-                        </div>
                         <div>
                             <p class="text-mun-gray-500">Founding Date</p>
                             <p class="text-mun-gray-900">{{ org.foundingDate ? formatDate(org.foundingDate) : '—' }}</p>
                         </div>
                     </div>
+                    <!-- Description rendered as rich text -->
+                    <div v-if="org.description">
+                        <p class="text-sm text-mun-gray-500 mb-2">Description</p>
+                        <div class="bg-mun-gray-50 rounded-xl border border-mun-gray-100 p-4">
+                            <RichTextContent v-if="isHtml(org.description)" :content="org.description" />
+                            <p v-else class="text-sm text-mun-gray-700 whitespace-pre-line">{{ org.description }}</p>
+                        </div>
+                    </div>
+                    <div v-else class="text-sm text-mun-gray-400 italic">No description set</div>
                 </template>
 
                 <!-- Edit mode -->
@@ -79,7 +103,7 @@
                 </template>
             </section>
 
-            <!-- Logo & Photos -->
+            <!-- Branding -->
             <section class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-5">
                 <h2 class="text-lg font-semibold text-mun-gray-900">Branding</h2>
 
@@ -106,7 +130,7 @@
                     </div>
                 </div>
 
-                <!-- Photos -->
+                <!-- Hero background -->
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Hero Background Image</label>
                     <p class="text-xs text-mun-gray-400 mb-3">Background image for your public organization page hero
@@ -128,7 +152,7 @@
                         style="aspect-ratio: 3/1;" />
                 </div>
 
-                <!-- Gallery Photos -->
+                <!-- Gallery photos -->
                 <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Photos</label>
                     <p class="text-xs text-mun-gray-400 mb-3">Showcase your organization on the public page</p>
@@ -169,7 +193,9 @@
                         </div>
                         <div>
                             <p class="text-mun-gray-500">Website</p>
-                            <p class="text-mun-gray-900">{{ org.website || '—' }}</p>
+                            <a v-if="org.website" :href="org.website" target="_blank"
+                                class="text-mun-blue hover:underline break-all">{{ org.website }}</a>
+                            <p v-else class="text-mun-gray-900">—</p>
                         </div>
                         <div>
                             <p class="text-mun-gray-500">Address</p>
@@ -259,9 +285,7 @@
                         <div v-for="(label, key) in socialLabels" :key="key">
                             <p class="text-mun-gray-500">{{ label }}</p>
                             <a v-if="org.socialLinks?.[key]" :href="org.socialLinks[key]" target="_blank"
-                                class="text-mun-blue hover:underline break-all">
-                                {{ org.socialLinks[key] }}
-                            </a>
+                                class="text-mun-blue hover:underline break-all">{{ org.socialLinks[key] }}</a>
                             <p v-else class="text-mun-gray-400">—</p>
                         </div>
                     </div>
@@ -286,27 +310,6 @@
                     </div>
                 </template>
             </section>
-
-            <!-- Public Page Link -->
-            <section class="bg-white rounded-xl border border-mun-gray-200 p-5">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-mun-gray-700">Public Organization Page</p>
-                        <p class="text-xs text-mun-gray-400 mt-0.5">Anyone can view this page</p>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <code
-                            class="text-xs bg-mun-gray-50 text-mun-gray-600 px-3 py-1.5 rounded-lg border border-mun-gray-200 max-w-xs truncate hidden sm:block">
-                {{ publicPageUrl }}
-            </code>
-                        <button @click="copyToClipboard"
-                            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-mun-blue bg-mun-blue-50 rounded-lg hover:bg-mun-blue-100 transition-colors">
-                            <ClipboardDocumentIcon class="w-4 h-4" />
-                            {{ copied ? 'Copied!' : 'Copy' }}
-                        </button>
-                    </div>
-                </div>
-            </section>
         </template>
     </div>
 </template>
@@ -322,6 +325,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import ImageUploader from '@/components/ui/ImageUploader.vue'
 import RichTextEditor from '@/components/ui/RichTextEditor.vue'
+import RichTextContent from '@/components/ui/RichTextContent.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -341,50 +345,26 @@ const copied = ref(false)
 
 const publicPageUrl = computed(() => `${window.location.origin}/org/${orgSlug.value}/public`)
 
+const isHtml = (text) => /<[a-z][\s\S]*>/i.test(text)
+
 // Section-based edit state
 const editing = reactive({ general: false, contact: false, social: false })
 
 // Form data
 const form = reactive({
-    name: '',
-    description: '',
-    foundingDate: '',
-    email: '',
-    phone: '',
-    website: '',
-    address: '',
-    mapUrl: '',
+    name: '', description: '', foundingDate: '',
+    email: '', phone: '', website: '', address: '', mapUrl: '',
     location: { city: '', country: '' },
-    socialLinks: {
-        telegram: '',
-        instagram: '',
-        facebook: '',
-        linkedin: '',
-        twitter: ''
-    }
+    socialLinks: { telegram: '', instagram: '', facebook: '', linkedin: '', twitter: '' }
 })
 
-const socialLabels = {
-    telegram: 'Telegram',
-    instagram: 'Instagram',
-    facebook: 'Facebook',
-    linkedin: 'LinkedIn',
-    twitter: 'Twitter / X'
-}
-
-const socialPlaceholders = {
-    telegram: 'https://t.me/yourorg',
-    instagram: 'https://instagram.com/yourorg',
-    facebook: 'https://facebook.com/yourorg',
-    linkedin: 'https://linkedin.com/company/yourorg',
-    twitter: 'https://x.com/yourorg'
-}
+const socialLabels = { telegram: 'Telegram', instagram: 'Instagram', facebook: 'Facebook', linkedin: 'LinkedIn', twitter: 'Twitter / X' }
+const socialPlaceholders = { telegram: 'https://t.me/yourorg', instagram: 'https://instagram.com/yourorg', facebook: 'https://facebook.com/yourorg', linkedin: 'https://linkedin.com/company/yourorg', twitter: 'https://x.com/yourorg' }
 
 const mediaUrl = (path) => {
     if (!path) return ''
     if (path.startsWith('http')) return path
-    const base = import.meta.env.VITE_API_URL || ''
-    return `${base}${path}`
+    return `${import.meta.env.VITE_API_URL || ''}${path}`
 }
 
 const loadOrg = async () => {
@@ -392,136 +372,57 @@ const loadOrg = async () => {
     isLoading.value = true
     try {
         const res = await apiMethods.organizations.getById(orgId.value)
-        if (res.data.success) {
-            org.value = res.data.organization
-        }
-    } catch (e) {
-        console.error('Failed to load org:', e)
-    } finally {
-        isLoading.value = false
-    }
+        if (res.data.success) org.value = res.data.organization
+    } catch (e) { console.error('Failed to load org:', e) }
+    finally { isLoading.value = false }
 }
 
-// Populate form from org data for a specific section
 const startEdit = (section) => {
     if (!org.value) return
-
     if (section === 'general') {
-        form.name = org.value.name || ''
-        form.description = org.value.description || ''
-        form.foundingDate = org.value.foundingDate?.split('T')[0] || ''
+        form.name = org.value.name || ''; form.description = org.value.description || ''; form.foundingDate = org.value.foundingDate?.split('T')[0] || ''
     } else if (section === 'contact') {
-        form.email = org.value.email || ''
-        form.phone = org.value.phone || ''
-        form.website = org.value.website || ''
-        form.address = org.value.address || ''
-        form.mapUrl = org.value.mapUrl || ''
-        form.location.city = org.value.location?.city || ''
-        form.location.country = org.value.location?.country || ''
+        form.email = org.value.email || ''; form.phone = org.value.phone || ''; form.website = org.value.website || ''
+        form.address = org.value.address || ''; form.mapUrl = org.value.mapUrl || ''
+        form.location.city = org.value.location?.city || ''; form.location.country = org.value.location?.country || ''
     } else if (section === 'social') {
-        form.socialLinks.telegram = org.value.socialLinks?.telegram || ''
-        form.socialLinks.instagram = org.value.socialLinks?.instagram || ''
-        form.socialLinks.facebook = org.value.socialLinks?.facebook || ''
-        form.socialLinks.linkedin = org.value.socialLinks?.linkedin || ''
-        form.socialLinks.twitter = org.value.socialLinks?.twitter || ''
+        Object.keys(form.socialLinks).forEach(k => { form.socialLinks[k] = org.value.socialLinks?.[k] || '' })
     }
-
     editing[section] = true
 }
-
-const cancelEdit = (section) => {
-    editing[section] = false
-}
+const cancelEdit = (section) => { editing[section] = false }
 
 const saveSection = async (section) => {
     isSaving.value = true
     try {
         let data = {}
-
         if (section === 'general') {
-            data = {
-                name: form.name,
-                description: form.description || null,
-                foundingDate: form.foundingDate || null
-            }
+            data = { name: form.name, description: form.description || null, foundingDate: form.foundingDate || null }
         } else if (section === 'contact') {
-            data = {
-                email: form.email || null,
-                phone: form.phone || null,
-                website: form.website || null,
-                address: form.address || null,
-                mapUrl: form.mapUrl || null,
-                location: {
-                    city: form.location.city || null,
-                    country: form.location.country || null
-                }
-            }
+            data = { email: form.email || null, phone: form.phone || null, website: form.website || null, address: form.address || null, mapUrl: form.mapUrl || null, location: { city: form.location.city || null, country: form.location.country || null } }
         } else if (section === 'social') {
-            data = {
-                socialLinks: {
-                    telegram: form.socialLinks.telegram || null,
-                    instagram: form.socialLinks.instagram || null,
-                    facebook: form.socialLinks.facebook || null,
-                    linkedin: form.socialLinks.linkedin || null,
-                    twitter: form.socialLinks.twitter || null
-                }
-            }
+            data = { socialLinks: {} }
+            Object.keys(form.socialLinks).forEach(k => { data.socialLinks[k] = form.socialLinks[k] || null })
         }
-
         const res = await apiMethods.organizations.update(orgId.value, data)
-        if (res.data.success) {
-            org.value = res.data.organization
-            editing[section] = false
-            toast.success('Saved')
-        }
-    } catch (e) {
-        toast.error(e.response?.data?.error || 'Failed to save')
-    } finally {
-        isSaving.value = false
-    }
+        if (res.data.success) { org.value = res.data.organization; editing[section] = false; toast.success('Saved') }
+    } catch (e) { toast.error(e.response?.data?.error || 'Failed to save') }
+    finally { isSaving.value = false }
 }
 
-// Quick-save a single field (logo, photos)
 const updateField = async (field, value) => {
     try {
         const res = await apiMethods.organizations.update(orgId.value, { [field]: value })
-        if (res.data.success) {
-            org.value = res.data.organization
-            toast.success('Updated')
-        }
-    } catch (e) {
-        toast.error(e.response?.data?.error || 'Failed to update')
-    }
+        if (res.data.success) { org.value = res.data.organization; toast.success('Updated') }
+    } catch (e) { toast.error(e.response?.data?.error || 'Failed to update') }
 }
 
-// Photos
-const addOrgPhoto = async (url) => {
-    if (!url) return
-    const photos = [...(org.value.photos || []), url]
-    await updateField('photos', photos)
-}
+const addOrgPhoto = async (url) => { if (!url) return; await updateField('photos', [...(org.value.photos || []), url]) }
+const removeOrgPhoto = async (i) => { const p = [...(org.value.photos || [])]; p.splice(i, 1); await updateField('photos', p) }
 
-const removeOrgPhoto = async (index) => {
-    const photos = [...(org.value.photos || [])]
-    photos.splice(index, 1)
-    await updateField('photos', photos)
-}
-
-// Clipboard
-const copyToClipboard = async () => {
-    try {
-        await navigator.clipboard.writeText(publicPageUrl.value)
-    } catch {
-        const textarea = document.createElement('textarea')
-        textarea.value = publicPageUrl.value
-        document.body.appendChild(textarea)
-        textarea.select()
-        document.execCommand('copy')
-        document.body.removeChild(textarea)
-    }
-    copied.value = true
-    toast.success('Link copied!')
-    setTimeout(() => { copied.value = false }, 2000)
+const copyLink = async () => {
+    try { await navigator.clipboard.writeText(publicPageUrl.value) } catch { /* fallback */ const t = document.createElement('textarea'); t.value = publicPageUrl.value; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t) }
+    copied.value = true; toast.success('Link copied!'); setTimeout(() => { copied.value = false }, 2000)
 }
 
 const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''
