@@ -181,6 +181,13 @@ export const apiMethods = {
                 headers: { 'Content-Type': 'multipart/form-data' }
             })
         },
+        uploadDocument: (file) => {
+            const formData = new FormData()
+            formData.append('file', file)
+            return api.post('/media/upload-document', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            })
+        },
         uploadMultiple: (files) => {
             const formData = new FormData()
             files.forEach(f => formData.append('files', f))

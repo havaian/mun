@@ -374,7 +374,7 @@ const submitApplication = async () => {
         const resolvedResponses = { ...customResponses }
         for (const [fieldId, file] of Object.entries(fileUploads)) {
             try {
-                const uploadRes = await apiMethods.media.upload(file)
+                const uploadRes = await apiMethods.media.uploadDocument(file)
                 if (uploadRes.data.success) {
                     resolvedResponses[fieldId] = uploadRes.data.url || uploadRes.data.file?.url
                 }

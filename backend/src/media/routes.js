@@ -68,6 +68,70 @@ router.post('/upload',
     }
 );
 
+// =============================================
+// DOCUMENT UPLOAD CONFIG — PDFs, DOCs, etc.
+// =============================================
+const documentStorage = multer.diskStorage({
+    destination: async (req, file, cb) => {
+        const uploadPath = path.join(__dirname, '../../uploads/documents');
+        await fs.mkdir(uploadPath, { recursive: true });
+        cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+        const uniqueId = crypto.randomBytes(8).toString('hex');
+        const ext = path.extname(file.originalname).toLowerCase();
+        cb(null, `${Date.now()}-${uniqueId}${ext}`);
+    }
+});
+
+const documentUpload = multer({
+    storage: documentStorage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+    fileFilter: (req, file, cb) => {
+        const allowed = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/rtf',
+            'text/rtf'
+        ];
+        if (allowed.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only document files are allowed (PDF, DOC, DOCX, RTF)'));
+        }
+    }
+});
+
+// POST /api/media/upload-document — single document upload
+router.post('/upload-document',
+    global.auth.token,
+    documentUpload.single('file'),
+    (req, res) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ error: 'No file uploaded' });
+            }
+
+            const url = `/uploads/documents/${req.file.filename}`;
+
+            global.logger.info(`Document uploaded: ${req.file.originalname} → ${url} by ${req.user.userId}`);
+
+            res.json({
+                success: true,
+                url,
+                filename: req.file.filename,
+                originalName: req.file.originalname,
+                size: req.file.size,
+                mimetype: req.file.mimetype
+            });
+        } catch (error) {
+            global.logger.error('Document upload error:', error);
+            res.status(500).json({ error: 'Failed to upload document' });
+        }
+    }
+);
+
 // POST /api/media/upload-multiple — up to 10 images at once
 router.post('/upload-multiple',
     global.auth.token,
@@ -136,7 +200,7 @@ router.use((err, req, res, next) => {
         }
         return res.status(400).json({ error: err.message });
     }
-    if (err.message?.includes('Only image files')) {
+    if (err.message?.includes('Only image files') || err.message?.includes('Only document files')) {
         return res.status(400).json({ error: err.message });
     }
     next(err);

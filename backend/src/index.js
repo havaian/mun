@@ -116,6 +116,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve uploaded files statically
+app.use('/uploads/documents', express.static('uploads/documents'));
 app.use('/uploads', express.static('uploads'));
 app.use('/upload', express.static('upload', {
   maxAge: '1d',
