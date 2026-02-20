@@ -109,7 +109,7 @@ router.put('/:id/complete',
 router.get('/',
     validateTimerFilters,
     handleValidationErrors,
-    controller.getTimers
+    controller.getCommitteeTimers
 );
 
 // Get single timer
