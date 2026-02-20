@@ -28,7 +28,7 @@ const middleware = require('./middleware');
 const _legacyRequireRoles = (...allowedRoles) => {
     const roles = allowedRoles.flat();
 
-    return (req, res, next) => {
+    return async (req, res, next) => {
         if (!req.user) {
             return res.status(401).json({
                 error: 'Authentication required.'
@@ -48,6 +48,30 @@ const _legacyRequireRoles = (...allowedRoles) => {
         // If user has eventParticipant data attached (future Phase 3 middleware)
         if (req.user.eventRole && roles.includes(req.user.eventRole)) {
             return next();
+        }
+
+        // Bridge: if 'admin' role requested, check if user is an org admin
+        // via OrgMembership. This lets org admins use legacy committee/session
+        // routes until they're migrated to org-scoped endpoints.
+        if (roles.includes('admin')) {
+            try {
+                const { OrgMembership } = require('../org-membership/model');
+                const membership = await OrgMembership.findOne({
+                    user: req.user.userId,
+                    status: 'active',
+                    role: 'admin'
+                }).lean();
+
+                if (membership) {
+                    // Attach org context for downstream use
+                    req.user.orgMembershipId = membership._id.toString();
+                    req.user.organizationId = membership.organization.toString();
+                    return next();
+                }
+            } catch (e) {
+                // OrgMembership module not available — fall through to denial
+                global.logger.debug('Legacy admin bridge: OrgMembership lookup failed:', e.message);
+            }
         }
 
         return res.status(403).json({
