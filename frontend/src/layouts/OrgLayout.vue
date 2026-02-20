@@ -77,7 +77,7 @@ const primaryNavigation = computed(() => [
 const navigationSections = computed(() => {
     const sections = []
 
-    if (authStore.isOrgAdmin) {
+    if (authStore.isOrgAdmin || authStore.hasOrgPermission('manage_content')) {
         sections.push({
             title: 'Administration',
             items: [
