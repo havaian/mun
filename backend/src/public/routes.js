@@ -14,7 +14,7 @@ router.get('/org/:orgSlug', async (req, res) => {
         const { orgSlug } = req.params;
 
         const org = await Organization.findOne({ slug: orgSlug, status: 'active' })
-            .select('name slug description logo photos foundingDate email phone website address location socialLinks')
+            .select('name slug description logo heroImage photos foundingDate email phone website address mapUrl location socialLinks')
             .lean();
 
         if (!org) {
@@ -60,7 +60,7 @@ router.get('/events/:orgSlug/:eventSlug', async (req, res) => {
             organization: org._id,
             status: { $nin: ['draft'] }
         })
-            .select('name slug description location logo heroImage photos sponsors startDate endDate status statistics organization')
+            .select('name slug description location logo heroImage photos sponsors startDate endDate timezone mapUrl status statistics organization')
             .lean();
 
         if (!event) {

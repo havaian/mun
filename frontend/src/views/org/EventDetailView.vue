@@ -439,11 +439,20 @@ const handleEdit = async () => {
     finally { isSaving.value = false }
 }
 
-// Quick-save a single field without opening the modal
+// Quick-save a single field without opening the modal (no full reload to preserve focus)
 const updateEventField = async (field, value) => {
     try {
         const res = await apiMethods.events.update(orgId.value, event.value._id, { [field]: value })
-        if (res.data.success) { toast.success('Updated'); await loadEvent() }
+        if (res.data.success) {
+            // Update local state directly instead of calling loadEvent()
+            // This avoids isLoading=true → full remount → lost focus / scroll position
+            if (res.data.event) {
+                event.value = res.data.event
+            } else {
+                event.value[field] = value
+            }
+            toast.success('Updated')
+        }
     } catch (e) { toast.error(e.response?.data?.error || 'Failed to update') }
 }
 

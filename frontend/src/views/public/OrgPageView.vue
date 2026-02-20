@@ -176,11 +176,6 @@
                                             org.location.country].filter(Boolean).join(', ') }}</p>
                                     </div>
                                 </div>
-                                <a v-if="org.mapUrl" :href="org.mapUrl" target="_blank"
-                                    class="flex items-center gap-2 px-3 py-2 bg-white border border-mun-gray-200 rounded-xl text-sm text-mun-gray-700 hover:border-mun-blue-200 hover:text-mun-blue transition-colors w-full">
-                                    <MapPinIcon class="w-4 h-4" />
-                                    View on map
-                                </a>
                             </div>
 
                             <!-- Contact card -->
@@ -209,10 +204,17 @@
                                 </div>
                             </div>
 
-                            <!-- Social links -->
-                            <div v-if="Object.keys(activeSocials).length" class="flex flex-wrap gap-2.5">
+                            <!-- Map link (after contacts) -->
+                            <a v-if="org.mapUrl" :href="org.mapUrl" target="_blank"
+                                class="flex items-center justify-center gap-2 px-3 py-2.5 bg-mun-gray-50 border border-mun-gray-200 rounded-xl text-sm font-medium text-mun-gray-700 hover:border-mun-blue-200 hover:text-mun-blue transition-colors w-full">
+                                <MapPinIcon class="w-4 h-4" />
+                                View on map
+                            </a>
+
+                            <!-- Social links (full-width) -->
+                            <div v-if="Object.keys(activeSocials).length" class="flex gap-2">
                                 <a v-for="(url, platform) in activeSocials" :key="platform" :href="url" target="_blank"
-                                    class="w-9 h-9 rounded-lg bg-mun-gray-100 hover:bg-mun-blue hover:text-white flex items-center justify-center text-mun-gray-500 transition-colors">
+                                    class="flex-1 h-9 rounded-lg bg-mun-gray-100 hover:bg-mun-blue hover:text-white flex items-center justify-center text-mun-gray-500 transition-colors">
                                     <SocialIcon :name="platform" class="w-4 h-4" />
                                 </a>
                             </div>
