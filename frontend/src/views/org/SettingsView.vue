@@ -108,6 +108,28 @@
 
                 <!-- Photos -->
                 <div>
+                    <label class="block text-sm font-medium text-mun-gray-700 mb-2">Hero Background Image</label>
+                    <p class="text-xs text-mun-gray-400 mb-3">Background image for your public organization page hero
+                        section</p>
+                    <div v-if="org.heroImage" class="relative rounded-xl overflow-hidden mb-3"
+                        style="aspect-ratio: 3/1;">
+                        <img :src="mediaUrl(org.heroImage)" alt="" class="w-full h-full object-cover" />
+                        <div
+                            class="absolute inset-0 bg-gradient-to-br from-mun-blue-900/55 via-mun-blue-800/45 to-mun-blue-950/55 flex items-center justify-center">
+                            <span class="text-white/60 text-sm font-medium">Hero preview</span>
+                        </div>
+                        <button @click="updateField('heroImage', null)"
+                            class="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors">
+                            <XMarkIcon class="w-4 h-4" />
+                        </button>
+                    </div>
+                    <ImageUploader v-if="!org.heroImage" :model-value="null"
+                        @update:model-value="updateField('heroImage', $event)" compact size-classes="w-full"
+                        style="aspect-ratio: 3/1;" />
+                </div>
+
+                <!-- Gallery Photos -->
+                <div>
                     <label class="block text-sm font-medium text-mun-gray-700 mb-2">Photos</label>
                     <p class="text-xs text-mun-gray-400 mb-3">Showcase your organization on the public page</p>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">

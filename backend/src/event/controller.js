@@ -183,8 +183,9 @@ const updateEvent = async (req, res) => {
 
         // Allowed fields
         const allowedFields = [
-            'name', 'description', 'location', 'startDate', 'endDate',
-            'timezone', 'logo', 'heroImage', 'photos', 'sponsors'
+            'name', 'description', 'startDate', 'endDate',
+            'timezone', 'logo', 'photos',
+            'location', 'mapUrl', 'heroImage', 'sponsors'
         ];
 
         allowedFields.forEach(field => {

@@ -54,6 +54,11 @@ const organizationSchema = new mongoose.Schema({
         trim: true,
         maxlength: 500
     },
+    
+    heroImage: { 
+        type: String, 
+        default: null 
+    },
 
     foundingDate: {
         type: Date,
