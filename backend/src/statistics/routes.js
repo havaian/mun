@@ -1,111 +1,68 @@
+// backend/src/statistics/routes.js
+// Mounted at: /api/organizations/:orgId/events/:eventId/committees/:committeeId/statistics
 const express = require('express');
 const { body, param, query, validationResult } = require('express-validator');
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 const controller = require('./controller');
 
-// Validation middleware
 const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json({
-            error: 'Validation failed',
-            details: errors.array()
-        });
+        return res.status(400).json({ error: 'Validation failed', details: errors.array() });
     }
     next();
 };
 
-// Validation schemas
 const validateEmail = [
-    param('email')
-        .isEmail()
-        .withMessage('Valid email is required')
-];
-
-const validateCommitteeId = [
-    param('committeeId')
-        .isMongoId()
-        .withMessage('Valid committee ID is required')
+    param('email').isEmail().withMessage('Valid email is required')
 ];
 
 const validateAchievement = [
-    body('awardType')
-        .isIn([
-            'best_delegate', 'outstanding_delegate', 'honorable_mention',
-            'best_position_paper', 'best_speaker', 'most_collaborative',
-            'most_innovative', 'rising_star', 'diplomat_award',
-            'leadership_award', 'research_award'
-        ])
-        .withMessage('Invalid award type'),
-    body('awardName')
-        .isLength({ min: 3, max: 100 })
-        .withMessage('Award name must be between 3 and 100 characters')
-        .trim(),
-    body('description')
-        .isLength({ min: 10, max: 500 })
-        .withMessage('Description must be between 10 and 500 characters')
-        .trim(),
-    body('criteria')
-        .optional()
-        .isObject()
-        .withMessage('Criteria must be an object')
+    body('awardType').isIn([
+        'best_delegate', 'outstanding_delegate', 'honorable_mention',
+        'best_position_paper', 'best_speaker', 'most_collaborative',
+        'most_innovative', 'rising_star', 'diplomat_award',
+        'leadership_award', 'research_award'
+    ]).withMessage('Invalid award type'),
+    body('awardName').isLength({ min: 3, max: 100 }).withMessage('Award name must be between 3 and 100 characters').trim(),
+    body('description').isLength({ min: 10, max: 500 }).withMessage('Description must be between 10 and 500 characters').trim(),
+    body('criteria').optional().isObject().withMessage('Criteria must be an object')
 ];
 
 const validateActivityQuery = [
-    query('actionType')
-        .optional()
-        .isIn([
-            'speech', 'vote', 'document_upload', 'amendment', 'motion', 
-            'question', 'message', 'coalition_join', 'coalition_create',
-            'resolution_submit', 'session_attend', 'login', 'logout', 'all'
-        ])
-        .withMessage('Invalid action type'),
-    query('userEmail')
-        .optional()
-        .isEmail()
-        .withMessage('User email must be valid'),
-    query('page')
-        .optional()
-        .isInt({ min: 1 })
-        .withMessage('Page must be a positive integer'),
-    query('limit')
-        .optional()
-        .isInt({ min: 1, max: 100 })
-        .withMessage('Limit must be between 1 and 100'),
-    query('timeRange')
-        .optional()
-        .isIn(['1h', '24h', '7d', '30d'])
-        .withMessage('Time range must be 1h, 24h, 7d, or 30d')
+    query('actionType').optional().isIn([
+        'speech', 'vote', 'document_upload', 'amendment', 'motion',
+        'question', 'message', 'coalition_join', 'coalition_create',
+        'resolution_submit', 'session_attend', 'login', 'logout', 'all'
+    ]).withMessage('Invalid action type'),
+    query('userEmail').optional().isEmail().withMessage('User email must be valid'),
+    query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+    query('timeRange').optional().isIn(['1h', '24h', '7d', '30d']).withMessage('Time range must be 1h, 24h, 7d, or 30d')
 ];
 
 const validateRankingsQuery = [
-    query('sortBy')
-        .optional()
-        .isIn(['totalScore', 'participationScore', 'leadershipScore', 'collaborationScore', 'innovationScore'])
-        .withMessage('Invalid sort field'),
-    query('limit')
-        .optional()
-        .isInt({ min: 1, max: 50 })
-        .withMessage('Limit must be between 1 and 50')
+    query('sortBy').optional().isIn(['totalScore', 'participationScore', 'leadershipScore', 'collaborationScore', 'innovationScore']).withMessage('Invalid sort field'),
+    query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50')
 ];
 
 const validateStatsQuery = [
-    query('eventId')
-        .optional()
-        .isMongoId()
-        .withMessage('Event ID must be valid'),
-    query('committeeId')
-        .optional()
-        .isMongoId()
-        .withMessage('Committee ID must be valid')
+    query('eventId').optional().isMongoId().withMessage('Event ID must be valid'),
+    query('committeeId').optional().isMongoId().withMessage('Committee ID must be valid')
 ];
 
-// Delegate Statistics Routes
-
-// Get delegate statistics
-router.get('/delegate/:email',
+// Shared: token + event context + participant
+router.use(
     global.auth.token,
+    global.auth.eventContext('orgId', 'eventId'),
+    global.auth.participant('committeeId')
+);
+
+// ==================== DELEGATE STATISTICS ====================
+
+// Get delegate statistics by email
+router.get('/delegate/:email',
     validateEmail,
     validateStatsQuery,
     handleValidationErrors,
@@ -114,7 +71,6 @@ router.get('/delegate/:email',
 
 // Get current user's statistics
 router.get('/my-stats',
-    global.auth.token,
     query('eventId').optional().isMongoId().withMessage('Event ID must be valid'),
     query('committeeId').optional().isMongoId().withMessage('Committee ID must be valid'),
     handleValidationErrors,
@@ -124,65 +80,47 @@ router.get('/my-stats',
     }
 );
 
-// Committee Statistics Routes
+// ==================== COMMITTEE STATISTICS ====================
 
-// Get committee statistics
-router.get('/committee/:committeeId',
-    global.auth.token,
-    validateCommitteeId,
+// Get committee statistics (any participant)
+router.get('/',
     handleValidationErrors,
-    global.auth.sameCommittee,
     controller.getCommitteeStats
 );
 
-// Get delegate rankings for committee
-router.get('/committee/:committeeId/rankings',
-    global.auth.token,
-    validateCommitteeId,
+// Get delegate rankings (any participant)
+router.get('/rankings',
     validateRankingsQuery,
     handleValidationErrors,
-    global.auth.sameCommittee,
     controller.getDelegateRankings
 );
 
-// Get activity feed for committee
-router.get('/committee/:committeeId/activity',
-    global.auth.token,
-    validateCommitteeId,
+// Get activity feed (any participant)
+router.get('/activity',
     validateActivityQuery,
     handleValidationErrors,
-    global.auth.sameCommittee,
     controller.getActivityFeed
 );
 
 // Recalculate committee statistics (presidium only)
-router.post('/committee/:committeeId/recalculate',
-    global.auth.token,
+router.post('/recalculate',
     global.auth.presidium,
-    validateCommitteeId,
     handleValidationErrors,
     async (req, res) => {
         try {
             const { committeeId } = req.params;
-            
             await controller.calculateCommitteeStats(committeeId);
-            
-            res.json({
-                success: true,
-                message: 'Committee statistics recalculated successfully'
-            });
-
+            res.json({ success: true, message: 'Committee statistics recalculated successfully' });
         } catch (error) {
             res.status(500).json({ error: 'Failed to recalculate statistics' });
         }
     }
 );
 
-// Achievement Management Routes (Presidium only)
+// ==================== ACHIEVEMENTS (Presidium) ====================
 
-// Award achievement to delegate
+// Award achievement to delegate (presidium only)
 router.post('/delegate/:email/achievement',
-    global.auth.token,
     global.auth.presidium,
     validateEmail,
     validateAchievement,
@@ -190,28 +128,22 @@ router.post('/delegate/:email/achievement',
     controller.awardAchievement
 );
 
-// Get all achievements for committee
-router.get('/committee/:committeeId/achievements',
-    global.auth.token,
-    validateCommitteeId,
+// Get all achievements for committee (any participant)
+router.get('/achievements',
     handleValidationErrors,
-    global.auth.sameCommittee,
     async (req, res) => {
         try {
             const { DelegateStats } = require('./model');
             const { committeeId } = req.params;
 
-            const delegateStats = await DelegateStats.find({ 
+            const delegateStats = await DelegateStats.find({
                 committeeId,
-                'achievements.0': { $exists: true } // Only delegates with achievements
+                'achievements.0': { $exists: true }
             }, 'userEmail countryName achievements');
 
-            const achievements = delegateStats.flatMap(delegate => 
+            const achievements = delegateStats.flatMap(delegate =>
                 delegate.achievements.map(achievement => ({
-                    delegate: {
-                        email: delegate.userEmail,
-                        country: delegate.countryName
-                    },
+                    delegate: { email: delegate.userEmail, country: delegate.countryName },
                     achievement: {
                         awardType: achievement.awardType,
                         awardName: achievement.awardName,
@@ -221,33 +153,25 @@ router.get('/committee/:committeeId/achievements',
                 }))
             ).sort((a, b) => new Date(b.achievement.earnedAt) - new Date(a.achievement.earnedAt));
 
-            res.json({
-                success: true,
-                achievements,
-                totalAchievements: achievements.length
-            });
-
+            res.json({ success: true, achievements, totalAchievements: achievements.length });
         } catch (error) {
             res.status(500).json({ error: 'Failed to get achievements' });
         }
     }
 );
 
-// Analytics and Reports Routes
+// ==================== ANALYTICS ====================
 
-// Get participation analytics
-router.get('/committee/:committeeId/analytics/participation',
-    global.auth.token,
-    validateCommitteeId,
+// Get participation analytics (any participant)
+router.get('/analytics/participation',
     handleValidationErrors,
-    global.auth.sameCommittee,
     async (req, res) => {
         try {
             const { DelegateStats } = require('./model');
             const { committeeId } = req.params;
 
             const stats = await DelegateStats.find({ committeeId });
-            
+
             const analytics = {
                 averageAttendance: stats.reduce((sum, s) => sum + s.participation.attendanceRate, 0) / stats.length || 0,
                 totalSessions: Math.max(...stats.map(s => s.participation.totalSessions), 0),
@@ -263,23 +187,16 @@ router.get('/committee/:committeeId/analytics/participation',
                 }
             };
 
-            res.json({
-                success: true,
-                analytics,
-                participantCount: stats.length
-            });
-
+            res.json({ success: true, analytics, participantCount: stats.length });
         } catch (error) {
             res.status(500).json({ error: 'Failed to get participation analytics' });
         }
     }
 );
 
-// Export committee statistics (CSV format)
-router.get('/committee/:committeeId/export',
-    global.auth.token,
+// Export committee statistics CSV (presidium only)
+router.get('/export',
     global.auth.presidium,
-    validateCommitteeId,
     handleValidationErrors,
     async (req, res) => {
         try {
@@ -289,7 +206,6 @@ router.get('/committee/:committeeId/export',
             const stats = await DelegateStats.find({ committeeId })
                 .sort({ 'scores.totalScore': -1 });
 
-            // Create CSV data
             const csvData = stats.map((delegate, index) => ({
                 rank: index + 1,
                 country: delegate.countryName,
@@ -308,15 +224,17 @@ router.get('/committee/:committeeId/export',
                 attendanceRate: delegate.participation.attendanceRate
             }));
 
-            // Convert to CSV format
-            const csvHeader = Object.keys(csvData[0] || {}).join(',');
+            if (csvData.length === 0) {
+                return res.status(404).json({ error: 'No statistics data found' });
+            }
+
+            const csvHeader = Object.keys(csvData[0]).join(',');
             const csvRows = csvData.map(row => Object.values(row).join(','));
             const csv = [csvHeader, ...csvRows].join('\n');
 
             res.setHeader('Content-Type', 'text/csv');
             res.setHeader('Content-Disposition', `attachment; filename=committee-${committeeId}-statistics.csv`);
             res.send(csv);
-
         } catch (error) {
             res.status(500).json({ error: 'Failed to export statistics' });
         }

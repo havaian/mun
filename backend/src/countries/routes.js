@@ -1,23 +1,19 @@
+// backend/src/countries/routes.js
+// Mounted at: /api/countries (general resource — not committee-scoped)
 const express = require('express');
 const { param, query, validationResult } = require('express-validator');
+const router = express.Router();
 
 const controller = require('./controller');
 
-// Validation middleware
 const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json({
-            error: 'Validation failed',
-            details: errors.array()
-        });
+        return res.status(400).json({ error: 'Validation failed', details: errors.array() });
     }
     next();
 };
 
-const router = express.Router();
-
-// Validation middleware
 const validateCountryCode = [
     param('code')
         .isLength({ min: 2, max: 2 })
@@ -88,12 +84,12 @@ router.get('/flags/all/batch',
     controller.getAllFlags
 );
 
-// Admin routes (admin authentication required)
+// Admin routes — SuperAdmin only (was: global.auth.admin)
 
-// Refresh flag cache (admin only)
+// Refresh flag cache (SuperAdmin only)
 router.post('/admin/refresh-flags',
     global.auth.token,
-    global.auth.admin,
+    global.auth.superAdmin,
     controller.refreshFlagCache
 );
 

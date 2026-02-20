@@ -1,200 +1,113 @@
+// backend/src/document/routes.js
+// Mounted at: /api/organizations/:orgId/events/:eventId/committees/:committeeId/documents
 const express = require('express');
+const multer = require('multer');
 const { body, param, query, validationResult } = require('express-validator');
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 const controller = require('./controller');
 
-// Validation middleware
 const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json({
-            error: 'Validation failed',
-            details: errors.array()
-        });
+        return res.status(400).json({ error: 'Validation failed', details: errors.array() });
     }
     next();
 };
 
-// Validation schemas
-const validateDocumentReview = [
-    body('decision')
-        .isIn(['approve', 'reject', 'needs_revision'])
-        .withMessage('Decision must be approve, reject, or needs_revision'),
-    body('comments')
-        .optional()
-        .isLength({ max: 2000 })
-        .withMessage('Comments cannot exceed 2000 characters'),
-    body('allowResubmission')
-        .optional()
-        .isBoolean()
-        .withMessage('Allow resubmission must be boolean'),
-    body('extendedDeadline')
-        .optional()
-        .isISO8601()
-        .withMessage('Extended deadline must be valid date')
-];
-
 const validateDocumentId = [
-    param('id')
-        .isMongoId()
-        .withMessage('Invalid document ID')
-];
-
-const validateCommitteeId = [
-    param('committeeId')
-        .isMongoId()
-        .withMessage('Invalid committee ID')
+    param('id').isMongoId().withMessage('Valid document ID is required')
 ];
 
 const validatePagination = [
-    query('page')
-        .optional()
-        .isInt({ min: 1 })
-        .withMessage('Page must be a positive integer'),
-    query('limit')
-        .optional()
-        .isInt({ min: 1, max: 100 })
-        .withMessage('Limit must be between 1 and 100'),
-    query('type')
-        .optional()
+    query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+    query('type').optional()
         .isIn(['position_paper', 'public_document', 'resolution_draft', 'all'])
         .withMessage('Type must be position_paper, public_document, resolution_draft, or all'),
-    query('status')
-        .optional()
+    query('status').optional()
         .isIn(['uploaded', 'under_review', 'approved', 'rejected', 'needs_revision'])
         .withMessage('Status must be uploaded, under_review, approved, rejected, or needs_revision')
 ];
 
-// Get all documents (admin only) - for document management page
-router.get('/',
+// Shared: token + event context + participant for all routes
+router.use(
     global.auth.token,
-    global.auth.admin, // Only admins can see all documents across committees
+    global.auth.eventContext('orgId', 'eventId'),
+    global.auth.participant('committeeId')
+);
+
+// ==================== DOCUMENT LISTING ====================
+
+// Get all documents for this committee (OrgAdmin sees all, participants see their committee's)
+router.get('/',
     validatePagination,
     handleValidationErrors,
     async (req, res) => {
         try {
-            const {
-                page = 1,
-                limit = 20,
-                type,
-                status,
-                search,
-                committeeId,
-                dateRange
-            } = req.query;
+            const { committeeId } = req.params;
+            const { page = 1, limit = 20, type, status, search, dateRange } = req.query;
 
             const { Document } = require('./model');
+            const filter = { committeeId };
 
-            // Build filter
-            const filter = {};
-
-            // Type filter
-            if (type && ['position_paper', 'public_document', 'resolution_draft', 'all'].includes(type) && type !== 'all') {
-                filter.type = type;
-            }
-
-            // Status filter  
-            if (status && ['uploaded', 'under_review', 'approved', 'rejected', 'needs_revision', 'pending'].includes(status)) {
-                // Map 'pending' to actual backend status
+            if (type && type !== 'all') filter.type = type;
+            if (status) {
                 if (status === 'pending') {
                     filter.status = { $in: ['uploaded', 'under_review'] };
                 } else {
                     filter.status = status;
                 }
             }
-
-            // Committee filter
-            if (committeeId) {
-                filter.committeeId = committeeId;
-            }
-
-            // Search filter
             if (search) {
                 filter.$or = [
-                    { originalName: { $regex: search, $options: 'i' } },
-                    { publicTitle: { $regex: search, $options: 'i' } },
-                    { 'content.extractedText': { $regex: search, $options: 'i' } }
+                    { title: { $regex: search, $options: 'i' } },
+                    { publicTitle: { $regex: search, $options: 'i' } }
                 ];
             }
 
-            // Date range filter
-            if (dateRange) {
-                const now = new Date();
-                let startDate;
-
-                switch (dateRange) {
-                    case 'today':
-                        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                        break;
-                    case 'week':
-                        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                        break;
-                    case 'month':
-                        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-                        break;
-                    case '3months':
-                        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-                        break;
-                }
-
-                if (startDate) {
-                    filter.createdAt = { $gte: startDate };
-                }
-            }
-
-            // Only show parent documents (not versions)
-            filter.parentDocumentId = null;
-
-            const skip = (page - 1) * limit;
+            const skip = (parseInt(page) - 1) * parseInt(limit);
             const limitNum = parseInt(limit);
 
-            // Execute query with population
-            const documents = await Document.find(filter)
-                .select('type authorEmail countryName originalName filename fileSize status createdAt updatedAt content.wordCount content.pageCount publicTitle')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(limitNum)
-                .populate('committeeId', 'name')
-                .populate('uploadedBy', 'username presidiumRole');
-
-            const total = await Document.countDocuments(filter);
-
-            // Calculate stats for the current filter
-            const stats = {
-                total: total,
-                pending: await Document.countDocuments({ ...filter, status: { $in: ['uploaded', 'under_review'] } }),
-                approved: await Document.countDocuments({ ...filter, status: 'approved' }),
-                rejected: await Document.countDocuments({ ...filter, status: 'rejected' })
-            };
+            const [documents, total, stats] = await Promise.all([
+                Document.find(filter)
+                    .sort({ createdAt: -1 })
+                    .skip(skip)
+                    .limit(limitNum)
+                    .populate('committeeId', 'name')
+                    .lean(),
+                Document.countDocuments(filter),
+                Promise.all([
+                    Document.countDocuments({ ...filter, status: { $in: ['uploaded', 'under_review'] } }),
+                    Document.countDocuments({ ...filter, status: 'approved' }),
+                    Document.countDocuments({ ...filter, status: 'rejected' })
+                ])
+            ]);
 
             res.json({
                 success: true,
                 documents,
-                stats,
+                stats: { total, pending: stats[0], approved: stats[1], rejected: stats[2] },
                 pagination: {
                     currentPage: parseInt(page),
                     totalPages: Math.ceil(total / limitNum),
-                    total: total,
+                    total,
                     hasNext: skip + documents.length < total,
                     hasPrev: page > 1
                 }
             });
-
         } catch (error) {
-            global.logger.error('Get all documents error:', error);
+            global.logger.error('Get documents error:', error);
             res.status(500).json({ error: 'Failed to fetch documents' });
         }
     }
 );
 
-// Position Papers Routes
+// ==================== POSITION PAPERS (delegates) ====================
 
 // Upload position paper (delegates only)
 router.post('/position-papers',
-    global.auth.token,
     global.auth.delegate,
-    // Handle file upload with validation
     (req, res, next) => {
         controller.upload.single('document')(req, res, (err) => {
             if (err) {
@@ -202,110 +115,31 @@ router.post('/position-papers',
                     if (err.code === 'LIMIT_FILE_SIZE') {
                         return res.status(400).json({ error: 'File too large. Maximum size is 10MB.' });
                     }
+                    return res.status(400).json({ error: `Upload error: ${err.message}` });
                 }
-                return res.status(400).json({ error: err.message });
+                return res.status(400).json({ error: err.message || 'File upload failed' });
             }
             next();
         });
     },
-    [
-        body('committeeId')
-            .isMongoId()
-            .withMessage('Valid committee ID is required')
-    ],
     handleValidationErrors,
-    global.auth.sameCommittee,
     controller.uploadPositionPaper
 );
 
-// Get position papers for committee
-router.get('/position-papers/:committeeId',
-    global.auth.token,
-    validateCommitteeId,
-    validatePagination,
+// Get position paper for a country
+router.get('/position-papers/:countryName',
+    [param('countryName').trim().notEmpty().withMessage('Country name is required')],
     handleValidationErrors,
-    global.auth.sameCommittee,
-    (req, res, next) => {
-        req.query.type = 'position_paper';
-        next();
-    },
-    controller.getDocuments
-);
-
-// Review position paper (presidium only)
-router.put('/position-papers/:id/review',
-    global.auth.token,
-    global.auth.presidium,
-    validateDocumentId,
-    validateDocumentReview,
-    handleValidationErrors,
-    controller.reviewDocument
-);
-
-// Submit position paper as text (delegates only)
-router.post('/position-papers/text',
-    global.auth.token,
-    global.auth.delegate,
-    [
-        body('committeeId')
-            .isMongoId()
-            .withMessage('Valid committee ID is required'),
-        body('title')
-            .isLength({ min: 3, max: 200 })
-            .withMessage('Title must be between 3 and 200 characters')
-            .trim(),
-        body('content')
-            .isLength({ min: 100, max: 50000 })
-            .withMessage('Content must be between 100 and 50,000 characters')
-    ],
-    handleValidationErrors,
-    global.auth.sameCommittee,
-    controller.submitPositionPaperText
-);
-
-// Get position paper eligibility (delegates only) 
-router.get('/position-papers/:committeeId/eligibility',
-    global.auth.token,
-    global.auth.delegate,
-    validateCommitteeId,
-    handleValidationErrors,
-    global.auth.sameCommittee,
-    async (req, res) => {
-        try {
-            const { committeeId } = req.params;
-            const eligibility = await controller.checkPositionPaperEligibility(committeeId, req.user.email);
-
-            res.json({
-                success: true,
-                eligibility
-            });
-        } catch (error) {
-            global.logger.error('Position paper eligibility check error:', error);
-            res.status(500).json({ error: 'Failed to check eligibility' });
-        }
-    }
-);
-
-// Get single position paper by delegate and committee
-router.get('/position-papers/:committeeId/delegate',
-    global.auth.token,
-    validateCommitteeId,
-    handleValidationErrors,
-    global.auth.sameCommittee,
     controller.getPositionPaper
 );
 
-// Public Documents Routes (presidium only)
+// ==================== PUBLIC DOCUMENTS (presidium) ====================
 
-// Upload public document
+// Upload public document (presidium only)
 router.post('/public',
-    global.auth.token,
     global.auth.presidium,
     controller.upload.single('document'),
     [
-        body('committeeId')
-            .isMongoId()
-            .withMessage('Valid committee ID is required'),
         body('publicTitle')
             .isLength({ min: 3, max: 200 })
             .withMessage('Public title must be between 3 and 200 characters')
@@ -317,7 +151,6 @@ router.post('/public',
             .trim()
     ],
     handleValidationErrors,
-    global.auth.sameCommittee,
     async (req, res) => {
         try {
             if (!req.file) {
@@ -325,26 +158,26 @@ router.post('/public',
             }
 
             const { Document } = require('./model');
-            const { committeeId, publicTitle, publicDescription } = req.body;
+            const { committeeId } = req.params;
+            const { publicTitle, publicDescription } = req.body;
 
-            // Extract text content (using the same function from controller)
-            const contentData = await controller.extractTextFromFile ?
-                await controller.extractTextFromFile(req.file.path, req.file.mimetype) :
-                { extractedText: '', pageCount: 0, wordCount: 0 };
+            const contentData = await controller.extractTextFromFile
+                ? controller.extractTextFromFile(req.file.path)
+                : { text: '', pages: 0 };
 
             const document = new Document({
-                type: 'public_document',
                 committeeId,
-                uploadedBy: req.user.userId,
-                filename: req.file.filename,
-                originalName: req.file.originalname,
-                fileSize: req.file.size,
-                mimeType: req.file.mimetype,
-                filePath: req.file.path,
+                type: 'public_document',
                 publicTitle: publicTitle.trim(),
                 publicDescription: publicDescription?.trim(),
-                status: 'approved', // Public documents are auto-approved
-                content: contentData
+                filePath: req.file.path,
+                fileName: req.file.originalname,
+                fileSize: req.file.size,
+                mimeType: req.file.mimetype,
+                extractedText: contentData.text,
+                pageCount: contentData.pages,
+                status: 'approved',
+                uploadedBy: req.user.userId
             });
 
             await document.save();
@@ -353,64 +186,25 @@ router.post('/public',
                 success: true,
                 document: {
                     _id: document._id,
-                    type: document.type,
                     publicTitle: document.publicTitle,
-                    originalName: document.originalName,
+                    publicDescription: document.publicDescription,
+                    fileName: document.fileName,
                     fileSize: document.fileSize,
-                    status: document.status,
-                    createdAt: document.createdAt
+                    status: document.status
                 },
                 message: 'Public document uploaded successfully'
             });
-
         } catch (error) {
             global.logger.error('Upload public document error:', error);
-
-            // Clean up file on error
-            if (req.file) {
-                try {
-                    await require('fs').promises.unlink(req.file.path);
-                } catch (unlinkError) {
-                    global.logger.error('File cleanup error:', unlinkError);
-                }
-            }
-
             res.status(500).json({ error: 'Failed to upload public document' });
         }
     }
 );
 
-// Get public documents for committee
-router.get('/public/:committeeId',
-    global.auth.token,
-    validateCommitteeId,
-    validatePagination,
-    handleValidationErrors,
-    global.auth.sameCommittee,
-    (req, res, next) => {
-        req.query.type = 'public_document';
-        next();
-    },
-    controller.getDocuments
-);
-
 // Update public document (presidium only)
 router.put('/public/:id',
-    global.auth.token,
     global.auth.presidium,
     validateDocumentId,
-    [
-        body('publicTitle')
-            .optional()
-            .isLength({ min: 3, max: 200 })
-            .withMessage('Public title must be between 3 and 200 characters')
-            .trim(),
-        body('publicDescription')
-            .optional()
-            .isLength({ max: 1000 })
-            .withMessage('Description cannot exceed 1000 characters')
-            .trim()
-    ],
     handleValidationErrors,
     async (req, res) => {
         try {
@@ -420,36 +214,19 @@ router.put('/public/:id',
             const { Document } = require('./model');
             const document = await Document.findById(id);
 
-            if (!document) {
-                return res.status(404).json({ error: 'Document not found' });
-            }
+            if (!document) return res.status(404).json({ error: 'Document not found' });
+            if (document.type !== 'public_document') return res.status(400).json({ error: 'Not a public document' });
 
-            if (document.type !== 'public_document') {
-                return res.status(400).json({ error: 'Document is not a public document' });
-            }
-
-            // Check committee access
-            if (req.user.committeeId?.toString() !== document.committeeId.toString()) {
-                return res.status(403).json({ error: 'Access denied to this document' });
-            }
-
-            // Update fields
-            if (publicTitle) document.publicTitle = publicTitle.trim();
+            if (publicTitle !== undefined) document.publicTitle = publicTitle?.trim();
             if (publicDescription !== undefined) document.publicDescription = publicDescription?.trim();
 
             await document.save();
 
             res.json({
                 success: true,
-                document: {
-                    _id: document._id,
-                    publicTitle: document.publicTitle,
-                    publicDescription: document.publicDescription,
-                    updatedAt: document.updatedAt
-                },
+                document: { _id: document._id, publicTitle: document.publicTitle, publicDescription: document.publicDescription, updatedAt: document.updatedAt },
                 message: 'Public document updated successfully'
             });
-
         } catch (error) {
             global.logger.error('Update public document error:', error);
             res.status(500).json({ error: 'Failed to update public document' });
@@ -459,104 +236,32 @@ router.put('/public/:id',
 
 // Delete public document (presidium only)
 router.delete('/public/:id',
-    global.auth.token,
     global.auth.presidium,
     validateDocumentId,
     handleValidationErrors,
     async (req, res) => {
         try {
-            const { id } = req.params;
-
             const { Document } = require('./model');
-            const document = await Document.findById(id);
+            const document = await Document.findById(req.params.id);
 
-            if (!document) {
-                return res.status(404).json({ error: 'Document not found' });
-            }
+            if (!document) return res.status(404).json({ error: 'Document not found' });
+            if (document.type !== 'public_document') return res.status(400).json({ error: 'Not a public document' });
 
-            if (document.type !== 'public_document') {
-                return res.status(400).json({ error: 'Document is not a public document' });
-            }
-
-            // Check committee access
-            if (req.user.committeeId?.toString() !== document.committeeId.toString()) {
-                return res.status(403).json({ error: 'Access denied to this document' });
-            }
-
-            // Delete file from filesystem
             try {
                 await require('fs').promises.unlink(document.filePath);
-
-                // Delete version files
                 for (const version of document.versions) {
-                    try {
-                        await require('fs').promises.unlink(version.filePath);
-                    } catch (versionError) {
-                        global.logger.warn('Failed to delete version file:', versionError);
-                    }
+                    if (version.filePath) await require('fs').promises.unlink(version.filePath).catch(() => { });
                 }
-            } catch (fileError) {
-                global.logger.warn('Failed to delete document file:', fileError);
-            }
+            } catch (e) { /* file cleanup best-effort */ }
 
-            await Document.findByIdAndDelete(id);
+            await Document.findByIdAndDelete(req.params.id);
 
-            res.json({
-                success: true,
-                message: 'Public document deleted successfully'
-            });
-
+            res.json({ success: true, message: 'Public document deleted successfully' });
         } catch (error) {
             global.logger.error('Delete public document error:', error);
             res.status(500).json({ error: 'Failed to delete public document' });
         }
     }
-);
-
-// General Document Routes
-
-// Get single document
-router.get('/:id',
-    global.auth.token,
-    validateDocumentId,
-    handleValidationErrors,
-    controller.getDocument
-);
-
-// Download document file
-router.get('/:id/download',
-    global.auth.token,
-    validateDocumentId,
-    [
-        query('version')
-            .optional()
-            .isInt({ min: 1 })
-            .withMessage('Version must be a positive integer')
-    ],
-    handleValidationErrors,
-    controller.downloadDocument
-);
-
-// Get document preview (extracted text)
-router.get('/:id/preview',
-    global.auth.token,
-    validateDocumentId,
-    [
-        query('version')
-            .optional()
-            .isInt({ min: 1 })
-            .withMessage('Version must be a positive integer')
-    ],
-    handleValidationErrors,
-    controller.getDocumentPreview
-);
-
-// Get document versions
-router.get('/:id/versions',
-    global.auth.token,
-    validateDocumentId,
-    handleValidationErrors,
-    controller.getDocumentVersions
 );
 
 module.exports = router;

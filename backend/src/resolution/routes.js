@@ -1,146 +1,88 @@
+// backend/src/resolution/routes.js
+// Mounted at: /api/organizations/:orgId/events/:eventId/committees/:committeeId/resolutions
 const express = require('express');
 const { body, param, query, validationResult } = require('express-validator');
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 const controller = require('./controller');
 
-// Validation middleware
 const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json({
-            error: 'Validation failed',
-            details: errors.array()
-        });
+        return res.status(400).json({ error: 'Validation failed', details: errors.array() });
     }
     next();
 };
 
-// Validation schemas
-const validateCoalitionCreation = [
-    body('committeeId')
-        .isMongoId()
-        .withMessage('Valid committee ID is required'),
-    body('name')
-        .isLength({ min: 3, max: 100 })
-        .withMessage('Coalition name must be between 3 and 100 characters')
-        .trim(),
-    body('description')
-        .optional()
-        .isLength({ max: 500 })
-        .withMessage('Description cannot exceed 500 characters')
-        .trim(),
-    body('invitedCountries')
-        .optional()
-        .isArray()
-        .withMessage('Invited countries must be an array'),
-    body('invitedCountries.*')
-        .isLength({ min: 2, max: 50 })
-        .withMessage('Country names must be between 2 and 50 characters')
-];
-
-const validateInvitationResponse = [
-    body('response')
-        .isIn(['accepted', 'declined'])
-        .withMessage('Response must be "accepted" or "declined"')
-];
-
-const validateResolutionSubmission = [
-    body('coalitionId')
-        .isMongoId()
-        .withMessage('Valid coalition ID is required'),
-    body('title')
-        .isLength({ min: 5, max: 200 })
-        .withMessage('Title must be between 5 and 200 characters')
-        .trim(),
-    body('content')
-        .isLength({ min: 50, max: 50000 })
-        .withMessage('Content must be between 50 and 50,000 characters')
-        .trim(),
-    body('documentType')
-        .optional()
-        .isIn(['resolution', 'declaration', 'decision'])
-        .withMessage('Document type must be resolution, declaration, or decision')
-];
-
-const validateResolutionReview = [
-    body('decision')
-        .isIn(['accept', 'reject_with_deadline', 'reject_with_extension'])
-        .withMessage('Invalid decision type'),
-    body('comments')
-        .optional()
-        .isLength({ max: 2000 })
-        .withMessage('Comments cannot exceed 2000 characters'),
-    body('allowResubmission')
-        .optional()
-        .isBoolean()
-        .withMessage('Allow resubmission must be boolean'),
-    body('extendedDeadline')
-        .optional()
-        .isISO8601()
-        .withMessage('Extended deadline must be valid date')
-];
-
-const validateCommitteeId = [
-    param('committeeId')
-        .isMongoId()
-        .withMessage('Invalid committee ID')
-];
-
-const validateId = [
-    param('id')
-        .isMongoId()
-        .withMessage('Invalid ID')
-];
+const validateId = [param('id').isMongoId().withMessage('Valid ID is required')];
 
 const validatePagination = [
-    query('page')
-        .optional()
-        .isInt({ min: 1 })
-        .withMessage('Page must be a positive integer'),
-    query('limit')
-        .optional()
-        .isInt({ min: 1, max: 50 })
-        .withMessage('Limit must be between 1 and 50'),
-    query('status')
-        .optional()
+    query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+    query('status').optional()
         .isIn(['draft', 'submitted', 'under_review', 'approved', 'rejected', 'working_document', 'all'])
         .withMessage('Invalid status filter')
 ];
 
-// Coalition Routes
+const validateCoalitionCreation = [
+    body('name').isLength({ min: 3, max: 100 }).withMessage('Coalition name must be between 3 and 100 characters').trim(),
+    body('description').optional().isLength({ max: 500 }).withMessage('Description cannot exceed 500 characters').trim(),
+    body('members').optional().isArray().withMessage('Members must be an array'),
+    body('members.*.email').optional().isEmail().withMessage('Each member must have a valid email'),
+    body('members.*.country').optional().isLength({ min: 2, max: 50 }).withMessage('Country name must be between 2 and 50 characters')
+];
+
+const validateInvitationResponse = [
+    body('accept').isBoolean().withMessage('Accept must be a boolean value')
+];
+
+const validateResolutionSubmission = [
+    body('coalitionId').isMongoId().withMessage('Valid coalition ID is required'),
+    body('title').isLength({ min: 5, max: 200 }).withMessage('Title must be between 5 and 200 characters').trim(),
+    body('content').isLength({ min: 50, max: 50000 }).withMessage('Content must be between 50 and 50,000 characters').trim(),
+    body('documentType').optional().isIn(['resolution', 'declaration', 'decision']).withMessage('Invalid document type')
+];
+
+const validateResolutionReview = [
+    body('decision').isIn(['accept', 'reject_with_deadline', 'reject_with_extension']).withMessage('Invalid decision'),
+    body('comments').optional().isLength({ max: 1000 }).withMessage('Comments cannot exceed 1000 characters').trim(),
+    body('allowResubmission').optional().isBoolean().withMessage('allowResubmission must be boolean'),
+    body('extendedDeadline').optional().isISO8601().withMessage('Extended deadline must be a valid date')
+];
+
+// Shared: token + event context + participant for all routes
+router.use(
+    global.auth.token,
+    global.auth.eventContext('orgId', 'eventId'),
+    global.auth.participant('committeeId')
+);
+
+// ==================== COALITION ROUTES ====================
 
 // Create coalition (delegates only)
 router.post('/coalitions',
-    global.auth.token,
     global.auth.delegate,
     validateCoalitionCreation,
     handleValidationErrors,
-    global.auth.sameCommittee,
     controller.createCoalition
 );
 
-// Get coalitions for committee
-router.get('/coalitions/:committeeId',
-    global.auth.token,
-    validateCommitteeId,
+// Get coalitions for this committee (any participant)
+router.get('/coalitions',
     validatePagination,
     handleValidationErrors,
-    global.auth.sameCommittee,
     controller.getCoalitions
 );
 
-// Get single coalition
-router.get('/coalitions/detail/:id',
-    global.auth.token,
+// Get single coalition (any participant)
+router.get('/coalitions/:id',
     validateId,
     handleValidationErrors,
     controller.getCoalition
 );
 
-// Respond to coalition invitation
+// Respond to coalition invitation (delegates only)
 router.put('/coalitions/:id/respond',
-    global.auth.token,
     global.auth.delegate,
     validateId,
     validateInvitationResponse,
@@ -148,48 +90,41 @@ router.put('/coalitions/:id/respond',
     controller.respondToInvitation
 );
 
-// Activate coalition (head only)
+// Activate coalition (delegates — head only, checked in controller)
 router.put('/coalitions/:id/activate',
-    global.auth.token,
     global.auth.delegate,
     validateId,
     handleValidationErrors,
     controller.activateCoalition
 );
 
-// Leave coalition
+// Leave coalition (delegates only)
 router.delete('/coalitions/:id/leave',
-    global.auth.token,
     global.auth.delegate,
     validateId,
     handleValidationErrors,
     controller.leaveCoalition
 );
 
-// Resolution Routes
+// ==================== RESOLUTION ROUTES ====================
 
-// Submit resolution (coalition head only)
+// Submit resolution (delegates — coalition head only, checked in controller)
 router.post('/',
-    global.auth.token,
     global.auth.delegate,
     validateResolutionSubmission,
     handleValidationErrors,
     controller.submitResolution
 );
 
-// Get resolutions for committee
-router.get('/:committeeId',
-    global.auth.token,
-    validateCommitteeId,
+// Get resolutions for this committee (any participant)
+router.get('/',
     validatePagination,
     handleValidationErrors,
-    global.auth.sameCommittee,
     controller.getResolutions
 );
 
-// Get single resolution
+// Get single resolution (any participant)
 router.get('/detail/:id',
-    global.auth.token,
     validateId,
     handleValidationErrors,
     controller.getResolution
@@ -197,7 +132,6 @@ router.get('/detail/:id',
 
 // Review resolution (presidium only)
 router.put('/:id/review',
-    global.auth.token,
     global.auth.presidium,
     validateId,
     validateResolutionReview,
@@ -205,9 +139,8 @@ router.put('/:id/review',
     controller.reviewResolution
 );
 
-// Submit new version of resolution (coalition head only)
+// Submit new version (delegates — coalition head only, checked in controller)
 router.post('/:id/new-version',
-    global.auth.token,
     global.auth.delegate,
     validateId,
     [
@@ -222,45 +155,28 @@ router.post('/:id/new-version',
             const { id } = req.params;
             const { content } = req.body;
 
-            const { Resolution } = require('./model');
-            const { Coalition } = require('./model');
+            const { Resolution, Coalition } = require('./model');
 
             const resolution = await Resolution.findById(id);
+            if (!resolution) return res.status(404).json({ error: 'Resolution not found' });
 
-            if (!resolution) {
-                return res.status(404).json({ error: 'Resolution not found' });
-            }
-
-            // Check if user is coalition head
             const coalition = await Coalition.findById(resolution.coalitionId);
             if (coalition.headEmail !== req.user.email) {
-                return res.status(403).json({
-                    error: 'Only coalition head can submit new version'
-                });
+                return res.status(403).json({ error: 'Only coalition head can submit new version' });
             }
 
-            // Check if resubmission is allowed
             if (!resolution.canResubmit()) {
-                return res.status(400).json({
-                    error: 'Resubmission not allowed for this resolution'
-                });
+                return res.status(400).json({ error: 'Resubmission not allowed for this resolution' });
             }
 
-            // Create new version
             const newVersion = resolution.createNewVersion(content.trim());
             await resolution.save();
 
             res.json({
                 success: true,
-                resolution: {
-                    _id: resolution._id,
-                    version: resolution.version,
-                    status: resolution.status,
-                    wordCount: resolution.wordCount
-                },
+                resolution: { _id: resolution._id, version: resolution.version, status: resolution.status, wordCount: resolution.wordCount },
                 message: `New version (v${newVersion}) submitted successfully`
             });
-
         } catch (error) {
             global.logger.error('Submit new version error:', error);
             res.status(500).json({ error: 'Failed to submit new version' });
@@ -268,49 +184,22 @@ router.post('/:id/new-version',
     }
 );
 
-// Get resolution versions
+// Get resolution versions (any participant)
 router.get('/:id/versions',
-    global.auth.token,
     validateId,
     handleValidationErrors,
     async (req, res) => {
         try {
-            const { id } = req.params;
-
             const { Resolution } = require('./model');
-            const resolution = await Resolution.findById(id);
-
-            if (!resolution) {
-                return res.status(404).json({ error: 'Resolution not found' });
-            }
-
-            // Check access permissions
-            if (req.user.role !== 'admin' &&
-                req.user.committeeId?.toString() !== resolution.committeeId.toString()) {
-                return res.status(403).json({ error: 'Access denied to this resolution' });
-            }
+            const resolution = await Resolution.findById(req.params.id);
+            if (!resolution) return res.status(404).json({ error: 'Resolution not found' });
 
             const versions = [
-                {
-                    version: resolution.version,
-                    content: resolution.content,
-                    submittedAt: resolution.lastModifiedAt,
-                    status: resolution.status,
-                    wordCount: resolution.wordCount,
-                    isCurrent: true
-                },
-                ...resolution.versionHistory.map(v => ({
-                    ...v.toObject(),
-                    isCurrent: false
-                }))
+                { version: resolution.version, content: resolution.content, submittedAt: resolution.lastModifiedAt, status: resolution.status, wordCount: resolution.wordCount, isCurrent: true },
+                ...resolution.versionHistory.map(v => ({ ...v.toObject(), isCurrent: false }))
             ].sort((a, b) => b.version - a.version);
 
-            res.json({
-                success: true,
-                versions,
-                currentVersion: resolution.version
-            });
-
+            res.json({ success: true, versions, currentVersion: resolution.version });
         } catch (error) {
             global.logger.error('Get resolution versions error:', error);
             res.status(500).json({ error: 'Failed to fetch resolution versions' });
@@ -320,39 +209,23 @@ router.get('/:id/versions',
 
 // Submit presidium resolution (presidium only)
 router.post('/presidium-draft',
-    global.auth.token,
     global.auth.presidium,
     [
-        body('committeeId')
-            .isMongoId()
-            .withMessage('Valid committee ID is required'),
-        body('title')
-            .isLength({ min: 5, max: 200 })
-            .withMessage('Title must be between 5 and 200 characters')
-            .trim(),
-        body('content')
-            .isLength({ min: 50, max: 50000 })
-            .withMessage('Content must be between 50 and 50,000 characters')
-            .trim(),
-        body('designatedAuthors')
-            .optional()
-            .isArray()
-            .withMessage('Designated authors must be an array'),
-        body('designatedAuthors.*')
-            .isLength({ min: 2, max: 50 })
-            .withMessage('Country names must be between 2 and 50 characters')
+        body('title').isLength({ min: 5, max: 200 }).withMessage('Title must be between 5 and 200 characters').trim(),
+        body('content').isLength({ min: 50, max: 50000 }).withMessage('Content must be between 50 and 50,000 characters').trim(),
+        body('designatedAuthors').optional().isArray().withMessage('Designated authors must be an array'),
+        body('designatedAuthors.*').optional().isLength({ min: 2, max: 50 }).withMessage('Country names must be between 2 and 50 characters')
     ],
     handleValidationErrors,
-    global.auth.sameCommittee,
     async (req, res) => {
         try {
-            const { committeeId, title, content, designatedAuthors = [] } = req.body;
+            const { committeeId } = req.params;
+            const { title, content, designatedAuthors = [] } = req.body;
 
             const { Resolution } = require('./model');
 
-            // Create presidium resolution
             const resolution = new Resolution({
-                coalitionId: null, // No coalition for presidium drafts
+                coalitionId: null,
                 committeeId,
                 title: title.trim(),
                 content: content.trim(),
@@ -361,7 +234,7 @@ router.post('/presidium-draft',
                 authorEmails: [],
                 coAuthors: [],
                 coAuthorEmails: [],
-                status: 'approved', // Presidium drafts are auto-approved
+                status: 'approved',
                 isPresidiumDraft: true,
                 submissionDeadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
                 submittedAt: new Date()
@@ -369,21 +242,11 @@ router.post('/presidium-draft',
 
             await resolution.save();
 
-            global.logger.info(`Presidium resolution submitted: "${title}" by ${req.user.presidiumRole}`);
-
             res.status(201).json({
                 success: true,
-                resolution: {
-                    _id: resolution._id,
-                    title: resolution.title,
-                    authors: resolution.authors,
-                    status: resolution.status,
-                    isPresidiumDraft: resolution.isPresidiumDraft,
-                    submittedAt: resolution.submittedAt
-                },
+                resolution: { _id: resolution._id, title: resolution.title, authors: resolution.authors, status: resolution.status, isPresidiumDraft: resolution.isPresidiumDraft, submittedAt: resolution.submittedAt },
                 message: 'Presidium resolution submitted successfully'
             });
-
         } catch (error) {
             global.logger.error('Submit presidium resolution error:', error);
             res.status(500).json({ error: 'Failed to submit presidium resolution' });

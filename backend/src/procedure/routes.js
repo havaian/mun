@@ -1,197 +1,83 @@
+// backend/src/procedure/routes.js
+// Mounted at: /api/organizations/:orgId/events/:eventId/committees/:committeeId/procedure
 const express = require('express');
 const { body, param, query, validationResult } = require('express-validator');
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 const controller = require('./controller');
 
-// Validation middleware
 const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json({
-            error: 'Validation failed',
-            details: errors.array()
-        });
+        return res.status(400).json({ error: 'Validation failed', details: errors.array() });
     }
     next();
 };
 
-// Validation schemas for procedural motions
-const validateMotionSubmission = [
-    body('sessionId')
-        .isMongoId()
-        .withMessage('Valid session ID is required'),
-    body('committeeId')
-        .isMongoId()
-        .withMessage('Valid committee ID is required'),
-    body('motionType')
-        .isIn([
-            'close_debate', 'suspension', 'moderated_caucus', 'unmoderated_caucus',
-            'informal_consultation', 'extend_debate', 'voting_procedure',
-            'disciplinary_action', 'technical_break', 'change_speaking_time',
-            'reopen_speakers_list', 'limit_speakers', 'change_agenda'
-        ])
-        .withMessage('Invalid motion type'),
-    body('text')
-        .isLength({ min: 10, max: 1000 })
-        .withMessage('Motion text must be between 10 and 1000 characters')
-        .trim(),
-    body('justification')
-        .optional()
-        .isLength({ max: 500 })
-        .withMessage('Justification cannot exceed 500 characters')
-        .trim(),
-    body('purpose')
-        .optional()
-        .isLength({ max: 300 })
-        .withMessage('Purpose cannot exceed 300 characters')
-        .trim(),
-    body('parameters.duration')
-        .optional()
-        .isInt({ min: 30, max: 3600 })
-        .withMessage('Duration must be between 30 and 3600 seconds'),
-    body('parameters.speechTime')
-        .optional()
-        .isInt({ min: 15, max: 300 })
-        .withMessage('Speech time must be between 15 and 300 seconds'),
-    body('parameters.topic')
-        .optional()
-        .isLength({ max: 200 })
-        .withMessage('Topic cannot exceed 200 characters')
-        .trim(),
-    body('parameters.targetDelegate')
-        .optional()
-        .isLength({ max: 100 })
-        .withMessage('Target delegate cannot exceed 100 characters')
-        .trim()
-];
+const validateIdParam = [param('id').isMongoId().withMessage('Valid ID is required')];
+const validateSessionId = [param('sessionId').isMongoId().withMessage('Valid session ID is required')];
 
-const validatePresidiumMotion = [
-    ...validateMotionSubmission,
-    body('priority')
-        .optional()
-        .isIn(['highest', 'procedural', 'debate'])
-        .withMessage('Priority must be highest, procedural, or debate')
+const validateMotionSubmission = [
+    body('sessionId').isMongoId().withMessage('Valid session ID is required'),
+    body('committeeId').isMongoId().withMessage('Valid committee ID is required'),
+    body('motionType').isIn([
+        'close_debate', 'suspension', 'moderated_caucus', 'unmoderated_caucus',
+        'informal_consultation', 'extend_debate', 'voting_procedure',
+        'disciplinary_action', 'technical_break', 'change_speaking_time',
+        'reopen_speakers_list', 'limit_speakers', 'change_agenda'
+    ]).withMessage('Invalid motion type'),
+    body('text').isLength({ min: 10, max: 1000 }).withMessage('Motion text must be between 10 and 1000 characters').trim(),
+    body('justification').optional().isLength({ max: 500 }).withMessage('Justification cannot exceed 500 characters').trim(),
+    body('purpose').optional().isLength({ max: 300 }).withMessage('Purpose cannot exceed 300 characters').trim(),
+    body('parameters.duration').optional().isInt({ min: 30, max: 3600 }).withMessage('Duration must be between 30 and 3600 seconds'),
+    body('parameters.speechTime').optional().isInt({ min: 15, max: 300 }).withMessage('Speech time must be between 15 and 300 seconds'),
+    body('parameters.topic').optional().isLength({ max: 200 }).withMessage('Topic cannot exceed 200 characters').trim()
 ];
 
 const validateMotionReview = [
-    body('action')
-        .isIn(['accept', 'reject', 'modify_order'])
-        .withMessage('Action must be accept, reject, or modify_order'),
-    body('comments')
-        .optional()
-        .isLength({ max: 1000 })
-        .withMessage('Comments cannot exceed 1000 characters')
-        .trim(),
-    body('newPriority')
-        .optional()
-        .isInt({ min: 1, max: 10 })
-        .withMessage('New priority must be between 1 and 10')
+    body('decision').isIn(['accept', 'reject', 'defer', 'put_to_vote']).withMessage('Invalid decision'),
+    body('reasoning').optional().isLength({ max: 500 }).withMessage('Reasoning cannot exceed 500 characters').trim()
 ];
 
-// Validation schemas for questions
 const validateQuestionSubmission = [
-    body('sessionId')
-        .isMongoId()
-        .withMessage('Valid session ID is required'),
-    body('committeeId')
-        .isMongoId()
-        .withMessage('Valid committee ID is required'),
-    body('questionType')
-        .isIn([
-            'personal_privilege', 'voting_procedure', 'to_speaker',
-            'procedure', 'to_chairman', 'to_expert', 'right_of_reply'
-        ])
-        .withMessage('Invalid question type'),
-    body('targetRole')
-        .isIn(['chairman', 'expert', 'speaker'])
-        .withMessage('Target role must be chairman, expert, or speaker'),
-    body('targetCountry')
-        .optional()
-        .isLength({ min: 2, max: 50 })
-        .withMessage('Target country must be between 2 and 50 characters'),
-    body('text')
-        .isLength({ min: 10, max: 1000 })
-        .withMessage('Question text must be between 10 and 1000 characters')
-        .trim(),
-    body('context')
-        .optional()
-        .isLength({ max: 500 })
-        .withMessage('Context cannot exceed 500 characters')
-        .trim(),
-    body('rightOfReply.targetStatement')
-        .optional()
-        .isLength({ min: 10, max: 500 })
-        .withMessage('Target statement must be between 10 and 500 characters'),
-    body('rightOfReply.targetSpeaker')
-        .optional()
-        .isLength({ min: 2, max: 50 })
-        .withMessage('Target speaker must be between 2 and 50 characters'),
-    body('rightOfReply.timeAllocated')
-        .optional()
-        .isInt({ min: 30, max: 180 })
-        .withMessage('Time allocated must be between 30 and 180 seconds')
+    body('sessionId').isMongoId().withMessage('Valid session ID is required'),
+    body('committeeId').isMongoId().withMessage('Valid committee ID is required'),
+    body('questionType').isIn([
+        'personal_privilege', 'voting_procedure', 'to_speaker',
+        'procedure', 'to_chairman', 'to_expert', 'right_of_reply', 'general'
+    ]).withMessage('Invalid question type'),
+    body('text').isLength({ min: 5, max: 500 }).withMessage('Question text must be between 5 and 500 characters').trim()
 ];
 
 const validateQuestionResponse = [
-    body('responseText')
-        .isLength({ min: 5, max: 2000 })
-        .withMessage('Response text must be between 5 and 2000 characters')
-        .trim(),
-    body('responseType')
-        .optional()
-        .isIn(['oral', 'written'])
-        .withMessage('Response type must be oral or written')
-];
-
-const validateIdParam = [
-    param('id')
-        .isMongoId()
-        .withMessage('Invalid ID')
-];
-
-const validateSessionId = [
-    param('sessionId')
-        .isMongoId()
-        .withMessage('Invalid session ID')
+    body('answer').isLength({ min: 5, max: 2000 }).withMessage('Answer must be between 5 and 2000 characters').trim(),
+    body('status').isIn(['answered', 'rejected']).withMessage('Status must be answered or rejected')
 ];
 
 const validatePagination = [
-    query('page')
-        .optional()
-        .isInt({ min: 1 })
-        .withMessage('Page must be a positive integer'),
-    query('limit')
-        .optional()
-        .isInt({ min: 1, max: 100 })
-        .withMessage('Limit must be between 1 and 100')
+    query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100')
 ];
 
-// PROCEDURAL MOTIONS ROUTES
-
-// Submit procedural motion (delegates)
-router.post('/motions',
+// Shared: token + event context + participant
+router.use(
     global.auth.token,
+    global.auth.eventContext('orgId', 'eventId'),
+    global.auth.participant('committeeId')
+);
+
+// ==================== MOTION ROUTES ====================
+
+// Submit motion (delegates only)
+router.post('/motions',
     global.auth.delegate,
     validateMotionSubmission,
     handleValidationErrors,
-    global.auth.sameCommittee,
     controller.submitMotion
 );
 
-// Submit presidium motion (presidium only)
-router.post('/motions/presidium',
-    global.auth.token,
-    global.auth.presidium,
-    validatePresidiumMotion,
-    handleValidationErrors,
-    global.auth.sameCommittee,
-    controller.submitPresidiumMotion
-);
-
-// Support motion (delegates)
+// Support motion (delegates only)
 router.post('/motions/:id/support',
-    global.auth.token,
     global.auth.delegate,
     validateIdParam,
     handleValidationErrors,
@@ -200,7 +86,6 @@ router.post('/motions/:id/support',
 
 // Review motion (presidium only)
 router.put('/motions/:id/review',
-    global.auth.token,
     global.auth.presidium,
     validateIdParam,
     validateMotionReview,
@@ -208,74 +93,32 @@ router.put('/motions/:id/review',
     controller.reviewMotion
 );
 
-// Get motions for session
+// Get motions for session (any participant)
 router.get('/motions/session/:sessionId',
-    global.auth.token,
     validateSessionId,
     [
-        query('status')
-            .optional()
-            .isIn(['submitted', 'under_review', 'accepted', 'rejected', 'voted', 'implemented', 'all'])
-            .withMessage('Status must be submitted, under_review, accepted, rejected, voted, implemented, or all'),
-        query('priority')
-            .optional()
-            .isIn(['highest', 'procedural', 'debate', 'all'])
-            .withMessage('Priority must be highest, procedural, debate, or all'),
+        query('status').optional().isIn(['submitted', 'under_review', 'accepted', 'rejected', 'voted', 'implemented', 'all']).withMessage('Invalid status filter'),
+        query('priority').optional().isIn(['highest', 'procedural', 'debate', 'all']).withMessage('Invalid priority filter'),
         ...validatePagination
     ],
     handleValidationErrors,
     controller.getSessionMotions
 );
 
-// Get single motion details
+// Get single motion (any participant)
 router.get('/motions/:id',
-    global.auth.token,
     validateIdParam,
     handleValidationErrors,
     async (req, res) => {
         try {
             const { ProceduralMotion } = require('./model');
-
             const motion = await ProceduralMotion.findById(req.params.id)
-                .populate('presidiumDecision.decidedBy', 'username')
-                .populate('presidiumAuthor', 'username');
+                .populate('presidiumDecision.decidedBy', 'firstName lastName')
+                .populate('presidiumAuthor', 'firstName lastName');
 
-            if (!motion) {
-                return res.status(404).json({ error: 'Motion not found' });
-            }
+            if (!motion) return res.status(404).json({ error: 'Motion not found' });
 
-            // Format response
-            const motionData = {
-                _id: motion._id,
-                motionType: motion.motionType,
-                priority: motion.priority,
-                text: motion.text,
-                justification: motion.justification,
-                purpose: motion.purpose,
-                parameters: motion.parameters,
-                authorCountry: motion.authorCountry,
-                submittedBy: motion.submittedBy,
-                presidiumAuthor: motion.presidiumAuthor,
-                support: motion.support.map(s => ({
-                    country: s.country,
-                    supportedAt: s.supportedAt
-                })),
-                requiredSupport: motion.requiredSupport,
-                hasRequiredSupport: motion.hasRequiredSupport,
-                status: motion.status,
-                presidiumDecision: motion.presidiumDecision,
-                votingResult: motion.votingResult,
-                submittedAt: motion.submittedAt,
-                processedAt: motion.processedAt,
-                createdAt: motion.createdAt,
-                updatedAt: motion.updatedAt
-            };
-
-            res.json({
-                success: true,
-                motion: motionData
-            });
-
+            res.json({ success: true, motion });
         } catch (error) {
             global.logger.error('Get motion error:', error);
             res.status(500).json({ error: 'Failed to get motion details' });
@@ -283,197 +126,100 @@ router.get('/motions/:id',
     }
 );
 
-// QUESTIONS ROUTES
+// Get motion queue (any participant)
+router.get('/motions/session/:sessionId/queue',
+    validateSessionId,
+    handleValidationErrors,
+    async (req, res) => {
+        try {
+            const { ProceduralMotion } = require('./model');
+            const motions = await ProceduralMotion.find({
+                sessionId: req.params.sessionId,
+                status: { $in: ['submitted', 'accepted'] }
+            })
+                .sort({ priority: 1, submittedAt: 1 })
+                .limit(10)
+                .populate('presidiumDecision.decidedBy', 'firstName lastName');
 
-// Submit question (delegates)
+            const queueData = motions.map(motion => ({
+                _id: motion._id, motionType: motion.motionType, priority: motion.priority,
+                text: motion.text.substring(0, 100) + (motion.text.length > 100 ? '...' : ''),
+                authorCountry: motion.authorCountry, hasRequiredSupport: motion.hasRequiredSupport,
+                supportCount: motion.support.length, status: motion.status, submittedAt: motion.submittedAt
+            }));
+
+            res.json({ success: true, queue: queueData, count: queueData.length });
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to get motion queue' });
+        }
+    }
+);
+
+// ==================== QUESTION ROUTES ====================
+
+// Submit question (delegates only)
 router.post('/questions',
-    global.auth.token,
     global.auth.delegate,
     validateQuestionSubmission,
     handleValidationErrors,
-    global.auth.sameCommittee,
     controller.submitQuestion
 );
 
-// Answer question (presidium or authorized users)
+// Answer question (presidium)
 router.put('/questions/:id/answer',
-    global.auth.token,
+    global.auth.presidium,
     validateIdParam,
     validateQuestionResponse,
     handleValidationErrors,
     controller.answerQuestion
 );
 
-// Get questions for session
+// Get questions for session (any participant)
 router.get('/questions/session/:sessionId',
-    global.auth.token,
     validateSessionId,
     [
-        query('status')
-            .optional()
-            .isIn(['submitted', 'under_review', 'answered', 'rejected', 'all'])
-            .withMessage('Status must be submitted, under_review, answered, rejected, or all'),
-        query('questionType')
-            .optional()
-            .isIn([
-                'personal_privilege', 'voting_procedure', 'to_speaker',
-                'procedure', 'to_chairman', 'to_expert', 'right_of_reply', 'all'
-            ])
-            .withMessage('Invalid question type filter'),
+        query('status').optional().isIn(['submitted', 'under_review', 'answered', 'rejected', 'all']).withMessage('Invalid status filter'),
+        query('questionType').optional().isIn([
+            'personal_privilege', 'voting_procedure', 'to_speaker',
+            'procedure', 'to_chairman', 'to_expert', 'right_of_reply', 'general', 'all'
+        ]).withMessage('Invalid question type filter'),
         ...validatePagination
     ],
     handleValidationErrors,
     controller.getSessionQuestions
 );
 
-// Get single question details
-router.get('/questions/:id',
-    global.auth.token,
-    validateIdParam,
-    handleValidationErrors,
-    async (req, res) => {
-        try {
-            const { Question } = require('./model');
-
-            const question = await Question.findById(req.params.id)
-                .populate('response.respondedBy', 'username');
-
-            if (!question) {
-                return res.status(404).json({ error: 'Question not found' });
-            }
-
-            const questionData = {
-                _id: question._id,
-                questionType: question.questionType,
-                priority: question.priority,
-                text: question.text,
-                context: question.context,
-                authorCountry: question.authorCountry,
-                targetRole: question.targetRole,
-                targetCountry: question.targetCountry,
-                rightOfReply: question.rightOfReply,
-                status: question.status,
-                response: question.response,
-                submittedAt: question.submittedAt,
-                processedAt: question.processedAt,
-                createdAt: question.createdAt,
-                updatedAt: question.updatedAt
-            };
-
-            res.json({
-                success: true,
-                question: questionData
-            });
-
-        } catch (error) {
-            global.logger.error('Get question error:', error);
-            res.status(500).json({ error: 'Failed to get question details' });
-        }
-    }
-);
-
-// Bulk operations (presidium only)
-
-// Mark multiple questions as reviewed
-router.post('/questions/bulk/review',
-    global.auth.token,
+// Bulk review questions (presidium only)
+router.post('/questions/bulk-review',
     global.auth.presidium,
     [
-        body('questionIds')
-            .isArray({ min: 1 })
-            .withMessage('Question IDs array is required'),
-        body('questionIds.*')
-            .isMongoId()
-            .withMessage('Each question ID must be valid'),
-        body('action')
-            .isIn(['accept', 'reject'])
-            .withMessage('Action must be accept or reject'),
-        body('comments')
-            .optional()
-            .isLength({ max: 500 })
-            .withMessage('Comments cannot exceed 500 characters')
+        body('questionIds').isArray({ min: 1 }).withMessage('Question IDs array required'),
+        body('questionIds.*').isMongoId().withMessage('Each question ID must be valid'),
+        body('action').isIn(['approve', 'reject']).withMessage('Action must be approve or reject')
     ],
     handleValidationErrors,
     async (req, res) => {
         try {
             const { Question } = require('./model');
-            const { questionIds, action, comments } = req.body;
-
-            const newStatus = action === 'accept' ? 'under_review' : 'rejected';
+            const { questionIds, action } = req.body;
+            const newStatus = action === 'approve' ? 'under_review' : 'rejected';
 
             const result = await Question.updateMany(
-                {
-                    _id: { $in: questionIds },
-                    status: 'submitted'
-                },
-                {
-                    status: newStatus,
-                    processedAt: new Date()
-                }
+                { _id: { $in: questionIds }, status: 'submitted' },
+                { status: newStatus, processedAt: new Date() }
             );
 
-            // Emit notifications
             if (req.app.locals.io) {
+                const { committeeId } = req.params;
                 const { emitToRoom } = require('../websocket/socketManager');
-                emitToRoom(req.app.locals.io, `committee-${req.user.committeeId}`, 'questions-bulk-reviewed', {
-                    action,
-                    count: result.modifiedCount,
-                    reviewedBy: req.user.username
+                emitToRoom(req.app.locals.io, `committee-${committeeId}`, 'questions-bulk-reviewed', {
+                    action, count: result.modifiedCount, reviewedBy: req.user.email
                 });
             }
 
-            res.json({
-                success: true,
-                modifiedCount: result.modifiedCount,
-                message: `${result.modifiedCount} questions ${action}ed`
-            });
-
+            res.json({ success: true, modifiedCount: result.modifiedCount, message: `${result.modifiedCount} questions ${action}ed` });
         } catch (error) {
             res.status(500).json({ error: 'Failed to bulk review questions' });
-        }
-    }
-);
-
-// Get motion queue (ordered by priority and time)
-router.get('/motions/session/:sessionId/queue',
-    global.auth.token,
-    validateSessionId,
-    handleValidationErrors,
-    async (req, res) => {
-        try {
-            const { ProceduralMotion } = require('./model');
-
-            const motions = await ProceduralMotion.find({
-                sessionId: req.params.sessionId,
-                status: { $in: ['submitted', 'accepted'] }
-            })
-                .sort({
-                    priority: 1, // Highest priority first
-                    submittedAt: 1 // Earlier submissions first within same priority
-                })
-                .limit(10) // Show next 10 motions in queue
-                .populate('presidiumDecision.decidedBy', 'username');
-
-            const queueData = motions.map(motion => ({
-                _id: motion._id,
-                motionType: motion.motionType,
-                priority: motion.priority,
-                text: motion.text.substring(0, 100) + (motion.text.length > 100 ? '...' : ''),
-                authorCountry: motion.authorCountry,
-                hasRequiredSupport: motion.hasRequiredSupport,
-                supportCount: motion.support.length,
-                status: motion.status,
-                submittedAt: motion.submittedAt
-            }));
-
-            res.json({
-                success: true,
-                queue: queueData,
-                count: queueData.length
-            });
-
-        } catch (error) {
-            res.status(500).json({ error: 'Failed to get motion queue' });
         }
     }
 );

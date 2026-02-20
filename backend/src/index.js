@@ -29,11 +29,11 @@ const { eventAutomationService } = require('./event/automationService');
 // Import route modules
 // ============================================
 
-// --- Phase 1: New modules ---
+// --- Phase 1: Auth & Org ---
 const authRoutes = require('./auth/routes');
 const organizationRoutes = require('./organization/routes');
 
-// --- Phase 2: Org management modules ---
+// --- Phase 2: Org management ---
 const orgMembershipRoutes = require('./org-membership/routes');
 const invitationRoutes = require('./invitation/routes');
 const notificationRoutes = require('./notification/routes');
@@ -51,12 +51,7 @@ const publicRoutes = require('./public/routes');
 // --- Media routes ---
 const mediaRoutes = require('./media/routes');
 
-// --- Existing modules (will need ref updates in Phase 2/3) ---
-// NOTE: These modules still reference the OLD User model shape (role, loginToken, etc.)
-// They will break until updated to use EventParticipant refs.
-// Keeping imports but they'll need rewiring.
-const adminRoutes = require('./admin/routes');
-// eventRoutes — MOVED to Phase 3 (org-scoped)
+// --- MUN committee-scoped modules (org → event → committee) ---
 const committeeRoutes = require('./committee/routes');
 const sessionRoutes = require('./session/routes');
 const documentRoutes = require('./document/routes');
@@ -68,6 +63,11 @@ const presentationRoutes = require('./presentation/routes');
 const timerRoutes = require('./timer/routes');
 const procedureRoutes = require('./procedure/routes');
 const exportRoutes = require('./export/routes');
+
+// --- Platform admin (SuperAdmin) ---
+const adminRoutes = require('./admin/routes');
+
+// --- General resources ---
 const countriesRoutes = require('./countries/routes');
 
 // Import countries cache initialization
@@ -126,11 +126,11 @@ app.use('/upload', express.static('upload', {
 // API Routes
 // ============================================
 
-// --- Phase 1: New routes ---
+// --- Phase 1: Auth & Org ---
 app.use('/api/auth', authRoutes);
 app.use('/api/organizations', organizationRoutes);
 
-// --- Phase 2: Org management routes ---
+// --- Phase 2: Org management ---
 app.use('/api/organizations/:orgId/members', orgMembershipRoutes);
 app.use('/api/invitations', invitationRoutes);
 app.use('/api/notifications', notificationRoutes);
@@ -148,25 +148,26 @@ app.use('/api/public', publicRoutes);
 // --- Media routes ---
 app.use('/api/media', mediaRoutes);
 
-// --- Existing routes (need Phase 2/3 middleware updates) ---
+// --- MUN: Committee CRUD (org → event scoped) ---
+app.use('/api/organizations/:orgId/events/:eventId/committees', committeeRoutes);
+
+// --- MUN: Committee-scoped modules (org → event → committee) ---
+const committeeBase = '/api/organizations/:orgId/events/:eventId/committees/:committeeId';
+app.use(`${committeeBase}/sessions`, sessionRoutes);
+app.use(`${committeeBase}/documents`, documentRoutes);
+app.use(`${committeeBase}/resolutions`, resolutionRoutes);
+app.use(`${committeeBase}/voting`, votingRoutes);
+app.use(`${committeeBase}/messages`, messagingRoutes);
+app.use(`${committeeBase}/statistics`, statisticsRoutes);
+app.use(`${committeeBase}/presentation`, presentationRoutes);
+app.use(`${committeeBase}/timers`, timerRoutes);
+app.use(`${committeeBase}/procedure`, procedureRoutes);
+app.use(`${committeeBase}/export`, exportRoutes);
+
+// --- Platform admin (SuperAdmin only) ---
 app.use('/api/admin', adminRoutes);
 
-// // Apply event protection middleware to all API routes EXCEPT exempt routes
-// // The new middleware automatically handles exempt routes internally
-// app.use('/api', eventProtectionMiddleware);
-
-// eventRoutes — MOVED to /api/organizations/:orgId/events (Phase 3)
-app.use('/api/committees', committeeRoutes);
-app.use('/api/sessions', sessionRoutes);
-app.use('/api/documents', documentRoutes);
-app.use('/api/resolutions', resolutionRoutes);
-app.use('/api/voting', votingRoutes);
-app.use('/api/messages', messagingRoutes);
-app.use('/api/statistics', statisticsRoutes);
-app.use('/api/presentation', presentationRoutes);
-app.use('/api/timers', timerRoutes);
-app.use('/api/procedure', procedureRoutes);
-app.use('/api/export', exportRoutes);
+// --- General resources ---
 app.use('/api/countries', countriesRoutes);
 
 // // Event Automation Control Routes (Admin only)
@@ -255,8 +256,12 @@ const startServer = async () => {
       global.logger.info(`📅 Events: /api/organizations/:orgId/events`);
       global.logger.info(`🎭 Participants: /api/organizations/:orgId/events/:eventId/participants`);
       global.logger.info(`📝 Registration: /api/organizations/:orgId/events/:eventId/registration`);
+      global.logger.info(`🏛️ Committees: /api/organizations/:orgId/events/:eventId/committees`);
+      global.logger.info(`📋 Sessions/Docs/Voting/etc: .../committees/:committeeId/*`);
       global.logger.info(`📨 Invitations: /api/invitations`);
       global.logger.info(`🔔 Notifications: /api/notifications`);
+      global.logger.info(`🔧 Admin: /api/admin (SuperAdmin)`);
+      global.logger.info(`🌍 Countries: /api/countries`);
       global.logger.info(`⚡ Event automation: ${eventAutomationService.getStatus().isRunning ? 'ACTIVE' : 'INACTIVE'}`);
     });
   } catch (error) {

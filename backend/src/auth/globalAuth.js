@@ -1,231 +1,98 @@
+// backend/src/auth/globalAuth.js
+// Global auth middleware setup — v3: All legacy shims removed
+// All routes now use org-scoped event-context middleware.
+
 const middleware = require('./middleware');
 
 /**
- * Setup global authentication methods
- * Call this early in app startup (in index.js)
- * 
- * New permission model:
- *   - SuperAdmin: platform-level god account
- *   - Org Admin: per-organization admin (checked dynamically)
- *   - Org Permissions: per-membership permissions (checked dynamically)
- *   - Event roles: per-EventParticipant (Phase 3)
- * 
- * Legacy compat:
- *   Old route files still reference global.auth.admin, .presidium, .delegate,
- *   .adminOrPresidium, .sameCommittee, .roles(), etc.
- *   These shims keep the server bootable until those routes are migrated.
+ * Sets up global.auth with all available middleware.
+ *
+ * Usage examples:
+ *
+ *   // Require authenticated user
+ *   router.get('/me', global.auth.token, controller.getMe);
+ *
+ *   // Platform-level SuperAdmin
+ *   router.get('/admin/stats', global.auth.token, global.auth.superAdmin, controller.stats);
+ *
+ *   // Org Admin (SuperAdmin OR Organization.admin)
+ *   router.post('/orgs/:orgId/events', global.auth.token, global.auth.orgAdmin('orgId'), controller.create);
+ *
+ *   // Org permission (OrgAdmin OR member with specific permission)
+ *   router.put('/orgs/:orgId/events/:eventId', global.auth.token, global.auth.orgPermission('manage_event_content', 'orgId'), controller.update);
+ *
+ *   // Event context + participant (committee-scoped routes):
+ *   router.use(
+ *       global.auth.token,
+ *       global.auth.eventContext('orgId', 'eventId'),
+ *       global.auth.participant('committeeId')
+ *   );
+ *   router.post('/sessions', global.auth.presidium, controller.createSession);
+ *   router.post('/vote', global.auth.votingRights, controller.castVote);
  */
-
-// ============================================
-// Legacy role-based middleware shims
-// ============================================
-// The old User model had a `role` field (admin/presidium/delegate).
-// The new model uses isSuperAdmin + OrgMembership + EventParticipant.
-// These shims let old route files load without crashing.
-// They check isSuperAdmin as a stand-in for the old "admin" role.
-// Presidium/delegate routes will need proper EventParticipant checks later.
-
-const _legacyRequireRoles = (...allowedRoles) => {
-    const roles = allowedRoles.flat();
-
-    return async (req, res, next) => {
-        if (!req.user) {
-            return res.status(401).json({
-                error: 'Authentication required.'
-            });
-        }
-
-        // SuperAdmin passes any legacy admin check
-        if (roles.includes('admin') && req.user.isSuperAdmin) {
-            return next();
-        }
-
-        // If user has a legacy role field (e.g. from old JWT), check it
-        if (req.user.role && roles.includes(req.user.role)) {
-            return next();
-        }
-
-        // If user has eventParticipant data attached (future Phase 3 middleware)
-        if (req.user.eventRole && roles.includes(req.user.eventRole)) {
-            return next();
-        }
-
-        // Bridge: if 'admin' role requested, check if user is an org admin
-        // via OrgMembership. This lets org admins use legacy committee/session
-        // routes until they're migrated to org-scoped endpoints.
-        if (roles.includes('admin')) {
-            try {
-                const { OrgMembership } = require('../org-membership/model');
-                const membership = await OrgMembership.findOne({
-                    user: req.user.userId,
-                    status: 'active',
-                    role: 'admin'
-                }).lean();
-
-                if (membership) {
-                    // Attach org context for downstream use
-                    req.user.orgMembershipId = membership._id.toString();
-                    req.user.organizationId = membership.organization.toString();
-                    return next();
-                }
-            } catch (e) {
-                // OrgMembership module not available — fall through to denial
-                global.logger.debug('Legacy admin bridge: OrgMembership lookup failed:', e.message);
-            }
-        }
-
-        return res.status(403).json({
-            error: `Access denied. Required role(s): ${roles.join(' or ')}.`,
-            requiredRoles: roles,
-        });
-    };
-};
-
-const _legacyRequireAdmin = _legacyRequireRoles('admin');
-const _legacyRequirePresidium = _legacyRequireRoles('presidium');
-const _legacyRequireDelegate = _legacyRequireRoles('delegate');
-const _legacyRequireAdminOrPresidium = _legacyRequireRoles('admin', 'presidium');
-const _legacyRequireAdminOrDelegate = _legacyRequireRoles('admin', 'delegate');
-const _legacyRequireAnyRole = _legacyRequireRoles('admin', 'presidium', 'delegate');
-
-const _legacyRequireSameCommittee = (req, res, next) => {
-    if (!req.user) {
-        return res.status(401).json({ error: 'Authentication required.' });
-    }
-
-    // SuperAdmin can access any committee
-    if (req.user.isSuperAdmin) {
-        return next();
-    }
-
-    // Legacy: admin role can access any committee
-    if (req.user.role === 'admin') {
-        return next();
-    }
-
-    // Check committee match
-    const requestedCommitteeId = req.params.committeeId || req.params.id || req.body.committeeId;
-    const userCommitteeId = req.user.committeeId?.toString();
-
-    if (!userCommitteeId) {
-        return res.status(403).json({
-            error: 'Access denied. User not assigned to any committee.'
-        });
-    }
-
-    if (requestedCommitteeId !== userCommitteeId) {
-        return res.status(403).json({
-            error: 'Access denied. You can only access your assigned committee.'
-        });
-    }
-
-    next();
-};
-
-const _legacyRequireVotingRights = (req, res, next) => {
-    if (!req.user) {
-        return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    // SuperAdmin and admin/presidium always pass
-    if (req.user.isSuperAdmin || req.user.role === 'admin' || req.user.role === 'presidium') {
-        return next();
-    }
-
-    // Delegates must not be observers
-    if (req.user.role === 'delegate' &&
-        req.user.specialRole !== 'observer' &&
-        req.user.specialRole !== 'special') {
-        return next();
-    }
-
-    return res.status(403).json({
-        error: 'No voting rights',
-        reason: 'Only regular country delegates can vote'
-    });
-};
-
-
 const setupGlobalAuth = () => {
     global.auth = {
         // ============================================
-        // New org-based middleware (Phase 1+)
+        // Core authentication
         // ============================================
         token: middleware.authenticateToken,
-        superAdmin: middleware.requireSuperAdmin,
-        orgAdmin: middleware.requireOrgAdmin,
-        orgPermission: middleware.requireOrgPermission,
         optionalAuth: middleware.optionalAuth,
         authRateLimit: middleware.authRateLimit,
 
         // ============================================
-        // Legacy shims — referenced by old route files
-        // (admin, committee, session, document, resolution,
-        //  voting, messaging, statistics, presentation,
-        //  timer, procedure, export, countries, auth/routes)
+        // Platform-level: SuperAdmin
         // ============================================
-        admin: _legacyRequireAdmin,
-        presidium: _legacyRequirePresidium,
-        delegate: _legacyRequireDelegate,
-        adminOrPresidium: _legacyRequireAdminOrPresidium,
-        adminOrDelegate: _legacyRequireAdminOrDelegate,
-        anyRole: _legacyRequireAnyRole,
-        sameCommittee: _legacyRequireSameCommittee,
+        superAdmin: middleware.requireSuperAdmin,
 
-        // global.auth.roles('admin', 'presidium') — used in some old routes
-        roles: (...roles) => _legacyRequireRoles(...roles),
+        // ============================================
+        // Organization-level
+        // ============================================
+        // SuperAdmin OR Organization.admin for the given org
+        orgAdmin: middleware.requireOrgAdmin,
 
-        // global.auth.require.admin etc — nested form used by some routes
-        require: {
-            admin: _legacyRequireAdmin,
-            presidium: _legacyRequirePresidium,
-            delegate: _legacyRequireDelegate,
-            adminOrPresidium: _legacyRequireAdminOrPresidium,
-            adminOrDelegate: _legacyRequireAdminOrDelegate,
-            anyRole: _legacyRequireAnyRole,
-            roles: _legacyRequireRoles,
-        },
+        // OrgAdmin OR OrgMembership with specific permission
+        orgPermission: middleware.requireOrgPermission,
 
-        // Utility helpers — old routes reference global.auth.utils.authRateLimit etc
-        utils: {
-            isSuperAdmin: (user) => user?.isSuperAdmin === true,
-            authRateLimit: middleware.authRateLimit,
-            requireVotingRights: _legacyRequireVotingRights,
-            hasRole: (user, ...allowedRoles) => {
-                if (!user) return false;
-                if (user.isSuperAdmin && allowedRoles.flat().includes('admin')) return true;
-                return user.role ? allowedRoles.flat().includes(user.role) : false;
-            },
-            canAccessCommittee: (user, committeeId) => {
-                if (!user) return false;
-                if (user.isSuperAdmin || user.role === 'admin') return true;
-                return user.committeeId?.toString() === committeeId;
-            },
-            getRoleDisplayName: (role) => {
-                const map = { admin: 'Administrator', presidium: 'Presidium Member', delegate: 'Delegate' };
-                return map[role] || role;
-            },
-        },
+        // ============================================
+        // Event-level: resolve context from URL params
+        // ============================================
+        // Validates org exists, event belongs to org
+        // Attaches: req.organization, req.event, req.isOrgAdmin, req.orgMembership
+        eventContext: middleware.resolveEventContext,
+
+        // ============================================
+        // Committee-level: resolve participant from URL params
+        // ============================================
+        // Looks up EventParticipant for user in event/committee
+        // OrgAdmin/SuperAdmin bypass. Attaches: req.participant
+        participant: middleware.resolveParticipant,
+
+        // ============================================
+        // Role checks (require participant resolved first)
+        // ============================================
+        // Any presidium_* role (chair, vice_chair, rapporteur, etc.)
+        presidium: middleware.requirePresidium,
+
+        // Delegate role only
+        delegate: middleware.requireDelegate,
+
+        // Any active participant
+        anyParticipant: middleware.requireAnyParticipant,
+
+        // Active delegate with voting rights (not observer/special)
+        votingRights: middleware.requireVotingRights,
+
+        // Presidium OR delegate
+        presidiumOrDelegate: middleware.requirePresidiumOrDelegate,
+
+        // Specific event roles
+        eventRole: middleware.requireEventRole,
     };
 
-    global.logger.info('Global authentication middleware initialized (v2 — org-based, with legacy compat)');
+    global.logger.info('Global authentication middleware initialized (v3 — org-scoped, no legacy shims)');
 
     return global.auth;
 };
-
-/**
- * Usage — new routes:
- * 
- * router.get('/orgs', global.auth.token, global.auth.superAdmin, controller.list);
- * router.put('/orgs/:id', global.auth.token, global.auth.orgAdmin(), controller.update);
- * router.post('/orgs/:orgId/events', global.auth.token, global.auth.orgPermission('manage_registration', 'orgId'), controller.create);
- * 
- * Legacy routes (still works):
- * 
- * router.get('/admin-only', global.auth.token, global.auth.admin, controller.func);
- * router.get('/flexible', global.auth.token, global.auth.adminOrPresidium, controller.func);
- * router.get('/committee', global.auth.token, global.auth.sameCommittee, controller.func);
- */
 
 module.exports = {
     setupGlobalAuth,
