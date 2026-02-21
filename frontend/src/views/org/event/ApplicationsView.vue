@@ -514,7 +514,7 @@ const loadInitial = async () => {
 
         // Load committees for accept dropdown
         try {
-            const cRes = await apiMethods.committees.getAll({ eventId: eventData.value._id })
+            const cRes = await apiMethods.committees.getAll(orgId.value, eventData.value._id)
             if (cRes.data.success) committees.value = cRes.data.committees || []
         } catch (e) { /* non-fatal */ }
 
