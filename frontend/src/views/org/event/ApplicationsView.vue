@@ -442,35 +442,65 @@ const acceptableCountries = computed(() => {
     return committee?.countries || []
 })
 
-// Pipeline stage logic
+// Pipeline stage logic — dynamic from form's pipelineStages
 const TERMINAL_STAGES = ['accepted', 'rejected', 'withdrawn']
-const STAGE_ORDER = ['form_submitted', 'form_review', 'interview', 'payment', 'final_decision']
+
+// Active pipeline stages for the selected application's form, sorted by order
+const activePipeline = computed(() => {
+    const stages = selectedApp.value?.form?.pipelineStages
+    if (!stages) return ['form_review', 'final_decision'] // safe fallback
+    return stages
+        .filter(s => s.isActive)
+        .sort((a, b) => a.order - b.order)
+        .map(s => s.stage)
+})
 
 const isTerminal = computed(() => TERMINAL_STAGES.includes(selectedApp.value?.currentStage))
+
+const nextStage = computed(() => {
+    if (!selectedApp.value || isTerminal.value) return null
+    const stages = activePipeline.value
+    const idx = stages.indexOf(selectedApp.value.currentStage)
+    if (idx === -1 || idx >= stages.length - 1) return null
+    return stages[idx + 1]
+})
+
+const lastPipelineStage = computed(() => {
+    const stages = activePipeline.value
+    return stages.length ? stages[stages.length - 1] : 'final_decision'
+})
+
 const canAdvance = computed(() => {
     if (!selectedApp.value || isTerminal.value) return false
-    const stage = selectedApp.value.currentStage
-    return ['form_review', 'interview', 'payment'].includes(stage)
+    // Can advance if not on the last pipeline stage
+    return nextStage.value !== null && selectedApp.value.currentStage !== lastPipelineStage.value
 })
 const canReturn = computed(() => {
     if (!selectedApp.value || isTerminal.value) return false
-    return ['form_review', 'interview', 'payment', 'final_decision'].includes(selectedApp.value.currentStage)
+    // Can return from any active pipeline stage
+    return activePipeline.value.includes(selectedApp.value.currentStage)
 })
-const canAccept = computed(() => selectedApp.value?.currentStage === 'final_decision')
+const canAccept = computed(() => selectedApp.value?.currentStage === lastPipelineStage.value)
 const canReject = computed(() => !isTerminal.value && selectedApp.value?.currentStage !== 'form_submitted')
 
-const showInterviewSection = computed(() =>
-    selectedApp.value && ['interview', 'payment', 'final_decision', 'accepted'].includes(selectedApp.value.currentStage)
-)
-const showPaymentSection = computed(() =>
-    selectedApp.value && ['payment', 'final_decision', 'accepted'].includes(selectedApp.value.currentStage)
-)
-
-const nextStage = computed(() => {
-    if (!selectedApp.value) return null
-    const idx = STAGE_ORDER.indexOf(selectedApp.value.currentStage)
-    if (idx === -1 || idx >= STAGE_ORDER.length - 1) return null
-    return STAGE_ORDER[idx + 1]
+// Show interview/payment sections only if those stages exist in the pipeline
+// and the app has reached or passed them
+const showInterviewSection = computed(() => {
+    if (!selectedApp.value) return false
+    const stages = activePipeline.value
+    if (!stages.includes('interview')) return false
+    const interviewIdx = stages.indexOf('interview')
+    const currentIdx = stages.indexOf(selectedApp.value.currentStage)
+    // Show if current stage is at or past interview, or if terminal (accepted)
+    return currentIdx >= interviewIdx || selectedApp.value.currentStage === 'accepted'
+})
+const showPaymentSection = computed(() => {
+    if (!selectedApp.value) return false
+    const stages = activePipeline.value
+    if (!stages.includes('payment')) return false
+    const paymentIdx = stages.indexOf('payment')
+    const currentIdx = stages.indexOf(selectedApp.value.currentStage)
+    return currentIdx >= paymentIdx || selectedApp.value.currentStage === 'accepted'
 })
 
 // Load data
