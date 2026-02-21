@@ -59,16 +59,18 @@
                                     <div
                                         class="w-10 h-10 bg-mun-blue-100 rounded-full flex items-center justify-center">
                                         <span class="text-xs font-bold text-mun-blue">
-                                            {{ app.user?.firstName?.charAt(0) }}{{ app.user?.lastName?.charAt(0) }}
+                                            {{ app.applicant?.firstName?.charAt(0) }}{{
+                                            app.applicant?.lastName?.charAt(0) }}
                                         </span>
                                     </div>
                                     <div>
                                         <p class="text-sm font-medium text-mun-gray-900">
-                                            {{ app.user?.firstName }} {{ app.user?.lastName }}
+                                            {{ app.applicant?.firstName }} {{ app.applicant?.lastName }}
                                         </p>
                                         <p class="text-xs text-mun-gray-500">
-                                            {{ app.user?.email }}
-                                            <span v-if="app.user?.institution"> · {{ app.user.institution }}</span>
+                                            {{ app.applicant?.email }}
+                                            <span v-if="app.applicant?.institution"> · {{ app.applicant?.institution
+                                                }}</span>
                                         </p>
                                     </div>
                                 </div>
@@ -82,7 +84,7 @@
                                         </span>
                                     </div>
                                     <span :class="stageClass(app.currentStage)">{{ formatStage(app.currentStage)
-                                    }}</span>
+                                        }}</span>
                                     <ChevronRightIcon class="w-4 h-4 text-mun-gray-400" />
                                 </div>
                             </div>
@@ -106,7 +108,7 @@
         <!-- Application detail modal -->
         <ModalWrapper :showDefaultFooter="false" :modelValue="!!selectedApp" @close="selectedApp = null" size="lg">
             <template #title>
-                Application — {{ selectedApp?.user?.firstName }} {{ selectedApp?.user?.lastName }}
+                Application — {{ selectedApp?.applicant?.firstName }} {{ selectedApp?.applicant?.lastName }}
             </template>
             <template #default>
                 <div v-if="selectedApp" class="space-y-6 max-h-[70vh] overflow-y-auto">
@@ -126,14 +128,15 @@
                         <h3 class="text-sm font-semibold text-mun-gray-700 mb-2">Applicant Information</h3>
                         <div class="grid grid-cols-2 gap-3 text-sm">
                             <div><span class="text-mun-gray-500">Name:</span> <span class="font-medium">{{
-                                selectedApp.user?.firstName }} {{ selectedApp.user?.lastName }}</span></div>
+                                selectedApp.applicant?.firstName }} {{ selectedApp.applicant?.lastName }}</span>
+                            </div>
                             <div><span class="text-mun-gray-500">Email:</span> <span class="font-medium">{{
-                                selectedApp.user?.email }}</span></div>
-                            <div v-if="selectedApp.user?.phone"><span class="text-mun-gray-500">Phone:</span> <span
-                                    class="font-medium">{{ selectedApp.user.phone }}</span></div>
-                            <div v-if="selectedApp.user?.institution"><span
+                                selectedApp.applicant?.email }}</span></div>
+                            <div v-if="selectedApp.applicant?.phone"><span class="text-mun-gray-500">Phone:</span> <span
+                                    class="font-medium">{{ selectedApp.applicant.phone }}</span></div>
+                            <div v-if="selectedApp.applicant?.institution"><span
                                     class="text-mun-gray-500">Institution:</span> <span class="font-medium">{{
-                                        selectedApp.user.institution }}</span></div>
+                                        selectedApp.applicant.institution }}</span></div>
                         </div>
                     </div>
 
@@ -152,14 +155,26 @@
                         </div>
                     </div>
 
-                    <!-- Custom field responses -->
-                    <div
-                        v-if="selectedApp.customFieldResponses && Object.keys(selectedApp.customFieldResponses).length">
-                        <h3 class="text-sm font-semibold text-mun-gray-700 mb-2">Custom Field Responses</h3>
-                        <div class="space-y-2 text-sm">
-                            <div v-for="(value, key) in selectedApp.customFieldResponses" :key="key">
-                                <p class="text-mun-gray-500">{{ key }}</p>
-                                <p class="font-medium text-mun-gray-900">{{ value }}</p>
+                    <!-- Custom field responses — resolved with form labels -->
+                    <div v-if="resolvedCustomFields.length">
+                        <h3 class="text-sm font-semibold text-mun-gray-700 mb-3">Application Responses</h3>
+                        <div class="space-y-4">
+                            <div v-for="field in resolvedCustomFields" :key="field.fieldId"
+                                class="bg-mun-gray-50 rounded-xl p-4">
+                                <p class="text-xs font-medium text-mun-gray-500 uppercase tracking-wide mb-1">
+                                    {{ field.label }}
+                                </p>
+
+                                <!-- File response -->
+                                <a v-if="field.isFile" :href="mediaUrl(field.value)" target="_blank"
+                                    class="inline-flex items-center gap-2 text-sm font-medium text-mun-blue hover:text-mun-blue-700 transition-colors">
+                                    <DocumentArrowDownIcon class="w-4 h-4" />
+                                    <span>{{ field.fileName }}</span>
+                                </a>
+
+                                <!-- Text response -->
+                                <p v-else class="text-sm text-mun-gray-900 whitespace-pre-wrap">{{ field.value || '—' }}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -209,8 +224,12 @@
                         <div v-if="selectedApp.moderatorNotes?.length" class="space-y-2 mb-3">
                             <div v-for="note in selectedApp.moderatorNotes" :key="note._id"
                                 class="text-sm bg-yellow-50 border border-yellow-200 rounded-lg p-2">
-                                <p>{{ note.content }}</p>
-                                <p class="text-xs text-mun-gray-400 mt-1">{{ formatDate(note.createdAt) }}</p>
+                                <p>{{ note.text }}</p>
+                                <p class="text-xs text-mun-gray-400 mt-1">
+                                    <span v-if="note.author">{{ note.author.firstName }} {{ note.author.lastName }} ·
+                                    </span>
+                                    {{ formatDate(note.timestamp) }}
+                                </p>
                             </div>
                         </div>
                         <div class="flex space-x-2">
@@ -221,17 +240,35 @@
                         </div>
                     </div>
 
-                    <!-- Status history -->
+                    <!-- Status history — timeline -->
                     <div v-if="selectedApp.statusHistory?.length">
-                        <h3 class="text-sm font-semibold text-mun-gray-700 mb-2">History</h3>
-                        <div class="space-y-1">
-                            <div v-for="entry in selectedApp.statusHistory" :key="entry._id"
-                                class="flex items-center space-x-2 text-xs text-mun-gray-500">
-                                <span class="w-1.5 h-1.5 rounded-full bg-mun-gray-300"></span>
-                                <span>{{ formatStage(entry.stage) }}</span>
-                                <span>·</span>
-                                <span>{{ formatDate(entry.changedAt) }}</span>
-                                <span v-if="entry.comment" class="text-mun-gray-400">— {{ entry.comment }}</span>
+                        <h3 class="text-sm font-semibold text-mun-gray-700 mb-3">History</h3>
+                        <div class="relative pl-5">
+                            <!-- Vertical line -->
+                            <div class="absolute left-[7px] top-1 bottom-1 w-px bg-mun-gray-200"></div>
+
+                            <div v-for="(entry, i) in [...selectedApp.statusHistory].reverse()" :key="i"
+                                class="relative pb-4 last:pb-0">
+                                <!-- Dot -->
+                                <div :class="[
+                                    'absolute -left-5 top-0.5 w-3.5 h-3.5 rounded-full border-2 border-white',
+                                    i === 0 ? 'bg-mun-blue' : 'bg-mun-gray-300'
+                                ]"></div>
+
+                                <div class="min-w-0">
+                                    <div class="flex items-baseline gap-2 flex-wrap">
+                                        <span :class="[
+                                            'text-sm font-medium',
+                                            i === 0 ? 'text-mun-gray-900' : 'text-mun-gray-600'
+                                        ]">{{ formatStage(entry.toStage) }}</span>
+                                        <span class="text-xs text-mun-gray-400">{{ formatDate(entry.timestamp) }}</span>
+                                    </div>
+                                    <p v-if="entry.comment" class="text-xs text-mun-gray-500 mt-0.5">{{ entry.comment }}
+                                    </p>
+                                    <p v-if="entry.changedBy" class="text-xs text-mun-gray-400 mt-0.5">
+                                        by {{ entry.changedBy.firstName || entry.changedBy }}
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -323,7 +360,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
-import { DocumentTextIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
+import { DocumentTextIcon, ChevronRightIcon, DocumentArrowDownIcon } from '@heroicons/vue/24/outline'
 
 defineProps({
     embedded: { type: Boolean, default: false }
@@ -366,6 +403,37 @@ const activeStageLabel = computed(() => stageFilters.find(s => s.value === activ
 
 const interviewForm = reactive({ scheduledAt: '', score: null, notes: '' })
 const acceptForm = reactive({ committeeId: '', country: '', role: 'delegate' })
+
+// Resolve custom field responses: map fieldId → { label, value, type } using form.customFields
+const resolvedCustomFields = computed(() => {
+    if (!selectedApp.value?.customFieldResponses || !selectedApp.value?.form?.customFields) return []
+
+    const formFields = selectedApp.value.form.customFields
+    const responses = selectedApp.value.customFieldResponses
+
+    return formFields
+        .sort((a, b) => (a.order || 0) - (b.order || 0))
+        .map(field => {
+            const value = responses[field.fieldId]
+            const isFile = field.type === 'file' || (typeof value === 'string' && value.startsWith('/uploads/'))
+            return {
+                fieldId: field.fieldId,
+                label: field.label,
+                type: field.type,
+                value: value ?? null,
+                isFile,
+                fileName: isFile && typeof value === 'string' ? value.split('/').pop() : null
+            }
+        })
+        .filter(f => f.value !== null && f.value !== undefined)
+})
+
+const mediaUrl = (path) => {
+    if (!path) return ''
+    if (path.startsWith('http')) return path
+    const base = import.meta.env.VITE_API_URL || ''
+    return `${base}${path}`
+}
 
 // Which countries are available based on selected committee
 const acceptableCountries = computed(() => {
@@ -546,7 +614,7 @@ const addNote = async () => {
     if (!newNote.value.trim()) return
     try {
         await apiMethods.registration.addNote(orgId.value, eventData.value._id, selectedApp.value._id, {
-            content: newNote.value
+            text: newNote.value
         })
         // Refresh detail
         await openDetail(selectedApp.value)
