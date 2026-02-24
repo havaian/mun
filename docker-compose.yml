@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  api:
+  backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: mun-uz-api
+    container_name: mun-uz-backend
     restart: unless-stopped
     ports:
       - "${BACKEND_EXPOSE}:${BACKEND_PORT}"
