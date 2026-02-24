@@ -3,7 +3,6 @@ const { Event } = require('../event/model');
 const { User } = require('../auth/model');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const QRCode = require('qrcode');
 const path = require('path');
 const fs = require('fs').promises;
 
