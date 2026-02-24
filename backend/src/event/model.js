@@ -45,13 +45,6 @@ const eventSchema = new mongoose.Schema({
         maxlength: 500
     },
 
-    mapUrl: { 
-        type: String, 
-        default: null, 
-        trim: true, 
-        maxlength: 500 
-    },
-
     logo: {
         type: String,
         default: null
@@ -114,6 +107,33 @@ const eventSchema = new mongoose.Schema({
         allowLatePositionPapers: {
             type: Boolean,
             default: true
+        }
+    },
+
+    // NEW: Registration fee configuration (post-acceptance payment)
+    registrationFee: {
+        enabled: {
+            type: Boolean,
+            default: false
+        },
+        defaultAmount: {
+            type: Number,
+            default: null
+        },
+        currency: {
+            type: String,
+            default: 'USD'
+        },
+        // Days after acceptance the applicant has to pay
+        defaultDeadlineDays: {
+            type: Number,
+            default: null
+        },
+        // Instructions shown to the applicant (e.g. "Transfer to bank account X...")
+        instructions: {
+            type: String,
+            default: null,
+            maxlength: 2000
         }
     },
 

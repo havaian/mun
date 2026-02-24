@@ -108,6 +108,8 @@ export const apiMethods = {
         changePassword: (data) => api.put('/auth/change-password', data),
         requestPasswordReset: (email) => api.post('/auth/password-reset/request', { email }),
         confirmPasswordReset: (data) => api.post('/auth/password-reset/confirm', data),
+        verifyEmail: (token) => api.post('/auth/verify-email', { token }),
+        resendVerification: () => api.post('/auth/resend-verification'),
     },
 
     // =============================================
@@ -254,6 +256,24 @@ export const apiMethods = {
         addNote: (orgId, eventId, appId, data) => api.post(`${eventBase(orgId, eventId)}/registration/applications/${appId}/notes`, data),
         updateInterview: (orgId, eventId, appId, data) => api.put(`${eventBase(orgId, eventId)}/registration/applications/${appId}/interview`, data),
         verifyPayment: (orgId, eventId, appId, data) => api.post(`${eventBase(orgId, eventId)}/registration/applications/${appId}/payment/verify`, data),
+        // Payment managementf
+        configurePayment: (orgId, eventId, appId, data) => api.post(`${eventBase(orgId, eventId)}/registration/applications/${appId}/payment/configure`, data),
+        grantWaiver: (orgId, eventId, appId, data) => api.post(`${eventBase(orgId, eventId)}/registration/applications/${appId}/payment/waiver`, data),
+        directAssign: (orgId, eventId, committeeId, data) => api.post(`${eventBase(orgId, eventId)}/registration/committees/${committeeId}/assign`, data),
+
+        // Applications — committee-scoped (presidium)
+        // Routes: /api/organizations/:orgId/events/:eventId/registration/committees/:committeeId/applications
+        getCommitteeApplications: (orgId, eventId, committeeId, params = {}) =>
+            api.get(`${eventBase(orgId, eventId)}/registration/committees/${committeeId}/applications`, { params }),
+
+        advanceApplicationStage: (orgId, eventId, committeeId, appId) =>
+            api.post(`${eventBase(orgId, eventId)}/registration/committees/${committeeId}/applications/${appId}/advance`),
+
+        reviewApplication: (orgId, eventId, committeeId, appId, data) =>
+            api.post(`${eventBase(orgId, eventId)}/registration/committees/${committeeId}/applications/${appId}/review`, data),
+
+        updateCommitteeInterview: (orgId, eventId, committeeId, appId, data) =>
+            api.put(`${eventBase(orgId, eventId)}/registration/committees/${committeeId}/applications/${appId}/interview`, data),
     },
 
     // =============================================

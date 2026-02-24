@@ -22,6 +22,9 @@ setupGlobalAuth();
 // Import event automation service
 const { eventAutomationService } = require('./event/automationService');
 
+const emailService = require('./email/service');
+emailService.init();
+
 // // Import global event protection middleware
 // const { middleware: eventProtectionMiddleware, clearCache: clearEventCache, getCacheStats } = require('./auth/globalEventProtection');
 

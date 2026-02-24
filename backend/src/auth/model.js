@@ -93,6 +93,21 @@ const userSchema = new mongoose.Schema({
         default: null
     },
 
+    emailVerified: {
+        type: Boolean,
+        default: false
+    },
+
+    verificationToken: {
+        type: String,
+        default: null
+    },
+
+    verificationTokenExpires: {
+        type: Date,
+        default: null
+    },
+
     lastLogin: {
         type: Date,
         default: null

@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
 
 // Valid pipeline stage keys
+// UPDATED: Removed 'payment' and 'final_decision'
+// Payment is always post-acceptance (handled on RegistrationApplication)
+// Final decision is replaced by per-committee accept/pass
 const PIPELINE_STAGES = [
-    'form_review',       // moderator reviews submitted form
-    'interview',         // video/audio interview via Jitsi
-    'payment',           // payment verification
-    'final_decision'     // accept or reject
+    'form_review',       // committee presidium reviews submitted form
+    'interview',         // video/audio interview (optional, toggled per event)
 ];
 
 // Custom field types
@@ -93,7 +94,6 @@ const pipelineStageSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.Mixed,
         default: {}
         // For 'interview': { jitsiRoomTemplate: String, durationMinutes: Number }
-        // For 'payment': { amount: Number, currency: String, instructions: String }
     }
 }, { _id: false });
 
@@ -115,11 +115,11 @@ const registrationFormSchema = new mongoose.Schema({
     },
 
     // Pipeline stages configuration
+    // UPDATED: default only includes form_review (interview is optional)
     pipelineStages: {
         type: [pipelineStageSchema],
         default: [
-            { stage: 'form_review', order: 1, isActive: true },
-            { stage: 'final_decision', order: 2, isActive: true }
+            { stage: 'form_review', order: 1, isActive: true }
         ]
     },
 
@@ -162,9 +162,10 @@ registrationFormSchema.methods.getActiveStages = function () {
 };
 
 // Get the first active stage key (what stage an application starts at after submission)
+// UPDATED: fallback to 'form_review' instead of 'final_decision'
 registrationFormSchema.methods.getFirstReviewStage = function () {
     const activeStages = this.getActiveStages();
-    return activeStages.length > 0 ? activeStages[0].stage : 'final_decision';
+    return activeStages.length > 0 ? activeStages[0].stage : 'form_review';
 };
 
 // Validate custom field IDs are unique within the form

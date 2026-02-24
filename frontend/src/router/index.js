@@ -42,6 +42,7 @@ const PresidiumCoalitions = () => import('@/views/presidium/CoalitionsView.vue')
 const PresidiumDiplomacy = () => import('@/views/presidium/DiplomacyView.vue')
 const PresidiumVoting = () => import('@/views/presidium/VotingView.vue')
 const PresidiumPublicDisplay = () => import('@/views/presidium/PublicDisplayView.vue')
+const PresidiumApplications = () => import('@/views/presidium/ApplicationsView.vue')
 
 // =============================================
 // DELEGATE VIEWS (existing — will be rewired later)
@@ -63,7 +64,9 @@ const NotFoundView = () => import('@/views/NotFoundView.vue')
 // PUBLIC VIEWS
 // =============================================
 const PublicEventPage = () => import('@/views/public/EventPageView.vue')
+const PublicOrgPage = () => import('@/views/public/OrgPageView.vue')
 const PublicRegistrationPage = () => import('@/views/public/RegistrationPageView.vue')
+const MyApplicationView = () => import('@/views/public/MyApplicationView.vue')
 
 // =============================================
 // ROUTES
@@ -120,6 +123,15 @@ const routes = [
           title: 'Reset Password',
           requiresAuth: false,
           hideForAuthenticated: true
+        }
+      },
+      {
+        path: 'verify-email',
+        name: 'VerifyEmail',
+        component: () => import('@/views/auth/VerifyEmailView.vue'),
+        meta: {
+          title: 'Verify Email',
+          requiresAuth: false
         }
       }
     ]
@@ -271,7 +283,13 @@ const routes = [
         name: 'PresidiumPublicDisplay',
         component: PresidiumPublicDisplay,
         meta: { title: 'Public Display' }
-      }
+      },
+      {
+        path: 'applications',
+        name: 'PresidiumApplications',
+        component: PresidiumApplications,
+        meta: { title: 'Application Review' }
+      },
     ]
   },
 
@@ -381,20 +399,29 @@ const routes = [
   {
     path: '/org/:orgSlug/public',
     name: 'PublicOrg',
-    component: () => import('@/views/public/OrgPageView.vue'),
+    component: PublicOrgPage,
     meta: { title: 'Organization', requiresAuth: false }
   },
   {
     path: '/events/:orgSlug/:eventSlug',
     name: 'PublicEvent',
-    component: () => import('@/views/public/EventPageView.vue'),
+    component: PublicEventPage,
     meta: { title: 'Event', requiresAuth: false }
   },
   {
     path: '/events/:orgSlug/:eventSlug/register',
     name: 'PublicRegistration',
-    component: () => import('@/views/public/RegistrationPageView.vue'),
+    component: PublicRegistrationPage,
     meta: { title: 'Registration', requiresAuth: false }
+  },
+  {
+    path: '/events/:orgSlug/:eventSlug/my-application',
+    name: 'MyApplication',
+    component: MyApplicationView,
+    meta: {
+        title: 'My Application',
+        requiresAuth: true
+    }
   },
 
   // =============================================

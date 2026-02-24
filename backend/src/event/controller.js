@@ -199,6 +199,11 @@ const updateEvent = async (req, res) => {
             event.settings = { ...event.settings.toObject(), ...updates.settings };
         }
 
+        // NEW: Handle nested registrationFee config
+        if (updates.registrationFee) {
+            event.registrationFee = { ...event.registrationFee.toObject(), ...updates.registrationFee };
+        }
+
         // Re-generate slug if name changed
         if (updates.name && updates.name !== event.name) {
             event.slug = await Event.generateSlug(updates.name, orgId, event._id);

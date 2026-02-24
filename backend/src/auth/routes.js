@@ -35,4 +35,12 @@ router.put('/change-password',
     controller.changePassword
 );
 
+router.post('/verify-email',
+    controller.verifyEmail
+);
+
+router.post('/resend-verification',
+    controller.resendVerification
+);
+
 module.exports = router;

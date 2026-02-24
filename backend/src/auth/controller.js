@@ -2,6 +2,9 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { User } = require('./model');
 const { Organization } = require('../organization/model');
+const { sendEmail } = require('../email/service');
+const templates = require('../email/templates');
+const authEmails = require('../email/authEmails');
 
 // Generate JWT token
 const generateToken = (user) => {
@@ -16,7 +19,7 @@ const generateToken = (user) => {
     );
 };
 
-// Register new user
+// Register new user — UPDATED: sends verification email
 const register = async (req, res) => {
     try {
         const {
@@ -56,6 +59,9 @@ const register = async (req, res) => {
             return res.status(409).json({ error: 'An account with this email already exists' });
         }
 
+        // Generate email verification token
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+
         // Create user
         const user = new User({
             email: email.toLowerCase(),
@@ -65,7 +71,10 @@ const register = async (req, res) => {
             dateOfBirth: dateOfBirth || null,
             phone: phone || null,
             institution: institution?.trim() || null,
-            languageProficiency: languageProficiency || []
+            languageProficiency: languageProficiency || [],
+            emailVerified: false,
+            verificationToken,
+            verificationTokenExpires: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
         });
 
         await user.save();
@@ -82,6 +91,23 @@ const register = async (req, res) => {
             global.logger.debug('Member invitation claim skipped:', e.message);
         }
 
+        // Send verification email
+        try {
+            const { subject, html } = templates.emailVerification({
+                firstName: user.firstName,
+                token: verificationToken
+            });
+            await sendEmail({ to: user.email, subject, html });
+        } catch (e) {
+            global.logger.error('Failed to send verification email:', e.message);
+            // Non-fatal — user can request resend
+        }
+
+        user.verificationToken = crypto.randomBytes(32).toString('hex');
+        user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+        await user.save();
+        authEmails.sendVerificationEmail(user);
+
         // Generate token
         const token = generateToken(user);
 
@@ -89,13 +115,14 @@ const register = async (req, res) => {
         user.lastLogin = new Date();
         await user.save();
 
-        global.logger.info(`New user registered: ${email}`);
+        global.logger.info(`New user registered: ${email} (verification pending)`);
 
         res.status(201).json({
             success: true,
             token,
             user: user.toJSON(),
-            message: 'Registration successful'
+            emailVerified: false,
+            message: 'Registration successful. Please check your email to verify your account.'
         });
     } catch (error) {
         global.logger.error('Registration error:', error);
@@ -112,6 +139,63 @@ const register = async (req, res) => {
         }
 
         res.status(500).json({ error: 'Registration failed' });
+    }
+};
+
+// Verify email address
+const verifyEmail = async (req, res) => {
+    try {
+        const { token } = req.body;
+
+        if (!token) {
+            return res.status(400).json({ error: 'Verification token is required' });
+        }
+
+        const user = await User.findOne({
+            verificationToken: token,
+            verificationTokenExpires: { $gt: new Date() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid or expired verification token' });
+        }
+
+        user.emailVerified = true;
+        user.verificationToken = null;
+        user.verificationTokenExpires = null;
+        await user.save();
+
+        global.logger.info(`Email verified: ${user.email}`);
+
+        res.json({ success: true, message: 'Email verified successfully' });
+    } catch (error) {
+        global.logger.error('Verify email error:', error);
+        res.status(500).json({ error: 'Failed to verify email' });
+    }
+};
+
+// Resend verification email
+const resendVerification = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (user.emailVerified) {
+            return res.json({ success: true, message: 'Email is already verified' });
+        }
+
+        user.verificationToken = crypto.randomBytes(32).toString('hex');
+        user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        await user.save();
+
+        authEmails.sendVerificationEmail(user);
+
+        res.json({ success: true, message: 'Verification email sent' });
+    } catch (error) {
+        global.logger.error('Resend verification error:', error);
+        res.status(500).json({ error: 'Failed to resend verification email' });
     }
 };
 
@@ -302,7 +386,7 @@ const changePassword = async (req, res) => {
     }
 };
 
-// Request password reset (generates token, would send email)
+// Request password reset
 const requestPasswordReset = async (req, res) => {
     try {
         const { email } = req.body;
@@ -327,9 +411,14 @@ const requestPasswordReset = async (req, res) => {
         user.resetPasswordTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
         await user.save();
 
-        // TODO: Send reset email
-        // For now, log the token (remove in production)
-        global.logger.info(`Password reset requested for ${email}. Token: ${resetToken}`);
+        // Send password reset email
+        try {
+            authEmails.sendPasswordResetEmail(user);
+        } catch (e) {
+            global.logger.error('Failed to send password reset email:', e.message);
+        }
+
+        global.logger.info(`Password reset requested for ${email}`);
 
         res.json({
             success: true,
@@ -404,10 +493,13 @@ const claimPendingInvitations = async (user) => {
 
 module.exports = {
     register,
+    verifyEmail,
+    resendVerification,
     login,
     getMe,
     updateProfile,
     changePassword,
     requestPasswordReset,
-    resetPassword
+    resetPassword,
+    claimPendingInvitations
 };
