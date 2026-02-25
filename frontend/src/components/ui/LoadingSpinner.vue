@@ -118,16 +118,6 @@ const labelClasses = computed(() => {
     position: relative;
 }
 
-.loading-spinner::after {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border-radius: 50%;
-    background: radial-gradient(circle, transparent 40%, currentColor 41%, currentColor 43%, transparent 44%);
-    opacity: 0.1;
-    animation: pulse 2s ease-in-out infinite;
-}
-
 @keyframes pulse {
 
     0%,

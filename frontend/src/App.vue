@@ -277,8 +277,8 @@ const initializeApplication = async () => {
       // If even this fails, continue
     }
 
-    isGlobalLoading.value = false
-    loadingProgress.value = 0
+    // isGlobalLoading.value = false
+    // loadingProgress.value = 0
   }
 }
 
