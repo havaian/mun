@@ -549,11 +549,11 @@ const copyLink = async (text) => {
 const loadEvent = async () => {
     if (!orgId.value) return
     isLoading.value = true
-    try {
-        const res = await apiMethods.events.getById(orgId.value, eventSlug.value)
-        if (res.data.success) { event.value = res.data.event }
-    } catch (e) { console.error('Failed to load event:', e) }
-    finally { isLoading.value = false }
+    // try {
+    //     const res = await apiMethods.events.getById(orgId.value, eventSlug.value)
+    //     if (res.data.success) { event.value = res.data.event }
+    // } catch (e) { console.error('Failed to load event:', e) }
+    // finally { isLoading.value = false }
 }
 
 const changeStatus = async (newStatus) => {
