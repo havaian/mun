@@ -164,7 +164,7 @@ const addParticipant = async (req, res) => {
     }
 };
 
-// Update participant (change role, committee, country)
+// Update participant (change role, committee, country, status, user profile)
 const updateParticipant = async (req, res) => {
     try {
         const { eventId, participantId } = req.params;
@@ -175,7 +175,28 @@ const updateParticipant = async (req, res) => {
             return res.status(404).json({ error: 'Participant not found' });
         }
 
-        // Allow updating role
+        // ── Status update ──
+        if (updates.status) {
+            const validStatuses = ['active', 'inactive', 'removed'];
+            if (!validStatuses.includes(updates.status)) {
+                return res.status(400).json({
+                    error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+                });
+            }
+            participant.status = updates.status;
+        }
+
+        // Don't allow editing other fields on removed participants (unless reactivating)
+        if (participant.status === 'removed' && updates.status !== 'active') {
+            // Only allow status change for removed participants
+            if (updates.role || updates.committeeId !== undefined || updates.country || updates.userProfile) {
+                return res.status(400).json({
+                    error: 'Cannot edit a removed participant. Reactivate first by setting status to active.'
+                });
+            }
+        }
+
+        // ── Role update ──
         if (updates.role) {
             if (!EVENT_ROLES.includes(updates.role)) {
                 return res.status(400).json({
@@ -185,19 +206,30 @@ const updateParticipant = async (req, res) => {
             participant.role = updates.role;
         }
 
-        // Allow updating committee
+        // ── Committee update ──
+        const committeeChanged = updates.committeeId !== undefined &&
+            (updates.committeeId || null)?.toString() !== (participant.committee || null)?.toString();
+
         if (updates.committeeId !== undefined) {
             participant.committee = updates.committeeId || null;
+
+            // If committee changed and no new country provided, clear country
+            // (the frontend should send a new country along with the committee change for delegates)
+            if (committeeChanged && !updates.country) {
+                participant.country = { name: null, code: null, flag: null };
+            }
         }
 
-        // Allow updating country (for delegates)
+        // ── Country update (for delegates) ──
         if (updates.country) {
+            const targetCommittee = participant.committee;
+
             // Check duplicate country if changing
-            if (updates.country.code && participant.committee) {
+            if (updates.country.code && targetCommittee) {
                 const existingCountry = await EventParticipant.findOne({
                     _id: { $ne: participantId },
                     event: eventId,
-                    committee: participant.committee,
+                    committee: targetCommittee,
                     'country.code': updates.country.code.toLowerCase(),
                     status: 'active'
                 });
@@ -216,15 +248,60 @@ const updateParticipant = async (req, res) => {
             };
         }
 
-        await participant.save();
-        await participant.populate('user', 'firstName lastName email avatar');
-        await participant.populate('committee', 'name acronym');
+        // Clear country for non-delegate roles
+        const currentRole = updates.role || participant.role;
+        if (currentRole !== 'delegate') {
+            participant.country = { name: null, code: null, flag: null };
+        }
 
-        global.logger.info(`Participant updated: ${participantId} in event ${eventId}`);
+        await participant.save();
+
+        // ── User profile update (admin editing another user) ──
+        if (updates.userProfile && typeof updates.userProfile === 'object') {
+            const user = await User.findById(participant.user);
+            if (user) {
+                const allowedUserFields = ['firstName', 'lastName', 'phone', 'institution'];
+                let userChanged = false;
+
+                allowedUserFields.forEach(field => {
+                    if (updates.userProfile[field] !== undefined) {
+                        user[field] = updates.userProfile[field];
+                        userChanged = true;
+                    }
+                });
+
+                if (userChanged) {
+                    await user.save();
+                    global.logger.info(`User profile updated by admin: ${user.email} (by ${req.user.userId})`);
+                }
+            }
+        }
+
+        // Re-populate with full fields for the response
+        await participant.populate('user', 'firstName lastName email avatar institution phone');
+        await participant.populate('committee', 'name acronym');
+        await participant.populate('assignedBy', 'firstName lastName email');
+
+        // Update event statistics if status changed
+        if (updates.status) {
+            try {
+                const event = await Event.findById(eventId);
+                if (event) await event.updateStatistics();
+            } catch (e) { /* non-fatal */ }
+        }
+
+        global.logger.info(`Participant updated: ${participantId} in event ${eventId} by ${req.user.userId}`);
 
         res.json({ success: true, participant, message: 'Participant updated' });
     } catch (error) {
         global.logger.error('Update participant error:', error);
+
+        if (error.code === 11000) {
+            return res.status(409).json({
+                error: 'Duplicate assignment conflict. This user may already have this role in this committee.'
+            });
+        }
+
         res.status(500).json({ error: 'Failed to update participant' });
     }
 };

@@ -414,114 +414,266 @@
         </ModalWrapper>
 
         <!-- =============================================
-             MEMBER DETAIL MODAL
+             MEMBER DETAIL / EDIT MODAL
              ============================================= -->
-        <ModalWrapper :modelValue="showMemberDetail" @close="showMemberDetail = false" :showDefaultFooter="false"
-            size="md">
+        <ModalWrapper :modelValue="showMemberDetail" @close="closeMemberDetail" :showDefaultFooter="false" size="md">
             <template #title>
-                {{ detailMember?.user?.firstName }} {{ detailMember?.user?.lastName }}
+                <div class="flex items-center space-x-3">
+                    <span>{{ detailMember?.user?.firstName }} {{ detailMember?.user?.lastName }}</span>
+                    <span v-if="isEditingMember"
+                        class="px-2 py-0.5 text-[10px] font-medium rounded-full bg-amber-100 text-amber-700">Editing</span>
+                </div>
             </template>
             <template #default>
                 <div v-if="detailMember" class="space-y-5">
-                    <!-- Status + Role banner -->
-                    <div class="flex items-center justify-between">
-                        <span :class="memberRoleBadge(detailMember.role)">
-                            {{ formatMemberRole(detailMember.role) }}
-                        </span>
-                        <span :class="[
-                            'px-2 py-0.5 text-xs font-medium rounded-full',
-                            detailMember.status === 'active' ? 'bg-green-100 text-green-700' :
-                                detailMember.status === 'removed' ? 'bg-red-50 text-red-600' :
-                                    'bg-mun-gray-100 text-mun-gray-600'
-                        ]">
-                            {{ detailMember.status }}
-                        </span>
-                    </div>
 
-                    <!-- User info -->
-                    <div>
-                        <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Person</h4>
-                        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                            <div>
-                                <span class="text-mun-gray-400">Name</span>
-                                <p class="font-medium text-mun-gray-900">{{ detailMember.user?.firstName }} {{
-                                    detailMember.user?.lastName }}</p>
-                            </div>
-                            <div>
-                                <span class="text-mun-gray-400">Email</span>
-                                <p class="font-medium text-mun-gray-900">{{ detailMember.user?.email }}</p>
-                            </div>
-                            <div v-if="detailMember.user?.institution">
-                                <span class="text-mun-gray-400">Institution</span>
-                                <p class="font-medium text-mun-gray-900">{{ detailMember.user.institution }}</p>
-                            </div>
-                            <div v-if="detailMember.user?.phone">
-                                <span class="text-mun-gray-400">Phone</span>
-                                <p class="font-medium text-mun-gray-900">{{ detailMember.user.phone }}</p>
-                            </div>
+                    <!-- ── VIEW MODE ── -->
+                    <template v-if="!isEditingMember">
+                        <!-- Status + Role banner -->
+                        <div class="flex items-center justify-between">
+                            <span :class="memberRoleBadge(detailMember.role)">
+                                {{ formatMemberRole(detailMember.role) }}
+                            </span>
+                            <span :class="[
+                                'px-2 py-0.5 text-xs font-medium rounded-full',
+                                detailMember.status === 'active' ? 'bg-green-100 text-green-700' :
+                                    detailMember.status === 'removed' ? 'bg-red-50 text-red-600' :
+                                        'bg-mun-gray-100 text-mun-gray-600'
+                            ]">
+                                {{ detailMember.status }}
+                            </span>
                         </div>
-                    </div>
 
-                    <!-- Assignment info -->
-                    <div>
-                        <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Assignment</h4>
-                        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                            <div v-if="detailMember.committee">
-                                <span class="text-mun-gray-400">Committee</span>
-                                <p class="font-medium text-mun-gray-900">
-                                    {{ detailMember.committee.name }}
-                                    <span v-if="detailMember.committee.acronym" class="text-mun-gray-400 text-xs ml-1">
-                                        ({{ detailMember.committee.acronym }})
-                                    </span>
-                                </p>
-                            </div>
-                            <div v-if="detailMember.country?.name">
-                                <span class="text-mun-gray-400">Country</span>
-                                <div class="flex items-center space-x-1.5 mt-0.5">
-                                    <CountryFlag :country-name="detailMember.country.name"
-                                        :country-code="detailMember.country.code" size="small" variant="bordered" />
-                                    <span class="font-medium text-mun-gray-900">{{ detailMember.country.name }}</span>
+                        <!-- User info -->
+                        <div>
+                            <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Person</h4>
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                                <div>
+                                    <span class="text-mun-gray-400">Name</span>
+                                    <p class="font-medium text-mun-gray-900">{{ detailMember.user?.firstName }} {{
+                                        detailMember.user?.lastName }}</p>
+                                </div>
+                                <div>
+                                    <span class="text-mun-gray-400">Email</span>
+                                    <p class="font-medium text-mun-gray-900">{{ detailMember.user?.email }}</p>
+                                </div>
+                                <div v-if="detailMember.user?.institution">
+                                    <span class="text-mun-gray-400">Institution</span>
+                                    <p class="font-medium text-mun-gray-900">{{ detailMember.user.institution }}</p>
+                                </div>
+                                <div v-if="detailMember.user?.phone">
+                                    <span class="text-mun-gray-400">Phone</span>
+                                    <p class="font-medium text-mun-gray-900">{{ detailMember.user.phone }}</p>
                                 </div>
                             </div>
-                            <div>
-                                <span class="text-mun-gray-400">Source</span>
-                                <p class="font-medium text-mun-gray-900">{{ formatSource(detailMember.source) }}</p>
-                            </div>
-                            <div v-if="detailMember.assignedBy">
-                                <span class="text-mun-gray-400">Assigned By</span>
-                                <p class="font-medium text-mun-gray-900">
-                                    {{ detailMember.assignedBy.firstName }} {{ detailMember.assignedBy.lastName }}
-                                </p>
+                        </div>
+
+                        <!-- Assignment info -->
+                        <div>
+                            <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Assignment
+                            </h4>
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                                <div v-if="detailMember.committee">
+                                    <span class="text-mun-gray-400">Committee</span>
+                                    <p class="font-medium text-mun-gray-900">
+                                        {{ detailMember.committee.name }}
+                                        <span v-if="detailMember.committee.acronym"
+                                            class="text-mun-gray-400 text-xs ml-1">
+                                            ({{ detailMember.committee.acronym }})
+                                        </span>
+                                    </p>
+                                </div>
+                                <div v-if="detailMember.country?.name">
+                                    <span class="text-mun-gray-400">Country</span>
+                                    <div class="flex items-center space-x-1.5 mt-0.5">
+                                        <CountryFlag :country-name="detailMember.country.name"
+                                            :country-code="detailMember.country.code" size="small" variant="bordered" />
+                                        <span class="font-medium text-mun-gray-900">{{ detailMember.country.name
+                                        }}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="text-mun-gray-400">Source</span>
+                                    <p class="font-medium text-mun-gray-900">{{ formatSource(detailMember.source) }}</p>
+                                </div>
+                                <div v-if="detailMember.assignedBy">
+                                    <span class="text-mun-gray-400">Assigned By</span>
+                                    <p class="font-medium text-mun-gray-900">
+                                        {{ detailMember.assignedBy.firstName }} {{ detailMember.assignedBy.lastName }}
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Timestamps -->
-                    <div>
-                        <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Timeline</h4>
-                        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                            <div>
-                                <span class="text-mun-gray-400">Added</span>
-                                <p class="font-medium text-mun-gray-900">{{ formatDateTime(detailMember.createdAt) }}
-                                </p>
-                            </div>
-                            <div v-if="detailMember.updatedAt !== detailMember.createdAt">
-                                <span class="text-mun-gray-400">Last Updated</span>
-                                <p class="font-medium text-mun-gray-900">{{ formatDateTime(detailMember.updatedAt) }}
-                                </p>
+                        <!-- Timestamps -->
+                        <div>
+                            <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Timeline
+                            </h4>
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                                <div>
+                                    <span class="text-mun-gray-400">Added</span>
+                                    <p class="font-medium text-mun-gray-900">{{ formatDateTime(detailMember.createdAt)
+                                    }}</p>
+                                </div>
+                                <div v-if="detailMember.updatedAt !== detailMember.createdAt">
+                                    <span class="text-mun-gray-400">Last Updated</span>
+                                    <p class="font-medium text-mun-gray-900">{{ formatDateTime(detailMember.updatedAt)
+                                    }}</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Actions footer -->
-                    <div v-if="canManage" class="flex justify-end space-x-3 pt-3 border-t border-mun-gray-100">
-                        <AppButton variant="ghost" @click="showMemberDetail = false">Close</AppButton>
-                        <AppButton v-if="detailMember.status === 'active'" variant="ghost"
-                            class="!text-red-600 hover:!text-red-700"
-                            @click="showMemberDetail = false; confirmRemoveMember(detailMember, detailMemberCommittee)">
-                            Remove Member
-                        </AppButton>
-                    </div>
+                        <!-- View mode actions -->
+                        <div v-if="canManage" class="flex justify-end space-x-3 pt-3 border-t border-mun-gray-100">
+                            <AppButton variant="ghost" @click="closeMemberDetail">Close</AppButton>
+                            <AppButton variant="ghost" @click="startEditingMember">
+                                <PencilIcon class="w-4 h-4 mr-1.5" />
+                                Edit
+                            </AppButton>
+                            <AppButton v-if="detailMember.status === 'active'" variant="ghost"
+                                class="!text-red-600 hover:!text-red-700"
+                                @click="showMemberDetail = false; confirmRemoveMember(detailMember, detailMemberCommittee)">
+                                Remove
+                            </AppButton>
+                        </div>
+                        <div v-else class="flex justify-end pt-3 border-t border-mun-gray-100">
+                            <AppButton variant="ghost" @click="closeMemberDetail">Close</AppButton>
+                        </div>
+                    </template>
+
+                    <!-- ── EDIT MODE ── -->
+                    <template v-else>
+                        <!-- Status -->
+                        <div>
+                            <label class="block text-sm font-medium text-mun-gray-700 mb-1">Status</label>
+                            <select v-model="editMemberForm.status" class="input-field">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="removed">Removed</option>
+                            </select>
+                        </div>
+
+                        <!-- Person section -->
+                        <div>
+                            <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Person</h4>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs text-mun-gray-500 mb-1">First Name</label>
+                                    <input v-model="editMemberForm.userProfile.firstName" type="text"
+                                        class="input-field" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-mun-gray-500 mb-1">Last Name</label>
+                                    <input v-model="editMemberForm.userProfile.lastName" type="text"
+                                        class="input-field" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-mun-gray-500 mb-1">Phone</label>
+                                    <input v-model="editMemberForm.userProfile.phone" type="tel" class="input-field" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-mun-gray-500 mb-1">Institution</label>
+                                    <input v-model="editMemberForm.userProfile.institution" type="text"
+                                        class="input-field" />
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-mun-gray-400 mt-1">Email cannot be changed here.</p>
+                        </div>
+
+                        <!-- Assignment section -->
+                        <div>
+                            <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Assignment
+                            </h4>
+                            <div class="space-y-3">
+                                <!-- Role -->
+                                <div>
+                                    <label class="block text-xs text-mun-gray-500 mb-1">Role</label>
+                                    <select v-model="editMemberForm.role" class="input-field">
+                                        <optgroup label="Delegates">
+                                            <option value="delegate">Delegate</option>
+                                            <option value="observer">Observer</option>
+                                            <option value="expert">Expert</option>
+                                        </optgroup>
+                                        <optgroup label="Presidium">
+                                            <option value="presidium_chair">Chair</option>
+                                            <option value="presidium_cochair">Co-Chair</option>
+                                            <option value="presidium_expert">Expert (Presidium)</option>
+                                            <option value="presidium_secretary">Secretary</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+
+                                <!-- Committee -->
+                                <div>
+                                    <label class="block text-xs text-mun-gray-500 mb-1">Committee</label>
+                                    <select v-model="editMemberForm.committeeId" class="input-field"
+                                        @change="onEditCommitteeChange">
+                                        <option value="">No committee</option>
+                                        <option v-for="c in committees" :key="c._id" :value="c._id">
+                                            {{ c.acronym }} — {{ c.name }}
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <!-- Country (delegates only) -->
+                                <div v-if="editMemberForm.role === 'delegate' && editMemberForm.committeeId">
+                                    <label class="block text-xs text-mun-gray-500 mb-1">Country *</label>
+
+                                    <!-- Loading countries -->
+                                    <div v-if="editCountryLoading" class="text-xs text-mun-gray-400 py-2">Loading
+                                        countries...</div>
+
+                                    <template v-else>
+                                        <div class="relative">
+                                            <input v-model="editCountrySearch" type="text" class="input-field"
+                                                placeholder="Search country..."
+                                                @focus="showEditCountryDropdown = true" />
+                                        </div>
+
+                                        <!-- Country dropdown -->
+                                        <div v-if="showEditCountryDropdown && filteredEditCountries.length > 0"
+                                            class="mt-1 border border-mun-gray-200 rounded-lg max-h-40 overflow-y-auto bg-white shadow-lg z-10 relative">
+                                            <button v-for="country in filteredEditCountries" :key="country.code"
+                                                @click="selectEditCountry(country)"
+                                                class="w-full flex items-center px-4 py-2 hover:bg-mun-gray-50 text-left text-sm transition-colors">
+                                                <CountryFlag :country-name="country.name" :country-code="country.code"
+                                                    size="small" variant="bordered" class="mr-2" />
+                                                {{ country.name }}
+                                            </button>
+                                        </div>
+                                        <div v-else-if="showEditCountryDropdown && editCountrySearch.trim()"
+                                            class="mt-1 border border-mun-gray-200 rounded-lg py-3 bg-white shadow-lg text-center text-sm text-mun-gray-400">
+                                            No available countries found
+                                        </div>
+
+                                        <!-- Selected country chip -->
+                                        <div v-if="editMemberForm.country?.name && !showEditCountryDropdown"
+                                            class="mt-2 inline-flex items-center space-x-2 px-3 py-1.5 bg-mun-gray-50 border border-mun-gray-200 rounded-lg">
+                                            <CountryFlag :country-name="editMemberForm.country.name"
+                                                :country-code="editMemberForm.country.code" size="small"
+                                                variant="bordered" />
+                                            <span class="text-sm font-medium text-mun-gray-800">{{
+                                                editMemberForm.country.name }}</span>
+                                            <button
+                                                @click="editMemberForm.country = { name: '', code: '' }; editCountrySearch = ''"
+                                                class="ml-1 p-0.5 text-mun-gray-400 hover:text-red-500 rounded transition-colors">
+                                                <XMarkIcon class="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Edit mode actions -->
+                        <div class="flex justify-end space-x-3 pt-3 border-t border-mun-gray-100">
+                            <AppButton variant="ghost" @click="cancelEditingMember">Cancel</AppButton>
+                            <AppButton @click="saveEditMember" :disabled="isSavingMember || !canSaveEditMember">
+                                {{ isSavingMember ? 'Saving...' : 'Save Changes' }}
+                            </AppButton>
+                        </div>
+                    </template>
+
                 </div>
             </template>
         </ModalWrapper>
@@ -529,7 +681,7 @@
         <!-- Remove member confirmation -->
         <ConfirmationDialog v-model="showRemoveMemberConfirm" title="Remove Member"
             :message="`Remove ${removingMember?.user?.firstName} ${removingMember?.user?.lastName} from ${removingMemberCommittee?.acronym || removingMemberCommittee?.name}?`"
-            type="danger" confirmText="Remove" @confirm="executeRemoveMember"
+            type="danger" confirmText="Remove" confirmVariant="danger" @confirm="executeRemoveMember"
             @cancel="showRemoveMemberConfirm = false" />
     </div>
 </template>
@@ -542,6 +694,7 @@ import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
 import CountryManagementModal from '@/components/admin/CountryManagementModal.vue'
 import CountryFlag from '@/components/shared/CountryFlag.vue'
+// ConfirmationDialog is registered globally — no local import needed
 import {
     PlusIcon, PencilIcon, GlobeAltIcon, ChevronDownIcon,
     RectangleGroupIcon, UserGroupIcon, XMarkIcon
@@ -870,17 +1023,214 @@ const executeRemoveMember = async () => {
 }
 
 // =============================================
-// MEMBER DETAIL MODAL
+// MEMBER DETAIL / EDIT MODAL
 // =============================================
 const showMemberDetail = ref(false)
 const detailMember = ref(null)
 const detailMemberCommittee = ref(null)
+const isEditingMember = ref(false)
+const isSavingMember = ref(false)
+
+// Edit form state
+const editMemberForm = reactive({
+    status: 'active',
+    role: '',
+    committeeId: '',
+    country: { name: '', code: '' },
+    userProfile: {
+        firstName: '',
+        lastName: '',
+        phone: '',
+        institution: ''
+    }
+})
+
+// Edit country picker state
+const editCountrySearch = ref('')
+const showEditCountryDropdown = ref(false)
+const editCountryLoading = ref(false)
+const editEnrichedCountries = ref([])
+
+const filteredEditCountries = computed(() => {
+    let filtered = editEnrichedCountries.value.filter(c => {
+        // Allow the currently assigned country (so it shows in the list)
+        if (c.code === detailMember.value?.country?.code) return true
+        return !c.assignedTo
+    })
+    if (editCountrySearch.value.trim()) {
+        const q = editCountrySearch.value.toLowerCase()
+        filtered = filtered.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
+    }
+    return filtered.slice(0, 50)
+})
+
+const canSaveEditMember = computed(() => {
+    // Delegate must have a country if committee is set
+    if (editMemberForm.role === 'delegate' && editMemberForm.committeeId) {
+        if (!editMemberForm.country?.name || !editMemberForm.country?.code) return false
+    }
+    // Must have a first and last name
+    if (!editMemberForm.userProfile.firstName?.trim() || !editMemberForm.userProfile.lastName?.trim()) return false
+    return true
+})
 
 const openMemberDetail = (member) => {
     detailMember.value = member
-    // Find the committee this member belongs to
     detailMemberCommittee.value = committees.value.find(c => c._id === member.committee?._id) || null
+    isEditingMember.value = false
     showMemberDetail.value = true
+}
+
+const closeMemberDetail = () => {
+    showMemberDetail.value = false
+    isEditingMember.value = false
+    detailMember.value = null
+    detailMemberCommittee.value = null
+}
+
+const startEditingMember = () => {
+    const m = detailMember.value
+    if (!m) return
+
+    editMemberForm.status = m.status || 'active'
+    editMemberForm.role = m.role || ''
+    editMemberForm.committeeId = m.committee?._id || ''
+    editMemberForm.country = {
+        name: m.country?.name || '',
+        code: m.country?.code || ''
+    }
+    editMemberForm.userProfile = {
+        firstName: m.user?.firstName || '',
+        lastName: m.user?.lastName || '',
+        phone: m.user?.phone || '',
+        institution: m.user?.institution || ''
+    }
+
+    editCountrySearch.value = m.country?.name || ''
+    showEditCountryDropdown.value = false
+    editEnrichedCountries.value = []
+
+    isEditingMember.value = true
+
+    // Load countries for current committee if delegate
+    if (editMemberForm.role === 'delegate' && editMemberForm.committeeId) {
+        loadEditCountries(editMemberForm.committeeId)
+    }
+}
+
+const cancelEditingMember = () => {
+    isEditingMember.value = false
+}
+
+const loadEditCountries = async (committeeId) => {
+    if (!committeeId) {
+        editEnrichedCountries.value = []
+        return
+    }
+    editCountryLoading.value = true
+    try {
+        const res = await apiMethods.committees.getCountries(orgId.value, eventId.value, committeeId)
+        if (res.data.success) {
+            editEnrichedCountries.value = res.data.countries || []
+        }
+    } catch (e) {
+        // Fallback to committee's static countries
+        const committee = committees.value.find(c => c._id === committeeId)
+        if (committee?.countries) {
+            editEnrichedCountries.value = committee.countries.map(c => ({ ...c, assignedTo: null }))
+        }
+    } finally {
+        editCountryLoading.value = false
+    }
+}
+
+const onEditCommitteeChange = () => {
+    // Clear country when committee changes — user must re-select
+    editMemberForm.country = { name: '', code: '' }
+    editCountrySearch.value = ''
+    editEnrichedCountries.value = []
+    showEditCountryDropdown.value = false
+
+    if (editMemberForm.role === 'delegate' && editMemberForm.committeeId) {
+        loadEditCountries(editMemberForm.committeeId)
+    }
+}
+
+// Watch role changes in edit mode — clear country for non-delegates, load for delegates
+watch(() => editMemberForm.role, (newRole) => {
+    if (!isEditingMember.value) return
+    if (newRole !== 'delegate') {
+        editMemberForm.country = { name: '', code: '' }
+        editCountrySearch.value = ''
+        editEnrichedCountries.value = []
+    } else if (editMemberForm.committeeId) {
+        loadEditCountries(editMemberForm.committeeId)
+    }
+})
+
+const selectEditCountry = (country) => {
+    editMemberForm.country = { name: country.name, code: country.code }
+    editCountrySearch.value = country.name
+    showEditCountryDropdown.value = false
+}
+
+const saveEditMember = async () => {
+    if (!canSaveEditMember.value || !detailMember.value) return
+    isSavingMember.value = true
+
+    // Save old committee for refresh
+    const oldCommitteeId = detailMember.value.committee?._id
+
+    try {
+        const payload = {
+            status: editMemberForm.status,
+            role: editMemberForm.role,
+            committeeId: editMemberForm.committeeId || null,
+            userProfile: {
+                firstName: editMemberForm.userProfile.firstName.trim(),
+                lastName: editMemberForm.userProfile.lastName.trim(),
+                phone: editMemberForm.userProfile.phone?.trim() || null,
+                institution: editMemberForm.userProfile.institution?.trim() || null
+            }
+        }
+
+        // Include country for delegates
+        if (editMemberForm.role === 'delegate' && editMemberForm.country?.code) {
+            payload.country = {
+                name: editMemberForm.country.name,
+                code: editMemberForm.country.code
+            }
+        }
+
+        const res = await apiMethods.participants.update(orgId.value, eventId.value, detailMember.value._id, payload)
+
+        if (res.data.success) {
+            toast.success('Member updated')
+
+            // Update the detail member with fresh data
+            const updated = res.data.participant
+            detailMember.value = updated
+            detailMemberCommittee.value = committees.value.find(c => c._id === (updated.committee?._id || updated.committee)) || null
+
+            isEditingMember.value = false
+
+            // Refresh the members list for affected committees
+            const newCommitteeId = updated.committee?._id || updated.committee
+
+            if (oldCommitteeId && expandedCommittees[oldCommitteeId]) {
+                await fetchMembers(oldCommitteeId)
+            }
+            if (newCommitteeId && newCommitteeId !== oldCommitteeId && expandedCommittees[newCommitteeId]) {
+                await fetchMembers(newCommitteeId)
+            }
+
+            await loadData() // refresh counts
+        }
+    } catch (e) {
+        toast.error(e.response?.data?.error || 'Failed to update member')
+    } finally {
+        isSavingMember.value = false
+    }
 }
 
 // =============================================
