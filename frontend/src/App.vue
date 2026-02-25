@@ -4,7 +4,7 @@
     <transition name="fade">
       <div v-if="isGlobalLoading"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full mx-4">
+        <div class="bg-white rounded-2xl p-8 shadow-2xl max-w-sm w-full mx-4 text-center">
           <LoadingSpinner size="lg" />
           <p class="mt-4 text-mun-gray-600 text-center font-medium">{{ loadingMessage }}</p>
 
@@ -277,8 +277,8 @@ const initializeApplication = async () => {
       // If even this fails, continue
     }
 
-    // isGlobalLoading.value = false
-    // loadingProgress.value = 0
+    isGlobalLoading.value = false
+    loadingProgress.value = 0
   }
 }
 
