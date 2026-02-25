@@ -328,6 +328,65 @@ const getMyParticipation = async (req, res) => {
     }
 };
 
+// Search users for participant assignment (Org Admin only)
+// GET /api/organizations/:orgId/events/:eventId/participants/search-users?q=email_or_name
+const searchUsers = async (req, res) => {
+    try {
+        const { eventId } = req.params;
+        const { q } = req.query;
+
+        if (!q || q.trim().length < 2) {
+            return res.status(400).json({ error: 'Search query must be at least 2 characters' });
+        }
+
+        const query = q.trim();
+        const searchRegex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+
+        const users = await User.find({
+            status: 'active',
+            $or: [
+                { email: searchRegex },
+                { firstName: searchRegex },
+                { lastName: searchRegex },
+                { institution: searchRegex }
+            ]
+        })
+            .select('firstName lastName email phone institution avatar dateOfBirth languageProficiency')
+            .limit(20)
+            .lean();
+
+        // For each user, check if they're already a participant in this event
+        const existingParticipants = await EventParticipant.find({
+            event: eventId,
+            user: { $in: users.map(u => u._id) },
+            status: 'active'
+        })
+            .select('user role committee')
+            .populate('committee', 'name acronym')
+            .lean();
+
+        const participantMap = {};
+        existingParticipants.forEach(p => {
+            const uid = p.user.toString();
+            if (!participantMap[uid]) participantMap[uid] = [];
+            participantMap[uid].push({
+                role: p.role,
+                committee: p.committee?.acronym || p.committee?.name || null
+            });
+        });
+
+        const enriched = users.map(u => ({
+            ...u,
+            existingRoles: participantMap[u._id.toString()] || []
+        }));
+
+        res.json({ success: true, users: enriched });
+    } catch (error) {
+        global.logger.error('Search users error:', error);
+        res.status(500).json({ error: 'Failed to search users' });
+    }
+};
+
 module.exports = {
     getParticipants,
     getParticipant,
@@ -335,5 +394,6 @@ module.exports = {
     updateParticipant,
     removeParticipant,
     getParticipantsByCommittee,
-    getMyParticipation
+    getMyParticipation,
+    searchUsers,
 };

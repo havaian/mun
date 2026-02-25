@@ -20,6 +20,13 @@ router.get('/me',
     controller.getMyParticipation
 );
 
+// Search users to add as participants (by name or email)
+router.get('/search-users',
+    global.auth.token,
+    global.auth.orgPermission('manage_event_content', 'orgId'),
+    controller.searchUsers
+);
+
 // Get single participant
 router.get('/:participantId',
     global.auth.token,

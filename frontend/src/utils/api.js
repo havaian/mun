@@ -220,6 +220,7 @@ export const apiMethods = {
         remove: (orgId, eventId, participantId) => api.delete(`${eventBase(orgId, eventId)}/participants/${participantId}`),
         getByCommittee: (orgId, eventId) => api.get(`${eventBase(orgId, eventId)}/participants/by-committee`),
         getMyParticipation: (orgId, eventId) => api.get(`${eventBase(orgId, eventId)}/participants/me`),
+        searchUsers: (orgId, eventId, params = {}) => api.get(`${eventBase(orgId, eventId)}/participants/search-users`, { params }),
     },
 
     // =============================================
