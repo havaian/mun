@@ -221,72 +221,9 @@
             </template>
         </ModalWrapper>
 
-        <!-- Country Manager Modal -->
-        <ModalWrapper :showDefaultFooter="false" :modelValue="!!countryManagerCommittee"
-            @close="countryManagerCommittee = null" size="lg">
-            <template #title>Manage Countries — {{ countryManagerCommittee?.acronym }}</template>
-            <template #default>
-                <div class="space-y-4">
-                    <div class="flex items-end space-x-3">
-                        <div class="flex-1">
-                            <label class="block text-sm font-medium text-mun-gray-700 mb-1">Add Country</label>
-                            <input v-model="countrySearch" type="text" class="input-field"
-                                placeholder="Search country name..." @input="searchCountries" />
-                        </div>
-                    </div>
-
-                    <div v-if="countrySearchResults.length > 0"
-                        class="border border-mun-gray-200 rounded-lg max-h-40 overflow-y-auto divide-y divide-mun-gray-100">
-                        <button v-for="country in countrySearchResults" :key="country.code" type="button"
-                            @click="addCountryToCommittee(country)" :disabled="isCountryInCommittee(country.code)"
-                            class="w-full flex items-center justify-between p-2 text-sm hover:bg-mun-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
-                            <span>{{ country.name }}</span>
-                            <span v-if="isCountryInCommittee(country.code)" class="text-xs text-mun-gray-400">Already
-                                added</span>
-                            <PlusIcon v-else class="w-4 h-4 text-mun-blue" />
-                        </button>
-                    </div>
-
-                    <div v-if="countryManagerCommittee?.type === 'SC'" class="flex space-x-2">
-                        <AppButton variant="ghost" size="sm" @click="addP5Countries">Add P5 (with veto)</AppButton>
-                    </div>
-
-                    <div>
-                        <p class="text-sm font-medium text-mun-gray-700 mb-2">
-                            Current Countries ({{ countryManagerCommittee?.countries?.length || 0 }})
-                        </p>
-                        <div v-if="!countryManagerCommittee?.countries?.length"
-                            class="text-sm text-mun-gray-400 py-4 text-center">No countries added yet.</div>
-                        <div v-else
-                            class="max-h-60 overflow-y-auto divide-y divide-mun-gray-100 border border-mun-gray-200 rounded-lg">
-                            <div v-for="country in countryManagerCommittee.countries" :key="country.code"
-                                class="flex items-center justify-between p-2">
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-sm text-mun-gray-900">{{ country.name }}</span>
-                                    <span v-if="country.hasVetoRight"
-                                        class="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-red-100 text-red-700">VETO</span>
-                                    <span v-if="country.isPermanentMember"
-                                        class="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-blue-100 text-blue-700">P5</span>
-                                    <span v-if="country.isObserver"
-                                        class="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-yellow-100 text-yellow-700">Observer</span>
-                                </div>
-                                <button type="button" @click="removeCountryFromCommittee(country.code)"
-                                    class="text-mun-gray-400 hover:text-red-500 transition-colors">
-                                    <XMarkIcon class="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end space-x-3 pt-2">
-                        <AppButton variant="ghost" @click="countryManagerCommittee = null">Close</AppButton>
-                        <AppButton @click="saveCountries" :disabled="isSavingCountries">
-                            {{ isSavingCountries ? 'Saving...' : 'Save Countries' }}
-                        </AppButton>
-                    </div>
-                </div>
-            </template>
-        </ModalWrapper>
+        <!-- Country Management Modal (full-featured, client-side search) -->
+        <CountryManagementModal v-model="showCountryModal" :committee="countryManagerCommittee" :org-id="orgId"
+            :event-id="eventId" @saved="handleCountrySaved" />
     </div>
 </template>
 
@@ -296,9 +233,10 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
+import CountryManagementModal from '@/components/admin/CountryManagementModal.vue'
 import {
     PlusIcon, PencilIcon, GlobeAltIcon, ChevronDownIcon,
-    XMarkIcon, RectangleGroupIcon
+    RectangleGroupIcon
 } from '@heroicons/vue/24/outline'
 
 defineProps({
@@ -315,16 +253,15 @@ const canManage = computed(() => authStore.isOrgAdmin || authStore.hasOrgPermiss
 
 const isLoading = ref(true)
 const isSaving = ref(false)
-const isSavingCountries = ref(false)
 const committees = ref([])
 const eventData = ref(null)
 const showFormModal = ref(false)
 const editingCommittee = ref(null)
 const showSettings = ref(false)
 
+// Country management modal state
+const showCountryModal = ref(false)
 const countryManagerCommittee = ref(null)
-const countrySearch = ref('')
-const countrySearchResults = ref([])
 
 const eventId = computed(() => eventData.value?._id)
 
@@ -341,14 +278,6 @@ const form = reactive({
     language: 'en', status: 'setup',
     settings: defaultSettings(),
 })
-
-const P5_COUNTRIES = [
-    { name: 'United States', code: 'us', isPermanentMember: true, hasVetoRight: true },
-    { name: 'United Kingdom', code: 'gb', isPermanentMember: true, hasVetoRight: true },
-    { name: 'France', code: 'fr', isPermanentMember: true, hasVetoRight: true },
-    { name: 'Russia', code: 'ru', isPermanentMember: true, hasVetoRight: true },
-    { name: 'China', code: 'cn', isPermanentMember: true, hasVetoRight: true },
-]
 
 const loadData = async () => {
     if (!orgId.value) return
@@ -426,58 +355,14 @@ const handleSave = async () => {
 }
 
 const openCountryManager = (committee) => {
-    countryManagerCommittee.value = {
-        ...committee,
-        countries: JSON.parse(JSON.stringify(committee.countries || []))
-    }
-    countrySearch.value = ''
-    countrySearchResults.value = []
+    countryManagerCommittee.value = committee
+    showCountryModal.value = true
 }
 
-const searchCountries = async () => {
-    if (countrySearch.value.length < 2) { countrySearchResults.value = []; return }
-    try {
-        const res = await apiMethods.countries.search(countrySearch.value)
-        countrySearchResults.value = res.data?.countries || res.data || []
-    } catch (e) { countrySearchResults.value = [] }
-}
-
-const isCountryInCommittee = (code) => countryManagerCommittee.value?.countries?.some(c => c.code === code)
-
-const addCountryToCommittee = (country) => {
-    if (isCountryInCommittee(country.code)) return
-    countryManagerCommittee.value.countries.push({
-        name: country.name, code: country.code, flagUrl: country.flagUrl || null,
-        isPermanentMember: false, hasVetoRight: false, isObserver: false, specialRole: null,
-    })
-    countrySearch.value = ''
-    countrySearchResults.value = []
-}
-
-const addP5Countries = () => {
-    for (const p5 of P5_COUNTRIES) {
-        if (!isCountryInCommittee(p5.code)) {
-            countryManagerCommittee.value.countries.push({ ...p5, flagUrl: null, isObserver: false, specialRole: null })
-        }
-    }
-}
-
-const removeCountryFromCommittee = (code) => {
-    countryManagerCommittee.value.countries = countryManagerCommittee.value.countries.filter(c => c.code !== code)
-}
-
-const saveCountries = async () => {
-    isSavingCountries.value = true
-    try {
-        await apiMethods.committees.update(orgId.value, eventId.value, countryManagerCommittee.value._id, { countries: countryManagerCommittee.value.countries })
-        toast.success('Countries updated')
-        countryManagerCommittee.value = null
-        await loadData()
-    } catch (e) {
-        toast.error(e.response?.data?.error || 'Failed to save countries')
-    } finally {
-        isSavingCountries.value = false
-    }
+const handleCountrySaved = () => {
+    showCountryModal.value = false
+    countryManagerCommittee.value = null
+    loadData()
 }
 
 const typeBadgeClass = (type) => ({

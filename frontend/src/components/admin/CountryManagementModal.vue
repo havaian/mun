@@ -275,6 +275,14 @@ const props = defineProps({
     committee: {
         type: Object,
         default: null
+    },
+    orgId: {
+        type: String,
+        required: true
+    },
+    eventId: {
+        type: String,
+        required: true
     }
 })
 
@@ -298,15 +306,6 @@ const hoveredCountry = ref(null)
 const availableCountries = ref([])
 const assignedCountries = ref([])
 const originalAssigned = ref([])
-
-// // Regions for filtering
-// const regions = [
-//     { code: 'africa', name: 'Africa' },
-//     { code: 'asia', name: 'Asia' },
-//     { code: 'europe', name: 'Europe' },
-//     { code: 'americas', name: 'Americas' },
-//     { code: 'oceania', name: 'Oceania' }
-// ]
 
 // P5 countries (Security Council permanent members)
 const p5Countries = ['US', 'RU', 'CN', 'GB', 'FR']
@@ -589,7 +588,7 @@ const saveCountries = async () => {
             return backendCountry
         })
 
-        const response = await apiMethods.committees.update(props.committee._id, {
+        const response = await apiMethods.committees.update(props.orgId, props.eventId, props.committee._id, {
             countries: cleanedCountries
         })
 
