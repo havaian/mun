@@ -393,6 +393,18 @@
                 </form>
             </template>
         </ModalWrapper>
+        
+        <!-- Lifecycle confirmation -->
+        <ConfirmationDialog
+            v-model="showLifecycleConfirm"
+            :title="pendingLifecycleTarget && stageIndex(pendingLifecycleTarget) < stageIndex(event?.status) ? 'Move Back?' : 'Advance Event?'"
+            :message="`Move event to '${stageLabelFor(pendingLifecycleTarget)}'?${pendingLifecycleTarget && stageIndex(pendingLifecycleTarget) < stageIndex(event?.status) ? ' This will revert the event status.' : ''}`"
+            :type="pendingLifecycleTarget && stageIndex(pendingLifecycleTarget) < stageIndex(event?.status) ? 'warning' : 'question'"
+            :confirm-variant="pendingLifecycleTarget && stageIndex(pendingLifecycleTarget) < stageIndex(event?.status) ? 'warning' : 'primary'"
+            confirm-text="Confirm"
+            @confirm="confirmLifecycleChange"
+            @cancel="pendingLifecycleTarget = null"
+        />
     </div>
 </template>
 
@@ -435,6 +447,10 @@ const showEditModal = ref(false)
 const showSponsorModal = ref(false)
 const activeTab = ref('overview')
 const copiedField = ref(null)
+
+// Lifecycle confirmation dialog
+const showLifecycleConfirm = ref(false)
+const pendingLifecycleTarget = ref(null)
 
 const editForm = reactive({ name: '', description: '', startDate: '', endDate: '', location: '', mapUrl: '', logo: '', timezone: 'UTC' })
 const sponsorForm = reactive({ name: '', website: '', logo: null })
@@ -494,14 +510,24 @@ const STATUS_FLOW = {
 const nextStatuses = computed(() => STATUS_FLOW[event.value?.status] || [])
 const canMoveTo = (targetStatus) => nextStatuses.value.includes(targetStatus)
 
-const handleStageClick = async (targetStatus) => {
+const handleStageClick = (targetStatus) => {
     if (!canMoveTo(targetStatus)) return
-    const currentIdx = stageIndex(event.value.status)
-    const targetIdx = stageIndex(targetStatus)
-    if (targetIdx < currentIdx) {
-        if (!confirm(`Move back to "${stageLabelFor(targetStatus)}"? This will revert the event status.`)) return
+    pendingLifecycleTarget.value = targetStatus
+    showLifecycleConfirm.value = true
+}
+
+const confirmLifecycleChange = async () => {
+    const targetStatus = pendingLifecycleTarget.value
+    if (!targetStatus) return
+    try {
+        await apiMethods.events.updateStatus(orgId.value, event.value._id, { status: targetStatus })
+        event.value.status = targetStatus
+        toast.success(`Event moved to "${stageLabelFor(targetStatus)}"`)
+    } catch (e) {
+        toast.error(e.response?.data?.error || 'Failed to update status')
+    } finally {
+        pendingLifecycleTarget.value = null
     }
-    await changeStatus(targetStatus)
 }
 
 // ========== Helpers ==========

@@ -187,13 +187,18 @@
 
                 <!-- Withdraw -->
                 <div v-if="canWithdraw" class="text-center pt-4">
-                    <button @click="withdrawApplication" class="text-sm text-red-500 hover:text-red-700 font-medium"
-                        :disabled="isWithdrawing">
+                    <button @click="showWithdrawConfirm = true"
+                        class="text-sm text-red-500 hover:text-red-700 font-medium" :disabled="isWithdrawing">
                         {{ isWithdrawing ? 'Withdrawing...' : 'Withdraw Application' }}
                     </button>
                 </div>
             </template>
         </div>
+
+        <!-- Withdraw confirmation -->
+        <ConfirmationDialog v-model="showWithdrawConfirm" title="Withdraw Application?"
+            message="Are you sure you want to withdraw your application? This cannot be undone." type="danger"
+            confirm-variant="danger" confirm-text="Withdraw" @confirm="withdrawApplication" />
     </div>
 </template>
 
@@ -221,6 +226,7 @@ const eventName = ref('')
 const orgId = ref(null)
 const eventId = ref(null)
 const isWithdrawing = ref(false)
+const showWithdrawConfirm = ref(false)
 
 // =============================================
 // LOAD
@@ -434,7 +440,6 @@ const progressSteps = computed(() => {
 // ACTIONS
 // =============================================
 const withdrawApplication = async () => {
-    if (!confirm('Are you sure you want to withdraw your application? This cannot be undone.')) return
     isWithdrawing.value = true
     try {
         await apiMethods.registration.withdraw(orgId.value, eventId.value)

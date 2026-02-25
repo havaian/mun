@@ -296,14 +296,14 @@
 
                         <!-- Verify payment -->
                         <AppButton v-if="canVerifyPayment" size="sm" class="!bg-green-600 hover:!bg-green-700"
-                            @click="verifyPayment" :disabled="isActioning">
+                            @click="showVerifyConfirm = true" :disabled="isActioning">
                             <CheckIcon class="w-3.5 h-3.5 mr-1.5" />
                             Verify Payment
                         </AppButton>
 
                         <!-- Reject -->
                         <AppButton v-if="canReject" variant="ghost" size="sm" class="!text-red-600 hover:!text-red-700"
-                            @click="rejectApplication" :disabled="isActioning">
+                            @click="showRejectConfirm = true" :disabled="isActioning">
                             Reject
                         </AppButton>
                     </div>
@@ -311,6 +311,16 @@
             </div>
         </template>
     </ModalWrapper>
+
+    <!-- Reject confirmation -->
+    <ConfirmationDialog v-model="showRejectConfirm" title="Reject Application?"
+        message="Are you sure you want to reject this application?" type="danger" confirm-variant="danger"
+        confirm-text="Reject" @confirm="rejectApplication" />
+
+    <!-- Verify payment confirmation -->
+    <ConfirmationDialog v-model="showVerifyConfirm" title="Verify Payment?"
+        message="Verify this payment and create participant?" type="question" confirm-variant="success"
+        confirm-text="Verify" @confirm="verifyPayment" />
 </template>
 
 <script setup>
@@ -343,6 +353,8 @@ const showAcceptPanel = ref(false)
 const showHistory = ref(false)
 const returnComment = ref('')
 const newNote = ref('')
+const showRejectConfirm = ref(false)
+const showVerifyConfirm = ref(false)
 
 const interviewForm = reactive({
     scheduledAt: '',
@@ -648,7 +660,6 @@ const acceptApplication = async () => {
 }
 
 const rejectApplication = async () => {
-    if (!confirm('Are you sure you want to reject this application?')) return
     isActioning.value = true
     try {
         await apiMethods.registration.reject(props.orgId, props.eventId, props.application._id, {})
@@ -662,7 +673,6 @@ const rejectApplication = async () => {
 }
 
 const verifyPayment = async () => {
-    if (!confirm('Verify this payment and create participant?')) return
     isActioning.value = true
     try {
         await apiMethods.registration.verifyPayment(props.orgId, props.eventId, props.application._id, {})
