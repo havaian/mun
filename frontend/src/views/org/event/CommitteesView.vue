@@ -567,15 +567,6 @@
                                     <input v-model="editMemberForm.userProfile.lastName" type="text"
                                         class="input-field" />
                                 </div>
-                                <div>
-                                    <label class="block text-xs text-mun-gray-500 mb-1">Phone</label>
-                                    <input v-model="editMemberForm.userProfile.phone" type="tel" class="input-field" />
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-mun-gray-500 mb-1">Institution</label>
-                                    <input v-model="editMemberForm.userProfile.institution" type="text"
-                                        class="input-field" />
-                                </div>
                             </div>
                             <p class="text-[10px] text-mun-gray-400 mt-1">Email cannot be changed here.</p>
                         </div>
@@ -694,7 +685,6 @@ import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
 import CountryManagementModal from '@/components/admin/CountryManagementModal.vue'
 import CountryFlag from '@/components/shared/CountryFlag.vue'
-// ConfirmationDialog is registered globally — no local import needed
 import {
     PlusIcon, PencilIcon, GlobeAltIcon, ChevronDownIcon,
     RectangleGroupIcon, UserGroupIcon, XMarkIcon
@@ -1039,9 +1029,7 @@ const editMemberForm = reactive({
     country: { name: '', code: '' },
     userProfile: {
         firstName: '',
-        lastName: '',
-        phone: '',
-        institution: ''
+        lastName: ''
     }
 })
 
@@ -1101,9 +1089,7 @@ const startEditingMember = () => {
     }
     editMemberForm.userProfile = {
         firstName: m.user?.firstName || '',
-        lastName: m.user?.lastName || '',
-        phone: m.user?.phone || '',
-        institution: m.user?.institution || ''
+        lastName: m.user?.lastName || ''
     }
 
     editCountrySearch.value = m.country?.name || ''
@@ -1188,9 +1174,7 @@ const saveEditMember = async () => {
             committeeId: editMemberForm.committeeId || null,
             userProfile: {
                 firstName: editMemberForm.userProfile.firstName.trim(),
-                lastName: editMemberForm.userProfile.lastName.trim(),
-                phone: editMemberForm.userProfile.phone?.trim() || null,
-                institution: editMemberForm.userProfile.institution?.trim() || null
+                lastName: editMemberForm.userProfile.lastName.trim()
             }
         }
 
