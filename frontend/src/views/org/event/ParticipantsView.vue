@@ -280,6 +280,124 @@
             </template>
         </ModalWrapper>
 
+        <!-- =============================================
+             PARTICIPANT DETAIL MODAL
+             ============================================= -->
+        <ModalWrapper :modelValue="showDetailModal" @close="showDetailModal = false" :showDefaultFooter="false"
+            size="md">
+            <template #title>
+                {{ selectedParticipant?.user?.firstName }} {{ selectedParticipant?.user?.lastName }}
+            </template>
+            <template #default>
+                <div v-if="selectedParticipant" class="space-y-5">
+                    <!-- Status + Role banner -->
+                    <div class="flex items-center justify-between">
+                        <span :class="roleBadgeClass(selectedParticipant.role)">
+                            {{ formatRole(selectedParticipant.role) }}
+                        </span>
+                        <span :class="[
+                            'px-2 py-0.5 text-xs font-medium rounded-full',
+                            selectedParticipant.status === 'active' ? 'bg-green-100 text-green-700' :
+                                selectedParticipant.status === 'removed' ? 'bg-red-50 text-red-600' :
+                                    'bg-mun-gray-100 text-mun-gray-600'
+                        ]">
+                            {{ selectedParticipant.status }}
+                        </span>
+                    </div>
+
+                    <!-- User info -->
+                    <div>
+                        <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Person</h4>
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                            <div>
+                                <span class="text-mun-gray-400">Name</span>
+                                <p class="font-medium text-mun-gray-900">{{ selectedParticipant.user?.firstName }} {{
+                                    selectedParticipant.user?.lastName }}</p>
+                            </div>
+                            <div>
+                                <span class="text-mun-gray-400">Email</span>
+                                <p class="font-medium text-mun-gray-900">{{ selectedParticipant.user?.email }}</p>
+                            </div>
+                            <div v-if="selectedParticipant.user?.institution">
+                                <span class="text-mun-gray-400">Institution</span>
+                                <p class="font-medium text-mun-gray-900">{{ selectedParticipant.user.institution }}</p>
+                            </div>
+                            <div v-if="selectedParticipant.user?.phone">
+                                <span class="text-mun-gray-400">Phone</span>
+                                <p class="font-medium text-mun-gray-900">{{ selectedParticipant.user.phone }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Assignment info -->
+                    <div>
+                        <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Assignment</h4>
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                            <div v-if="selectedParticipant.committee">
+                                <span class="text-mun-gray-400">Committee</span>
+                                <p class="font-medium text-mun-gray-900">
+                                    {{ selectedParticipant.committee.name }}
+                                    <span v-if="selectedParticipant.committee.acronym"
+                                        class="text-mun-gray-400 text-xs ml-1">
+                                        ({{ selectedParticipant.committee.acronym }})
+                                    </span>
+                                </p>
+                            </div>
+                            <div v-if="selectedParticipant.country?.name">
+                                <span class="text-mun-gray-400">Country</span>
+                                <div class="flex items-center space-x-1.5 mt-0.5">
+                                    <CountryFlag :country-name="selectedParticipant.country.name"
+                                        :country-code="selectedParticipant.country.code" size="small"
+                                        variant="bordered" />
+                                    <span class="font-medium text-mun-gray-900">{{ selectedParticipant.country.name
+                                        }}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="text-mun-gray-400">Source</span>
+                                <p class="font-medium text-mun-gray-900">{{ formatSource(selectedParticipant.source) }}
+                                </p>
+                            </div>
+                            <div v-if="selectedParticipant.assignedBy">
+                                <span class="text-mun-gray-400">Assigned By</span>
+                                <p class="font-medium text-mun-gray-900">
+                                    {{ selectedParticipant.assignedBy.firstName }} {{
+                                    selectedParticipant.assignedBy.lastName }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timestamps -->
+                    <div>
+                        <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Timeline</h4>
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                            <div>
+                                <span class="text-mun-gray-400">Added</span>
+                                <p class="font-medium text-mun-gray-900">{{
+                                    formatDateTime(selectedParticipant.createdAt) }}</p>
+                            </div>
+                            <div v-if="selectedParticipant.updatedAt !== selectedParticipant.createdAt">
+                                <span class="text-mun-gray-400">Last Updated</span>
+                                <p class="font-medium text-mun-gray-900">{{
+                                    formatDateTime(selectedParticipant.updatedAt) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions footer -->
+                    <div v-if="canManage" class="flex justify-end space-x-3 pt-3 border-t border-mun-gray-100">
+                        <AppButton variant="ghost" @click="showDetailModal = false">Close</AppButton>
+                        <AppButton v-if="selectedParticipant.status === 'active'" variant="ghost"
+                            class="!text-red-600 hover:!text-red-700"
+                            @click="showDetailModal = false; confirmRemove(selectedParticipant)">
+                            Remove Participant
+                        </AppButton>
+                    </div>
+                </div>
+            </template>
+        </ModalWrapper>
+
         <!-- Remove confirmation -->
         <ConfirmationDialog v-model="showRemoveConfirm" title="Remove Participant?"
             :message="`Remove ${removingParticipant?.user?.firstName} ${removingParticipant?.user?.lastName} from this event? They will lose access to their committee.`"
@@ -355,6 +473,8 @@ const selectedUser = ref(null)
 const countrySearch = ref('')
 const showCountryDropdown = ref(false)
 const allCountries = ref([])
+const committeeCountries = ref([])
+const isLoadingCountries = ref(false)
 
 const addForm = reactive({
     role: '',
@@ -376,13 +496,17 @@ const canSubmitAdd = computed(() => {
 })
 
 const filteredCountries = computed(() => {
-    // Get committee's assigned countries if available
-    const committee = committees.value.find(c => c._id === addForm.committeeId)
-    const pool = committee?.countries?.length ? committee.countries : allCountries.value
+    // Use enriched committee countries (excludes assigned), fallback to allCountries
+    const pool = committeeCountries.value.length ? committeeCountries.value : allCountries.value
 
-    if (!countrySearch.value.trim()) return pool.slice(0, 50)
-    const q = countrySearch.value.toLowerCase()
-    return pool.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)).slice(0, 50)
+    let filtered = pool.filter(c => !c.assignedTo) // exclude countries already assigned to a delegate
+
+    if (countrySearch.value.trim()) {
+        const q = countrySearch.value.toLowerCase()
+        filtered = filtered.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
+    }
+
+    return filtered.slice(0, 50)
 })
 
 // =============================================
