@@ -476,12 +476,10 @@ const assignCountry = (country) => {
     }
 
     assignedCountries.value.push(newCountry)
-    toast.success(`${country.name} assigned to committee`)
 }
 
 const removeCountry = (country) => {
     assignedCountries.value = assignedCountries.value.filter(c => c.code !== country.code)
-    toast.success(`${country.name} removed from committee`)
 }
 
 const selectAllVisible = () => {
