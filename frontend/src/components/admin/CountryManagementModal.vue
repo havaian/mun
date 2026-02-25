@@ -134,10 +134,6 @@
                                 :disabled="assignedCountries.length === 0">
                                 Remove All
                             </AppButton>
-                            <AppButton variant="outline" size="sm" @click="regenerateAllQRs"
-                                :disabled="assignedCountries.length === 0" :loading="isRegeneratingQRs">
-                                Regenerate All QRs
-                            </AppButton>
                         </div>
                     </div>
 
@@ -167,41 +163,15 @@
                                         ]" size="sm" container-class="min-w-[120px]"
                                             @change="updateCountryRole(country)" />
 
-                                        <!-- Registration Status -->
-                                        <span v-if="country.email" class="text-mun-green-600">
-                                            ✓ Registered
+                                        <!-- Delegate Assignment Status -->
+                                        <span v-if="country.assignedTo" class="text-mun-green-600"
+                                            :title="country.assignedTo.email">
+                                            ✓ {{ country.assignedTo.name || country.assignedTo.email }}
                                         </span>
                                         <span v-else class="text-mun-gray-400">
-                                            Not registered
+                                            Unassigned
                                         </span>
                                     </div>
-                                </div>
-
-                                <!-- Actions -->
-                                <div class="flex items-center space-x-2">
-                                    <!-- QR Status -->
-                                    <div v-if="country.qrToken" class="text-xs">
-                                        <span v-if="country.isQrActive" class="text-mun-green-600">
-                                            QR Active
-                                        </span>
-                                        <span v-else class="text-mun-gray-500">
-                                            QR Used
-                                        </span>
-                                    </div>
-
-                                    <!-- Regenerate QR -->
-                                    <button @click="regenerateQR(country)"
-                                        class="p-1 text-mun-gray-400 hover:text-mun-blue transition-colors"
-                                        title="Regenerate QR Code">
-                                        <ArrowPathIcon class="w-4 h-4" />
-                                    </button>
-
-                                    <!-- Remove Country -->
-                                    <button @click="removeCountry(country)"
-                                        class="p-1 text-mun-gray-400 hover:text-mun-red-600 transition-colors"
-                                        title="Remove Country">
-                                        <XMarkIcon class="w-4 h-4" />
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -296,7 +266,6 @@ const flagsStore = useFlagsStore()
 // State
 const isLoading = ref(false)
 const isSaving = ref(false)
-const isRegeneratingQRs = ref(false)
 const searchQuery = ref('')
 const selectedCountries = ref([])
 const selectedRegions = ref([])
@@ -379,11 +348,19 @@ const loadCountries = async () => {
     }
 }
 
-const initializeAssignedCountries = () => {
-    if (props.committee?.countries) {
-        assignedCountries.value = props.committee.countries.map(country => {
-            // Handle both backend format and ensure frontend display fields exist
-            return {
+const initializeAssignedCountries = async () => {
+    if (!props.committee?._id) {
+        assignedCountries.value = []
+        originalAssigned.value = []
+        return
+    }
+
+    try {
+        // Fetch enriched countries from the committee endpoint (includes assignedTo delegate info)
+        const response = await apiMethods.committees.getCountries(props.orgId, props.eventId, props.committee._id)
+
+        if (response.data.success && response.data.countries) {
+            assignedCountries.value = response.data.countries.map(country => ({
                 // Backend schema fields
                 name: country.name,
                 flagUrl: country.flagUrl || `/api/countries/flags/${country.code?.toLowerCase() || 'unknown'}`,
@@ -391,20 +368,43 @@ const initializeAssignedCountries = () => {
                 hasVetoRight: country.hasVetoRight || false,
                 isObserver: country.isObserver || false,
                 specialRole: country.specialRole || null,
-                email: country.email || null,
-                qrToken: country.qrToken || generateQRToken(),
-                isQrActive: country.isQrActive !== false,
                 registeredAt: country.registeredAt || null,
                 lastActivity: country.lastActivity || new Date(),
 
-                // Frontend display fields (derived from backend data or fallback)
+                // Enriched delegate assignment from EventParticipant
+                assignedTo: country.assignedTo || null,
+
+                // Frontend display fields
                 code: country.code || extractCodeFromFlagUrl(country.flagUrl) || 'unknown',
                 region: country.region || 'Unknown',
                 role: country.isPermanentMember ? 'permanent' : 'non-permanent'
-            }
-        })
+            }))
 
-        originalAssigned.value = [...assignedCountries.value]
+            originalAssigned.value = assignedCountries.value.map(c => ({ ...c }))
+            return
+        }
+    } catch (error) {
+        console.warn('Failed to fetch enriched countries, falling back to committee data:', error)
+    }
+
+    // Fallback: use committee.countries if API call fails
+    if (props.committee?.countries) {
+        assignedCountries.value = props.committee.countries.map(country => ({
+            name: country.name,
+            flagUrl: country.flagUrl || `/api/countries/flags/${country.code?.toLowerCase() || 'unknown'}`,
+            isPermanentMember: country.isPermanentMember || false,
+            hasVetoRight: country.hasVetoRight || false,
+            isObserver: country.isObserver || false,
+            specialRole: country.specialRole || null,
+            registeredAt: country.registeredAt || null,
+            lastActivity: country.lastActivity || new Date(),
+            assignedTo: null,
+            code: country.code || extractCodeFromFlagUrl(country.flagUrl) || 'unknown',
+            region: country.region || 'Unknown',
+            role: country.isPermanentMember ? 'permanent' : 'non-permanent'
+        }))
+
+        originalAssigned.value = assignedCountries.value.map(c => ({ ...c }))
     } else {
         assignedCountries.value = []
         originalAssigned.value = []
@@ -459,11 +459,9 @@ const assignCountry = (country) => {
         hasVetoRight: isPermanent, // P5 countries have veto right
         isObserver: false,
         specialRole: null,
-        email: null,
-        qrToken: generateQRToken(),
-        isQrActive: true,
         registeredAt: null,
         lastActivity: new Date(),
+        assignedTo: null, // New countries won't have delegates yet
         // Frontend-only fields for display (these won't be sent to backend)
         code: country.code,
         region: country.region,
@@ -538,41 +536,6 @@ const updateCountryRole = (country) => {
     toast.success(`${country.name} role updated to ${country.role}`)
 }
 
-const regenerateQR = (country) => {
-    const index = assignedCountries.value.findIndex(c => c.code === country.code)
-    if (index !== -1) {
-        assignedCountries.value[index] = {
-            ...assignedCountries.value[index],
-            qrToken: generateQRToken(),
-            isQrActive: true,
-            email: null,
-            registeredAt: null
-        }
-        toast.success(`QR code regenerated for ${country.name}`)
-    }
-}
-
-const regenerateAllQRs = async () => {
-    try {
-        isRegeneratingQRs.value = true
-
-        assignedCountries.value.forEach(country => {
-            country.qrToken = generateQRToken()
-            country.isQrActive = true
-            country.email = null
-            country.registeredAt = null
-        })
-
-        toast.success('All QR codes regenerated')
-
-    } catch (error) {
-        console.error('Regenerate all QRs error:', error)
-        toast.error('Failed to regenerate QR codes')
-    } finally {
-        isRegeneratingQRs.value = false
-    }
-}
-
 const saveCountries = async () => {
     try {
         isSaving.value = true
@@ -581,7 +544,7 @@ const saveCountries = async () => {
         const cleanedCountries = assignedCountries.value.map(country => {
             // Remove frontend-only fields and keep only backend schema fields
             const {
-                region, role, // Remove frontend-only fields
+                region, role, assignedTo, // Remove frontend-only fields
                 ...backendCountry
             } = country
 
@@ -608,12 +571,12 @@ const saveCountries = async () => {
 
 const hasChanges = computed(() => {
     if (!originalAssigned.value.length && !assignedCountries.value.length) return false
-    
+
     if (originalAssigned.value.length !== assignedCountries.value.length) return true
-    
-    return !originalAssigned.value.every(original => 
-        assignedCountries.value.some(current => 
-            current.code === original.code && 
+
+    return !originalAssigned.value.every(original =>
+        assignedCountries.value.some(current =>
+            current.code === original.code &&
             current.role === original.role
         )
     )
@@ -622,12 +585,6 @@ const hasChanges = computed(() => {
 const close = () => {
     // ModalWrapper handles unsaved changes confirmation automatically
     emit('update:modelValue', false)
-}
-
-// Utility functions
-const generateQRToken = () => {
-    return Math.random().toString(36).substring(2, 15) +
-        Math.random().toString(36).substring(2, 15)
 }
 
 const isP5Country = (countryCode) => {
