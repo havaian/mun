@@ -428,7 +428,6 @@ import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
 import CountryManagementModal from '@/components/admin/CountryManagementModal.vue'
 import CountryFlag from '@/components/shared/CountryFlag.vue'
-import ConfirmationDialog from '@/components/shared/ConfirmationDialog.vue'
 import {
     PlusIcon, PencilIcon, GlobeAltIcon, ChevronDownIcon,
     RectangleGroupIcon, UserGroupIcon, XMarkIcon
