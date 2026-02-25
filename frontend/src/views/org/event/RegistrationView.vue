@@ -46,7 +46,7 @@
             <div class="bg-white rounded-xl border border-mun-gray-200 p-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <span class="text-sm text-mun-gray-500">Form status:</span>
-                    <select v-model="form.status" class="input-field text-sm !w-auto !py-1.5 !px-3">
+                    <select v-model="form.status" class="input-field text-sm !w-auto !py-1.5 !pl-3 !pr-8">
                         <option value="draft">Draft</option>
                         <option value="active">Active</option>
                         <option value="closed">Closed</option>

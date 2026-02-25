@@ -228,77 +228,85 @@
 
             <!-- ==================== LIFECYCLE TAB ==================== -->
             <template v-else-if="activeTab === 'lifecycle'">
-                <section class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-5">
+                <section class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-6">
                     <div>
                         <h2 class="text-lg font-semibold text-mun-gray-900">Event Lifecycle</h2>
-                        <p class="text-sm text-mun-gray-500 mt-1">Move your event through each stage. You can advance to
-                            the next step or go back one step.</p>
+                        <p class="text-sm text-mun-gray-500 mt-1">Move your event through each stage. You can advance to the next step or go back one step.</p>
                     </div>
 
-                    <!-- Visual pipeline -->
-                    <div class="flex flex-col sm:flex-row items-stretch gap-0">
-                        <div v-for="(stage, idx) in LIFECYCLE_STAGES" :key="stage.key" class="flex-1 relative">
-                            <!-- Connector line -->
-                            <div v-if="idx > 0"
-                                class="hidden sm:block absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-0.5"
-                                :class="stageIndex(event.status) >= idx ? 'bg-mun-blue' : 'bg-mun-gray-200'"></div>
+                    <!-- Stepper -->
+                    <div class="relative">
+                        <!-- Background connector line -->
+                        <div class="hidden sm:block absolute top-5 left-0 right-0 h-0.5 bg-mun-gray-200 z-0"></div>
+                        <!-- Progress line -->
+                        <div
+                            class="hidden sm:block absolute top-5 left-0 h-0.5 bg-mun-blue z-[1] transition-all duration-500"
+                            :style="{ width: `${(stageIndex(event.status) / (LIFECYCLE_STAGES.length - 1)) * 100}%` }"
+                        ></div>
 
-                            <button @click="handleStageClick(stage.key)" :disabled="!canMoveTo(stage.key)" :class="[
-                                'w-full px-3 py-4 text-center border-2 transition-all relative',
-                                idx === 0 ? 'rounded-t-xl sm:rounded-l-xl sm:rounded-tr-none' : '',
-                                idx === LIFECYCLE_STAGES.length - 1 ? 'rounded-b-xl sm:rounded-r-xl sm:rounded-bl-none' : '',
-                                event.status === stage.key
-                                    ? 'border-mun-blue bg-mun-blue-50 ring-1 ring-mun-blue/30'
-                                    : stageIndex(event.status) > idx
-                                        ? 'border-mun-blue/30 bg-mun-blue-50/30'
-                                        : 'border-mun-gray-200 bg-white',
-                                canMoveTo(stage.key) && event.status !== stage.key
-                                    ? 'hover:border-mun-blue-300 hover:bg-mun-blue-50/50 cursor-pointer'
-                                    : event.status === stage.key ? 'cursor-default' : 'cursor-not-allowed opacity-50',
-                            ]">
-                                <div class="flex items-center justify-center mb-1.5">
-                                    <span v-if="stageIndex(event.status) > idx"
-                                        class="w-6 h-6 rounded-full bg-mun-blue text-white text-xs font-bold flex items-center justify-center">✓</span>
-                                    <span v-else
-                                        :class="['w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center', event.status === stage.key ? 'bg-mun-blue text-white' : 'bg-mun-gray-200 text-mun-gray-500']">
-                                        {{ idx + 1 }}
-                                    </span>
-                                </div>
-                                <p class="text-xs font-semibold"
-                                    :class="event.status === stage.key ? 'text-mun-blue' : stageIndex(event.status) > idx ? 'text-mun-blue/70' : 'text-mun-gray-500'">
+                        <div class="grid grid-cols-2 sm:grid-cols-6 gap-y-4 gap-x-0 relative z-[2]">
+                            <div
+                                v-for="(stage, idx) in LIFECYCLE_STAGES"
+                                :key="stage.key"
+                                class="flex flex-col items-center text-center"
+                            >
+                                <!-- Circle indicator -->
+                                <button
+                                    @click="handleStageClick(stage.key)"
+                                    :disabled="!canMoveTo(stage.key)"
+                                    :class="[
+                                        'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors relative',
+                                        event.status === stage.key
+                                            ? 'bg-mun-blue text-white ring-4 ring-mun-blue/20'
+                                            : stageIndex(event.status) > idx
+                                                ? 'bg-mun-blue text-white'
+                                                : 'bg-mun-gray-100 text-mun-gray-400',
+                                        canMoveTo(stage.key) && event.status !== stage.key
+                                            ? 'hover:ring-4 hover:ring-mun-blue/10 cursor-pointer'
+                                            : event.status === stage.key ? 'cursor-default' : 'cursor-not-allowed',
+                                    ]"
+                                >
+                                    <CheckIcon v-if="stageIndex(event.status) > idx" class="w-5 h-5" />
+                                    <span v-else>{{ idx + 1 }}</span>
+                                </button>
+
+                                <!-- Label -->
+                                <p :class="[
+                                    'text-xs font-semibold mt-2 leading-tight',
+                                    event.status === stage.key ? 'text-mun-blue' :
+                                    stageIndex(event.status) > idx ? 'text-mun-gray-700' : 'text-mun-gray-400'
+                                ]">
                                     {{ stage.label }}
                                 </p>
-                                <p class="text-[10px] mt-0.5 leading-tight"
-                                    :class="event.status === stage.key ? 'text-mun-blue/70' : 'text-mun-gray-400'">
+                                <p :class="[
+                                    'text-[10px] mt-0.5 leading-tight',
+                                    event.status === stage.key ? 'text-mun-blue/60' : 'text-mun-gray-400'
+                                ]">
                                     {{ stage.hint }}
                                 </p>
-                                <div v-if="event.status === stage.key"
-                                    class="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-mun-blue text-white text-[9px] font-bold uppercase tracking-wider rounded-full whitespace-nowrap">
+
+                                <!-- Current badge -->
+                                <span
+                                    v-if="event.status === stage.key"
+                                    class="mt-1.5 px-2 py-0.5 bg-mun-blue text-white text-[9px] font-bold uppercase tracking-wider rounded-full"
+                                >
                                     Current
-                                </div>
-                            </button>
+                                </span>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Action hint -->
-                    <div v-if="nextStatuses.length > 0" class="flex items-center gap-3 p-3 bg-mun-blue-50 rounded-xl">
+                    <div v-if="nextStatuses.length > 0" class="flex items-center gap-3 p-3 bg-mun-blue-50/70 rounded-xl">
                         <InformationCircleIcon class="w-5 h-5 text-mun-blue flex-shrink-0" />
                         <p class="text-sm text-mun-blue-700">
-                            <template v-if="nextStatuses.length === 1">
-                                Next step: click <strong>{{ stageLabelFor(nextStatuses[0]) }}</strong> above to advance.
-                            </template>
-                            <template v-else>
-                                You can move to:
-                                <strong v-for="(s, i) in nextStatuses" :key="s">{{ stageLabelFor(s) }}<template
-                                        v-if="i < nextStatuses.length - 1">, </template></strong>
-                            </template>
+                            You can move to:
+                            <strong v-for="(s, i) in nextStatuses" :key="s">{{ stageLabelFor(s) }}<template v-if="i < nextStatuses.length - 1">, </template></strong>
                         </p>
                     </div>
-                    <div v-else-if="event.status === 'completed'"
-                        class="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
+                    <div v-else-if="event.status === 'completed'" class="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
                         <CheckCircleIcon class="w-5 h-5 text-green-600 flex-shrink-0" />
-                        <p class="text-sm text-green-700">This event has been completed. No further status changes
-                            available.</p>
+                        <p class="text-sm text-green-700">This event has been completed.</p>
                     </div>
                 </section>
             </template>
@@ -397,7 +405,7 @@ import { useToast } from '@/plugins/toast'
 import {
     PencilIcon, ClipboardDocumentIcon, PlusIcon, XMarkIcon,
     BuildingOffice2Icon, ArrowTopRightOnSquareIcon,
-    InformationCircleIcon, CheckCircleIcon
+    InformationCircleIcon, CheckCircleIcon, CheckIcon
 } from '@heroicons/vue/24/outline'
 import ImageUploader from '@/components/ui/ImageUploader.vue'
 import RichTextEditor from '@/components/ui/RichTextEditor.vue'
