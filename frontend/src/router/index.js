@@ -28,7 +28,6 @@ const OrgSettings = () => import('@/views/org/SettingsView.vue')
 // =============================================
 // EVENT MANAGEMENT VIEWS
 // =============================================
-const EventParticipants = () => import('@/views/org/event/ParticipantsView.vue')
 const EventRegistration = () => import('@/views/org/event/RegistrationView.vue')
 const EventApplications = () => import('@/views/org/event/ApplicationsView.vue')
 const EventCommittees = () => import('@/views/org/event/CommitteesView.vue')
@@ -198,12 +197,6 @@ const routes = [
         name: 'OrgEventDetail',
         component: OrgEventDetail,
         meta: { title: 'Event Details' }
-      },
-      {
-        path: 'events/:eventSlug/participants',
-        name: 'EventParticipants',
-        component: EventParticipants,
-        meta: { title: 'Participants' }
       },
       {
         path: 'events/:eventSlug/registration',
