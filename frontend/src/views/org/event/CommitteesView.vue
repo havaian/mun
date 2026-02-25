@@ -527,7 +527,7 @@
         </ModalWrapper>
 
         <!-- Remove member confirmation -->
-        <ConfirmationDialog :show="showRemoveMemberConfirm" title="Remove Member"
+        <ConfirmationDialog v-model="showRemoveMemberConfirm" title="Remove Member"
             :message="`Remove ${removingMember?.user?.firstName} ${removingMember?.user?.lastName} from ${removingMemberCommittee?.acronym || removingMemberCommittee?.name}?`"
             type="danger" confirmText="Remove" @confirm="executeRemoveMember"
             @cancel="showRemoveMemberConfirm = false" />
