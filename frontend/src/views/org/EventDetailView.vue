@@ -222,7 +222,6 @@
 
             <!-- ==================== EMBEDDED TABS ==================== -->
             <EventCommittees v-else-if="activeTab === 'committees'" :embedded="true" />
-            <EventParticipants v-else-if="activeTab === 'participants'" :embedded="true" />
             <EventRegistration v-else-if="activeTab === 'registration'" :embedded="true" />
             <EventApplications v-else-if="activeTab === 'applications'" :embedded="true" />
 
@@ -425,7 +424,6 @@ import RichTextContent from '@/components/ui/RichTextContent.vue'
 import SleekSelect from '@/components/ui/SleekSelect.vue'
 
 import EventCommittees from '@/views/org/event/CommitteesView.vue'
-import EventParticipants from '@/views/org/event/ParticipantsView.vue'
 import EventRegistration from '@/views/org/event/RegistrationView.vue'
 import EventApplications from '@/views/org/event/ApplicationsView.vue'
 
@@ -438,7 +436,7 @@ const orgSlug = computed(() => route.params.orgSlug)
 const eventSlug = computed(() => route.params.eventSlug)
 const orgId = computed(() => authStore.activeOrganization?._id)
 const canManage = computed(() => authStore.isOrgAdmin || authStore.hasOrgPermission('manage_event_content'))
-const canChangeStatus = computed(() => authStore.isOrgAdmin || authStore.hasOrgPermission('manage_event_status'))
+const canChangeStatus = computed(() => authStore.isOrgAdmin)
 
 const isLoading = ref(true)
 const isSaving = ref(false)
@@ -459,7 +457,6 @@ const tabs = computed(() => {
     const list = [
         { id: 'overview', label: 'Overview' },
         { id: 'committees', label: 'Committees' },
-        { id: 'participants', label: 'Participants' },
         { id: 'registration', label: 'Registration' },
         { id: 'applications', label: 'Applications' },
     ]

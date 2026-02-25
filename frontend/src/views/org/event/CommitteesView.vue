@@ -58,6 +58,9 @@
                                 <span class="text-xs text-mun-gray-300">·</span>
                                 <span class="text-xs text-mun-gray-400">{{ committee.countries?.length || 0 }}
                                     countries</span>
+                                <span class="text-xs text-mun-gray-300">·</span>
+                                <span class="text-xs text-mun-gray-400">{{ (committee.delegatesCount || 0) +
+                                    (committee.presidiumCount || 0) }} members</span>
                             </div>
                         </div>
                     </div>
@@ -68,6 +71,9 @@
                         </AppButton>
                         <AppButton v-if="canManage" variant="ghost" size="sm" @click="openCountryManager(committee)">
                             <GlobeAltIcon class="w-4 h-4" />
+                        </AppButton>
+                        <AppButton v-if="canManage" variant="ghost" size="sm" @click="toggleMembers(committee._id)">
+                            <UserGroupIcon class="w-4 h-4" />
                         </AppButton>
                     </div>
                 </div>
@@ -85,6 +91,68 @@
                     <span v-if="committee.countries.length > 10" class="text-xs text-mun-gray-400 self-center ml-1">
                         +{{ committee.countries.length - 10 }} more
                     </span>
+                </div>
+
+                <!-- Expandable members section -->
+                <div v-if="expandedCommittees[committee._id]" class="mt-3 pt-3 border-t border-mun-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide">
+                            Members
+                            <span v-if="committeeMembers[committee._id]?.length"
+                                class="text-mun-gray-400 font-normal">({{ committeeMembers[committee._id].length
+                                }})</span>
+                        </h4>
+                        <button v-if="canManage" @click="openAddMember(committee)"
+                            class="text-xs text-mun-blue hover:text-mun-blue-700 font-medium">
+                            + Add
+                        </button>
+                    </div>
+
+                    <!-- Loading -->
+                    <div v-if="loadingMembers[committee._id]" class="py-3 text-center">
+                        <LoadingSpinner class="w-5 h-5 mx-auto" />
+                    </div>
+
+                    <!-- Empty -->
+                    <p v-else-if="!committeeMembers[committee._id]?.length" class="text-xs text-mun-gray-400 py-2">
+                        No members assigned yet.
+                    </p>
+
+                    <!-- Member rows -->
+                    <div v-else class="space-y-1.5 max-h-60 overflow-y-auto">
+                        <div v-for="m in committeeMembers[committee._id]" :key="m._id"
+                            class="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-mun-gray-50/80 group">
+                            <div class="flex items-center space-x-2.5 min-w-0">
+                                <div :class="[
+                                    'w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold',
+                                    memberAvatarClass(m.role)
+                                ]">
+                                    {{ (m.user?.firstName?.[0] || '') + (m.user?.lastName?.[0] || '') }}
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-medium text-mun-gray-800 truncate">
+                                        {{ m.user?.firstName }} {{ m.user?.lastName }}
+                                    </p>
+                                    <div class="flex items-center space-x-1.5">
+                                        <span :class="memberRoleBadge(m.role)">{{ formatMemberRole(m.role) }}</span>
+                                        <template v-if="m.country?.name">
+                                            <span class="text-mun-gray-300">·</span>
+                                            <div class="flex items-center space-x-1">
+                                                <CountryFlag :country-name="m.country.name"
+                                                    :country-code="m.country.code" size="small" variant="bordered" />
+                                                <span class="text-xs text-mun-gray-500">{{ m.country.name }}</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                            <button v-if="canManage && m.status === 'active'" @click="confirmRemoveMember(m, committee)"
+                                class="p-1 text-mun-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded"
+                                title="Remove">
+                                <XMarkIcon class="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Session link -->
@@ -224,19 +292,146 @@
         <!-- Country Management Modal (full-featured, client-side search) -->
         <CountryManagementModal v-model="showCountryModal" :committee="countryManagerCommittee" :org-id="orgId"
             :event-id="eventId" @saved="handleCountrySaved" />
+
+        <!-- =============================================
+             ADD MEMBER MODAL
+             ============================================= -->
+        <ModalWrapper :modelValue="showAddMemberModal" @close="closeAddMember" :showDefaultFooter="false" size="lg">
+            <template #title>Add Member to {{ addMemberCommittee?.acronym || addMemberCommittee?.name }}</template>
+            <template #default>
+                <div class="space-y-4">
+                    <!-- User search -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-1">Search User *</label>
+                        <input v-model="memberSearchQuery" type="text" class="input-field"
+                            placeholder="Search by name or email (min 2 chars)..." @input="debouncedMemberSearch" />
+                        <!-- Search results dropdown -->
+                        <div v-if="memberSearching"
+                            class="mt-1 border border-mun-gray-200 rounded-lg py-3 bg-white shadow-lg text-center text-sm text-mun-gray-400">
+                            Searching...
+                        </div>
+                        <div v-else-if="memberSearchResults.length > 0 && !selectedMemberUser"
+                            class="mt-1 border border-mun-gray-200 rounded-lg max-h-48 overflow-y-auto bg-white shadow-lg">
+                            <button v-for="u in memberSearchResults" :key="u._id" @click="selectMemberUser(u)"
+                                class="w-full flex items-center justify-between px-4 py-2.5 hover:bg-mun-gray-50 text-left transition-colors">
+                                <div>
+                                    <p class="text-sm font-medium text-mun-gray-900">{{ u.firstName }} {{ u.lastName }}
+                                    </p>
+                                    <p class="text-xs text-mun-gray-400">{{ u.email }}</p>
+                                </div>
+                                <div v-if="u.existingRoles?.length" class="flex flex-wrap gap-1 ml-3">
+                                    <span v-for="r in u.existingRoles" :key="r.role + r.committeeId"
+                                        class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-yellow-100 text-yellow-700 whitespace-nowrap">
+                                        {{ formatMemberRole(r.role) }}{{ r.committeeName ? ` (${r.committeeName})` : ''
+                                        }}
+                                    </span>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Selected user chip -->
+                        <div v-if="selectedMemberUser"
+                            class="mt-2 flex items-center justify-between px-3 py-2 bg-mun-gray-50 border border-mun-gray-200 rounded-lg">
+                            <div>
+                                <p class="text-sm font-medium text-mun-gray-900">{{ selectedMemberUser.firstName }} {{
+                                    selectedMemberUser.lastName }}</p>
+                                <p class="text-xs text-mun-gray-400">{{ selectedMemberUser.email }}</p>
+                            </div>
+                            <button @click="selectedMemberUser = null; memberSearchQuery = ''"
+                                class="p-0.5 text-mun-gray-400 hover:text-red-500 rounded transition-colors">
+                                <XMarkIcon class="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Role -->
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-1">Role *</label>
+                        <select v-model="addMemberForm.role" class="input-field">
+                            <option value="">Select role...</option>
+                            <optgroup label="Delegates">
+                                <option value="delegate">Delegate</option>
+                                <option value="observer">Observer</option>
+                                <option value="expert">Expert</option>
+                            </optgroup>
+                            <optgroup label="Presidium">
+                                <option value="presidium_chair">Chair</option>
+                                <option value="presidium_cochair">Co-Chair</option>
+                                <option value="presidium_expert">Expert (Presidium)</option>
+                                <option value="presidium_secretary">Secretary</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <!-- Country (delegates only) -->
+                    <div v-if="addMemberForm.role === 'delegate'">
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-1">Country *</label>
+                        <div class="relative">
+                            <input v-model="memberCountrySearch" type="text" class="input-field"
+                                placeholder="Search country..." @focus="showMemberCountryDropdown = true" />
+                        </div>
+                        <div v-if="showMemberCountryDropdown && memberCountryLoading"
+                            class="mt-1 border border-mun-gray-200 rounded-lg py-3 bg-white shadow-lg text-center text-sm text-mun-gray-400">
+                            Loading countries...
+                        </div>
+                        <div v-else-if="showMemberCountryDropdown && filteredMemberCountries.length > 0"
+                            class="mt-1 border border-mun-gray-200 rounded-lg max-h-40 overflow-y-auto bg-white shadow-lg">
+                            <button v-for="country in filteredMemberCountries" :key="country.code"
+                                @click="selectMemberCountry(country)"
+                                class="w-full flex items-center px-4 py-2 hover:bg-mun-gray-50 text-left text-sm transition-colors">
+                                <CountryFlag :country-name="country.name" :country-code="country.code" size="small"
+                                    variant="bordered" class="mr-2" />
+                                {{ country.name }}
+                            </button>
+                        </div>
+                        <div v-else-if="showMemberCountryDropdown && !memberCountryLoading && memberCountrySearch.trim()"
+                            class="mt-1 border border-mun-gray-200 rounded-lg py-3 bg-white shadow-lg text-center text-sm text-mun-gray-400">
+                            No available countries found
+                        </div>
+                        <!-- Selected country chip -->
+                        <div v-if="addMemberForm.country?.name && !showMemberCountryDropdown"
+                            class="mt-2 inline-flex items-center space-x-2 px-3 py-1.5 bg-mun-gray-50 border border-mun-gray-200 rounded-lg">
+                            <CountryFlag :country-name="addMemberForm.country.name"
+                                :country-code="addMemberForm.country.code" size="small" variant="bordered" />
+                            <span class="text-sm font-medium text-mun-gray-800">{{ addMemberForm.country.name }}</span>
+                            <button @click="addMemberForm.country = { name: '', code: '' }; memberCountrySearch = ''"
+                                class="ml-1 p-0.5 text-mun-gray-400 hover:text-red-500 rounded transition-colors">
+                                <XMarkIcon class="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex justify-end space-x-3 pt-2 border-t border-mun-gray-100">
+                        <AppButton variant="ghost" @click="closeAddMember">Cancel</AppButton>
+                        <AppButton @click="submitAddMember" :disabled="!canSubmitMember || isAddingMember">
+                            {{ isAddingMember ? 'Adding...' : 'Add Member' }}
+                        </AppButton>
+                    </div>
+                </div>
+            </template>
+        </ModalWrapper>
+
+        <!-- Remove member confirmation -->
+        <ConfirmationDialog :show="showRemoveMemberConfirm" title="Remove Member"
+            :message="`Remove ${removingMember?.user?.firstName} ${removingMember?.user?.lastName} from ${removingMemberCommittee?.acronym || removingMemberCommittee?.name}?`"
+            type="danger" confirmText="Remove" @confirm="executeRemoveMember"
+            @cancel="showRemoveMemberConfirm = false" />
     </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
 import CountryManagementModal from '@/components/admin/CountryManagementModal.vue'
+import CountryFlag from '@/components/shared/CountryFlag.vue'
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog.vue'
 import {
     PlusIcon, PencilIcon, GlobeAltIcon, ChevronDownIcon,
-    RectangleGroupIcon
+    RectangleGroupIcon, UserGroupIcon, XMarkIcon
 } from '@heroicons/vue/24/outline'
 
 defineProps({
@@ -363,6 +558,228 @@ const handleCountrySaved = () => {
     showCountryModal.value = false
     countryManagerCommittee.value = null
     loadData()
+}
+
+// =============================================
+// MEMBERS EXPANSION
+// =============================================
+const expandedCommittees = reactive({})
+const committeeMembers = reactive({})
+const loadingMembers = reactive({})
+
+const PRESIDIUM_ROLES = ['presidium_chair', 'presidium_cochair', 'presidium_expert', 'presidium_secretary']
+
+const toggleMembers = async (committeeId) => {
+    if (expandedCommittees[committeeId]) {
+        expandedCommittees[committeeId] = false
+        return
+    }
+    expandedCommittees[committeeId] = true
+    await fetchMembers(committeeId)
+}
+
+const fetchMembers = async (committeeId) => {
+    loadingMembers[committeeId] = true
+    try {
+        const res = await apiMethods.participants.getAll(orgId.value, eventId.value, { committee: committeeId, status: 'all' })
+        if (res.data.success) {
+            committeeMembers[committeeId] = res.data.participants || []
+        }
+    } catch (e) {
+        console.warn('Failed to load members for committee:', e)
+        committeeMembers[committeeId] = []
+    } finally {
+        loadingMembers[committeeId] = false
+    }
+}
+
+// =============================================
+// ADD MEMBER MODAL
+// =============================================
+const showAddMemberModal = ref(false)
+const addMemberCommittee = ref(null)
+const selectedMemberUser = ref(null)
+const memberSearchQuery = ref('')
+const memberSearchResults = ref([])
+const memberSearching = ref(false)
+const isAddingMember = ref(false)
+const memberCountrySearch = ref('')
+const showMemberCountryDropdown = ref(false)
+const memberCountryLoading = ref(false)
+const enrichedMemberCountries = ref([])
+
+const addMemberForm = reactive({
+    role: '',
+    country: { name: '', code: '' }
+})
+
+const canSubmitMember = computed(() => {
+    if (!selectedMemberUser.value || !addMemberForm.role) return false
+    if (addMemberForm.role === 'delegate' && (!addMemberForm.country?.name || !addMemberForm.country?.code)) return false
+    return true
+})
+
+const filteredMemberCountries = computed(() => {
+    const pool = enrichedMemberCountries.value
+    let filtered = pool.filter(c => !c.assignedTo)
+    if (memberCountrySearch.value.trim()) {
+        const q = memberCountrySearch.value.toLowerCase()
+        filtered = filtered.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q))
+    }
+    return filtered.slice(0, 50)
+})
+
+const openAddMember = (committee) => {
+    addMemberCommittee.value = committee
+    selectedMemberUser.value = null
+    memberSearchQuery.value = ''
+    memberSearchResults.value = []
+    addMemberForm.role = ''
+    addMemberForm.country = { name: '', code: '' }
+    memberCountrySearch.value = ''
+    enrichedMemberCountries.value = []
+    showAddMemberModal.value = true
+}
+
+const closeAddMember = () => {
+    showAddMemberModal.value = false
+    addMemberCommittee.value = null
+}
+
+// Load enriched countries when role changes to delegate
+watch(() => addMemberForm.role, async (role) => {
+    addMemberForm.country = { name: '', code: '' }
+    memberCountrySearch.value = ''
+    enrichedMemberCountries.value = []
+    if (role !== 'delegate' || !addMemberCommittee.value) return
+
+    memberCountryLoading.value = true
+    try {
+        const res = await apiMethods.committees.getCountries(orgId.value, eventId.value, addMemberCommittee.value._id)
+        if (res.data.success) {
+            enrichedMemberCountries.value = res.data.countries || []
+        }
+    } catch (e) {
+        // Fallback to committee's static countries
+        if (addMemberCommittee.value?.countries) {
+            enrichedMemberCountries.value = addMemberCommittee.value.countries.map(c => ({ ...c, assignedTo: null }))
+        }
+    } finally {
+        memberCountryLoading.value = false
+    }
+})
+
+let memberSearchTimeout = null
+const debouncedMemberSearch = () => {
+    clearTimeout(memberSearchTimeout)
+    if (memberSearchQuery.value.trim().length < 2) {
+        memberSearchResults.value = []
+        return
+    }
+    memberSearchTimeout = setTimeout(async () => {
+        memberSearching.value = true
+        try {
+            const res = await apiMethods.participants.searchUsers(orgId.value, eventId.value, { q: memberSearchQuery.value.trim() })
+            if (res.data.success) {
+                memberSearchResults.value = res.data.users || []
+            }
+        } catch (e) {
+            console.warn('User search failed:', e)
+        } finally {
+            memberSearching.value = false
+        }
+    }, 300)
+}
+
+const selectMemberUser = (user) => {
+    selectedMemberUser.value = user
+    memberSearchResults.value = []
+    memberSearchQuery.value = ''
+}
+
+const selectMemberCountry = (country) => {
+    addMemberForm.country = { name: country.name, code: country.code }
+    memberCountrySearch.value = country.name
+    showMemberCountryDropdown.value = false
+}
+
+const submitAddMember = async () => {
+    if (!canSubmitMember.value || !addMemberCommittee.value) return
+    isAddingMember.value = true
+    try {
+        await apiMethods.participants.add(orgId.value, eventId.value, {
+            userId: selectedMemberUser.value._id,
+            role: addMemberForm.role,
+            committeeId: addMemberCommittee.value._id,
+            country: addMemberForm.role === 'delegate' ? addMemberForm.country : undefined
+        })
+        toast.success('Member added')
+        closeAddMember()
+        // Refresh members list for that committee
+        if (expandedCommittees[addMemberCommittee.value._id]) {
+            await fetchMembers(addMemberCommittee.value._id)
+        }
+        await loadData() // refresh counts
+    } catch (e) {
+        toast.error(e.response?.data?.error || 'Failed to add member')
+    } finally {
+        isAddingMember.value = false
+    }
+}
+
+// =============================================
+// REMOVE MEMBER
+// =============================================
+const showRemoveMemberConfirm = ref(false)
+const removingMember = ref(null)
+const removingMemberCommittee = ref(null)
+
+const confirmRemoveMember = (member, committee) => {
+    removingMember.value = member
+    removingMemberCommittee.value = committee
+    showRemoveMemberConfirm.value = true
+}
+
+const executeRemoveMember = async () => {
+    if (!removingMember.value) return
+    try {
+        await apiMethods.participants.remove(orgId.value, eventId.value, removingMember.value._id)
+        toast.success('Member removed')
+        showRemoveMemberConfirm.value = false
+        // Refresh members list
+        if (removingMemberCommittee.value && expandedCommittees[removingMemberCommittee.value._id]) {
+            await fetchMembers(removingMemberCommittee.value._id)
+        }
+        await loadData() // refresh counts
+    } catch (e) {
+        toast.error(e.response?.data?.error || 'Failed to remove member')
+    }
+}
+
+// =============================================
+// MEMBER FORMATTING
+// =============================================
+const formatMemberRole = (role) => {
+    const map = {
+        delegate: 'Delegate', observer: 'Observer', expert: 'Expert',
+        presidium_chair: 'Chair', presidium_cochair: 'Co-Chair',
+        presidium_expert: 'Expert', presidium_secretary: 'Secretary'
+    }
+    return map[role] || role
+}
+
+const memberRoleBadge = (role) => {
+    if (PRESIDIUM_ROLES.includes(role)) return 'px-1.5 py-0.5 text-[10px] font-medium rounded bg-purple-100 text-purple-700'
+    if (role === 'delegate') return 'px-1.5 py-0.5 text-[10px] font-medium rounded bg-blue-100 text-blue-700'
+    if (role === 'observer') return 'px-1.5 py-0.5 text-[10px] font-medium rounded bg-yellow-100 text-yellow-700'
+    return 'px-1.5 py-0.5 text-[10px] font-medium rounded bg-mun-gray-100 text-mun-gray-600'
+}
+
+const memberAvatarClass = (role) => {
+    if (PRESIDIUM_ROLES.includes(role)) return 'bg-purple-100 text-purple-700'
+    if (role === 'delegate') return 'bg-blue-100 text-blue-700'
+    if (role === 'observer') return 'bg-yellow-100 text-yellow-700'
+    return 'bg-mun-gray-100 text-mun-gray-600'
 }
 
 const typeBadgeClass = (type) => ({

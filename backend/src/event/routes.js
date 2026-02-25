@@ -31,7 +31,7 @@ router.put('/:eventId',
 // Update event status (Org Admin or manage_event_status permission)
 router.put('/:eventId/status',
     global.auth.token,
-    global.auth.orgPermission('manage_event_status', 'orgId'),  // was: global.auth.orgAdmin('orgId')
+    global.auth.superAdmin,
     controller.updateEventStatus
 );
 
