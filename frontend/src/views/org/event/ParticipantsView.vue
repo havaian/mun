@@ -76,7 +76,7 @@
         <div v-else class="bg-white rounded-xl border border-mun-gray-200 overflow-hidden">
             <!-- Table header -->
             <div
-                class="grid grid-cols-12 gap-4 px-5 py-3 bg-mun-gray-50 border-b border-mun-gray-200 text-xs font-semibold text-mun-gray-500 uppercase tracking-wide">
+                class="grid grid-cols-12 gap-4 px-5 py-3 border-b border-mun-gray-200 text-xs font-semibold text-mun-gray-500 uppercase tracking-wide">
                 <div class="col-span-4">Participant</div>
                 <div class="col-span-2">Role</div>
                 <div class="col-span-2">Committee</div>
@@ -85,8 +85,8 @@
             </div>
 
             <!-- Rows -->
-            <div v-for="p in filteredParticipants" :key="p._id"
-                class="grid grid-cols-12 gap-4 px-5 py-3.5 items-center border-b border-mun-gray-100 last:border-b-0 hover:bg-mun-gray-50/50 transition-colors">
+            <div v-for="p in filteredParticipants" :key="p._id" @click="openDetail(p)"
+                class="grid grid-cols-12 gap-4 px-5 py-3.5 items-center border-b border-mun-gray-100 last:border-b-0 hover:bg-mun-gray-50/50 transition-colors cursor-pointer">
                 <!-- Participant info -->
                 <div class="col-span-4 flex items-center space-x-3 min-w-0">
                     <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
@@ -130,7 +130,7 @@
 
                 <!-- Actions -->
                 <div class="col-span-2 flex items-center justify-end space-x-1">
-                    <button v-if="canManage && p.status === 'active'" @click="confirmRemove(p)"
+                    <button v-if="canManage && p.status === 'active'" @click.stop="confirmRemove(p)"
                         class="p-1.5 text-mun-gray-400 hover:text-red-600 transition-colors rounded"
                         title="Remove participant">
                         <XMarkIcon class="w-4 h-4" />
@@ -386,6 +386,12 @@ const filteredCountries = computed(() => {
 })
 
 // =============================================
+// DETAIL MODAL STATE
+// =============================================
+const showDetailModal = ref(false)
+const selectedParticipant = ref(null)
+
+// =============================================
 // REMOVE STATE
 // =============================================
 const showRemoveConfirm = ref(false)
@@ -521,6 +527,14 @@ const addParticipant = async () => {
 }
 
 // =============================================
+// DETAIL MODAL
+// =============================================
+const openDetail = (participant) => {
+    selectedParticipant.value = participant
+    showDetailModal.value = true
+}
+
+// =============================================
 // REMOVE PARTICIPANT
 // =============================================
 const confirmRemove = (participant) => {
@@ -568,6 +582,25 @@ const roleAvatarClass = (role) => {
     if (role === 'delegate') return 'bg-mun-blue-100 text-mun-blue-700'
     if (role === 'observer') return 'bg-yellow-100 text-yellow-700'
     return 'bg-mun-gray-100 text-mun-gray-600'
+}
+
+const formatDate = (d) => {
+    if (!d) return ''
+    return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+const formatDateTime = (d) => {
+    if (!d) return ''
+    return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+const formatSource = (source) => {
+    const map = {
+        direct_assignment: 'Direct Assignment',
+        registration_pipeline: 'Registration Pipeline',
+        invitation: 'Invitation'
+    }
+    return map[source] || source
 }
 
 // =============================================
