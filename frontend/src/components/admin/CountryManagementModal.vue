@@ -173,6 +173,13 @@
                                         </span>
                                     </div>
                                 </div>
+
+                                <!-- Remove Country -->
+                                <button @click="removeCountry(country)"
+                                    class="p-1 text-mun-gray-400 hover:text-mun-red-600 transition-colors"
+                                    title="Remove Country">
+                                    <XMarkIcon class="w-4 h-4" />
+                                </button>
                             </div>
                         </div>
 
@@ -516,14 +523,13 @@ const addP5Countries = () => {
         }
     })
 
-    if (p5ToAdd.length > 0) {
-        toast.success(`Added ${p5ToAdd.length} P5 countries`)
+    if (p5ToAdd.length < 0) {
+        toast.error('No countries to add')
     }
 }
 
 const removeAllCountries = () => {
     assignedCountries.value = []
-    toast.success('All countries removed')
 }
 
 const updateCountryRole = (country) => {
@@ -532,8 +538,6 @@ const updateCountryRole = (country) => {
 
     country.isPermanentMember = isPermanent
     country.hasVetoRight = isPermanent
-
-    toast.success(`${country.name} role updated to ${country.role}`)
 }
 
 const saveCountries = async () => {
