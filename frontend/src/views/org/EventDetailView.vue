@@ -436,7 +436,7 @@ const orgSlug = computed(() => route.params.orgSlug)
 const eventSlug = computed(() => route.params.eventSlug)
 const orgId = computed(() => authStore.activeOrganization?._id)
 const canManage = computed(() => authStore.isOrgAdmin || authStore.hasOrgPermission('manage_event_content'))
-const canChangeStatus = computed(() => authStore.isOrgAdmin)
+const canChangeStatus = computed(() => authStore.isSuperAdmin)
 
 const isLoading = ref(true)
 const isSaving = ref(false)
