@@ -121,9 +121,8 @@
                 <!-- Country -->
                 <div class="col-span-2">
                     <div v-if="p.country?.name" class="flex items-center space-x-1.5">
-                        <img v-if="p.country?.code" :src="`/api/countries/flags/${p.country.code}`"
-                            :alt="p.country.name" class="w-5 h-3.5 rounded-sm object-cover border border-mun-gray-200"
-                            @error="$event.target.style.display = 'none'" />
+                        <CountryFlag :country-name="p.country.name" :country-code="p.country.code" size="small"
+                            variant="bordered" />
                         <span class="text-sm text-mun-gray-700">{{ p.country.name }}</span>
                     </div>
                     <span v-else class="text-xs text-mun-gray-400">—</span>
@@ -252,18 +251,16 @@
                             <button v-for="country in filteredCountries" :key="country.code"
                                 @click="selectCountry(country)"
                                 class="w-full flex items-center px-4 py-2 hover:bg-mun-gray-50 text-left text-sm transition-colors">
-                                <img :src="`/api/countries/flags/${country.code}`" :alt="country.name"
-                                    class="w-5 h-3.5 rounded-sm object-cover border border-mun-gray-200 mr-2"
-                                    @error="$event.target.style.display = 'none'" />
+                                <CountryFlag :country-name="country.name" :country-code="country.code" size="small"
+                                    variant="bordered" class="mr-2" />
                                 {{ country.name }}
                             </button>
                         </div>
                         <!-- Selected country -->
                         <div v-if="addForm.country?.name && !showCountryDropdown"
                             class="mt-1 flex items-center space-x-2 text-sm text-mun-gray-700">
-                            <img :src="`/api/countries/flags/${addForm.country.code}`"
-                                class="w-5 h-3.5 rounded-sm object-cover border border-mun-gray-200"
-                                @error="$event.target.style.display = 'none'" />
+                            <CountryFlag :country-name="addForm.country.name" :country-code="addForm.country.code"
+                                size="small" variant="bordered" />
                             <span>{{ addForm.country.name }}</span>
                             <button @click="addForm.country = { name: '', code: '' }; countrySearch = ''"
                                 class="text-mun-gray-400 hover:text-mun-gray-600">
@@ -299,6 +296,7 @@ import { useToast } from '@/plugins/toast'
 import {
     PlusIcon, XMarkIcon, MagnifyingGlassIcon, UserGroupIcon
 } from '@heroicons/vue/24/outline'
+import CountryFlag from '@/components/shared/CountryFlag.vue'
 
 defineProps({
     embedded: { type: Boolean, default: false }

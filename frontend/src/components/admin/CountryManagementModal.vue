@@ -370,7 +370,6 @@ const initializeAssignedCountries = async () => {
             assignedCountries.value = response.data.countries.map(country => ({
                 // Backend schema fields
                 name: country.name,
-                flagUrl: country.flagUrl || `/api/countries/flags/${country.code?.toLowerCase() || 'unknown'}`,
                 isPermanentMember: country.isPermanentMember || false,
                 hasVetoRight: country.hasVetoRight || false,
                 isObserver: country.isObserver || false,
@@ -382,7 +381,7 @@ const initializeAssignedCountries = async () => {
                 assignedTo: country.assignedTo || null,
 
                 // Frontend display fields
-                code: country.code || extractCodeFromFlagUrl(country.flagUrl) || 'unknown',
+                code: country.code,
                 region: country.region || 'Unknown',
                 role: country.isPermanentMember ? 'permanent' : 'non-permanent'
             }))
@@ -398,7 +397,6 @@ const initializeAssignedCountries = async () => {
     if (props.committee?.countries) {
         assignedCountries.value = props.committee.countries.map(country => ({
             name: country.name,
-            flagUrl: country.flagUrl || `/api/countries/flags/${country.code?.toLowerCase() || 'unknown'}`,
             isPermanentMember: country.isPermanentMember || false,
             hasVetoRight: country.hasVetoRight || false,
             isObserver: country.isObserver || false,
@@ -406,7 +404,7 @@ const initializeAssignedCountries = async () => {
             registeredAt: country.registeredAt || null,
             lastActivity: country.lastActivity || new Date(),
             assignedTo: null,
-            code: country.code || extractCodeFromFlagUrl(country.flagUrl) || 'unknown',
+            code: country.code,
             region: country.region || 'Unknown',
             role: country.isPermanentMember ? 'permanent' : 'non-permanent'
         }))
@@ -416,13 +414,6 @@ const initializeAssignedCountries = async () => {
         assignedCountries.value = []
         originalAssigned.value = []
     }
-}
-
-// Helper function to extract country code from flag URL
-const extractCodeFromFlagUrl = (flagUrl) => {
-    if (!flagUrl) return null
-    const match = flagUrl.match(/\/([a-z]{2})\.svg$/i)
-    return match ? match[1].toUpperCase() : null
 }
 
 const toggleRegionFilter = (regionCode) => {
@@ -461,7 +452,6 @@ const assignCountry = (country) => {
 
     const newCountry = {
         name: country.name,
-        flagUrl: `/api/countries/flags/${country.code.toLowerCase()}`,
         isPermanentMember: isPermanent,
         hasVetoRight: isPermanent, // P5 countries have veto right
         isObserver: false,
