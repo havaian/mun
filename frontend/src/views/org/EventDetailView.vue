@@ -160,8 +160,8 @@
                                 <XMarkIcon class="w-4 h-4" />
                             </button>
                         </div>
-                        <ImageUploader v-if="!event.heroImage" :model-value="null"
-                            @update:model-value="updateEventField('heroImage', $event)" />
+                        <ImageUploader v-if="!event.heroImage" :modelValue="null"
+                            @update:modelValue="updateEventField('heroImage', $event)" />
                     </div>
 
                     <!-- Photo gallery -->
@@ -176,7 +176,7 @@
                                     <XMarkIcon class="w-3.5 h-3.5" />
                                 </button>
                             </div>
-                            <ImageUploader :model-value="null" @update:model-value="addPhoto($event)" compact
+                            <ImageUploader :modelValue="null" @update:modelValue="addPhoto($event)" compact
                                 size-classes="w-full aspect-square" />
                         </div>
                     </div>

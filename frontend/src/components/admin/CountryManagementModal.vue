@@ -1,5 +1,5 @@
 <template>
-    <ModalWrapper :model-value="modelValue" :title="`Manage Countries - ${committee?.name}`"
+    <ModalWrapper :modelValue="modelValue" :title="`Manage Countries - ${committee?.name}`"
         subtitle="Assign countries to this committee" :icon="GlobeAltIcon" size="full" height="full" variant="default"
         :has-unsaved-changes="hasChanges" :is-loading="isSaving" cancel-text="Cancel" primary-text="Save Countries"
         :is-primary-disabled="!hasChanges" @close="close" @primary-action="saveCountries">
