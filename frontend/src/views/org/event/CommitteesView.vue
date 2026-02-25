@@ -120,8 +120,8 @@
 
                     <!-- Member rows -->
                     <div v-else class="space-y-1.5 max-h-60 overflow-y-auto">
-                        <div v-for="m in committeeMembers[committee._id]" :key="m._id"
-                            class="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-mun-gray-50/80 group">
+                        <div v-for="m in committeeMembers[committee._id]" :key="m._id" @click="openMemberDetail(m)"
+                            class="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-mun-gray-50/80 cursor-pointer group">
                             <div class="flex items-center space-x-2.5 min-w-0">
                                 <div :class="[
                                     'w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold',
@@ -146,7 +146,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <button v-if="canManage && m.status === 'active'" @click="confirmRemoveMember(m, committee)"
+                            <button v-if="canManage && m.status === 'active'"
+                                @click.stop="confirmRemoveMember(m, committee)"
                                 class="p-1 text-mun-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all rounded"
                                 title="Remove">
                                 <XMarkIcon class="w-3.5 h-3.5" />
@@ -412,6 +413,119 @@
             </template>
         </ModalWrapper>
 
+        <!-- =============================================
+             MEMBER DETAIL MODAL
+             ============================================= -->
+        <ModalWrapper :modelValue="showMemberDetail" @close="showMemberDetail = false" :showDefaultFooter="false"
+            size="md">
+            <template #title>
+                {{ detailMember?.user?.firstName }} {{ detailMember?.user?.lastName }}
+            </template>
+            <template #default>
+                <div v-if="detailMember" class="space-y-5">
+                    <!-- Status + Role banner -->
+                    <div class="flex items-center justify-between">
+                        <span :class="memberRoleBadge(detailMember.role)">
+                            {{ formatMemberRole(detailMember.role) }}
+                        </span>
+                        <span :class="[
+                            'px-2 py-0.5 text-xs font-medium rounded-full',
+                            detailMember.status === 'active' ? 'bg-green-100 text-green-700' :
+                                detailMember.status === 'removed' ? 'bg-red-50 text-red-600' :
+                                    'bg-mun-gray-100 text-mun-gray-600'
+                        ]">
+                            {{ detailMember.status }}
+                        </span>
+                    </div>
+
+                    <!-- User info -->
+                    <div>
+                        <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Person</h4>
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                            <div>
+                                <span class="text-mun-gray-400">Name</span>
+                                <p class="font-medium text-mun-gray-900">{{ detailMember.user?.firstName }} {{
+                                    detailMember.user?.lastName }}</p>
+                            </div>
+                            <div>
+                                <span class="text-mun-gray-400">Email</span>
+                                <p class="font-medium text-mun-gray-900">{{ detailMember.user?.email }}</p>
+                            </div>
+                            <div v-if="detailMember.user?.institution">
+                                <span class="text-mun-gray-400">Institution</span>
+                                <p class="font-medium text-mun-gray-900">{{ detailMember.user.institution }}</p>
+                            </div>
+                            <div v-if="detailMember.user?.phone">
+                                <span class="text-mun-gray-400">Phone</span>
+                                <p class="font-medium text-mun-gray-900">{{ detailMember.user.phone }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Assignment info -->
+                    <div>
+                        <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Assignment</h4>
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                            <div v-if="detailMember.committee">
+                                <span class="text-mun-gray-400">Committee</span>
+                                <p class="font-medium text-mun-gray-900">
+                                    {{ detailMember.committee.name }}
+                                    <span v-if="detailMember.committee.acronym" class="text-mun-gray-400 text-xs ml-1">
+                                        ({{ detailMember.committee.acronym }})
+                                    </span>
+                                </p>
+                            </div>
+                            <div v-if="detailMember.country?.name">
+                                <span class="text-mun-gray-400">Country</span>
+                                <div class="flex items-center space-x-1.5 mt-0.5">
+                                    <CountryFlag :country-name="detailMember.country.name"
+                                        :country-code="detailMember.country.code" size="small" variant="bordered" />
+                                    <span class="font-medium text-mun-gray-900">{{ detailMember.country.name }}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="text-mun-gray-400">Source</span>
+                                <p class="font-medium text-mun-gray-900">{{ formatSource(detailMember.source) }}</p>
+                            </div>
+                            <div v-if="detailMember.assignedBy">
+                                <span class="text-mun-gray-400">Assigned By</span>
+                                <p class="font-medium text-mun-gray-900">
+                                    {{ detailMember.assignedBy.firstName }} {{ detailMember.assignedBy.lastName }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timestamps -->
+                    <div>
+                        <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Timeline</h4>
+                        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                            <div>
+                                <span class="text-mun-gray-400">Added</span>
+                                <p class="font-medium text-mun-gray-900">{{ formatDateTime(detailMember.createdAt) }}
+                                </p>
+                            </div>
+                            <div v-if="detailMember.updatedAt !== detailMember.createdAt">
+                                <span class="text-mun-gray-400">Last Updated</span>
+                                <p class="font-medium text-mun-gray-900">{{ formatDateTime(detailMember.updatedAt) }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions footer -->
+                    <div v-if="canManage" class="flex justify-end space-x-3 pt-3 border-t border-mun-gray-100">
+                        <AppButton variant="ghost" @click="showMemberDetail = false">Close</AppButton>
+                        <AppButton v-if="detailMember.status === 'active'" variant="ghost"
+                            class="!text-red-600 hover:!text-red-700"
+                            @click="showMemberDetail = false; confirmRemoveMember(detailMember, detailMemberCommittee)">
+                            Remove Member
+                        </AppButton>
+                    </div>
+                </div>
+            </template>
+        </ModalWrapper>
+
         <!-- Remove member confirmation -->
         <ConfirmationDialog :show="showRemoveMemberConfirm" title="Remove Member"
             :message="`Remove ${removingMember?.user?.firstName} ${removingMember?.user?.lastName} from ${removingMemberCommittee?.acronym || removingMemberCommittee?.name}?`"
@@ -428,6 +542,7 @@ import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
 import CountryManagementModal from '@/components/admin/CountryManagementModal.vue'
 import CountryFlag from '@/components/shared/CountryFlag.vue'
+import ConfirmationDialog from '@/components/shared/ConfirmationDialog.vue'
 import {
     PlusIcon, PencilIcon, GlobeAltIcon, ChevronDownIcon,
     RectangleGroupIcon, UserGroupIcon, XMarkIcon
@@ -705,19 +820,19 @@ const selectMemberCountry = (country) => {
 const submitAddMember = async () => {
     if (!canSubmitMember.value || !addMemberCommittee.value) return
     isAddingMember.value = true
+    const committeeId = addMemberCommittee.value._id // save before close nullifies it
     try {
         await apiMethods.participants.add(orgId.value, eventId.value, {
             userId: selectedMemberUser.value._id,
             role: addMemberForm.role,
-            committeeId: addMemberCommittee.value._id,
+            committeeId: committeeId,
             country: addMemberForm.role === 'delegate' ? addMemberForm.country : undefined
         })
         toast.success('Member added')
         closeAddMember()
-        // Refresh members list for that committee
-        if (expandedCommittees[addMemberCommittee.value._id]) {
-            await fetchMembers(addMemberCommittee.value._id)
-        }
+        // Auto-expand and refresh members list for that committee
+        expandedCommittees[committeeId] = true
+        await fetchMembers(committeeId)
         await loadData() // refresh counts
     } catch (e) {
         toast.error(e.response?.data?.error || 'Failed to add member')
@@ -756,6 +871,20 @@ const executeRemoveMember = async () => {
 }
 
 // =============================================
+// MEMBER DETAIL MODAL
+// =============================================
+const showMemberDetail = ref(false)
+const detailMember = ref(null)
+const detailMemberCommittee = ref(null)
+
+const openMemberDetail = (member) => {
+    detailMember.value = member
+    // Find the committee this member belongs to
+    detailMemberCommittee.value = committees.value.find(c => c._id === member.committee?._id) || null
+    showMemberDetail.value = true
+}
+
+// =============================================
 // MEMBER FORMATTING
 // =============================================
 const formatMemberRole = (role) => {
@@ -779,6 +908,20 @@ const memberAvatarClass = (role) => {
     if (role === 'delegate') return 'bg-blue-100 text-blue-700'
     if (role === 'observer') return 'bg-yellow-100 text-yellow-700'
     return 'bg-mun-gray-100 text-mun-gray-600'
+}
+
+const formatDateTime = (d) => {
+    if (!d) return ''
+    return new Date(d).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+const formatSource = (source) => {
+    const map = {
+        direct_assignment: 'Direct Assignment',
+        registration_pipeline: 'Registration Pipeline',
+        invitation: 'Invitation'
+    }
+    return map[source] || source
 }
 
 const typeBadgeClass = (type) => ({
