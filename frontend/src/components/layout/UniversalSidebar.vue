@@ -408,7 +408,7 @@ const getBadgeClass = (type) => {
         default: 'bg-mun-blue-600',
         success: 'bg-green-100',
         warning: 'bg-orange-100',
-        info: 'bg-mun-blue-400',
+        info: 'bg-gray-400',
         danger: 'bg-red-100',
         live: 'bg-red-500'
     }
