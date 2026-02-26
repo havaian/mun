@@ -73,6 +73,9 @@ const adminRoutes = require('./admin/routes');
 // --- General resources ---
 const countriesRoutes = require('./countries/routes');
 
+// --- Participant-scoped routes (no orgId in URL) ---
+const participantScopedRoutes = require('./participant-routes');
+
 // Import countries cache initialization
 const { initializeFlagCache } = require('./countries/controller');
 
@@ -168,6 +171,9 @@ app.use(`${committeeBase}/timers`, timerRoutes);
 app.use(`${committeeBase}/procedure`, procedureRoutes);
 app.use(`${committeeBase}/export`, exportRoutes);
 
+// --- Participant-scoped routes (access via EventParticipant, no org context needed in URL) ---
+app.use('/api/p', participantScopedRoutes);
+
 // --- Platform admin (SuperAdmin only) ---
 app.use('/api/admin', adminRoutes);
 
@@ -262,6 +268,7 @@ const startServer = async () => {
       global.logger.info(`📝 Registration: /api/organizations/:orgId/events/:eventId/registration`);
       global.logger.info(`🏛️ Committees: /api/organizations/:orgId/events/:eventId/committees`);
       global.logger.info(`📋 Sessions/Docs/Voting/etc: .../committees/:committeeId/*`);
+      global.logger.info('🎯 Participant routes: /api/p/events/:eventId/...');
       global.logger.info(`📨 Invitations: /api/invitations`);
       global.logger.info(`🔔 Notifications: /api/notifications`);
       global.logger.info(`🔧 Admin: /api/admin (SuperAdmin)`);

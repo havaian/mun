@@ -555,6 +555,82 @@ const requirePresidiumOrDelegate = (req, res, next) => {
     next();
 };
 
+/**
+ * Resolve event context from just an eventId (no orgId in URL).
+ * For participant-scoped routes where user accesses via EventParticipant,
+ * not via OrgMembership.
+ *
+ * Attaches to req:
+ *   - req.organization (lean doc)
+ *   - req.event (lean doc)
+ *   - req.isOrgAdmin (boolean — checks superAdmin or org.admin)
+ *   - req.orgMembership (OrgMembership if exists, else null)
+ *
+ * Usage:
+ *   router.use(
+ *     global.auth.token,
+ *     global.auth.eventById('eventId'),
+ *     global.auth.participant('committeeId')
+ *   );
+ */
+const resolveEventById = (eventIdParam = 'eventId') => {
+    return async (req, res, next) => {
+        const eventId = req.params[eventIdParam];
+
+        if (!eventId) {
+            return res.status(400).json({ error: 'Event ID required in URL.' });
+        }
+
+        try {
+            const { Event } = require('../event/model');
+            const { Organization } = require('../organization/model');
+
+            const event = await Event.findById(eventId).lean();
+            if (!event) {
+                return res.status(404).json({ error: 'Event not found.' });
+            }
+
+            const org = await Organization.findById(event.organization).lean();
+            if (!org) {
+                return res.status(404).json({ error: 'Organization not found.' });
+            }
+
+            req.organization = org;
+            req.event = event;
+
+            // Inject orgId/eventId into params so downstream middleware works
+            // (resolveParticipant, controllers that read req.params.orgId, etc.)
+            req.params.orgId = org._id.toString();
+            req.params.eventId = event._id.toString();
+
+            // Determine org-level access
+            const isSuperAdmin = req.user.isSuperAdmin;
+            const isOrgOwner = org.admin?.toString() === req.user.userId;
+            req.isOrgAdmin = isSuperAdmin || isOrgOwner;
+
+            // Lookup OrgMembership for permission-based access
+            if (!req.isOrgAdmin) {
+                try {
+                    const { OrgMembership } = require('../org-membership/model');
+                    const membership = await OrgMembership.findOne({
+                        user: req.user.userId,
+                        organization: org._id,
+                        status: 'active'
+                    }).lean();
+                    req.orgMembership = membership || null;
+                } catch (e) {
+                    req.orgMembership = null;
+                }
+            }
+
+            next();
+        } catch (error) {
+            global.logger.error('resolveEventById error:', error);
+            return res.status(500).json({ error: 'Failed to resolve event context.' });
+        }
+    };
+};
+
 module.exports = {
     // Core
     authenticateToken,
@@ -576,5 +652,6 @@ module.exports = {
     requireDelegate,
     requireAnyParticipant,
     requireVotingRights,
-    requirePresidiumOrDelegate
+    requirePresidiumOrDelegate,
+    resolveEventById,
 };

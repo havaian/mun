@@ -316,8 +316,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch, markRaw } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, nextTick, watch, markRaw, inject } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
@@ -335,9 +334,11 @@ import {
 } from 'lucide-vue-next'
 
 // Stores
-const router = useRouter()
 const authStore = useAuthStore()
 const toast = useToast()
+
+// Context
+const ctx = inject('sessionContext')
 
 // State
 const selectedChannel = ref(null)
@@ -347,7 +348,6 @@ const isSending = ref(false)
 const isLoadingMessages = ref(false)
 const messages = ref([])
 const onlineDelegates = ref([])
-const committee = ref(null)
 const messagesContainer = ref(null)
 const conversations = ref([])
 const dmConversations = ref([])
@@ -413,9 +413,9 @@ const filteredOnlineDelegates = computed(() => {
 })
 
 const allDelegates = computed(() => {
-  if (!committee.value?.countries) return []
+  if (!ctx.committee.value?.countries) return []
 
-  return committee.value.countries
+  return ctx.committee.value.countries
     .filter(country =>
       country.email &&
       country.email !== authStore.user?.email
@@ -445,20 +445,6 @@ const canSendMessage = computed(() => {
 // Methods
 const loadData = async () => {
   try {
-    // Get committee ID from auth context
-    const committeeId = authStore.user?.committeeId._id
-    if (!committeeId) {
-      throw new Error('No committee assigned')
-    }
-
-    // Fetch full committee details to get countries
-    const committeeResponse = await apiMethods.committees.getById(committeeId)
-    if (!committeeResponse.data.success) {
-      throw new Error('Failed to fetch committee details')
-    }
-
-    committee.value = committeeResponse.data.committee
-
     await Promise.all([
       loadConversations(),
       loadOnlineDelegates()
@@ -484,7 +470,7 @@ const loadMessages = async () => {
     // For public channels
     if (selectedChannel.value.type === 'public') {
       const response = await apiMethods.messages.getCommitteeConversation(
-        committee.value._id || committee.value,
+        ctx.committeeId.value,
         selectedChannel.value.id
       )
 
@@ -521,7 +507,7 @@ const loadMessages = async () => {
 const loadOnlineDelegates = async () => {
   try {
     // Placeholder - in real app would come from WebSocket presence
-    onlineDelegates.value = committee.value?.countries
+    onlineDelegates.value = ctx.committee.value?.countries
       ?.filter(country => country.email)
       ?.map(country => ({
         email: country.email,
@@ -536,7 +522,7 @@ const loadOnlineDelegates = async () => {
 const loadConversations = async () => {
   try {
     const response = await apiMethods.messages.getCommitteeConversations(
-      committee.value._id || committee.value
+      ctx.committeeId.value
     )
 
     if (response.data.success) {
@@ -586,7 +572,7 @@ const sendMessage = async () => {
     // For public channels
     if (selectedChannel.value.type === 'public') {
       const response = await apiMethods.messages.sendCommitteeMessage(
-        committee.value._id || committee.value,
+        ctx.committeeId.value,
         selectedChannel.value.id,
         { content: messageContent }
       )
@@ -656,7 +642,7 @@ const openDirectMessage = async (delegate) => {
     } else {
       // Create new bilateral conversation
       const response = await apiMethods.messages.createBilateral({
-        committeeId: committee.value._id || committee.value,
+        committeeId: ctx.committeeId.value,
         targetEmail: delegate.email,
         targetCountry: delegate.countryName
       })
@@ -720,7 +706,7 @@ const getCountryCodeForMessage = (message) => {
   }
   
   // Find country code from committee countries
-  const country = committee.value?.countries?.find(c => 
+  const country = ctx.committee.value?.countries?.find(c => 
     c.name === message.senderCountry || 
     c.name.toLowerCase() === message.senderCountry.toLowerCase()
   )
@@ -839,8 +825,10 @@ watch(selectedChannel, () => {
 })
 
 // Lifecycle
-onMounted(async () => {
-  await loadData()
-  setupWebSocketListeners()
-})
+watch(() => ctx.isReady.value, (ready) => {
+    if (ready) {
+      await loadData()
+      setupWebSocketListeners()
+    }
+}, { immediate: true })
 </script>

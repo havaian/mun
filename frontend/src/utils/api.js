@@ -91,6 +91,12 @@ const eventBase = (orgId, eventId) => `/organizations/${orgId}/events/${eventId}
 // Build committee-scoped base: /organizations/:orgId/events/:eventId/committees/:committeeId
 const committeeBase = (orgId, eventId, committeeId) => `${eventBase(orgId, eventId)}/committees/${committeeId}`
 
+// Participant-scoped base (no orgId): /p/events/:eventId
+const pEventBase = (eventId) => `/p/events/${eventId}`
+
+// Participant-scoped committee base: /p/events/:eventId/committees/:committeeId
+const pCommitteeBase = (eventId, committeeId) => `${pEventBase(eventId)}/committees/${committeeId}`
+
 // =============================================
 // API METHODS — organized by module
 // =============================================
@@ -110,51 +116,79 @@ export const apiMethods = {
         confirmPasswordReset: (data) => api.post('/auth/password-reset/confirm', data),
         verifyEmail: (token) => api.post('/auth/verify-email', { token }),
         resendVerification: () => api.post('/auth/resend-verification'),
+    },    
+
+    // =============================================
+    // ADMIN (platform-level, SuperAdmin only)
+    // =============================================
+    admin: {
+        getDashboardStats: () => api.get('/admin/dashboard/stats'),
+        getRecentActivity: (params = {}) => api.get('/admin/dashboard/activity', { params }),
+        getSystemHealth: () => api.get('/admin/system/health'),
+        clearCaches: () => api.post('/admin/system/clear-cache'),
+        getPerformanceMetrics: () => api.get('/admin/performance/metrics'),
+        getResponseTimes: (params = {}) => api.get('/admin/performance/response-times', { params }),
+        exportConfig: () => api.get('/admin/export/config'),
+        databaseMaintenance: (data) => api.post('/admin/maintenance/database', data),
+        createBackup: (data = {}) => api.post('/admin/maintenance/backup', data),
+        getUserEngagement: (params = {}) => api.get('/admin/analytics/user-engagement', { params }),
+        getUsagePatterns: (params = {}) => api.get('/admin/analytics/usage-patterns', { params }),
+        bulkGenerateQR: (data) => api.post('/admin/committees/bulk-qr', data),
+    },
+
+    
+
+    // =============================================
+    // COMMITTEES — /api/organizations/:orgId/events/:eventId/committees
+    // =============================================
+    committees: {
+        getAll: (orgId, eventId, params = {}) => api.get(`${eventBase(orgId, eventId)}/committees`, { params }),
+        getById: (orgId, eventId, committeeId) => api.get(`${eventBase(orgId, eventId)}/committees/${committeeId}`),
+        create: (orgId, eventId, data) => api.post(`${eventBase(orgId, eventId)}/committees`, data),
+        update: (orgId, eventId, committeeId, data) => api.put(`${eventBase(orgId, eventId)}/committees/${committeeId}`, data),
+        delete: (orgId, eventId, committeeId) => api.delete(`${eventBase(orgId, eventId)}/committees/${committeeId}`),
+
+        // Country management
+        getCountries: (orgId, eventId, committeeId) => api.get(`${eventBase(orgId, eventId)}/committees/${committeeId}/countries`),
+        addCountries: (orgId, eventId, committeeId, data) => api.put(`${eventBase(orgId, eventId)}/committees/${committeeId}/countries`, data),
+        removeCountry: (orgId, eventId, committeeId, countryName) => api.delete(`${eventBase(orgId, eventId)}/committees/${committeeId}/countries/${encodeURIComponent(countryName)}`),
+        updateCountryStatus: (orgId, eventId, committeeId, countryName, data) => api.put(`${eventBase(orgId, eventId)}/committees/${committeeId}/countries/${encodeURIComponent(countryName)}/status`, data),
     },
 
     // =============================================
-    // ORGANIZATIONS (SuperAdmin)
+    // COUNTRIES (general resource — not committee-scoped)
     // =============================================
-    organizations: {
-        getAll: (params = {}) => api.get('/organizations', { params }),
-        getById: (identifier) => api.get(`/organizations/${identifier}`),
-        create: (data) => api.post('/organizations', data),
-        update: (id, data) => api.put(`/organizations/${id}`, data),
-        delete: (id) => api.delete(`/organizations/${id}`),
-        assignAdmin: (id, data) => api.post(`/organizations/${id}/assign-admin`, data),
+    countries: {
+        getAll: (params = {}) => api.get('/countries', { params }),
+        getByCode: (code, params = {}) => api.get(`/countries/${code}`, { params }),
+        search: (query) => api.get('/countries/search', { params: { q: query } }),
+        // Flags
+        getFlag: (code) => api.get(`/countries/flags/${code}`),
+        getAllFlags: () => api.get('/countries/flags/all/batch'),
+        getAllFlagsBatch: () => api.get('/countries/flags/all/batch'),
+        getFlagsMetaInfo: () => api.get('/countries/flags/meta/info'),
+        getMetaHealth: () => api.get('/countries/meta/health'),
+        refreshCache: () => api.post('/countries/admin/refresh-flags'),
     },
 
     // =============================================
-    // ORG MEMBERS — /api/organizations/:orgId/members
+    // DOCUMENTS — /api/organizations/:orgId/events/:eventId/committees/:committeeId/documents
     // =============================================
-    orgMembers: {
-        getAll: (orgId, params = {}) => api.get(`/organizations/${orgId}/members`, { params }),
-        add: (orgId, data) => api.post(`/organizations/${orgId}/members`, data),
-        invite: (orgId, data) => api.post(`/organizations/${orgId}/members/invite`, data),
-        updatePermissions: (orgId, membershipId, data) => api.put(`/organizations/${orgId}/members/${membershipId}/permissions`, data),
-        remove: (orgId, membershipId) => api.delete(`/organizations/${orgId}/members/${membershipId}`),
-        getInvitations: (orgId) => api.get(`/organizations/${orgId}/members/invitations`),
-        cancelInvitation: (orgId, invitationId) => api.delete(`/organizations/${orgId}/members/invitations/${invitationId}`),
-        getPermissionsList: (orgId) => api.get(`/organizations/${orgId}/members/permissions-list`),
-    },
+    documents: {
+        getAll: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/documents`, { params }),
 
-    // =============================================
-    // INVITATIONS (user-facing)
-    // =============================================
-    invitations: {
-        getInfo: (token) => api.get(`/invitations/${token}/info`),
-        accept: (token) => api.post(`/invitations/${token}/accept`),
-        getMy: () => api.get('/invitations/my'),
-    },
+        // Position papers (delegates)
+        uploadPositionPaper: (orgId, eventId, committeeId, formData) => api.post(`${committeeBase(orgId, eventId, committeeId)}/documents/position-papers`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        }),
+        getPositionPaper: (orgId, eventId, committeeId, countryName) => api.get(`${committeeBase(orgId, eventId, committeeId)}/documents/position-papers/${encodeURIComponent(countryName)}`),
 
-    // =============================================
-    // NOTIFICATIONS
-    // =============================================
-    notifications: {
-        getAll: (params = {}) => api.get('/notifications', { params }),
-        getUnreadCount: () => api.get('/notifications/unread-count'),
-        markAsRead: (id) => api.put(`/notifications/${id}/read`),
-        markAllAsRead: () => api.put('/notifications/read-all'),
+        // Public documents (presidium)
+        uploadPublic: (orgId, eventId, committeeId, formData) => api.post(`${committeeBase(orgId, eventId, committeeId)}/documents/public`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        }),
+        updatePublic: (orgId, eventId, committeeId, docId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/documents/public/${docId}`, data),
+        deletePublic: (orgId, eventId, committeeId, docId) => api.delete(`${committeeBase(orgId, eventId, committeeId)}/documents/public/${docId}`),
     },
 
     // =============================================
@@ -170,6 +204,15 @@ export const apiMethods = {
         updateStatus: (orgId, eventId, data) => api.put(`/organizations/${orgId}/events/${eventId}/status`, data),
         delete: (orgId, eventId) => api.delete(`/organizations/${orgId}/events/${eventId}`),
         getStatistics: (orgId, eventId) => api.get(`/organizations/${orgId}/events/${eventId}/statistics`),
+    },
+
+    // =============================================
+    // INVITATIONS (user-facing)
+    // =============================================
+    invitations: {
+        getInfo: (token) => api.get(`/invitations/${token}/info`),
+        accept: (token) => api.post(`/invitations/${token}/accept`),
+        getMy: () => api.get('/invitations/my'),
     },
 
     // =============================================
@@ -201,12 +244,140 @@ export const apiMethods = {
     },
 
     // =============================================
-    // PUBLIC ENDPOINTS (no auth required)
+    // MESSAGING — /api/organizations/:orgId/events/:eventId/committees/:committeeId/messages
     // =============================================
-    public: {
-        getOrg: (orgSlug) => api.get(`/public/org/${orgSlug}`),
-        getEvent: (orgSlug, eventSlug) => api.get(`/public/events/${orgSlug}/${eventSlug}`),
-        getRegistration: (orgSlug, eventSlug) => api.get(`/public/events/${orgSlug}/${eventSlug}/registration`),
+    messages: {
+        // Conversations
+        createBilateral: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/bilateral`, data),
+        createGroup: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/group`, data),
+        getUserConversations: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/messages`, { params }),
+
+        // Committee-wide channels
+        getCommitteeConversation: (orgId, eventId, committeeId, channelType) => api.get(`${committeeBase(orgId, eventId, committeeId)}/messages/channel/${channelType}`),
+        sendCommitteeMessage: (orgId, eventId, committeeId, channelType, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/channel/${channelType}`, data),
+
+        // Single conversation
+        getConversation: (orgId, eventId, committeeId, conversationId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}`, { params }),
+
+        // Message operations
+        sendMessage: (orgId, eventId, committeeId, conversationId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/messages`, data),
+        editMessage: (orgId, eventId, committeeId, conversationId, messageId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/messages/${messageId}`, data),
+        markAsRead: (orgId, eventId, committeeId, conversationId, data = {}) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/read`, data),
+
+        // Participant management
+        addParticipant: (orgId, eventId, committeeId, conversationId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/participants`, data),
+        leaveConversation: (orgId, eventId, committeeId, conversationId) => api.delete(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/leave`),
+        archiveConversation: (orgId, eventId, committeeId, conversationId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/archive`, data),
+    },
+
+    // =============================================
+    // NOTIFICATIONS
+    // =============================================
+    notifications: {
+        getAll: (params = {}) => api.get('/notifications', { params }),
+        getUnreadCount: () => api.get('/notifications/unread-count'),
+        markAsRead: (id) => api.put(`/notifications/${id}/read`),
+        markAllAsRead: () => api.put('/notifications/read-all'),
+    },
+
+    // =============================================
+    // ORGANIZATIONS (SuperAdmin)
+    // =============================================
+    organizations: {
+        getAll: (params = {}) => api.get('/organizations', { params }),
+        getById: (identifier) => api.get(`/organizations/${identifier}`),
+        create: (data) => api.post('/organizations', data),
+        update: (id, data) => api.put(`/organizations/${id}`, data),
+        delete: (id) => api.delete(`/organizations/${id}`),
+        assignAdmin: (id, data) => api.post(`/organizations/${id}/assign-admin`, data),
+    },
+
+    // =============================================
+    // ORG MEMBERS — /api/organizations/:orgId/members
+    // =============================================
+    orgMembers: {
+        getAll: (orgId, params = {}) => api.get(`/organizations/${orgId}/members`, { params }),
+        add: (orgId, data) => api.post(`/organizations/${orgId}/members`, data),
+        invite: (orgId, data) => api.post(`/organizations/${orgId}/members/invite`, data),
+        updatePermissions: (orgId, membershipId, data) => api.put(`/organizations/${orgId}/members/${membershipId}/permissions`, data),
+        remove: (orgId, membershipId) => api.delete(`/organizations/${orgId}/members/${membershipId}`),
+        getInvitations: (orgId) => api.get(`/organizations/${orgId}/members/invitations`),
+        cancelInvitation: (orgId, invitationId) => api.delete(`/organizations/${orgId}/members/invitations/${invitationId}`),
+        getPermissionsList: (orgId) => api.get(`/organizations/${orgId}/members/permissions-list`),
+    },
+
+    // =============================================
+    // PARTICIPANT-SCOPED — /api/p/events/:eventId/...
+    // For users accessing via EventParticipant (no org membership needed)
+    // =============================================
+    participant: {
+        // Event info
+        getEvent: (eventId) => api.get(`${pEventBase(eventId)}`),
+        getMyParticipation: (eventId) => api.get(`${pEventBase(eventId)}/me`),
+
+        // Committee
+        getCommittee: (eventId, committeeId) =>
+            api.get(`${pCommitteeBase(eventId, committeeId)}`),
+        getParticipants: (eventId, committeeId) =>
+            api.get(`${pCommitteeBase(eventId, committeeId)}/participants`),
+
+        // Sessions
+        getSessions: (eventId, committeeId, params = {}) =>
+            api.get(`${pCommitteeBase(eventId, committeeId)}/sessions`, { params }),
+        createSession: (eventId, committeeId, data) =>
+            api.post(`${pCommitteeBase(eventId, committeeId)}/sessions`, data),
+        startSession: (eventId, committeeId, sessionId) =>
+            api.put(`${pCommitteeBase(eventId, committeeId)}/sessions/${sessionId}/start`),
+        endSession: (eventId, committeeId, sessionId) =>
+            api.put(`${pCommitteeBase(eventId, committeeId)}/sessions/${sessionId}/end`),
+
+        // Voting
+        getVotingSessions: (eventId, committeeId, params = {}) =>
+            api.get(`${pCommitteeBase(eventId, committeeId)}/voting`, { params }),
+        createVote: (eventId, committeeId, data) =>
+            api.post(`${pCommitteeBase(eventId, committeeId)}/voting`, data),
+        castVote: (eventId, committeeId, voteId, data) =>
+            api.post(`${pCommitteeBase(eventId, committeeId)}/voting/${voteId}/cast`, data),
+
+        // Documents
+        getDocuments: (eventId, committeeId, params = {}) =>
+            api.get(`${pCommitteeBase(eventId, committeeId)}/documents`, { params }),
+        uploadDocument: (eventId, committeeId, formData) =>
+            api.post(`${pCommitteeBase(eventId, committeeId)}/documents`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+
+        // Messaging
+        getMessages: (eventId, committeeId, params = {}) =>
+            api.get(`${pCommitteeBase(eventId, committeeId)}/messages`, { params }),
+        sendMessage: (eventId, committeeId, data) =>
+            api.post(`${pCommitteeBase(eventId, committeeId)}/messages`, data),
+
+        // Procedure (motions, speakers)
+        getMotions: (eventId, committeeId, sessionId, params = {}) =>
+            api.get(`${pCommitteeBase(eventId, committeeId)}/procedure/motions/session/${sessionId}`, { params }),
+        submitMotion: (eventId, committeeId, data) =>
+            api.post(`${pCommitteeBase(eventId, committeeId)}/procedure/motions`, data),
+        getSpeakersList: (eventId, committeeId, sessionId) =>
+            api.get(`${pCommitteeBase(eventId, committeeId)}/procedure/speakers-list/${sessionId}`),
+
+        // Timers
+        getTimers: (eventId, committeeId) =>
+            api.get(`${pCommitteeBase(eventId, committeeId)}/timers`),
+
+        // Coalitions (via messaging module)
+        getCoalitions: (eventId, committeeId, params = {}) =>
+            api.get(`${pCommitteeBase(eventId, committeeId)}/messages/coalitions`, { params }),
+
+        // Statistics
+        getStatistics: (eventId, committeeId) =>
+            api.get(`${pCommitteeBase(eventId, committeeId)}/statistics`),
+
+        // Presentation
+        getPresentation: (eventId, committeeId) =>
+            api.get(`${pCommitteeBase(eventId, committeeId)}/presentation`),
+
+        // Applications (presidium review)
+        getApplications: (eventId, committeeId, params = {}) =>
+            api.get(`${pCommitteeBase(eventId, committeeId)}/registration/committees/${committeeId}/applications`, { params }),
     },
 
     // =============================================
@@ -221,6 +392,42 @@ export const apiMethods = {
         getByCommittee: (orgId, eventId) => api.get(`${eventBase(orgId, eventId)}/participants/by-committee`),
         getMyParticipation: (orgId, eventId) => api.get(`${eventBase(orgId, eventId)}/participants/me`),
         searchUsers: (orgId, eventId, params = {}) => api.get(`${eventBase(orgId, eventId)}/participants/search-users`, { params }),
+    },
+
+    // =============================================
+    // PRESENTATION — /api/organizations/:orgId/events/:eventId/committees/:committeeId/presentation
+    // =============================================
+    presentation: {
+        getDisplayData: (orgId, eventId, committeeId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/presentation`),
+        announce: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/presentation/announce`, data),
+    },
+
+    // =============================================
+    // PROCEDURE — /api/organizations/:orgId/events/:eventId/committees/:committeeId/procedure
+    // =============================================
+    procedure: {
+        // Motions
+        submitMotion: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions`, data),
+        supportMotion: (orgId, eventId, committeeId, motionId) => api.post(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions/${motionId}/support`),
+        reviewMotion: (orgId, eventId, committeeId, motionId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions/${motionId}/review`, data),
+        getSessionMotions: (orgId, eventId, committeeId, sessionId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions/session/${sessionId}`, { params }),
+        getMotion: (orgId, eventId, committeeId, motionId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions/${motionId}`),
+        getMotionQueue: (orgId, eventId, committeeId, sessionId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions/session/${sessionId}/queue`),
+
+        // Questions
+        submitQuestion: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/procedure/questions`, data),
+        answerQuestion: (orgId, eventId, committeeId, questionId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/procedure/questions/${questionId}/answer`, data),
+        getSessionQuestions: (orgId, eventId, committeeId, sessionId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/procedure/questions/session/${sessionId}`, { params }),
+        bulkReviewQuestions: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/procedure/questions/bulk-review`, data),
+    },
+
+    // =============================================
+    // PUBLIC ENDPOINTS (no auth required)
+    // =============================================
+    public: {
+        getOrg: (orgSlug) => api.get(`/public/org/${orgSlug}`),
+        getEvent: (orgSlug, eventSlug) => api.get(`/public/events/${orgSlug}/${eventSlug}`),
+        getRegistration: (orgSlug, eventSlug) => api.get(`/public/events/${orgSlug}/${eventSlug}/registration`),
     },
 
     // =============================================
@@ -278,53 +485,6 @@ export const apiMethods = {
     },
 
     // =============================================
-    // COMMITTEES — /api/organizations/:orgId/events/:eventId/committees
-    // =============================================
-    committees: {
-        getAll: (orgId, eventId, params = {}) => api.get(`${eventBase(orgId, eventId)}/committees`, { params }),
-        getById: (orgId, eventId, committeeId) => api.get(`${eventBase(orgId, eventId)}/committees/${committeeId}`),
-        create: (orgId, eventId, data) => api.post(`${eventBase(orgId, eventId)}/committees`, data),
-        update: (orgId, eventId, committeeId, data) => api.put(`${eventBase(orgId, eventId)}/committees/${committeeId}`, data),
-        delete: (orgId, eventId, committeeId) => api.delete(`${eventBase(orgId, eventId)}/committees/${committeeId}`),
-
-        // Country management
-        getCountries: (orgId, eventId, committeeId) => api.get(`${eventBase(orgId, eventId)}/committees/${committeeId}/countries`),
-        addCountries: (orgId, eventId, committeeId, data) => api.put(`${eventBase(orgId, eventId)}/committees/${committeeId}/countries`, data),
-        removeCountry: (orgId, eventId, committeeId, countryName) => api.delete(`${eventBase(orgId, eventId)}/committees/${committeeId}/countries/${encodeURIComponent(countryName)}`),
-        updateCountryStatus: (orgId, eventId, committeeId, countryName, data) => api.put(`${eventBase(orgId, eventId)}/committees/${committeeId}/countries/${encodeURIComponent(countryName)}/status`, data),
-    },
-
-    // =============================================
-    // SESSIONS — /api/organizations/:orgId/events/:eventId/committees/:committeeId/sessions
-    // =============================================
-    sessions: {
-        getAll: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/sessions`, { params }),
-        create: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/sessions`, data),
-        start: (orgId, eventId, committeeId, sessionId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/sessions/${sessionId}/start`),
-        end: (orgId, eventId, committeeId, sessionId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/sessions/${sessionId}/end`),
-    },
-
-    // =============================================
-    // DOCUMENTS — /api/organizations/:orgId/events/:eventId/committees/:committeeId/documents
-    // =============================================
-    documents: {
-        getAll: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/documents`, { params }),
-
-        // Position papers (delegates)
-        uploadPositionPaper: (orgId, eventId, committeeId, formData) => api.post(`${committeeBase(orgId, eventId, committeeId)}/documents/position-papers`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        }),
-        getPositionPaper: (orgId, eventId, committeeId, countryName) => api.get(`${committeeBase(orgId, eventId, committeeId)}/documents/position-papers/${encodeURIComponent(countryName)}`),
-
-        // Public documents (presidium)
-        uploadPublic: (orgId, eventId, committeeId, formData) => api.post(`${committeeBase(orgId, eventId, committeeId)}/documents/public`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        }),
-        updatePublic: (orgId, eventId, committeeId, docId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/documents/public/${docId}`, data),
-        deletePublic: (orgId, eventId, committeeId, docId) => api.delete(`${committeeBase(orgId, eventId, committeeId)}/documents/public/${docId}`),
-    },
-
-    // =============================================
     // RESOLUTIONS — /api/organizations/:orgId/events/:eventId/committees/:committeeId/resolutions
     // =============================================
     resolutions: {
@@ -347,83 +507,13 @@ export const apiMethods = {
     },
 
     // =============================================
-    // VOTING — /api/organizations/:orgId/events/:eventId/committees/:committeeId/voting
+    // SESSIONS — /api/organizations/:orgId/events/:eventId/committees/:committeeId/sessions
     // =============================================
-    voting: {
-        getAll: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/voting`, { params }),
-        getById: (orgId, eventId, committeeId, votingId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}`),
-        create: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/voting`, data),
-        start: (orgId, eventId, committeeId, votingId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/start`),
-        complete: (orgId, eventId, committeeId, votingId, data = {}) => api.put(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/complete`, data),
-        cancel: (orgId, eventId, committeeId, votingId, data) => api.delete(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}`, { data }),
-        getStatus: (orgId, eventId, committeeId, votingId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/status`),
-        getRollCallOrder: (orgId, eventId, committeeId, votingId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/roll-call-order`),
-        getEligibleVoters: (orgId, eventId, committeeId, votingId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/eligible-voters`),
-
-        // Delegate actions
-        castVote: (orgId, eventId, committeeId, votingId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/vote`, data),
-        skipVote: (orgId, eventId, committeeId, votingId) => api.post(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/skip`),
-    },
-
-    // =============================================
-    // TIMERS — /api/organizations/:orgId/events/:eventId/committees/:committeeId/timers
-    // =============================================
-    timers: {
-        getAll: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/timers`, { params }),
-        getById: (orgId, eventId, committeeId, timerId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}`),
-        create: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/timers`, data),
-        start: (orgId, eventId, committeeId, timerId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}/start`),
-        pause: (orgId, eventId, committeeId, timerId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}/pause`),
-        resume: (orgId, eventId, committeeId, timerId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}/resume`),
-        complete: (orgId, eventId, committeeId, timerId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}/complete`),
-        extend: (orgId, eventId, committeeId, timerId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}/extend`, data),
-        cancel: (orgId, eventId, committeeId, timerId, data = {}) => api.delete(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}`, { data }),
-    },
-
-    // =============================================
-    // PROCEDURE — /api/organizations/:orgId/events/:eventId/committees/:committeeId/procedure
-    // =============================================
-    procedure: {
-        // Motions
-        submitMotion: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions`, data),
-        supportMotion: (orgId, eventId, committeeId, motionId) => api.post(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions/${motionId}/support`),
-        reviewMotion: (orgId, eventId, committeeId, motionId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions/${motionId}/review`, data),
-        getSessionMotions: (orgId, eventId, committeeId, sessionId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions/session/${sessionId}`, { params }),
-        getMotion: (orgId, eventId, committeeId, motionId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions/${motionId}`),
-        getMotionQueue: (orgId, eventId, committeeId, sessionId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/procedure/motions/session/${sessionId}/queue`),
-
-        // Questions
-        submitQuestion: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/procedure/questions`, data),
-        answerQuestion: (orgId, eventId, committeeId, questionId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/procedure/questions/${questionId}/answer`, data),
-        getSessionQuestions: (orgId, eventId, committeeId, sessionId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/procedure/questions/session/${sessionId}`, { params }),
-        bulkReviewQuestions: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/procedure/questions/bulk-review`, data),
-    },
-
-    // =============================================
-    // MESSAGING — /api/organizations/:orgId/events/:eventId/committees/:committeeId/messages
-    // =============================================
-    messages: {
-        // Conversations
-        createBilateral: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/bilateral`, data),
-        createGroup: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/group`, data),
-        getUserConversations: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/messages`, { params }),
-
-        // Committee-wide channels
-        getCommitteeConversation: (orgId, eventId, committeeId, channelType) => api.get(`${committeeBase(orgId, eventId, committeeId)}/messages/channel/${channelType}`),
-        sendCommitteeMessage: (orgId, eventId, committeeId, channelType, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/channel/${channelType}`, data),
-
-        // Single conversation
-        getConversation: (orgId, eventId, committeeId, conversationId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}`, { params }),
-
-        // Message operations
-        sendMessage: (orgId, eventId, committeeId, conversationId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/messages`, data),
-        editMessage: (orgId, eventId, committeeId, conversationId, messageId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/messages/${messageId}`, data),
-        markAsRead: (orgId, eventId, committeeId, conversationId, data = {}) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/read`, data),
-
-        // Participant management
-        addParticipant: (orgId, eventId, committeeId, conversationId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/participants`, data),
-        leaveConversation: (orgId, eventId, committeeId, conversationId) => api.delete(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/leave`),
-        archiveConversation: (orgId, eventId, committeeId, conversationId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/messages/conversation/${conversationId}/archive`, data),
+    sessions: {
+        getAll: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/sessions`, { params }),
+        create: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/sessions`, data),
+        start: (orgId, eventId, committeeId, sessionId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/sessions/${sessionId}/start`),
+        end: (orgId, eventId, committeeId, sessionId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/sessions/${sessionId}/end`),
     },
 
     // =============================================
@@ -443,45 +533,37 @@ export const apiMethods = {
     },
 
     // =============================================
-    // PRESENTATION — /api/organizations/:orgId/events/:eventId/committees/:committeeId/presentation
+    // TIMERS — /api/organizations/:orgId/events/:eventId/committees/:committeeId/timers
     // =============================================
-    presentation: {
-        getDisplayData: (orgId, eventId, committeeId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/presentation`),
-        announce: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/presentation/announce`, data),
+    timers: {
+        getAll: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/timers`, { params }),
+        getById: (orgId, eventId, committeeId, timerId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}`),
+        create: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/timers`, data),
+        start: (orgId, eventId, committeeId, timerId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}/start`),
+        pause: (orgId, eventId, committeeId, timerId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}/pause`),
+        resume: (orgId, eventId, committeeId, timerId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}/resume`),
+        complete: (orgId, eventId, committeeId, timerId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}/complete`),
+        extend: (orgId, eventId, committeeId, timerId, data) => api.put(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}/extend`, data),
+        cancel: (orgId, eventId, committeeId, timerId, data = {}) => api.delete(`${committeeBase(orgId, eventId, committeeId)}/timers/${timerId}`, { data }),
     },
 
     // =============================================
-    // COUNTRIES (general resource — not committee-scoped)
+    // VOTING — /api/organizations/:orgId/events/:eventId/committees/:committeeId/voting
     // =============================================
-    countries: {
-        getAll: (params = {}) => api.get('/countries', { params }),
-        getByCode: (code, params = {}) => api.get(`/countries/${code}`, { params }),
-        search: (query) => api.get('/countries/search', { params: { q: query } }),
-        // Flags
-        getFlag: (code) => api.get(`/countries/flags/${code}`),
-        getAllFlags: () => api.get('/countries/flags/all/batch'),
-        getAllFlagsBatch: () => api.get('/countries/flags/all/batch'),
-        getFlagsMetaInfo: () => api.get('/countries/flags/meta/info'),
-        getMetaHealth: () => api.get('/countries/meta/health'),
-        refreshCache: () => api.post('/countries/admin/refresh-flags'),
-    },
+    voting: {
+        getAll: (orgId, eventId, committeeId, params = {}) => api.get(`${committeeBase(orgId, eventId, committeeId)}/voting`, { params }),
+        getById: (orgId, eventId, committeeId, votingId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}`),
+        create: (orgId, eventId, committeeId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/voting`, data),
+        start: (orgId, eventId, committeeId, votingId) => api.put(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/start`),
+        complete: (orgId, eventId, committeeId, votingId, data = {}) => api.put(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/complete`, data),
+        cancel: (orgId, eventId, committeeId, votingId, data) => api.delete(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}`, { data }),
+        getStatus: (orgId, eventId, committeeId, votingId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/status`),
+        getRollCallOrder: (orgId, eventId, committeeId, votingId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/roll-call-order`),
+        getEligibleVoters: (orgId, eventId, committeeId, votingId) => api.get(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/eligible-voters`),
 
-    // =============================================
-    // ADMIN (platform-level, SuperAdmin only)
-    // =============================================
-    admin: {
-        getDashboardStats: () => api.get('/admin/dashboard/stats'),
-        getRecentActivity: (params = {}) => api.get('/admin/dashboard/activity', { params }),
-        getSystemHealth: () => api.get('/admin/system/health'),
-        clearCaches: () => api.post('/admin/system/clear-cache'),
-        getPerformanceMetrics: () => api.get('/admin/performance/metrics'),
-        getResponseTimes: (params = {}) => api.get('/admin/performance/response-times', { params }),
-        exportConfig: () => api.get('/admin/export/config'),
-        databaseMaintenance: (data) => api.post('/admin/maintenance/database', data),
-        createBackup: (data = {}) => api.post('/admin/maintenance/backup', data),
-        getUserEngagement: (params = {}) => api.get('/admin/analytics/user-engagement', { params }),
-        getUsagePatterns: (params = {}) => api.get('/admin/analytics/usage-patterns', { params }),
-        bulkGenerateQR: (data) => api.post('/admin/committees/bulk-qr', data),
+        // Delegate actions
+        castVote: (orgId, eventId, committeeId, votingId, data) => api.post(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/vote`, data),
+        skipVote: (orgId, eventId, committeeId, votingId) => api.post(`${committeeBase(orgId, eventId, committeeId)}/voting/${votingId}/skip`),
     },
 }
 

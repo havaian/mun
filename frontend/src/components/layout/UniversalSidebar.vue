@@ -279,7 +279,7 @@ const props = defineProps({
     userRole: {
         type: String,
         required: true,
-        validator: (value) => ['admin', 'presidium', 'delegate'].includes(value)
+        validator: (value) => ['admin', 'presidium', 'delegate', 'superadmin', 'user'].includes(value)
     },
     user: {
         type: Object,
@@ -322,6 +322,24 @@ const route = useRoute()
 
 // Role-specific configurations
 const roleConfigs = {
+    user: {
+        title: 'MUN.UZ',
+        subtitle: 'Personal Dashboard',
+        headerGradient: 'from-mun-blue-600 to-mun-blue-700',
+        logoBackground: 'bg-mun-blue',
+        logoIcon: 'UserIcon',
+        subtitleColor: 'text-blue-100',
+        userIconBackground: 'bg-mun-blue'
+    },
+    superadmin: {
+        title: 'Platform Admin',
+        subtitle: 'System Control',
+        headerGradient: 'from-mun-blue-600 to-mun-blue-700',
+        logoBackground: 'bg-mun-blue',
+        logoIcon: 'ShieldCheckIcon',
+        subtitleColor: 'text-blue-100',
+        userIconBackground: 'bg-mun-blue'
+    },
     admin: {
         title: 'Admin Center',
         subtitle: 'System Control',

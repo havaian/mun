@@ -24,6 +24,9 @@ export const useAuthStore = defineStore('auth', () => {
     // Pending org invitations
     const pendingInvitations = ref([])
 
+    // Event participations (events the user is assigned to — presidium, delegate, etc.)
+    const eventParticipations = ref([])
+
     // Currently selected/active context
     const activeOrgId = ref(localStorage.getItem('mun_active_org') || null)
 
@@ -104,6 +107,26 @@ export const useAuthStore = defineStore('auth', () => {
         if (!user.value) return ''
         return `${user.value.firstName} ${user.value.lastName}`
     })
+    
+    // Events where the user is a presidium member
+    const presidiumEvents = computed(() =>
+        eventParticipations.value.filter(ep =>
+            ['presidium_chair', 'presidium_cochair', 'presidium_expert', 'presidium_secretary'].includes(ep.role)
+        )
+    )
+
+    // Events where the user is a delegate
+    const delegateEvents = computed(() =>
+        eventParticipations.value.filter(ep => ep.role === 'delegate')
+    )
+
+    // Check if user has any role in a specific event
+    const hasEventAccess = (eventId) =>
+        eventParticipations.value.some(ep => ep.event?._id === eventId)
+
+    // Check if user is org member (admin or member) for a given org
+    const isOrgMember = (orgId) =>
+        allOrganizations.value.some(org => org._id === orgId)
 
     // =============================================
     // LEGACY COMPAT — old stores (session, voting, admin) 
@@ -213,6 +236,7 @@ export const useAuthStore = defineStore('auth', () => {
                 user.value = response.data.user
                 organizations.value = response.data.organizations || { admin: [], member: [] }
                 pendingInvitations.value = response.data.pendingInvitations || []
+                eventParticipations.value = response.data.eventParticipations || []
 
                 // Auto-select first org if none selected
                 if (!activeOrgId.value && allOrganizations.value.length > 0) {
@@ -290,6 +314,7 @@ export const useAuthStore = defineStore('auth', () => {
             user.value = null
             organizations.value = { admin: [], member: [] }
             pendingInvitations.value = []
+            eventParticipations.value = []
             activeOrgId.value = null
 
             localStorage.removeItem('mun_token')
@@ -356,6 +381,7 @@ export const useAuthStore = defineStore('auth', () => {
                 user.value = response.data.user
                 organizations.value = response.data.organizations || { admin: [], member: [] }
                 pendingInvitations.value = response.data.pendingInvitations || []
+                eventParticipations.value = response.data.eventParticipations || []
 
                 // Auto-select org if needed
                 if (!activeOrgId.value && allOrganizations.value.length > 0) {
@@ -428,17 +454,8 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Determine where to route after login
     const getDefaultRoute = () => {
-        if (isSuperAdmin.value) {
-            return { name: 'SuperAdminDashboard' }
-        }
-
-        if (allOrganizations.value.length > 0) {
-            const org = activeOrganization.value
-            return { name: 'OrgDashboard', params: { orgSlug: org.slug } }
-        }
-
-        // No orgs — go to a "welcome" or "no org" page
-        return { name: 'UserHome' }
+        // All users land on the universal dashboard
+        return { name: 'DashboardHome' }
     }
 
     // =============================================
@@ -534,6 +551,11 @@ export const useAuthStore = defineStore('auth', () => {
         orgPermissions,
         hasOrganization,
         displayName,
+        eventParticipations,
+        presidiumEvents,
+        delegateEvents,
+        hasEventAccess,
+        isOrgMember,
 
         // Legacy compat computeds — used by old stores/components
         isAdmin,

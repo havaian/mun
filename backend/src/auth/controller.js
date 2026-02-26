@@ -296,6 +296,34 @@ const getMe = async (req, res) => {
             // Invitation module may not exist yet
         }
 
+        // Fetch event participations (events the user is assigned to as participant)
+        let eventParticipations = [];
+        try {
+            const { EventParticipant } = require('../participant/model');
+            eventParticipations = await EventParticipant.find({
+                user: user._id,
+                status: { $in: ['active', 'inactive'] }
+            })
+                .populate({
+                    path: 'event',
+                    select: 'name slug status startDate endDate organization',
+                    populate: {
+                        path: 'organization',
+                        select: 'name slug logo'
+                    }
+                })
+                .populate('committee', 'name acronym type')
+                .select('event committee role status country source createdAt')
+                .sort({ createdAt: -1 })
+                .lean();
+
+            // Filter out participations where the event no longer exists (orphan cleanup)
+            eventParticipations = eventParticipations.filter(ep => ep.event != null);
+        } catch (e) {
+            // EventParticipant module may not exist yet
+            global.logger.warn('Failed to fetch event participations for /auth/me:', e.message);
+        }
+
         res.json({
             success: true,
             user,
@@ -303,7 +331,8 @@ const getMe = async (req, res) => {
                 admin: adminOrgs,
                 member: memberOrgs
             },
-            pendingInvitations
+            pendingInvitations,
+            eventParticipations
         });
     } catch (error) {
         global.logger.error('Get me error:', error);

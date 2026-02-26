@@ -292,9 +292,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { ref, computed, onMounted, watch, inject } from 'vue'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
@@ -309,16 +307,16 @@ import {
 } from '@heroicons/vue/24/outline'
 
 // Stores
-const router = useRouter()
-const authStore = useAuthStore()
 const toast = useToast()
+
+// Context
+const ctx = inject('sessionContext')
 
 // State
 const isLoading = ref(false)
 const activeVote = ref(null)
 const votingHistory = ref([])
 const currentSession = ref(null)
-const committee = ref(null)
 const showCreateVoteModal = ref(false)
 const pendingVote = ref(null)
 const showForceCompleteModal = ref(false)
@@ -330,12 +328,6 @@ const selectedVoting = ref(null)
 const loadData = async () => {
   try {
     isLoading.value = true
-
-    // Get committee from auth context
-    committee.value = authStore.user?.committeeId
-    if (!committee.value) {
-      throw new Error('No committee assigned')
-    }
 
     // Load current session
     await loadCurrentSession()
@@ -353,7 +345,7 @@ const loadData = async () => {
 
 const loadCurrentSession = async () => {
   try {
-    const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
+    const response = await sessionApi.sessions.getByCommittee(ctx.committeeId.value, {
       status: 'active',
       limit: 1
     })
@@ -368,7 +360,7 @@ const loadCurrentSession = async () => {
 
 const loadVotingData = async () => {
   try {
-    const response = await apiMethods.voting.getByCommitteeId(committee.value._id)
+    const response = await apiMethods.voting.getByCommitteeId(ctx.committeeId.value)
 
     if (response.data.success) {
       const allVotes = response.data.votings || []
@@ -489,7 +481,7 @@ const getStatusColor = (status) => {
 }
 
 const getCountryFlag = (countryName) => {
-  const country = committee.value?.countries?.find(c => c.name === countryName)
+  const country = ctx.committee.value?.countries?.find(c => c.name === countryName)
   return country?.flagUrl || '/api/countries/flags/default'
 }
 
@@ -521,7 +513,7 @@ const formatTimeRemaining = (vote) => {
 // WebSocket listeners
 const setupWebSocketListeners = () => {
   wsService.on('voting-created', (data) => {
-    if (data.committeeId === committee.value?._id) {
+    if (data.committeeId === ctx.committeeId.value) {
       pendingVote.value = data.voting
     }
   })
@@ -538,7 +530,7 @@ const setupWebSocketListeners = () => {
       // Update vote counts in real-time from WebSocket data
       if (data.results && activeVote.value) {
         activeVote.value.results = data.results
-        
+
         // For roll call, also update current voter if provided
         if (data.nextVoter !== undefined) {
           const currentIndex = activeVote.value.rollCallOrder?.indexOf(data.nextVoter)
@@ -546,7 +538,7 @@ const setupWebSocketListeners = () => {
             activeVote.value.currentVoterIndex = currentIndex
           }
         }
-        
+
         // Update vote record for roll call display
         if (data.country && data.vote && activeVote.value.votingType === 'rollCall') {
           const existingVote = activeVote.value.votes?.find(v => v.country === data.country)
@@ -584,14 +576,16 @@ const setupWebSocketListeners = () => {
 }
 
 // Lifecycle
-onMounted(async () => {
-  await loadData()
-  setupWebSocketListeners()
+watch(() => ctx.isReady.value, (ready) => {
+  if (ready) {
+    await loadData()
+    setupWebSocketListeners()
 
-  if (committee.value?._id) {
-       wsService.emit('join-committee-room', {
-           committeeId: committee.value._id
-       })
-   }
-})
+    if (ctx.committeeId.value) {
+      wsService.emit('join-committee-room', {
+        committeeId: ctx.committeeId.value
+      })
+    }
+  }
+}, { immediate: true })
 </script>

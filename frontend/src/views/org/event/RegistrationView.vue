@@ -58,12 +58,117 @@
                                 'bg-mun-gray-100 text-mun-gray-600'
                     ]">
                         {{ form.status === 'active' ? 'Accepting applications' : form.status === 'closed' ? 'Closed' :
-                        'Not visible to applicants' }}
+                            'Not visible to applicants' }}
                     </span>
                 </div>
-                <AppButton size="sm" @click="saveForm" :disabled="isSaving">
+                <AppButton size="sm" @click="saveAll" :disabled="isSaving">
                     {{ isSaving ? 'Saving...' : 'Save Changes' }}
                 </AppButton>
+            </div>
+
+            <!-- =============================================
+                 REGISTRATION SETTINGS (event-level)
+                 ============================================= -->
+            <div class="bg-white rounded-xl border border-mun-gray-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-mun-gray-100">
+                    <h2 class="text-base font-semibold text-mun-gray-900">Registration Settings</h2>
+                    <p class="text-sm text-mun-gray-500 mt-0.5">Control when registration opens, closes, and position
+                        paper deadlines.</p>
+                </div>
+                <div class="px-6 py-4 space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-mun-gray-700 mb-1">Registration Start</label>
+                            <input v-model="eventSettings.registrationStartDate" type="datetime-local"
+                                class="input-field text-sm" />
+                            <p class="text-xs text-mun-gray-400 mt-0.5">When the registration form becomes accessible.
+                            </p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-mun-gray-700 mb-1">Registration End</label>
+                            <input v-model="eventSettings.registrationEndDate" type="datetime-local"
+                                class="input-field text-sm" />
+                            <p class="text-xs text-mun-gray-400 mt-0.5">After this, no new applications are accepted.
+                            </p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-mun-gray-700 mb-1">Position Paper
+                                Deadline</label>
+                            <input v-model="eventSettings.positionPaperDeadline" type="datetime-local"
+                                class="input-field text-sm" />
+                            <p class="text-xs text-mun-gray-400 mt-0.5">When position papers are due.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-6 pt-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="eventSettings.allowLateRegistration"
+                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                            <span class="text-sm text-mun-gray-700">Allow late registration</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="eventSettings.allowLatePositionPapers"
+                                class="rounded border-mun-gray-300 text-mun-blue focus:ring-mun-blue" />
+                            <span class="text-sm text-mun-gray-700">Allow late position papers</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =============================================
+                 PAYMENT CONFIGURATION (event-level)
+                 ============================================= -->
+            <div class="bg-white rounded-xl border border-mun-gray-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-mun-gray-100 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-base font-semibold text-mun-gray-900">Registration Fee</h2>
+                        <p class="text-sm text-mun-gray-500 mt-0.5">Charge a participation fee after application
+                            acceptance.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" v-model="paymentConfig.enabled" class="sr-only peer" />
+                        <div
+                            class="w-9 h-5 bg-mun-gray-200 peer-focus:ring-2 peer-focus:ring-mun-blue/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-mun-blue after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all">
+                        </div>
+                    </label>
+                </div>
+
+                <div v-if="paymentConfig.enabled" class="px-6 py-4 space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-mun-gray-700 mb-1">Default Amount</label>
+                            <input v-model.number="paymentConfig.defaultAmount" type="number" min="0" step="0.01"
+                                class="input-field text-sm" placeholder="e.g. 50" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-mun-gray-700 mb-1">Currency</label>
+                            <select v-model="paymentConfig.currency" class="input-field text-sm">
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="GBP">GBP</option>
+                                <option value="UZS">UZS</option>
+                                <option value="RUB">RUB</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-mun-gray-700 mb-1">Payment Deadline (days after
+                                acceptance)</label>
+                            <input v-model.number="paymentConfig.defaultDeadlineDays" type="number" min="1" max="90"
+                                class="input-field text-sm" placeholder="e.g. 7" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-mun-gray-700 mb-1">Payment Instructions</label>
+                        <textarea v-model="paymentConfig.instructions" rows="3" class="input-field text-sm"
+                            placeholder="e.g. Transfer to bank account XXXX, reference: your application ID..."></textarea>
+                        <p class="text-xs text-mun-gray-400 mt-0.5">Shown to applicants after they are accepted.</p>
+                    </div>
+                </div>
+
+                <div v-else class="px-6 py-6 text-center">
+                    <p class="text-sm text-mun-gray-400">Payment is disabled. Accepted applicants will be assigned
+                        directly without a payment step.</p>
+                </div>
             </div>
 
             <!-- Pipeline stages -->
@@ -172,7 +277,7 @@
                                     <div class="flex items-center gap-2 mt-0.5">
                                         <span
                                             class="px-1.5 py-0.5 text-[10px] font-medium rounded bg-mun-gray-100 text-mun-gray-500 uppercase">{{
-                                            field.type }}</span>
+                                                field.type }}</span>
                                         <span v-if="field.placeholder" class="text-xs text-mun-gray-400">{{
                                             field.placeholder }}</span>
                                     </div>
@@ -265,7 +370,7 @@
 
             <!-- Bottom save bar -->
             <div class="flex items-center justify-end gap-3 pt-2">
-                <AppButton size="md" @click="saveForm" :disabled="isSaving">
+                <AppButton size="md" @click="saveAll" :disabled="isSaving">
                     {{ isSaving ? 'Saving...' : 'Save All Changes' }}
                 </AppButton>
             </div>
@@ -301,6 +406,29 @@ const copied = ref(false)
 const eventData = ref(null)
 const editingFieldId = ref(null)
 const editingField = reactive({ label: '', type: 'text', placeholder: '', required: false, options: [] })
+
+// =============================================
+// EVENT-LEVEL SETTINGS (saved via events.update)
+// =============================================
+const eventSettings = reactive({
+    registrationStartDate: '',
+    registrationEndDate: '',
+    positionPaperDeadline: '',
+    allowLateRegistration: false,
+    allowLatePositionPapers: true,
+})
+
+const paymentConfig = reactive({
+    enabled: false,
+    defaultAmount: null,
+    currency: 'USD',
+    defaultDeadlineDays: null,
+    instructions: '',
+})
+
+// =============================================
+// FORM-LEVEL SETTINGS (saved via registration.upsertForm)
+// =============================================
 
 // Default pipeline stages (all possible stages)
 const ALL_STAGES = [
@@ -350,7 +478,9 @@ const reorderStages = () => {
     }
 }
 
-// Custom field management
+// =============================================
+// CUSTOM FIELD MANAGEMENT
+// =============================================
 const addField = () => {
     const id = `custom_${form.customFields.length + 1}_${Date.now()}`
     form.customFields.push({
@@ -426,7 +556,30 @@ const moveField = (idx, direction) => {
     form.customFields.forEach((f, i) => f.order = i + 1)
 }
 
-// Load
+// =============================================
+// DATETIME HELPERS
+// =============================================
+
+// Convert ISO date string → local datetime-local input value
+const toDatetimeLocal = (isoString) => {
+    if (!isoString) return ''
+    const d = new Date(isoString)
+    if (isNaN(d.getTime())) return ''
+    // Format: YYYY-MM-DDTHH:MM
+    const pad = (n) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// Convert datetime-local input value → ISO string (or null)
+const fromDatetimeLocal = (val) => {
+    if (!val) return null
+    const d = new Date(val)
+    return isNaN(d.getTime()) ? null : d.toISOString()
+}
+
+// =============================================
+// LOAD
+// =============================================
 const loadForm = async () => {
     if (!orgId.value) return
     isLoading.value = true
@@ -436,7 +589,23 @@ const loadForm = async () => {
         if (!eventRes.data.success) return
         eventData.value = eventRes.data.event
 
-        // Try loading existing form
+        // Populate event-level settings
+        const s = eventData.value.settings || {}
+        eventSettings.registrationStartDate = toDatetimeLocal(s.registrationStartDate)
+        eventSettings.registrationEndDate = toDatetimeLocal(s.registrationEndDate)
+        eventSettings.positionPaperDeadline = toDatetimeLocal(s.positionPaperDeadline)
+        eventSettings.allowLateRegistration = s.allowLateRegistration || false
+        eventSettings.allowLatePositionPapers = s.allowLatePositionPapers !== undefined ? s.allowLatePositionPapers : true
+
+        // Populate payment config
+        const fee = eventData.value.registrationFee || {}
+        paymentConfig.enabled = fee.enabled || false
+        paymentConfig.defaultAmount = fee.defaultAmount || null
+        paymentConfig.currency = fee.currency || 'USD'
+        paymentConfig.defaultDeadlineDays = fee.defaultDeadlineDays || null
+        paymentConfig.instructions = fee.instructions || ''
+
+        // Try loading existing registration form
         try {
             const res = await apiMethods.registration.getForm(orgId.value, eventData.value._id)
             if (res.data.success && res.data.form) {
@@ -466,8 +635,10 @@ const loadForm = async () => {
     }
 }
 
-// Save
-const saveForm = async () => {
+// =============================================
+// SAVE ALL (form + event settings in parallel)
+// =============================================
+const saveAll = async () => {
     if (!eventData.value) return
     isSaving.value = true
     try {
@@ -475,24 +646,49 @@ const saveForm = async () => {
         for (const field of form.customFields) {
             if (!field.label.trim()) {
                 toast.error('All questions must have a label')
+                isSaving.value = false
                 return
             }
         }
 
         reorderStages()
 
-        const res = await apiMethods.registration.upsertForm(orgId.value, eventData.value._id, {
+        // 1) Save registration form
+        const formPromise = apiMethods.registration.upsertForm(orgId.value, eventData.value._id, {
             status: form.status,
             committeePreferenceCount: form.committeePreferenceCount,
             pipelineStages: form.pipelineStages,
             customFields: form.customFields,
         })
 
-        if (res.data.success) {
-            toast.success(res.data.message || 'Form saved')
+        // 2) Save event-level settings + payment config
+        const eventPromise = apiMethods.events.update(orgId.value, eventData.value._id, {
+            settings: {
+                registrationStartDate: fromDatetimeLocal(eventSettings.registrationStartDate),
+                registrationEndDate: fromDatetimeLocal(eventSettings.registrationEndDate),
+                positionPaperDeadline: fromDatetimeLocal(eventSettings.positionPaperDeadline),
+                allowLateRegistration: eventSettings.allowLateRegistration,
+                allowLatePositionPapers: eventSettings.allowLatePositionPapers,
+            },
+            registrationFee: {
+                enabled: paymentConfig.enabled,
+                defaultAmount: paymentConfig.defaultAmount || null,
+                currency: paymentConfig.currency,
+                defaultDeadlineDays: paymentConfig.defaultDeadlineDays || null,
+                instructions: paymentConfig.instructions?.trim() || null,
+            }
+        })
+
+        const [formRes, eventRes] = await Promise.all([formPromise, eventPromise])
+
+        // Update local eventData with fresh response
+        if (eventRes.data.success && eventRes.data.event) {
+            eventData.value = eventRes.data.event
         }
+
+        toast.success('All changes saved')
     } catch (e) {
-        toast.error(e.response?.data?.error || 'Failed to save form')
+        toast.error(e.response?.data?.error || 'Failed to save')
     } finally {
         isSaving.value = false
     }

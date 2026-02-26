@@ -119,17 +119,17 @@
                     <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
                         <p class="text-sm font-medium text-mun-gray-500">Committees</p>
                         <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalCommittees || 0
-                            }}</p>
+                        }}</p>
                     </div>
                     <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
                         <p class="text-sm font-medium text-mun-gray-500">Participants</p>
                         <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalParticipants || 0
-                            }}</p>
+                        }}</p>
                     </div>
                     <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
                         <p class="text-sm font-medium text-mun-gray-500">Applications</p>
                         <p class="text-2xl font-bold text-mun-gray-900 mt-1">{{ event.statistics?.totalApplications || 0
-                            }}</p>
+                        }}</p>
                     </div>
                     <div class="bg-white rounded-xl border border-mun-gray-200 p-5">
                         <p class="text-sm font-medium text-mun-gray-500">Countries</p>
@@ -230,7 +230,8 @@
                 <section class="bg-white rounded-xl border border-mun-gray-200 p-6 space-y-6">
                     <div>
                         <h2 class="text-lg font-semibold text-mun-gray-900">Event Lifecycle</h2>
-                        <p class="text-sm text-mun-gray-500 mt-1">Move your event through each stage. You can advance to the next step or go back one step.</p>
+                        <p class="text-sm text-mun-gray-500 mt-1">Move your event through each stage. You can advance to
+                            the next step or go back one step.</p>
                     </div>
 
                     <!-- Stepper -->
@@ -238,33 +239,25 @@
                         <!-- Background connector line -->
                         <div class="hidden sm:block absolute top-5 left-0 right-0 h-0.5 bg-mun-gray-200 z-0"></div>
                         <!-- Progress line -->
-                        <div
-                            class="hidden sm:block absolute top-5 left-0 h-0.5 bg-mun-blue z-[1] transition-all duration-500"
-                            :style="{ width: `${(stageIndex(event.status) / (LIFECYCLE_STAGES.length - 1)) * 100}%` }"
-                        ></div>
+                        <div class="hidden sm:block absolute top-5 left-0 h-0.5 bg-mun-blue z-[1] transition-all duration-500"
+                            :style="{ width: `${(stageIndex(event.status) / (LIFECYCLE_STAGES.length - 1)) * 100}%` }">
+                        </div>
 
                         <div class="grid grid-cols-2 sm:grid-cols-6 gap-y-4 gap-x-0 relative z-[2]">
-                            <div
-                                v-for="(stage, idx) in LIFECYCLE_STAGES"
-                                :key="stage.key"
-                                class="flex flex-col items-center text-center"
-                            >
+                            <div v-for="(stage, idx) in LIFECYCLE_STAGES" :key="stage.key"
+                                class="flex flex-col items-center text-center">
                                 <!-- Circle indicator -->
-                                <button
-                                    @click="handleStageClick(stage.key)"
-                                    :disabled="!canMoveTo(stage.key)"
-                                    :class="[
-                                        'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors relative',
-                                        event.status === stage.key
-                                            ? 'bg-mun-blue text-white ring-4 ring-mun-blue/20'
-                                            : stageIndex(event.status) > idx
-                                                ? 'bg-mun-blue text-white'
-                                                : 'bg-mun-gray-100 text-mun-gray-400',
-                                        canMoveTo(stage.key) && event.status !== stage.key
-                                            ? 'hover:ring-4 hover:ring-mun-blue/10 cursor-pointer'
-                                            : event.status === stage.key ? 'cursor-default' : 'cursor-not-allowed',
-                                    ]"
-                                >
+                                <button @click="handleStageClick(stage.key)" :disabled="!canMoveTo(stage.key)" :class="[
+                                    'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-colors relative',
+                                    event.status === stage.key
+                                        ? 'bg-mun-blue text-white ring-4 ring-mun-blue/20'
+                                        : stageIndex(event.status) > idx
+                                            ? 'bg-mun-blue text-white'
+                                            : 'bg-mun-gray-100 text-mun-gray-400',
+                                    canMoveTo(stage.key) && event.status !== stage.key
+                                        ? 'hover:ring-4 hover:ring-mun-blue/10 cursor-pointer'
+                                        : event.status === stage.key ? 'cursor-default' : 'cursor-not-allowed',
+                                ]">
                                     <CheckIcon v-if="stageIndex(event.status) > idx" class="w-5 h-5" />
                                     <span v-else>{{ idx + 1 }}</span>
                                 </button>
@@ -273,7 +266,7 @@
                                 <p :class="[
                                     'text-xs font-semibold mt-2 leading-tight',
                                     event.status === stage.key ? 'text-mun-blue' :
-                                    stageIndex(event.status) > idx ? 'text-mun-gray-700' : 'text-mun-gray-400'
+                                        stageIndex(event.status) > idx ? 'text-mun-gray-700' : 'text-mun-gray-400'
                                 ]">
                                     {{ stage.label }}
                                 </p>
@@ -285,10 +278,8 @@
                                 </p>
 
                                 <!-- Current badge -->
-                                <span
-                                    v-if="event.status === stage.key"
-                                    class="mt-1.5 px-2 py-0.5 bg-mun-blue text-white text-[9px] font-bold uppercase tracking-wider rounded-full"
-                                >
+                                <span v-if="event.status === stage.key"
+                                    class="mt-1.5 px-2 py-0.5 bg-mun-blue text-white text-[9px] font-bold uppercase tracking-wider rounded-full">
                                     Current
                                 </span>
                             </div>
@@ -296,16 +287,49 @@
                     </div>
 
                     <!-- Action hint -->
-                    <div v-if="nextStatuses.length > 0" class="flex items-center gap-3 p-3 bg-mun-blue-50/70 rounded-xl">
+                    <div v-if="nextStatuses.length > 0"
+                        class="flex items-center gap-3 p-3 bg-mun-blue-50/70 rounded-xl">
                         <InformationCircleIcon class="w-5 h-5 text-mun-blue flex-shrink-0" />
                         <p class="text-sm text-mun-blue-700">
                             You can move to:
-                            <strong v-for="(s, i) in nextStatuses" :key="s">{{ stageLabelFor(s) }}<template v-if="i < nextStatuses.length - 1">, </template></strong>
+                            <strong v-for="(s, i) in nextStatuses" :key="s">{{ stageLabelFor(s) }}<template
+                                    v-if="i < nextStatuses.length - 1">, </template></strong>
                         </p>
                     </div>
-                    <div v-else-if="event.status === 'completed'" class="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
+                    <div v-else-if="event.status === 'completed'"
+                        class="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
                         <CheckCircleIcon class="w-5 h-5 text-green-600 flex-shrink-0" />
                         <p class="text-sm text-green-700">This event has been completed.</p>
+                    </div>
+
+                    <!-- Automation overrides -->
+                    <div v-if="event.status !== 'completed'" class="space-y-3 pt-3 border-t border-mun-gray-100">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-sm font-semibold text-mun-gray-900">Automatic Transitions</h3>
+                                <p class="text-xs text-mun-gray-500 mt-0.5">The system advances status when dates are
+                                    reached. Toggle off to
+                                    manage manually.</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label v-for="rule in automationRules" :key="rule.key"
+                                class="flex items-center justify-between p-3 rounded-lg border border-mun-gray-200 hover:bg-mun-gray-50 cursor-pointer transition-colors">
+                                <div class="min-w-0 mr-3">
+                                    <p class="text-sm font-medium text-mun-gray-800">{{ rule.label }}</p>
+                                    <p class="text-xs text-mun-gray-400">{{ rule.hint }}</p>
+                                </div>
+                                <div class="relative inline-flex items-center flex-shrink-0">
+                                    <input type="checkbox" :checked="!event.automationOverrides?.[rule.key]"
+                                        @change="toggleAutomationOverride(rule.key, $event.target.checked)"
+                                        class="sr-only peer" />
+                                    <div
+                                        class="w-9 h-5 bg-mun-gray-200 peer-focus:ring-2 peer-focus:ring-mun-blue/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-mun-blue after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all">
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        <p v-if="overrideSaving" class="text-xs text-mun-gray-400">Saving...</p>
                     </div>
                 </section>
             </template>
@@ -392,18 +416,14 @@
                 </form>
             </template>
         </ModalWrapper>
-        
+
         <!-- Lifecycle confirmation -->
-        <ConfirmationDialog
-            v-model="showLifecycleConfirm"
+        <ConfirmationDialog v-model="showLifecycleConfirm"
             :title="pendingLifecycleTarget && stageIndex(pendingLifecycleTarget) < stageIndex(event?.status) ? 'Move Back?' : 'Advance Event?'"
             :message="`Move event to '${stageLabelFor(pendingLifecycleTarget)}'?${pendingLifecycleTarget && stageIndex(pendingLifecycleTarget) < stageIndex(event?.status) ? ' This will revert the event status.' : ''}`"
             :type="pendingLifecycleTarget && stageIndex(pendingLifecycleTarget) < stageIndex(event?.status) ? 'warning' : 'question'"
             :confirm-variant="pendingLifecycleTarget && stageIndex(pendingLifecycleTarget) < stageIndex(event?.status) ? 'warning' : 'primary'"
-            confirm-text="Confirm"
-            @confirm="confirmLifecycleChange"
-            @cancel="pendingLifecycleTarget = null"
-        />
+            confirm-text="Confirm" @confirm="confirmLifecycleChange" @cancel="pendingLifecycleTarget = null" />
     </div>
 </template>
 
@@ -450,6 +470,8 @@ const copiedField = ref(null)
 const showLifecycleConfirm = ref(false)
 const pendingLifecycleTarget = ref(null)
 
+const overrideSaving = ref(false)
+
 const editForm = reactive({ name: '', description: '', startDate: '', endDate: '', location: '', mapUrl: '', logo: '', timezone: 'UTC' })
 const sponsorForm = reactive({ name: '', website: '', logo: null })
 
@@ -465,6 +487,13 @@ const tabs = computed(() => {
     }
     return list
 })
+
+const automationRules = [
+    { key: 'skipOpenRegistration', label: 'Open Registration', hint: 'Auto-opens when registration start date is reached' },
+    { key: 'skipCloseRegistration', label: 'Close Registration', hint: 'Auto-closes when registration end date is reached' },
+    { key: 'skipActivate', label: 'Activate Event', hint: 'Auto-activates when event start date is reached' },
+    { key: 'skipComplete', label: 'Complete Event', hint: 'Auto-completes when event end date is reached' },
+]
 
 const timezoneOptions = [
     { label: 'UTC (GMT+0)', value: 'UTC' },
@@ -511,6 +540,26 @@ const handleStageClick = (targetStatus) => {
     if (!canMoveTo(targetStatus)) return
     pendingLifecycleTarget.value = targetStatus
     showLifecycleConfirm.value = true
+}
+
+const toggleAutomationOverride = async (key, autoEnabled) => {
+    // autoEnabled = true means automation IS active (override = false)
+    overrideSaving.value = true
+    try {
+        const res = await apiMethods.events.update(orgId.value, event.value._id, {
+            automationOverrides: {
+                [key]: !autoEnabled   // true = skip (disabled), false = auto (enabled)
+            }
+        })
+        if (res.data.success && res.data.event) {
+            event.value = res.data.event
+            toast.success(`Automation ${autoEnabled ? 'enabled' : 'disabled'}`)
+        }
+    } catch (e) {
+        toast.error('Failed to update automation setting')
+    } finally {
+        overrideSaving.value = false
+    }
 }
 
 const confirmLifecycleChange = async () => {

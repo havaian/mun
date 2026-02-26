@@ -143,6 +143,13 @@
                                                 <span class="text-xs text-mun-gray-500">{{ m.country.name }}</span>
                                             </div>
                                         </template>
+                                        <!-- Payment badge (only if fee enabled and participant came through pipeline) -->
+                                        <template v-if="m.registrationApplication?.payment?.amount != null">
+                                            <span class="text-mun-gray-300">·</span>
+                                            <span :class="paymentBadgeClass(m.registrationApplication)">
+                                                {{ paymentBadgeLabel(m.registrationApplication) }}
+                                            </span>
+                                        </template>
                                     </div>
                                 </div>
                             </div>
@@ -489,7 +496,7 @@
                                         <CountryFlag :country-name="detailMember.country.name"
                                             :country-code="detailMember.country.code" size="small" variant="bordered" />
                                         <span class="font-medium text-mun-gray-900">{{ detailMember.country.name
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                 </div>
                                 <div>
@@ -505,6 +512,57 @@
                             </div>
                         </div>
 
+                        <!-- Payment info (only if registration application has payment data) -->
+                        <div v-if="detailMember.registrationApplication?.payment?.amount != null">
+                            <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Payment
+                            </h4>
+                            <div class="rounded-lg border p-3 space-y-2"
+                                :class="paymentSectionClass(detailMember.registrationApplication)">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-2">
+                                        <span :class="paymentBadgeClass(detailMember.registrationApplication)">
+                                            {{ paymentBadgeLabel(detailMember.registrationApplication) }}
+                                        </span>
+                                        <span class="text-sm font-medium text-mun-gray-900">
+                                            {{ detailMember.registrationApplication.payment.currency || 'USD' }}
+                                            {{ detailMember.registrationApplication.payment.amount }}
+                                        </span>
+                                    </div>
+                                    <span v-if="detailMember.registrationApplication.payment.paidAmount != null"
+                                        class="text-xs text-mun-gray-500">
+                                        Paid: {{ detailMember.registrationApplication.payment.currency || 'USD' }}
+                                        {{ detailMember.registrationApplication.payment.paidAmount }}
+                                    </span>
+                                </div>
+                                <!-- Deadline -->
+                                <div v-if="detailMember.registrationApplication.payment.deadline"
+                                    class="text-xs text-mun-gray-500">
+                                    Deadline: {{ formatDateTime(detailMember.registrationApplication.payment.deadline)
+                                    }}
+                                    <span v-if="isPaymentOverdue(detailMember.registrationApplication)"
+                                        class="text-red-500 font-medium ml-1">
+                                        (overdue)
+                                    </span>
+                                </div>
+                                <!-- Verified info -->
+                                <div v-if="detailMember.registrationApplication.payment.verifiedAt"
+                                    class="text-xs text-green-600">
+                                    Verified: {{ formatDateTime(detailMember.registrationApplication.payment.verifiedAt)
+                                    }}
+                                </div>
+                                <!-- Waiver info -->
+                                <div v-if="detailMember.registrationApplication.payment.waiver?.type && detailMember.registrationApplication.payment.waiver.type !== 'none'"
+                                    class="text-xs">
+                                    <span class="text-mun-gray-500">Waiver:</span>
+                                    <span class="font-medium capitalize ml-1">{{
+                                        detailMember.registrationApplication.payment.waiver.type }}</span>
+                                    <span v-if="detailMember.registrationApplication.payment.waiver.reason"
+                                        class="text-mun-gray-400 ml-1">— {{
+                                            detailMember.registrationApplication.payment.waiver.reason }}</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Timestamps -->
                         <div>
                             <h4 class="text-xs font-semibold text-mun-gray-500 uppercase tracking-wide mb-2">Timeline
@@ -513,12 +571,12 @@
                                 <div>
                                     <span class="text-mun-gray-400">Added</span>
                                     <p class="font-medium text-mun-gray-900">{{ formatDateTime(detailMember.createdAt)
-                                    }}</p>
+                                        }}</p>
                                 </div>
                                 <div v-if="detailMember.updatedAt !== detailMember.createdAt">
                                     <span class="text-mun-gray-400">Last Updated</span>
                                     <p class="font-medium text-mun-gray-900">{{ formatDateTime(detailMember.updatedAt)
-                                    }}</p>
+                                        }}</p>
                                 </div>
                             </div>
                         </div>
@@ -565,6 +623,15 @@
                                 <div>
                                     <label class="block text-xs text-mun-gray-500 mb-1">Last Name</label>
                                     <input v-model="editMemberForm.userProfile.lastName" type="text"
+                                        class="input-field" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-mun-gray-500 mb-1">Phone</label>
+                                    <input v-model="editMemberForm.userProfile.phone" type="tel" class="input-field" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-mun-gray-500 mb-1">Institution</label>
+                                    <input v-model="editMemberForm.userProfile.institution" type="text"
                                         class="input-field" />
                                 </div>
                             </div>
@@ -685,6 +752,7 @@ import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
 import CountryManagementModal from '@/components/admin/CountryManagementModal.vue'
 import CountryFlag from '@/components/shared/CountryFlag.vue'
+// ConfirmationDialog is registered globally — no local import needed
 import {
     PlusIcon, PencilIcon, GlobeAltIcon, ChevronDownIcon,
     RectangleGroupIcon, UserGroupIcon, XMarkIcon
@@ -1029,7 +1097,9 @@ const editMemberForm = reactive({
     country: { name: '', code: '' },
     userProfile: {
         firstName: '',
-        lastName: ''
+        lastName: '',
+        phone: '',
+        institution: ''
     }
 })
 
@@ -1089,7 +1159,9 @@ const startEditingMember = () => {
     }
     editMemberForm.userProfile = {
         firstName: m.user?.firstName || '',
-        lastName: m.user?.lastName || ''
+        lastName: m.user?.lastName || '',
+        phone: m.user?.phone || '',
+        institution: m.user?.institution || ''
     }
 
     editCountrySearch.value = m.country?.name || ''
@@ -1174,7 +1246,9 @@ const saveEditMember = async () => {
             committeeId: editMemberForm.committeeId || null,
             userProfile: {
                 firstName: editMemberForm.userProfile.firstName.trim(),
-                lastName: editMemberForm.userProfile.lastName.trim()
+                lastName: editMemberForm.userProfile.lastName.trim(),
+                phone: editMemberForm.userProfile.phone?.trim() || null,
+                institution: editMemberForm.userProfile.institution?.trim() || null
             }
         }
 
@@ -1269,6 +1343,52 @@ const statusClass = (status) => ({
     suspended: 'px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-700',
     completed: 'px-2 py-1 text-xs font-medium rounded-full bg-mun-gray-100 text-mun-gray-500',
 }[status] || 'px-2 py-1 text-xs font-medium rounded-full bg-mun-gray-100 text-mun-gray-600')
+
+// =============================================
+// PAYMENT HELPERS
+// =============================================
+const paymentBadgeLabel = (regApp) => {
+    if (!regApp?.payment) return ''
+    const p = regApp.payment
+    const w = p.waiver
+    if (w?.type === 'full') return 'Waived'
+    if (p.verifiedAt) return 'Paid'
+    if (regApp.currentStage === 'payment_pending') return 'Pending'
+    return 'Paid'
+}
+
+const paymentBadgeClass = (regApp) => {
+    if (!regApp?.payment) return ''
+    const p = regApp.payment
+    const w = p.waiver
+    const base = 'px-1.5 py-0.5 text-[10px] font-medium rounded'
+    if (w?.type === 'full') return `${base} bg-yellow-100 text-yellow-700`
+    if (p.verifiedAt) return `${base} bg-green-100 text-green-700`
+    if (regApp.currentStage === 'payment_pending') {
+        // Check overdue
+        if (p.deadline && new Date(p.deadline) < new Date()) return `${base} bg-red-100 text-red-700`
+        return `${base} bg-amber-100 text-amber-700`
+    }
+    return `${base} bg-green-100 text-green-700`
+}
+
+const paymentSectionClass = (regApp) => {
+    if (!regApp?.payment) return 'border-mun-gray-200'
+    const p = regApp.payment
+    if (p.waiver?.type === 'full') return 'border-yellow-200 bg-yellow-50/50'
+    if (p.verifiedAt) return 'border-green-200 bg-green-50/50'
+    if (regApp.currentStage === 'payment_pending') {
+        if (p.deadline && new Date(p.deadline) < new Date()) return 'border-red-200 bg-red-50/50'
+        return 'border-amber-200 bg-amber-50/50'
+    }
+    return 'border-green-200 bg-green-50/50'
+}
+
+const isPaymentOverdue = (regApp) => {
+    if (!regApp?.payment?.deadline) return false
+    if (regApp.payment.verifiedAt) return false
+    return new Date(regApp.payment.deadline) < new Date()
+}
 
 onMounted(() => loadData())
 </script>

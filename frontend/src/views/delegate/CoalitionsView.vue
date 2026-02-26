@@ -261,8 +261,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, reactive, inject } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
@@ -277,16 +276,17 @@ import {
 } from '@heroicons/vue/24/outline'
 
 // Stores
-const router = useRouter()
 const authStore = useAuthStore()
 const toast = useToast()
+
+// Context
+const ctx = inject('sessionContext')
 
 // State
 const isLoading = ref(false)
 const isSubmitting = ref(false)
 const coalitions = ref([])
 const countries = ref([])
-const committee = ref(null)
 const searchQuery = ref('')
 const expandedCoalition = ref(null)
 const showCreateModal = ref(false)
@@ -377,8 +377,7 @@ const loadData = async () => {
       throw new Error('Failed to fetch committee details')
     }
 
-    committee.value = committeeResponse.data.committee
-    countries.value = committee.value.countries || []
+    countries.value = ctx.committee.value.countries || []
 
     // Load coalitions
     await loadCoalitions()
@@ -393,7 +392,7 @@ const loadData = async () => {
 
 const loadCoalitions = async () => {
   try {
-    const response = await apiMethods.resolutions.getCoalitions(committee.value._id)
+    const response = await apiMethods.resolutions.getCoalitions(ctx.committeeId.value)
 
     if (response.data.success) {
       coalitions.value = response.data.coalitions || []
@@ -409,7 +408,7 @@ const createCoalition = async () => {
     isSubmitting.value = true
 
     const coalitionData = {
-      committeeId: committee.value._id,
+      committeeId: ctx.committeeId.value,
       name: newCoalition.name.trim(),
       description: newCoalition.description.trim(),
       invitedCountries: newCoalition.invitedCountries
@@ -583,13 +582,13 @@ const closeCreateModal = () => {
 // WebSocket listeners
 const setupWebSocketListeners = () => {
   wsService.on('coalition-created', (data) => {
-    if (data.committeeId === committee.value?._id) {
+    if (data.committeeId === ctx.committeeId.value) {
       loadCoalitions()
     }
   })
 
   wsService.on('coalition-updated', (data) => {
-    if (data.committeeId === committee.value?._id) {
+    if (data.committeeId === ctx.committeeId.value) {
       loadCoalitions()
     }
   })
@@ -603,8 +602,10 @@ const setupWebSocketListeners = () => {
 }
 
 // Lifecycle
-onMounted(async () => {
-  await loadData()
-  setupWebSocketListeners()
-})
+watch(() => ctx.isReady.value, (ready) => {
+    if (ready) {
+      await loadData()
+      setupWebSocketListeners()
+    }
+}, { immediate: true })
 </script>

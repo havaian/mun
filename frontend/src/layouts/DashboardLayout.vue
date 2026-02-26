@@ -1,7 +1,7 @@
 <template>
     <div class="min-h-screen bg-gradient-mun">
         <!-- Sidebar -->
-        <UniversalSidebar :sidebar-collapsed="sidebarCollapsed" user-role="admin" :user="authStore.user"
+        <UniversalSidebar :sidebar-collapsed="sidebarCollapsed" user-role="user" :user="authStore.user"
             :primary-navigation="primaryNavigation" :navigation-sections="navigationSections"
             :user-actions="userActions" @toggle-sidebar="toggleSidebar" @logout="handleLogout" />
 
@@ -22,77 +22,65 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import UniversalSidebar from '@/components/layout/UniversalSidebar.vue'
 
 import {
-    HomeIcon,
     RectangleGroupIcon,
     CalendarDaysIcon,
-    UserGroupIcon,
-    CogIcon,
+    BuildingOffice2Icon,
+    UserCircleIcon,
+    ShieldCheckIcon,
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
-const route = useRoute()
 const authStore = useAuthStore()
 
 const sidebarCollapsed = ref(false)
 
-// Current org slug from URL
-const orgSlug = computed(() => route.params.orgSlug)
-
-// Set active org when slug changes
-watch(orgSlug, (newSlug) => {
-    if (newSlug) {
-        const org = authStore.allOrganizations.find(o => o.slug === newSlug)
-        if (org) {
-            authStore.setActiveOrg(org._id)
-        }
-    }
-}, { immediate: true })
-
 const primaryNavigation = computed(() => [
     {
         name: 'DashboardHome',
-        label: '← Home',
+        label: 'Home',
         to: '/dashboard',
-        icon: HomeIcon,
-    },
-    {
-        name: 'OrgDashboard',
-        label: 'Dashboard',
-        to: `/org/${orgSlug.value}`,
         icon: RectangleGroupIcon,
     },
     {
-        name: 'OrgEvents',
-        label: 'Events',
-        to: `/org/${orgSlug.value}/events`,
+        name: 'DashboardEvents',
+        label: 'My Events',
+        to: '/dashboard/events',
         icon: CalendarDaysIcon,
+        badge: authStore.eventParticipations?.length || null,
     },
     {
-        name: 'OrgMembers',
-        label: 'Members',
-        to: `/org/${orgSlug.value}/members`,
-        icon: UserGroupIcon,
+        name: 'DashboardOrganizations',
+        label: 'My Organizations',
+        to: '/dashboard/organizations',
+        icon: BuildingOffice2Icon,
+        badge: authStore.allOrganizations?.length || null,
+    },
+    {
+        name: 'DashboardProfile',
+        label: 'My Profile',
+        to: '/dashboard/profile',
+        icon: UserCircleIcon,
     },
 ])
 
 const navigationSections = computed(() => {
     const sections = []
 
-    if (authStore.isOrgAdmin || authStore.hasOrgPermission('manage_content')) {
+    if (authStore.isSuperAdmin) {
         sections.push({
             title: 'Administration',
             items: [
                 {
-                    name: 'OrgSettings',
-                    label: 'Settings',
-                    to: `/org/${orgSlug.value}/settings`,
-                    icon: CogIcon,
+                    name: 'SuperAdminDashboard',
+                    label: 'Platform Admin',
+                    to: '/superadmin',
+                    icon: ShieldCheckIcon,
                 },
             ]
         })
@@ -101,9 +89,7 @@ const navigationSections = computed(() => {
     return sections
 })
 
-const userActions = computed(() => [
-    { name: 'DashboardProfile', label: 'Profile', to: '/dashboard/profile' },
-])
+const userActions = computed(() => [])
 
 const toggleSidebar = () => {
     sidebarCollapsed.value = !sidebarCollapsed.value

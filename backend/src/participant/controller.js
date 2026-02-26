@@ -20,6 +20,7 @@ const getParticipants = async (req, res) => {
                 .populate('user', 'firstName lastName email avatar institution')
                 .populate('committee', 'name acronym')
                 .populate('assignedBy', 'firstName lastName email')
+                .populate('registrationApplication', 'payment currentStage')
                 .sort({ role: 1, 'country.name': 1 })
                 .skip(skip)
                 .limit(parseInt(limit))
@@ -51,7 +52,8 @@ const getParticipant = async (req, res) => {
         const participant = await EventParticipant.findOne({ _id: participantId, event: eventId })
             .populate('user', 'firstName lastName email avatar institution phone dateOfBirth languageProficiency')
             .populate('committee', 'name acronym type')
-            .populate('assignedBy', 'firstName lastName email');
+            .populate('assignedBy', 'firstName lastName email')
+            .populate('registrationApplication', 'payment currentStage');
 
         if (!participant) {
             return res.status(404).json({ error: 'Participant not found' });

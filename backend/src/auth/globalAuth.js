@@ -60,6 +60,10 @@ const setupGlobalAuth = () => {
         // Attaches: req.organization, req.event, req.isOrgAdmin, req.orgMembership
         eventContext: middleware.resolveEventContext,
 
+        // Resolve event context from just eventId (no orgId in URL)
+        // For participant-scoped routes: /api/p/events/:eventId/...
+        eventById: middleware.resolveEventById,
+
         // ============================================
         // Committee-level: resolve participant from URL params
         // ============================================

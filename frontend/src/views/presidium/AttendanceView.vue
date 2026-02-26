@@ -167,9 +167,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { ref, computed, onMounted, watch, inject } from 'vue'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
@@ -183,15 +181,15 @@ import {
 } from '@heroicons/vue/24/outline'
 
 // Stores
-const router = useRouter()
-const authStore = useAuthStore()
 const toast = useToast()
+
+// Context
+const ctx = inject('sessionContext')
 
 // State
 const isLoading = ref(false)
 const rollCallActive = ref(false)
 const countries = ref([])
-const attendanceData = ref([])
 const quorumData = ref({
     hasQuorum: false,
     required: 0,
@@ -204,7 +202,6 @@ const searchQuery = ref('')
 
 // Current session
 const currentSession = ref(null)
-const committee = ref(null)
 
 // Computed
 const attendanceCounts = computed(() => {
@@ -254,22 +251,8 @@ const loadData = async () => {
     try {
         isLoading.value = true
 
-        // Get committee ID from auth context
-        const committeeId = authStore.user?.committeeId._id
-        if (!committeeId) {
-            throw new Error('No committee assigned')
-        }
-
-        // Fetch full committee details to get countries
-        const committeeResponse = await apiMethods.committees.getById(committeeId)
-        if (!committeeResponse.data.success) {
-            throw new Error('Failed to fetch committee details')
-        }
-
-        committee.value = committeeResponse.data.committee
-
         // Set countries from committee
-        countries.value = committee.value.countries.map(country => ({
+        countries.value = ctx.committee.value.countries.map(country => ({
             ...country,
             attendanceStatus: 'absent' // Default status
         }))
@@ -287,7 +270,7 @@ const loadData = async () => {
 
 const loadActiveSession = async () => {
     try {
-        const response = await sessionApi.sessions.getByCommittee(committee.value._id, {
+        const response = await sessionApi.sessions.getByCommittee(ctx.committeeId.value, {
             status: 'active',
             limit: 1
         })
@@ -531,15 +514,17 @@ watch(attendanceCounts, (newCounts) => {
 }, { deep: true })
 
 // Lifecycle
-onMounted(async () => {
-    await loadData()
-    setupWebSocketListeners()
+watch(() => ctx.isReady.value, (ready) => {
+    if (ready) {
+        await loadData()
+        setupWebSocketListeners()
 
-    // Join committee WebSocket room for real-time updates
-   if (committee.value?._id) {
-       wsService.emit('join-committee-room', {
-           committeeId: committee.value._id
-       })
-   }
-})
+        // Join committee WebSocket room for real-time updates
+        if (ctx.committeeId.value) {
+            wsService.emit('join-committee-room', {
+                committeeId: ctx.committeeId.value
+            })
+        }
+    }
+}, { immediate: true })
 </script>

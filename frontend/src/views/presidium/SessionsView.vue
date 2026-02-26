@@ -4,7 +4,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-2xl font-bold text-mun-gray-900">Session Management</h1>
-                <p class="text-mun-gray-600">{{ committee?.name || 'Loading...' }}</p>
+                <p class="text-mun-gray-600">{{ ctx.committee.value.name || 'Loading...' }}</p>
             </div>
             <button @click="showCreateModal = true" class="btn-un-primary">
                 <PlusIcon class="w-5 h-5 mr-2" />
@@ -142,7 +142,7 @@
         </div>
 
         <!-- Create Session Modal -->
-        <SessionCreateModal v-model="showCreateModal" :committee-id="committeeId"
+        <SessionCreateModal v-model="showCreateModal" :committee-id="ctx.committeeId.value"
             @session-created="handleSessionCreated" />
 
         <!-- Change Mode Modal -->
@@ -151,9 +151,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { ref, computed, onMounted, inject } from 'vue'
 import { useToast } from '@/plugins/toast'
 import { apiMethods } from '@/utils/api'
 
@@ -173,18 +171,17 @@ import {
 import SessionCreateModal from '@/components/presidium/SessionCreateModal.vue'
 import ChangeModeModal from '@/components/presidium/ChangeModeModal.vue'
 
-const router = useRouter()
-const authStore = useAuthStore()
 const toast = useToast()
+
+// Context
+const ctx = inject('sessionContext')
 
 // State
 const isLoading = ref(false)
-const committee = ref(null)
 const sessions = ref([])
 const showCreateModal = ref(false)
 const changeModeModal = ref(false)
 
-const committeeId = computed(() => authStore.user?.committeeId?._id)
 const activeSession = computed(() => sessions.value.find(s => s.status === 'active' || s.status === 'paused'))
 
 // Methods
@@ -192,14 +189,8 @@ const loadSessions = async () => {
     try {
         isLoading.value = true
 
-        // Load committee info
-        const committeeResponse = await apiMethods.committees.getById(committeeId.value)
-        if (committeeResponse.data.success) {
-            committee.value = committeeResponse.data.committee
-        }
-
         // Load sessions
-        const sessionsResponse = await apiMethods.sessions.getAll(committeeId.value)
+        const sessionsResponse = await apiMethods.sessions.getAll(ctx.committeeId.value)
         if (sessionsResponse.data.success) {
             sessions.value = sessionsResponse.data.sessions || []
         }
@@ -347,7 +338,9 @@ const getStatusClass = (status) => {
 }
 
 // Lifecycle
-onMounted(() => {
-    loadSessions()
-})
+watch(() => ctx.isReady.value, (ready) => {
+    if (ready) {
+        loadSessions()
+    }
+}, { immediate: true })
 </script>

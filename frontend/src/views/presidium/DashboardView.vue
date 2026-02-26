@@ -470,7 +470,7 @@
         </div>
 
         <!-- Session Create Modal -->
-        <SessionCreateModal v-model="showCreateSessionModal" :committee-id="committee?._id"
+        <SessionCreateModal v-model="showCreateSessionModal" :committee-id="ctx.committeeId.value"
             @session-created="handleSessionCreated" />
 
         <!-- Quick Vote Modal -->
@@ -581,9 +581,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { ref, computed, onMounted, onUnmounted, watch, inject } from 'vue'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
 import { apiMethods } from '@/utils/api'
@@ -605,12 +603,13 @@ import SessionCreateModal from '@/components/presidium/SessionCreateModal.vue'
 import QuickVoteModal from '@/components/presidium/QuickVoteModal.vue'
 
 // Stores
-const router = useRouter()
-const authStore = useAuthStore()
 const toast = useToast()
 
+// Context
+const ctx = inject('sessionContext')
+// ctx provides: committeeId, eventId, orgId, committee, event, participation, isReady, basePath
+
 // State
-const committee = ref(null)
 const currentSession = ref(null)
 const sessionTimers = ref({
     session: null,
@@ -923,19 +922,6 @@ const loadDashboardData = async () => {
     try {
         isLoading.value = true
 
-        // Get committee ID from auth context
-        const committeeId = authStore.user?.committeeId._id
-        if (!committeeId) {
-            toast.error('No committee assigned')
-        }
-
-        // Fetch full committee details to get countries
-        const committeeResponse = await apiMethods.committees.getById(committeeId)
-        if (!committeeResponse.data.success) {
-            toast.error('Failed to fetch committee details')
-        }
-
-        committee.value = committeeResponse.data.committee
         await loadActiveSession()
         await loadAllSessions()
         setupWebSocketListeners()
@@ -949,10 +935,8 @@ const loadDashboardData = async () => {
 }
 
 const loadAllSessions = async () => {
-    if (!committee.value?._id) return
-
     try {
-        const response = await apiMethods.sessions.getAll(committee.value._id, {
+        const response = await apiMethods.sessions.getAll(ctx.committeeId.value, {
             page: 1,
             limit: 20,
             sort: '-sessionNumber'
@@ -968,7 +952,7 @@ const loadAllSessions = async () => {
 
 const loadActiveSession = async () => {
     try {
-        const response = await apiMethods.sessions.getAll(committee.value._id, {
+        const response = await apiMethods.sessions.getAll(ctx.committeeId.value, {
             status: 'active',
             limit: 1
         })
@@ -981,7 +965,7 @@ const loadActiveSession = async () => {
         console.error('Failed to load active session:', error)
     }
 }
-    
+
 const loadSessionDetails = async () => {
     if (!currentSession.value?._id) return
 
@@ -1027,7 +1011,7 @@ const loadSessionDetails = async () => {
         }
 
         // Load active voting
-        const votingResponse = await apiMethods.voting.getByCommitteeId(committee.value._id)
+        const votingResponse = await apiMethods.voting.getByCommitteeId(ctx.committeeId.value._id)
         if (votingResponse.data.success) {
             const activeVotingData = votingResponse.data.voting?.find(v => v.status === 'active')
             if (activeVotingData) {
@@ -1243,24 +1227,19 @@ const setDisplayMode = async (mode) => {
         console.error('Invalid display mode:', mode)
         return
     }
-    
-    if (!committee.value?._id) {
-        toast.error('Committee not loaded')
-        return
-    }
-    
+
     try {
         console.log('🎮 Setting display mode to:', mode)
-        
+
         // UPDATE DATABASE via API
         const response = await apiMethods.committees.setDisplayMode(
-            committee.value._id, 
+            ctx.committeeId.value,
             mode
         )
-        
+
         if (response.data?.success) {
             publicDisplayMode.value = mode
-            
+
             const modeLabel = mode === 'session' ? 'Session View' : 'Gossip Box'
             toast.success(`Public display: ${modeLabel}`)
         }
@@ -1357,9 +1336,9 @@ const handleVotingCreated = (voting) => {
 const setupWebSocketListeners = () => {
     console.log('🎧 Setting up WebSocket listeners')
 
-    if (committee.value?._id) {
+    if (ctx.committeeId.value) {
         wsService.emit('join-committee-room', {
-            committeeId: committee.value._id
+            committeeId: ctx.committeeId.value._id
         })
     }
 
@@ -1380,7 +1359,7 @@ const setupWebSocketListeners = () => {
     // Display mode
     wsService.on('public-display-mode-changed', (data) => {
         console.log('🎬 Display mode changed:', data)
-        if (data.committeeId === committee.value?._id) {
+        if (data.committeeId === ctx.committeeId.value) {
             publicDisplayMode.value = data.mode
             const modeLabel = data.mode === 'session' ? 'Session View' : 'Gossip Box'
             toast.log(`Display switched to ${modeLabel}`)
@@ -1399,11 +1378,11 @@ const setupWebSocketListeners = () => {
         if (data.sessionId === currentSession.value?._id) {
             rollCallStatus.value = 'completed'
             rollCallCompleted.value = true
-            
+
             // Update speaker lists from response
             speakerLists.value = data.speakerLists || { present: [], absent: [] }
             quorum.value = data.quorum
-            
+
             toast.success(`Roll call completed! ${speakerLists.value.present.length} present`)
         }
     })
@@ -1411,17 +1390,17 @@ const setupWebSocketListeners = () => {
     wsService.on('late-arrival-marked', (data) => {
         if (data.sessionId === currentSession.value?._id) {
             console.log('Late arrival marked:', data.country)
-            
+
             // Update speaker lists - delegate added to END
             if (data.speakerLists) {
                 speakerLists.value = data.speakerLists
             }
-            
+
             // Update quorum if changed
             if (data.quorum) {
                 quorum.value = data.quorum
             }
-            
+
             toast.log(`${data.country} arrived late and added to end of speaker list`)
         }
     })
@@ -1432,7 +1411,7 @@ const setupWebSocketListeners = () => {
             if (data.quorum) {
                 quorum.value = data.quorum
             }
-            
+
             // Handle speaker list updates (for late arrivals during session)
             if (data.speakerLists) {
                 speakerLists.value = data.speakerLists
@@ -1513,7 +1492,7 @@ const setupWebSocketListeners = () => {
 
     // Voting
     wsService.on('voting-started', (data) => {
-        if (data.committeeId === committee.value?._id) {
+        if (data.committeeId === ctx.committeeId.value) {
             activeVoting.value = data.voting
             updateVotingResults(data.voting)
         }
@@ -1536,17 +1515,19 @@ const setupWebSocketListeners = () => {
 }
 
 // Lifecycle
-onMounted(async () => {
-    await loadDashboardData()
+watch(() => ctx.isReady.value, (ready) => {
+    if (ready) {
+        await loadDashboardData()
 
-    // Update display every second
-    displayUpdateInterval = setInterval(() => {
-        if (activeTimer.value?.isActive && !activeTimer.value?.isPaused) {
-            // Trigger reactive update
-            activeTimer.value = { ...activeTimer.value }
-        }
-    }, 1000)
-})
+        // Update display every second
+        displayUpdateInterval = setInterval(() => {
+            if (activeTimer.value?.isActive && !activeTimer.value?.isPaused) {
+                // Trigger reactive update
+                activeTimer.value = { ...activeTimer.value }
+            }
+        }, 1000)
+    }
+}, { immediate: true })
 
 onUnmounted(() => {
     if (displayUpdateInterval) {

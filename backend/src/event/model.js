@@ -137,6 +137,15 @@ const eventSchema = new mongoose.Schema({
         }
     },
 
+    // Automation override flags — admin can disable specific auto-transitions
+    // If a key is true, the automation service will NOT perform that transition
+    automationOverrides: {
+        skipOpenRegistration: { type: Boolean, default: false },
+        skipCloseRegistration: { type: Boolean, default: false },
+        skipActivate: { type: Boolean, default: false },
+        skipComplete: { type: Boolean, default: false },
+    },
+
     // Expanded status flow
     status: {
         type: String,

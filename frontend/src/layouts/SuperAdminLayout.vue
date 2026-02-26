@@ -28,6 +28,7 @@ import { useAuthStore } from '@/stores/auth'
 import UniversalSidebar from '@/components/layout/UniversalSidebar.vue'
 
 import {
+    HomeIcon,
     RectangleGroupIcon,
     BuildingOffice2Icon,
 } from '@heroicons/vue/24/outline'
@@ -38,6 +39,12 @@ const authStore = useAuthStore()
 const sidebarCollapsed = ref(false)
 
 const primaryNavigation = computed(() => [
+    {
+        name: 'DashboardHome',
+        label: '← Home',
+        to: '/dashboard',
+        icon: HomeIcon,
+    },
     {
         name: 'SuperAdminDashboard',
         label: 'Dashboard',
@@ -53,7 +60,7 @@ const primaryNavigation = computed(() => [
 ])
 
 const userActions = computed(() => [
-    { name: 'Profile', label: 'Profile', to: '/profile' },
+    { name: 'DashboardProfile', label: 'Profile', to: '/dashboard/profile' },
 ])
 
 const toggleSidebar = () => {

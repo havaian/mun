@@ -313,8 +313,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, inject } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
 import { wsService } from '@/plugins/websocket'
@@ -328,16 +327,17 @@ import {
 } from '@heroicons/vue/24/outline'
 
 // Stores
-const router = useRouter()
 const authStore = useAuthStore()
 const toast = useToast()
+
+// Context
+const ctx = inject('sessionContext')
 
 // State
 const isLoading = ref(false)
 const isSubmitting = ref(false)
 const activeVote = ref(null)
 const votingHistory = ref([])
-const committee = ref(null)
 const showBoard = ref(false)
 const selectedVoting = ref(null)
 
@@ -367,12 +367,6 @@ const loadData = async () => {
   try {
     isLoading.value = true
 
-    // Get committee from auth context
-    committee.value = authStore.user?.committeeId
-    if (!committee.value) {
-      throw new Error('No committee assigned')
-    }
-
     // Load voting data
     await loadVotingData()
 
@@ -386,7 +380,7 @@ const loadData = async () => {
 
 const loadVotingData = async () => {
   try {
-    const response = await apiMethods.voting.getByCommitteeId(committee.value._id)
+    const response = await apiMethods.voting.getByCommitteeId(ctx.committeeId.value)
 
     if (response.data.success) {
       const allVotes = response.data.votings || []
@@ -472,7 +466,7 @@ const getVoteTypeColor = (type) => {
 }
 
 const getCountryCode = (countryName) => {
-  const country = committee.value?.countries?.find(c => c.name === countryName)
+  const country = ctx.committee.value?.countries?.find(c => c.name === countryName)
   return country?.code || ''
 }
 
@@ -521,7 +515,7 @@ const formatTime = (dateString) => {
 // WebSocket listeners
 const setupWebSocketListeners = () => {
   wsService.on('voting-started', (data) => {
-    if (data.committeeId === committee.value?._id) {
+    if (data.committeeId === ctx.committeeId.value) {
       loadVotingData() // Reload to get full voting data
       toast.log('New vote started: ' + data.title)
     }
@@ -592,14 +586,16 @@ const setupWebSocketListeners = () => {
 }
 
 // Lifecycle
-onMounted(async () => {
-  await loadData()
-  setupWebSocketListeners()
+watch(() => ctx.isReady.value, (ready) => {
+    if (ready) {
+      await loadData()
+      setupWebSocketListeners()
 
-  if (committee.value?._id) {
-       wsService.emit('join-committee-room', {
-           committeeId: committee.value._id
-       })
-   }
-})
+      if (ctx.committeeId.value) {
+          wsService.emit('join-committee-room', {
+              committeeId: ctx.committeeId.value
+          })
+      }
+    }
+}, { immediate: true })
 </script>

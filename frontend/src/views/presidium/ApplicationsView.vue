@@ -333,9 +333,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { ref, reactive, computed, watch, onMounted, inject } from 'vue'
 import { apiMethods } from '@/utils/api'
 import { useToast } from '@/plugins/toast'
 import {
@@ -343,19 +341,10 @@ import {
     ArrowPathIcon, ExclamationCircleIcon
 } from '@heroicons/vue/24/outline'
 
-const route = useRoute()
-const authStore = useAuthStore()
 const toast = useToast()
 
-// =============================================
-// CONTEXT RESOLUTION
-// =============================================
-const committeeId = computed(() => route.params.committeeId || authStore.user?.committeeId?._id)
-const committeeName = ref('')
-const committeeCountries = ref([])
-const orgId = ref(null)
-const eventId = ref(null)
-const contextError = ref(null)
+// Context
+const ctx = inject('sessionContext')
 
 // =============================================
 // STATE
@@ -366,6 +355,7 @@ const applications = ref([])
 const selectedApp = ref(null)
 const activeStage = ref('all')
 const stageCounts = ref({})
+const committeeCountries = ref([])
 
 // Detail modal state
 const showAcceptPanel = ref(false)
@@ -414,7 +404,7 @@ const previousReviews = computed(() => {
     if (!selectedApp.value?.committeeReviews) return []
     return selectedApp.value.committeeReviews.filter(r => {
         const rId = r.committee?._id || r.committee
-        return rId !== committeeId.value && r.decision !== 'pending'
+        return rId !== ctx.committeeId.value && r.decision !== 'pending'
     })
 })
 
@@ -440,69 +430,14 @@ const canAct = computed(() => {
     return ['form_review', 'interview'].includes(selectedApp.value.currentStage)
 })
 
-// =============================================
-// DATA LOADING
-// =============================================
-const resolveContext = async () => {
-    if (!committeeId.value) {
-        contextError.value = 'No committee assigned. Please contact your administrator.'
-        return false
-    }
-
-    try {
-        // The committee object in authStore should contain event reference
-        const userCommittee = authStore.user?.committeeId
-        if (userCommittee && typeof userCommittee === 'object') {
-            // Populated committee object from auth
-            committeeName.value = userCommittee.acronym || userCommittee.name || 'Committee'
-            committeeCountries.value = userCommittee.countries || []
-
-            // Try to extract event/org from committee
-            const evt = userCommittee.eventId || userCommittee.event
-            if (evt && typeof evt === 'object') {
-                eventId.value = evt._id
-                orgId.value = evt.organization?._id || evt.organization
-            } else if (evt) {
-                eventId.value = evt
-            }
-        }
-
-        // If we still don't have orgId/eventId, try loading committee details
-        if (!orgId.value || !eventId.value) {
-            // Try fetching from a known org context
-            // For now, use the activeOrganization if available
-            orgId.value = orgId.value || authStore.activeOrganization?._id
-            // If still missing, the API calls will fail gracefully
-            if (!orgId.value || !eventId.value) {
-                contextError.value = 'Unable to resolve event context. Committee may not be properly configured.'
-                return false
-            }
-        }
-
-        // Load full committee details for countries
-        if (committeeCountries.value.length === 0) {
-            try {
-                const cRes = await apiMethods.committees.getById(orgId.value, eventId.value, committeeId.value)
-                if (cRes.data.success) {
-                    committeeName.value = cRes.data.committee.acronym || cRes.data.committee.name
-                    committeeCountries.value = cRes.data.committee.countries || []
-                }
-            } catch (e) { /* non-fatal */ }
-        }
-
-        return true
-    } catch (e) {
-        contextError.value = 'Failed to resolve committee context.'
-        return false
-    }
-}
-
 const loadApplications = async () => {
-    if (!orgId.value || !eventId.value || !committeeId.value) return
+    committeeCountries.value = ctx.committee.value.countries || []
+
+    if (!ctx.orgId.value || !ctx.eventId.value || !ctx.committeeId.value) return
     isLoading.value = true
     try {
         const res = await apiMethods.registration.getCommitteeApplications(
-            orgId.value, eventId.value, committeeId.value
+            ctx.orgId.value, ctx.eventId.value, ctx.committeeId.value
         )
         if (res.data.success) {
             applications.value = res.data.applications || []
@@ -522,7 +457,7 @@ const loadApplications = async () => {
 const openDetail = async (app) => {
     try {
         // Use the org-level detail endpoint to get full data
-        const res = await apiMethods.registration.getApplication(orgId.value, eventId.value, app._id)
+        const res = await apiMethods.registration.getApplication(ctx.orgId.value, ctx.eventId.value, app._id)
         if (res.data.success) {
             selectedApp.value = res.data.application
             showAcceptPanel.value = false
@@ -534,7 +469,7 @@ const openDetail = async (app) => {
             // Pre-fill interview form from current committee review
             const currentReview = selectedApp.value.committeeReviews?.find(r => {
                 const rId = r.committee?._id || r.committee
-                return rId === committeeId.value
+                return rId === ctx.committeeId.value
             })
             if (currentReview?.interviewData) {
                 interviewForm.scheduledAt = currentReview.interviewData.scheduledAt
@@ -559,7 +494,7 @@ const advanceStage = async () => {
     isActioning.value = true
     try {
         await apiMethods.registration.advanceApplicationStage(
-            orgId.value, eventId.value, committeeId.value, selectedApp.value._id
+            ctx.orgId.value, ctx.eventId.value, ctx.committeeId.value, selectedApp.value._id
         )
         toast.success('Advanced to Interview')
         selectedApp.value = null
@@ -581,7 +516,7 @@ const acceptApp = async () => {
     try {
         const selectedCountry = committeeCountries.value.find(c => c.code === acceptForm.countryCode)
         await apiMethods.registration.reviewApplication(
-            orgId.value, eventId.value, committeeId.value, selectedApp.value._id,
+            ctx.orgId.value, ctx.eventId.value, ctx.committeeId.value, selectedApp.value._id,
             {
                 decision: 'accept',
                 role: acceptForm.role,
@@ -606,7 +541,7 @@ const passApp = async () => {
     isActioning.value = true
     try {
         await apiMethods.registration.reviewApplication(
-            orgId.value, eventId.value, committeeId.value, selectedApp.value._id,
+            ctx.orgId.value, ctx.eventId.value, ctx.committeeId.value, selectedApp.value._id,
             {
                 decision: 'pass',
                 internalNote: passNote.value || undefined
@@ -630,7 +565,7 @@ const saveInterview = async () => {
         if (interviewForm.notes) data.notes = interviewForm.notes
 
         await apiMethods.registration.updateCommitteeInterview(
-            orgId.value, eventId.value, committeeId.value, selectedApp.value._id, data
+            ctx.orgId.value, ctx.eventId.value, ctx.committeeId.value, selectedApp.value._id, data
         )
         toast.success('Interview data saved')
         await openDetail(selectedApp.value)
@@ -644,7 +579,7 @@ const saveInterview = async () => {
 // =============================================
 const isOurCommittee = (pref) => {
     const prefId = pref.committee?._id || pref.committee
-    return prefId === committeeId.value
+    return prefId === ctx.committeeId.value
 }
 
 const mediaUrl = (path) => {
@@ -679,9 +614,11 @@ const stageBgClass = (stage) => {
 // =============================================
 // LIFECYCLE
 // =============================================
-onMounted(async () => {
-    const ok = await resolveContext()
-    if (ok) await loadApplications()
-    else isLoading.value = false
-})
+watch(() => ctx.isReady.value, (ready) => {
+    if (ready) {
+        const ok = await resolveContext()
+        if (ok) await loadApplications()
+        else isLoading.value = false
+    }
+}, { immediate: true })
 </script>

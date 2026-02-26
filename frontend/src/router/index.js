@@ -68,6 +68,13 @@ const PublicRegistrationPage = () => import('@/views/public/RegistrationPageView
 const MyApplicationView = () => import('@/views/public/MyApplicationView.vue')
 
 // =============================================
+// DASHBOARD VIEWS (universal home)
+// =============================================
+const DashboardHomeView = () => import('@/views/dashboard/DashboardHomeView.vue')
+const MyEventsView = () => import('@/views/dashboard/MyEventsView.vue')
+const MyOrganizationsView = () => import('@/views/dashboard/MyOrganizationsView.vue')
+
+// =============================================
 // ROUTES
 // =============================================
 const routes = [
@@ -169,6 +176,41 @@ const routes = [
         component: SuperAdminOrganizations,
         meta: { title: 'Organizations' }
       }
+    ]
+  },
+
+  // =============================================
+  // DASHBOARD ROUTES — /dashboard (universal home for all users)
+  // =============================================
+  {
+    path: '/dashboard',
+    component: () => import('@/layouts/DashboardLayout.vue'),
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'DashboardHome',
+        component: DashboardHomeView,
+        meta: { title: 'Dashboard' }
+      },
+      {
+        path: 'events',
+        name: 'DashboardEvents',
+        component: MyEventsView,
+        meta: { title: 'My Events' }
+      },
+      {
+        path: 'organizations',
+        name: 'DashboardOrganizations',
+        component: MyOrganizationsView,
+        meta: { title: 'My Organizations' }
+      },
+      {
+        path: 'profile',
+        name: 'DashboardProfile',
+        component: ProfileView,
+        meta: { title: 'My Profile' }
+      },
     ]
   },
 
@@ -327,21 +369,11 @@ const routes = [
   // =============================================
   {
     path: '/profile',
-    name: 'Profile',
-    component: ProfileView,
-    meta: {
-      title: 'Profile',
-      requiresAuth: true
-    }
+    redirect: { name: 'DashboardProfile' }
   },
   {
     path: '/home',
-    name: 'UserHome',
-    component: UserHomeView,
-    meta: {
-      title: 'Home',
-      requiresAuth: true
-    }
+    redirect: { name: 'DashboardHome' }
   },
 
   // =============================================
@@ -351,12 +383,10 @@ const routes = [
     path: '/',
     redirect: () => {
       const authStore = useAuthStore()
-
       if (!authStore.isAuthenticated) {
         return { name: 'Login' }
       }
-
-      return authStore.getDefaultRoute()
+      return { name: 'DashboardHome' }
     }
   },
 
@@ -370,20 +400,17 @@ const routes = [
       if (authStore.isSuperAdmin) {
         return { name: 'SuperAdminDashboard' }
       }
-      if (authStore.activeOrganization) {
-        return { name: 'OrgDashboard', params: { orgSlug: authStore.activeOrganization.slug } }
-      }
-      return { name: 'UserHome' }
+      return { name: 'DashboardHome' }
     }
   },
   // Old presidium/delegate routes redirect to login (user needs to enter via session URL now)
   {
     path: '/presidium',
-    redirect: { name: 'UserHome' }
+    redirect: { name: 'DashboardEvents' }
   },
   {
     path: '/delegate',
-    redirect: { name: 'UserHome' }
+    redirect: { name: 'DashboardEvents' }
   },
 
   // =============================================
@@ -488,14 +515,46 @@ router.beforeEach(async (to, from, next) => {
         }
       }
 
-      // ---- Presidium/Delegate checks (for MUN session views) ----
-      // These will be fully implemented when we wire up EventParticipant lookup.
-      // For now, just verify the user is authenticated.
-      // TODO: Check EventParticipant for committeeId and role
+      // ---- Presidium/Delegate checks (session views) ----
       if (to.meta.requiresPresidium || to.meta.requiresDelegate) {
-        // Future: verify user has an EventParticipant record
-        // with the right role for this committeeId
-        // For now, allow any authenticated user through
+        const committeeId = to.params.committeeId
+        if (!committeeId) {
+          return next({ name: 'DashboardHome' })
+        }
+
+        // Check eventParticipations for a matching committee + role
+        const PRESIDIUM_ROLES = ['presidium_chair', 'presidium_cochair', 'presidium_expert', 'presidium_secretary']
+        const participations = authStore.eventParticipations || []
+
+        const match = participations.find(p => {
+          const cId = p.committee?._id || p.committee
+          return cId === committeeId
+        })
+
+        if (!match) {
+          // SuperAdmin and org admins can access any committee
+          const isSuperAdmin = authStore.isSuperAdmin
+          if (!isSuperAdmin) {
+            // Check if user is org admin for any org (they may have implicit access)
+            const isOrgAdmin = authStore.allOrganizations?.some(org => org.accessLevel === 'admin')
+            if (!isOrgAdmin) {
+              return next({ name: 'DashboardHome' })
+            }
+          }
+        } else {
+          // Verify role matches route requirement
+          if (to.meta.requiresPresidium && !PRESIDIUM_ROLES.includes(match.role)) {
+            // User is participant but not presidium — redirect to delegate view
+            return next({
+              name: 'DelegateDashboard',
+              params: { committeeId }
+            })
+          }
+          if (to.meta.requiresDelegate && PRESIDIUM_ROLES.includes(match.role)) {
+            // User is presidium trying to access delegate view — allow it
+            // (presidium can also view delegate interfaces)
+          }
+        }
       }
     }
 

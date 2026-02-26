@@ -204,6 +204,14 @@ const updateEvent = async (req, res) => {
             event.registrationFee = { ...event.registrationFee.toObject(), ...updates.registrationFee };
         }
 
+        // Handle automation overrides
+        if (updates.automationOverrides) {
+            event.automationOverrides = {
+                ...(event.automationOverrides?.toObject?.() || event.automationOverrides || {}),
+                ...updates.automationOverrides
+            };
+        }
+
         // Re-generate slug if name changed
         if (updates.name && updates.name !== event.name) {
             event.slug = await Event.generateSlug(updates.name, orgId, event._id);

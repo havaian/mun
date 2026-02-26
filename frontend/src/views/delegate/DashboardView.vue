@@ -211,7 +211,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, inject } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/plugins/toast'
@@ -229,9 +229,11 @@ import {
 const authStore = useAuthStore()
 const toast = useToast()
 
+// Context
+const ctx = inject('sessionContext')
+
 // State
 const currentSession = ref(null)
-const committee = ref(null)
 const attendanceStatus = ref(null)
 const rollCallActive = ref(false)
 const currentSpeaker = ref(null)
@@ -323,11 +325,6 @@ const getSenderName = (message) => {
 // Data Loading Methods
 const loadDashboardData = async () => {
     try {
-        committee.value = authStore.user?.committeeId
-        if (!committee.value) {
-            throw new Error('No committee assigned')
-        }
-
         await Promise.all([
             loadActiveSession(),
             loadRecentMessages(),
@@ -344,7 +341,7 @@ const loadDashboardData = async () => {
 
 const loadActiveSession = async () => {
     try {
-        const response = await apiMethods.sessions.getAll(committee.value._id, {
+        const response = await apiMethods.sessions.getAll(ctx.committeeId.value, {
             status: 'active',
             limit: 1
         })
@@ -397,13 +394,13 @@ const loadRecentMessages = async () => {
 
         // Load announcements
         const announcementsResponse = await apiMethods.messages.getCommitteeConversation(
-            committee.value._id,
+            ctx.committeeId.value,
             'announcements'
         )
 
         // Load gossip
         const gossipResponse = await apiMethods.messages.getCommitteeConversation(
-            committee.value._id,
+            ctx.committeeId.value,
             'gossip'
         )
 
@@ -433,7 +430,7 @@ const loadRecentMessages = async () => {
 
 const loadActiveVoting = async () => {
     try {
-        const response = await apiMethods.voting.getByCommitteeId(committee.value._id)
+        const response = await apiMethods.voting.getByCommitteeId(ctx.committeeId.value)
         if (response.data.success) {
             const active = response.data.voting?.find(v => v.status === 'active')
             activeVoting.value = active || null
@@ -508,9 +505,9 @@ const setupWebSocketListeners = () => {
     if (!currentSession.value) return
 
     // Join committee room
-    if (committee.value?._id) {
+    if (ctx.committeeId.value) {
         wsService.emit('join-committee-room', {
-            committeeId: committee.value._id
+            committeeId: ctx.committeeId.value
         })
     }
 
@@ -599,7 +596,7 @@ const setupWebSocketListeners = () => {
 
     // Voting events
     wsService.on('voting-started', (data) => {
-        if (data.committeeId === committee.value?._id) {
+        if (data.committeeId === ctx.committeeId.value) {
             activeVoting.value = data.voting
             toast.success('New voting started!')
         }
@@ -614,7 +611,7 @@ const setupWebSocketListeners = () => {
 
     // Message events
     wsService.on('committee-message-received', (data) => {
-        if (data.committeeId === committee.value?._id) {
+        if (data.committeeId === ctx.committeeId.value) {
             const newMessage = {
                 _id: data.messageId,
                 senderCountry: data.senderCountry,
@@ -632,16 +629,18 @@ const setupWebSocketListeners = () => {
 }
 
 // Lifecycle
-onMounted(async () => {
-    await loadDashboardData()
+watch(() => ctx.isReady.value, (ready) => {
+    if (ready) {
+        await loadDashboardData()
 
-    // Update speaker timer every second
-    timerUpdateInterval = setInterval(() => {
-        if (speakerTimer.value?.isActive && !speakerTimer.value?.isPaused) {
-            speakerTimer.value = { ...speakerTimer.value }
-        }
-    }, 1000)
-})
+        // Update speaker timer every second
+        timerUpdateInterval = setInterval(() => {
+            if (speakerTimer.value?.isActive && !speakerTimer.value?.isPaused) {
+                speakerTimer.value = { ...speakerTimer.value }
+            }
+        }, 1000)
+    }
+}, { immediate: true })
 
 onUnmounted(() => {
     if (timerUpdateInterval) {

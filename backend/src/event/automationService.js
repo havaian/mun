@@ -1,6 +1,51 @@
 // backend/src/event/automationService.js
+// =============================================
+// FULL LIFECYCLE AUTOMATION with ADMIN OVERRIDE
+// =============================================
+// Checks every 5 minutes and transitions events:
+//   published  → registration_open   (when registrationStartDate reached)
+//   registration_open → registration_closed (when registrationEndDate reached)
+//   registration_closed → active      (when startDate reached)
+//   active     → completed            (when endDate reached)
+//
+// Admin override: If event.automationOverrides.<transition> === true,
+// that specific transition is skipped (admin will do it manually).
+// =============================================
+
 const { Event } = require('./model');
 const { Committee } = require('../committee/model');
+
+// Maps: fromStatus → { toStatus, dateField, logVerb }
+const TRANSITION_RULES = [
+    {
+        from: 'published',
+        to: 'registration_open',
+        dateField: 'settings.registrationStartDate',
+        overrideKey: 'skipOpenRegistration',
+        logVerb: 'Opening registration for'
+    },
+    {
+        from: 'registration_open',
+        to: 'registration_closed',
+        dateField: 'settings.registrationEndDate',
+        overrideKey: 'skipCloseRegistration',
+        logVerb: 'Closing registration for'
+    },
+    {
+        from: 'registration_closed',
+        to: 'active',
+        dateField: 'startDate',
+        overrideKey: 'skipActivate',
+        logVerb: 'Activating'
+    },
+    {
+        from: 'active',
+        to: 'completed',
+        dateField: 'endDate',
+        overrideKey: 'skipComplete',
+        logVerb: 'Completing'
+    }
+];
 
 class EventAutomationService {
     constructor() {
@@ -29,16 +74,14 @@ class EventAutomationService {
             this.checkEventStatuses();
         }, this.checkInterval);
 
-        global.logger.info('Event automation service started - checking every 5 minutes');
+        global.logger.info('Event automation service started — checking every 5 minutes');
     }
 
     /**
      * Stop the automation service
      */
     stop() {
-        if (!this.isRunning) {
-            return;
-        }
+        if (!this.isRunning) return;
 
         if (this.intervalId) {
             clearInterval(this.intervalId);
@@ -47,6 +90,13 @@ class EventAutomationService {
 
         this.isRunning = false;
         global.logger.info('Event automation service stopped');
+    }
+
+    /**
+     * Resolve a nested field like 'settings.registrationStartDate' from an event doc
+     */
+    _getNestedField(event, fieldPath) {
+        return fieldPath.split('.').reduce((obj, key) => obj?.[key], event);
     }
 
     /**
@@ -59,32 +109,19 @@ class EventAutomationService {
 
             global.logger.debug('Starting automated event status check');
 
-            // Find events that need status updates
+            // Find events in any automatable status (not draft, not completed)
+            const candidateStatuses = TRANSITION_RULES.map(r => r.from);
             const events = await Event.find({
-                status: { $in: ['draft', 'active'] },
-                $or: [
-                    // Draft events that should become active
-                    {
-                        status: 'draft',
-                        startDate: { $lte: now }
-                    },
-                    // Active events that should become completed
-                    {
-                        status: 'active',
-                        endDate: { $lte: now }
-                    }
-                ]
+                status: { $in: candidateStatuses }
             });
 
             for (const event of events) {
-                const updated = await this.updateEventStatus(event, now);
-                if (updated) {
-                    updatedCount++;
-                }
+                const updated = await this.processEventTransition(event, now);
+                if (updated) updatedCount++;
             }
 
             if (updatedCount > 0) {
-                global.logger.info(`Automated status update completed: ${updatedCount} events updated`);
+                global.logger.info(`Automated status update completed: ${updatedCount} event(s) updated`);
             }
 
         } catch (error) {
@@ -93,71 +130,75 @@ class EventAutomationService {
     }
 
     /**
-     * Update individual event status
+     * Process a single event — find the matching rule and apply if conditions met
      */
-    async updateEventStatus(event, currentTime = new Date()) {
+    async processEventTransition(event, currentTime = new Date()) {
         try {
-            let newStatus = null;
-            let shouldUpdateCommittees = false;
+            // Find the rule that matches this event's current status
+            const rule = TRANSITION_RULES.find(r => r.from === event.status);
+            if (!rule) return false;
 
-            // Task 5: Draft event should automatically transition to active
-            if (event.status === 'draft' && currentTime >= new Date(event.startDate)) {
-                newStatus = 'active';
-                shouldUpdateCommittees = true;
-                global.logger.info(`Auto-activating event: ${event.name} (ID: ${event._id})`);
+            // Check admin override
+            const overrides = event.automationOverrides || {};
+            if (overrides[rule.overrideKey]) {
+                // Admin has disabled this automatic transition
+                global.logger.debug(`Skipping auto-transition ${rule.from}→${rule.to} for "${event.name}" (admin override: ${rule.overrideKey})`);
+                return false;
             }
 
-            // Task 6: Active event should automatically end
-            if (event.status === 'active' && currentTime > new Date(event.endDate)) {
-                newStatus = 'completed';
-                shouldUpdateCommittees = true;
-                global.logger.info(`Auto-completing event: ${event.name} (ID: ${event._id})`);
+            // Get the trigger date
+            const triggerDate = this._getNestedField(event, rule.dateField);
+            if (!triggerDate) {
+                // No date configured — can't auto-transition
+                return false;
             }
 
-            if (newStatus) {
-                const oldStatus = event.status;
-                event.status = newStatus;
-                event.updatedAt = currentTime;
-
-                await event.save();
-
-                // Update associated committee statuses
-                if (shouldUpdateCommittees) {
-                    await this.updateCommitteeStatuses(event._id, newStatus);
-                }
-
-                // Emit WebSocket event for real-time updates
-                if (global.io) {
-                    global.io.emit('event-status-changed', {
-                        eventId: event._id,
-                        eventName: event.name,
-                        oldStatus,
-                        newStatus,
-                        timestamp: currentTime
-                    });
-                }
-
-                global.logger.info(`Event status auto-updated: ${event.name} from ${oldStatus} to ${newStatus}`);
-                return true;
+            // Check if the trigger time has passed
+            if (currentTime < new Date(triggerDate)) {
+                return false;
             }
 
-            return false;
+            // ── Execute transition ──
+            const oldStatus = event.status;
+            event.status = rule.to;
+            event.updatedAt = currentTime;
+
+            await event.save();
+
+            global.logger.info(`${rule.logVerb} event: "${event.name}" (${oldStatus} → ${rule.to})`);
+
+            // Update committee statuses for activate/complete transitions
+            if (rule.to === 'active' || rule.to === 'completed') {
+                await this.updateCommitteeStatuses(event._id, rule.to);
+            }
+
+            // Emit WebSocket event for real-time updates
+            if (global.io) {
+                global.io.emit('event-status-changed', {
+                    eventId: event._id,
+                    eventName: event.name,
+                    oldStatus,
+                    newStatus: rule.to,
+                    automated: true,
+                    timestamp: currentTime
+                });
+            }
+
+            return true;
 
         } catch (error) {
-            global.logger.error(`Error updating event status for ${event.name}:`, error);
+            global.logger.error(`Error processing transition for "${event.name}":`, error);
             return false;
         }
     }
 
     /**
      * Update committee statuses based on parent event status
-     * Task 10: Committee statuses should change according to event status
      */
     async updateCommitteeStatuses(eventId, eventStatus) {
         try {
             let committeeStatus;
 
-            // Map event status to appropriate committee status
             switch (eventStatus) {
                 case 'active':
                     committeeStatus = 'active';
@@ -166,24 +207,24 @@ class EventAutomationService {
                     committeeStatus = 'completed';
                     break;
                 default:
-                    return; // Don't update for other statuses
+                    return;
             }
 
             const result = await Committee.updateMany(
                 {
-                    eventId: eventId,
-                    status: { $nin: ['completed'] } // Don't override already completed committees
+                    event: eventId,
+                    status: { $nin: ['completed'] }
                 },
                 {
                     status: committeeStatus,
-                    updatedAt: new Date()
+                    updatedAt: new Date(),
+                    ...(committeeStatus === 'completed' ? { completedAt: new Date() } : {})
                 }
             );
 
             if (result.modifiedCount > 0) {
-                global.logger.info(`Updated ${result.modifiedCount} committee(s) to status: ${committeeStatus} for event: ${eventId}`);
+                global.logger.info(`Updated ${result.modifiedCount} committee(s) to "${committeeStatus}" for event ${eventId}`);
 
-                // Emit WebSocket event for committee status changes
                 if (global.io) {
                     global.io.emit('committees-status-changed', {
                         eventId,
@@ -200,41 +241,11 @@ class EventAutomationService {
     }
 
     /**
-     * Manual trigger for event status check (useful for testing or immediate execution)
+     * Manual trigger for event status check
      */
     async runManualCheck() {
         global.logger.info('Manual event status check triggered');
         await this.checkEventStatuses();
-    }
-
-    /**
-     * Check if an event is blocking operations (Task 7)
-     */
-    static isEventBlocked(event, userRole) {
-        if (!event) return false;
-
-        // Task 7: Finished event should block all CRUD except admin reports
-        if (event.status === 'completed') {
-            // Allow admin access for reports
-            if (userRole === 'admin') {
-                return false;
-            }
-            // Block all other operations
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Get automation service status
-     */
-    getStatus() {
-        return {
-            isRunning: this.isRunning,
-            checkInterval: this.checkInterval,
-            nextCheck: this.intervalId ? new Date(Date.now() + this.checkInterval) : null
-        };
     }
 
     /**
@@ -245,25 +256,48 @@ class EventAutomationService {
             global.logger.info('Force checking all events for status updates');
 
             const now = new Date();
+            const candidateStatuses = TRANSITION_RULES.map(r => r.from);
             const allEvents = await Event.find({
-                status: { $in: ['draft', 'active'] }
+                status: { $in: candidateStatuses }
             });
 
             let updatedCount = 0;
             for (const event of allEvents) {
-                const updated = await this.updateEventStatus(event, now);
-                if (updated) {
-                    updatedCount++;
-                }
+                const updated = await this.processEventTransition(event, now);
+                if (updated) updatedCount++;
             }
 
-            global.logger.info(`Force check completed: ${updatedCount} events updated`);
+            global.logger.info(`Force check completed: ${updatedCount} event(s) updated out of ${allEvents.length} checked`);
             return { success: true, updatedCount, totalChecked: allEvents.length };
 
         } catch (error) {
             global.logger.error('Error in force check all events:', error);
             return { success: false, error: error.message };
         }
+    }
+
+    /**
+     * Check if an event is blocking operations
+     */
+    static isEventBlocked(event, userRole) {
+        if (!event) return false;
+        if (event.status === 'completed') {
+            if (userRole === 'admin') return false;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Get automation service status
+     */
+    getStatus() {
+        return {
+            isRunning: this.isRunning,
+            checkInterval: this.checkInterval,
+            transitionRules: TRANSITION_RULES.map(r => `${r.from} → ${r.to} (${r.dateField})`),
+            nextCheck: this.intervalId ? new Date(Date.now() + this.checkInterval) : null
+        };
     }
 }
 
@@ -272,5 +306,6 @@ const eventAutomationService = new EventAutomationService();
 
 module.exports = {
     eventAutomationService,
-    EventAutomationService
+    EventAutomationService,
+    TRANSITION_RULES
 };

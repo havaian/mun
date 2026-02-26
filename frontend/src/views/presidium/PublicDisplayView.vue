@@ -99,16 +99,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted, watch, inject } from 'vue'
 import { apiMethods } from '@/utils/api'
 import { wsService } from '@/plugins/websocket'
-import { useAuthStore } from '@/stores/auth'
 
 import { Ghost, VenetianMask, Maximize, Minimize, Clock, User, MessageCircle } from 'lucide-vue-next'
 
-const route = useRoute()
-const authStore = useAuthStore()
+// Context
+const ctx = inject('sessionContext')
 
 // Refs
 const committeeName = ref('UN General Assembly')
@@ -122,7 +120,6 @@ const currentSpeaker = ref(null)
 const speakerQueue = ref([])
 const gossipMessages = ref([])
 const displayUpdateInterval = ref(null)
-const committee = ref(null)
 const displayContainer = ref(null)
 const isFullscreen = ref(false)
 
@@ -202,7 +199,7 @@ const handleFullscreenChange = () => {
 
 const loadGossipMessages = async () => {
     try {
-        const committeeId = committee.value?._id
+        const committeeId = ctx.committeeId.value
         if (!committeeId) return
 
         // Fetch gossip channel conversation
@@ -226,32 +223,24 @@ const loadGossipMessages = async () => {
 
 const loadPublicData = async () => {
     try {
-        committee.value = authStore.user?.committee || authStore.user?.committeeId
-        if (!committee.value) {
-            throw new Error('No committee assigned')
-        }
-
-        const committeeId = committee.value._id
+        const committeeId = ctx.committeeId.value
         if (!committeeId) {
             console.error('No committee ID provided')
             return
         }
 
         // LOAD COMMITTEE INFO AND DISPLAY MODE
-        const committeeResponse = await apiMethods.committees.getById(committeeId)
-        if (committeeResponse.data?.committee) {
-            committeeName.value = committeeResponse.data.committee.name
+        committeeName.value = ctx.committee.value.name
 
-            // FETCH CURRENT DISPLAY MODE FROM DATABASE
-            try {
-                const modeResponse = await apiMethods.committees.getDisplayMode(committeeId)
-                if (modeResponse.data?.displayMode) {
-                    displayMode.value = modeResponse.data.displayMode
-                }
-            } catch (err) {
-                console.warn('Could not load display mode, using default:', err)
-                displayMode.value = 'session'
+        // FETCH CURRENT DISPLAY MODE FROM DATABASE
+        try {
+            const modeResponse = await apiMethods.committees.getDisplayMode(committeeId)
+            if (modeResponse.data?.displayMode) {
+                displayMode.value = modeResponse.data.displayMode
             }
+        } catch (err) {
+            console.warn('Could not load display mode, using default:', err)
+            displayMode.value = 'session'
         }
 
         // Load active session
@@ -286,7 +275,7 @@ const loadPublicData = async () => {
 }
 
 const setupWebSocketListeners = () => {
-    const committeeId = committee.value?._id
+    const committeeId = ctx.committeeId.value
 
     if (!committeeId) return
 
@@ -376,21 +365,23 @@ watch(displayMode, async (newMode, oldMode) => {
 })
 
 // Lifecycle
-onMounted(async () => {
-    await loadPublicData()
-    setupWebSocketListeners()
+watch(() => ctx.isReady.value, (ready) => {
+    if (ready) {
+        await loadPublicData()
+        setupWebSocketListeners()
 
-    // Add fullscreen change listener
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
+        // Add fullscreen change listener
+        document.addEventListener('fullscreenchange', handleFullscreenChange)
 
-    // Update display every second for smooth countdown
-    displayUpdateInterval.value = setInterval(() => {
-        // Trigger reactivity
-        if (activeTimer.value?.isActive && !activeTimer.value?.isPaused) {
-            timers.value = { ...timers.value }
-        }
-    }, 1000)
-})
+        // Update display every second for smooth countdown
+        displayUpdateInterval.value = setInterval(() => {
+            // Trigger reactivity
+            if (activeTimer.value?.isActive && !activeTimer.value?.isPaused) {
+                timers.value = { ...timers.value }
+            }
+        }, 1000)
+    }
+}, { immediate: true })
 
 onUnmounted(() => {
     if (displayUpdateInterval.value) {
