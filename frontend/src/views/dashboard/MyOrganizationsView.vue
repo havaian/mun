@@ -14,7 +14,7 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-4 min-w-0 flex-1">
                         <div v-if="org.logo" class="w-12 h-12 rounded-xl overflow-hidden bg-mun-gray-50 flex-shrink-0">
-                            <img :src="mediaUrl(org.logo)" :alt="org.name" class="w-full h-full object-cover" />
+                            <img :src="org.logo" :alt="org.name" class="w-full h-full object-cover" />
                         </div>
                         <div v-else
                             class="w-12 h-12 rounded-xl bg-mun-gray-100 flex items-center justify-center flex-shrink-0">
@@ -92,13 +92,6 @@ import { BuildingOffice2Icon } from '@heroicons/vue/24/outline'
 const authStore = useAuthStore()
 
 const allOrgs = computed(() => authStore.allOrganizations || [])
-
-const mediaUrl = (path) => {
-    if (!path) return null
-    if (path.startsWith('http')) return path
-    const base = import.meta.env.VITE_API_URL || ''
-    return `${base}/media/${path}`
-}
 
 const formatPermission = (perm) => perm?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || perm
 </script>

@@ -375,10 +375,7 @@ const roleConfig = computed(() => roleConfigs[props.userRole] || roleConfigs.adm
 const showSystemStatus = computed(() => props.userRole === 'admin')
 
 const userDisplayName = computed(() => {
-    return props.user?.fullName ||
-        props.user?.username ||
-        (props.userRole === 'admin' ? 'Admin User' :
-            props.userRole === 'presidium' ? 'Presidium Member' : 'Delegate')
+    return `${props.user?.firstName} ${props.user?.lastName}`
 })
 
 const userSubtitle = computed(() => {
@@ -408,11 +405,11 @@ const getNavLinkClass = (routeName, collapsed = false) => {
 
 const getBadgeClass = (type) => {
     const badgeClasses = {
-        default: 'bg-red-500',
-        success: 'bg-green-100 text-green-800',
-        warning: 'bg-yellow-100 text-yellow-800',
-        info: 'bg-blue-100 text-blue-800',
-        danger: 'bg-red-100 text-red-800',
+        default: 'bg-blue-600',
+        success: 'bg-green-100',
+        warning: 'bg-orange-100',
+        info: 'bg-blue-100',
+        danger: 'bg-red-100',
         live: 'bg-red-500'
     }
     return badgeClasses[type] || badgeClasses.default
