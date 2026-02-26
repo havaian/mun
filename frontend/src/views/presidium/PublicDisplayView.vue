@@ -365,7 +365,7 @@ watch(displayMode, async (newMode, oldMode) => {
 })
 
 // Lifecycle
-watch(() => ctx.isReady.value, (ready) => {
+watch(() => ctx.isReady.value, async (ready) => {
     if (ready) {
         await loadPublicData()
         setupWebSocketListeners()

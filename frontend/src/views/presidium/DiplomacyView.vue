@@ -760,7 +760,7 @@ watch(selectedChannel, () => {
 })
 
 // Lifecycle
-watch(() => ctx.isReady.value, (ready) => {
+watch(() => ctx.isReady.value, async (ready) => {
     if (ready) {
       await loadData()
       setupWebSocketListeners()

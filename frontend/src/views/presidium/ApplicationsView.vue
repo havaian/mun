@@ -614,7 +614,7 @@ const stageBgClass = (stage) => {
 // =============================================
 // LIFECYCLE
 // =============================================
-watch(() => ctx.isReady.value, (ready) => {
+watch(() => ctx.isReady.value, async (ready) => {
     if (ready) {
         const ok = await resolveContext()
         if (ok) await loadApplications()
