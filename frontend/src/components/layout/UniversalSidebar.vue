@@ -208,7 +208,7 @@
             </div>
 
             <!-- User Profile -->
-            <div class="border-t border-mun-gray-200 px-2 py-4">
+            <div class="border-t border-mun-gray-200 px-4 py-6">
                 <div class="space-y-3">
                     <!-- User Info -->
                     <div :class="sidebarCollapsed ? 'flex justify-center' : 'flex items-center space-x-3'">

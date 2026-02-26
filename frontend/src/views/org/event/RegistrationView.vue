@@ -434,15 +434,15 @@ const paymentConfig = reactive({
 const ALL_STAGES = [
     { stage: 'form_review', order: 1, isActive: true },
     { stage: 'interview', order: 2, isActive: false },
-    { stage: 'payment', order: 3, isActive: false },
-    { stage: 'final_decision', order: 4, isActive: true },
+    { stage: 'final_decision', order: 3, isActive: true },
+    { stage: 'payment', order: 4, isActive: false },
 ]
 
 const stageDescriptions = {
     form_review: 'Moderators review submitted applications',
     interview: 'Schedule and conduct interviews with applicants',
-    payment: 'Verify participation fee payment',
     final_decision: 'Make final accept or reject decision',
+    payment: 'Verify participation fee payment',
 }
 
 const form = reactive({
