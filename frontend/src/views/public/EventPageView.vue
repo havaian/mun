@@ -28,7 +28,7 @@
                 <MunBrand variant="top" transparent />
                 <!-- Background: hero image with REDUCED overlay -->
                 <div v-if="event.heroImage" class="absolute inset-0">
-                    <img :src="mediaUrl(event.heroImage)" alt="" class="w-full h-full object-cover" />
+                    <img :src="event.heroImage" :alt="event.name + ' hero background'" class="w-full h-full object-cover" />
                     <div
                         class="absolute inset-0 bg-gradient-to-br from-mun-blue-900/55 via-mun-blue-800/45 to-mun-blue-950/55">
                     </div>
@@ -53,7 +53,7 @@
                     <div class="flex items-center gap-4 mb-10">
                         <div v-if="displayLogo"
                             class="w-14 h-14 rounded-xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20 flex-shrink-0 shadow-lg">
-                            <img :src="mediaUrl(displayLogo)" :alt="orgName" class="w-full h-full object-cover" />
+                            <img :src="displayLogo" :alt="orgName" class="w-full h-full object-cover" />
                         </div>
                         <div v-else
                             class="w-14 h-14 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center flex-shrink-0 shadow-lg">
@@ -104,7 +104,7 @@
                             :target="sponsor.website ? '_blank' : undefined"
                             :class="['flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10', sponsor.website ? 'hover:bg-white/20 cursor-pointer' : 'cursor-default']"
                             :title="sponsor.name">
-                            <img v-if="sponsor.logo" :src="mediaUrl(sponsor.logo)" :alt="sponsor.name"
+                            <img v-if="sponsor.logo" :src="sponsor.logo" :alt="sponsor.name"
                                 class="h-5 w-auto object-contain" />
                             <span class="text-xs text-white/70 font-medium">{{ sponsor.name }}</span>
                         </a>
@@ -166,7 +166,7 @@
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 <button v-for="(photo, i) in event.photos" :key="i" @click="lightboxIndex = i"
                                     class="aspect-[4/3] rounded-xl overflow-hidden bg-mun-gray-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-mun-blue focus:ring-offset-2">
-                                    <img :src="mediaUrl(photo)" alt="" class="w-full h-full object-cover" />
+                                    <img :src="photo" :alt="event.name + ' photo '" class="w-full h-full object-cover" />
                                 </button>
                             </div>
                         </div>
@@ -182,7 +182,7 @@
                                     ]">
                                     <div v-if="sponsor.logo"
                                         class="w-16 h-16 rounded-xl overflow-hidden bg-mun-gray-50 mb-3 flex items-center justify-center">
-                                        <img :src="mediaUrl(sponsor.logo)" :alt="sponsor.name"
+                                        <img :src="sponsor.logo" :alt="sponsor.name"
                                             class="max-w-full max-h-full object-contain" />
                                     </div>
                                     <div v-else
@@ -347,14 +347,7 @@ const activeSocials = computed(() => {
     return active
 })
 
-const lightboxPhotos = computed(() => (event.value?.photos || []).map(p => mediaUrl(p)))
-
-const mediaUrl = (path) => {
-    if (!path) return ''
-    if (path.startsWith('http')) return path
-    const base = import.meta.env.VITE_API_URL || ''
-    return `${base}${path}`
-}
+const lightboxPhotos = event.value?.photos || []
 
 const isHtml = (text) => /<[a-z][\s\S]*>/i.test(text)
 

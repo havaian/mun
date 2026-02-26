@@ -202,7 +202,7 @@
                                 <span class="text-mun-gray-500 sm:w-40 flex-shrink-0 font-medium">{{ field.label
                                     }}:</span>
                                 <template v-if="field.isFile">
-                                    <a :href="mediaUrl(field.value)" target="_blank"
+                                    <a :href="field.value" target="_blank"
                                         class="text-mun-blue hover:text-mun-blue-700 flex items-center space-x-1">
                                         <DocumentArrowDownIcon class="w-4 h-4" />
                                         <span>{{ field.fileName }}</span>
@@ -582,12 +582,6 @@ const isOurCommittee = (pref) => {
     return prefId === ctx.committeeId.value
 }
 
-const mediaUrl = (path) => {
-    if (!path) return ''
-    if (path.startsWith('http')) return path
-    const base = import.meta.env.VITE_API_URL || ''
-    return `${base}${path}`
-}
 
 // =============================================
 // FORMATTING

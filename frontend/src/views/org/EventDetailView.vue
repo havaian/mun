@@ -98,7 +98,7 @@
                         </div>
                         <div v-if="event.logo">
                             <p class="text-mun-gray-500">Logo</p>
-                            <img :src="mediaUrl(event.logo)" alt="Event logo"
+                            <img :src="event.logo" :alt="event.name + ' logo'"
                                 class="mt-1 w-14 h-14 rounded-lg object-cover border border-mun-gray-200" />
                         </div>
                     </div>
@@ -149,7 +149,7 @@
                             page, shown with a blue overlay.</p>
                         <div v-if="event.heroImage" class="relative rounded-xl overflow-hidden mb-2"
                             style="aspect-ratio: 16/5;">
-                            <img :src="mediaUrl(event.heroImage)" alt="Hero background"
+                            <img :src="event.heroImage" :alt="event.name + ' hero background'"
                                 class="w-full h-full object-cover" />
                             <div
                                 class="absolute inset-0 bg-gradient-to-br from-mun-blue-900/55 via-mun-blue-800/45 to-mun-blue-950/55 flex items-center justify-center">
@@ -170,7 +170,7 @@
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
                             <div v-for="(photo, i) in (event.photos || [])" :key="i"
                                 class="relative group aspect-square rounded-xl overflow-hidden bg-mun-gray-100">
-                                <img :src="mediaUrl(photo)" alt="" class="w-full h-full object-cover" />
+                                <img :src="photo" :alt="event.name + ' photo'" class="w-full h-full object-cover" />
                                 <button @click="removePhoto(i)"
                                     class="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                     <XMarkIcon class="w-3.5 h-3.5" />
@@ -199,7 +199,7 @@
                         <div v-for="(sponsor, i) in event.sponsors" :key="i"
                             class="group relative flex flex-col items-center p-4 border border-mun-gray-200 rounded-xl hover:border-mun-gray-300 transition-colors">
                             <div v-if="sponsor.logo" class="w-16 h-16 rounded-lg overflow-hidden bg-mun-gray-50 mb-3">
-                                <img :src="mediaUrl(sponsor.logo)" :alt="sponsor.name"
+                                <img :src="sponsor.logo" :alt="sponsor.name"
                                     class="w-full h-full object-contain" />
                             </div>
                             <div v-else
@@ -579,12 +579,6 @@ const confirmLifecycleChange = async () => {
 // ========== Helpers ==========
 const eventPageUrl = computed(() => `${window.location.origin}/events/${orgSlug.value}/${eventSlug.value}`)
 const isHtml = (text) => /<[a-z][\s\S]*>/i.test(text)
-
-const mediaUrl = (path) => {
-    if (!path) return ''
-    if (path.startsWith('http')) return path
-    return `${import.meta.env.VITE_API_URL || ''}${path}`
-}
 
 const copyLink = async (text) => {
     try { await navigator.clipboard.writeText(text) } catch { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t) }

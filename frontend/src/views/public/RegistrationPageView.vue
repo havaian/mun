@@ -35,7 +35,7 @@
                         <span class="hidden sm:inline">Back to event</span>
                     </router-link>
                     <div class="flex items-center gap-2.5">
-                        <img v-if="eventLogo" :src="mediaUrl(eventLogo)" :alt="eventName"
+                        <img v-if="eventLogo" :src="eventLogo" :alt="eventName"
                             class="w-7 h-7 rounded-lg object-cover" />
                         <span class="text-sm font-medium text-mun-gray-900 truncate max-w-xs">{{ eventName }}</span>
                     </div>
@@ -226,13 +226,6 @@ const fileUploads = reactive({})
 const dragOver = reactive({})
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-
-const mediaUrl = (path) => {
-    if (!path) return ''
-    if (path.startsWith('http')) return path
-    const base = import.meta.env.VITE_API_URL || ''
-    return `${base}${path}`
-}
 
 // Build committee options for SleekSelect, excluding already-selected ones
 const getCommitteeOptions = (currentIndex) => {

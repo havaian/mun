@@ -7,7 +7,7 @@
                 shape === 'circle' ? 'rounded-full' : 'rounded-xl',
                 sizeClasses
             ]">
-                <img :src="mediaUrl(modelValue)" alt="Uploaded image" class="w-full h-full object-cover" />
+                <img :src="modelValue" alt="Uploaded image" class="w-full h-full object-cover" />
             </div>
             <button type="button" @click="removeImage"
                 class="text-xs text-red-500 hover:text-red-700 transition-colors">
@@ -53,13 +53,6 @@ const emit = defineEmits(['update:modelValue'])
 
 const isUploading = ref(false)
 const isDragOver = ref(false)
-
-const mediaUrl = (path) => {
-    if (!path) return ''
-    if (path.startsWith('http')) return path
-    const base = import.meta.env.VITE_API_URL || ''
-    return `${base}${path}`
-}
 
 const upload = async (file) => {
     if (!file) return

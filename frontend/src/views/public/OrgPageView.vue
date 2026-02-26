@@ -19,7 +19,7 @@
                 <!-- MUN.UZ top bar (overlays hero) -->
                 <MunBrand variant="top" transparent />
                 <div v-if="org.heroImage" class="absolute inset-0">
-                    <img :src="mediaUrl(org.heroImage)" alt="" class="w-full h-full object-cover" />
+                    <img :src="org.heroImage" :alt="org.name + ' hero background'" class="w-full h-full object-cover" />
                     <div
                         class="absolute inset-0 bg-gradient-to-br from-mun-blue-900/55 via-mun-blue-800/45 to-mun-blue-950/55">
                     </div>
@@ -44,7 +44,7 @@
                         <!-- Logo -->
                         <div v-if="org.logo"
                             class="w-20 h-20 rounded-2xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20 shadow-xl flex-shrink-0">
-                            <img :src="mediaUrl(org.logo)" :alt="org.name" class="w-full h-full object-cover" />
+                            <img :src="org.logo" :alt="org.name" class="w-full h-full object-cover" />
                         </div>
                         <div v-else
                             class="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center flex-shrink-0 shadow-xl">
@@ -81,7 +81,7 @@
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 <button v-for="(photo, i) in org.photos" :key="i" @click="lightboxIndex = i"
                                     class="aspect-[4/3] rounded-xl overflow-hidden bg-mun-gray-100 cursor-pointer focus:outline-none focus:ring-2 focus:ring-mun-blue focus:ring-offset-2">
-                                    <img :src="mediaUrl(photo)" alt="" class="w-full h-full object-cover" />
+                                    <img :src="photo" :alt="org.name + ' photo '" class="w-full h-full object-cover" />
                                 </button>
                             </div>
                         </div>
@@ -100,7 +100,7 @@
                                     class="group flex items-center gap-5 bg-white rounded-xl border border-mun-gray-200 p-5 hover:border-mun-blue-200 hover:shadow-md transition-all">
                                     <div v-if="ev.logo"
                                         class="w-14 h-14 rounded-xl overflow-hidden bg-mun-gray-50 flex-shrink-0">
-                                        <img :src="mediaUrl(ev.logo)" :alt="ev.name"
+                                        <img :src="ev.logo" :alt="ev.name"
                                             class="w-full h-full object-cover" />
                                     </div>
                                     <div v-else
@@ -252,14 +252,7 @@ const activeSocials = computed(() => {
     return active
 })
 
-const lightboxPhotos = computed(() => (org.value?.photos || []).map(p => mediaUrl(p)))
-
-const mediaUrl = (path) => {
-    if (!path) return ''
-    if (path.startsWith('http')) return path
-    const base = import.meta.env.VITE_API_URL || ''
-    return `${base}${path}`
-}
+const lightboxPhotos = org.value?.photos || []
 
 const isHtml = (text) => /<[a-z][\s\S]*>/i.test(text)
 const stripHtml = (html) => html ? html.replace(/<[^>]*>/g, '').substring(0, 200) : ''

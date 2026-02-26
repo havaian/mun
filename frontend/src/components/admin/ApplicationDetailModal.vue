@@ -79,7 +79,7 @@
                             :class="['flex items-start px-4 py-2.5 text-sm', i % 2 === 0 ? 'bg-mun-gray-50/50' : 'bg-white']">
                             <span class="text-mun-gray-500 w-40 flex-shrink-0">{{ field.label }}:</span>
                             <span v-if="field.isFile" class="font-medium">
-                                <a :href="mediaUrl(field.value)" target="_blank"
+                                <a :href="field.value" target="_blank"
                                     class="text-mun-blue hover:underline inline-flex items-center">
                                     <DocumentArrowDownIcon class="w-4 h-4 mr-1" />
                                     {{ field.fileName }}
@@ -551,12 +551,6 @@ const isPassedCommittee = (pref) => {
         const rId = r.committee?._id || r.committee
         return rId === prefId && r.decision === 'passed'
     })
-}
-
-const mediaUrl = (path) => {
-    if (!path) return '#'
-    if (path.startsWith('http')) return path
-    return `/api/uploads/${path}`
 }
 
 const formatStage = (stage) => {

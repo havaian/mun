@@ -113,7 +113,7 @@
                     <div class="flex items-center gap-4">
                         <div v-if="org.logo"
                             class="w-20 h-20 rounded-xl overflow-hidden bg-mun-gray-50 border border-mun-gray-200 flex-shrink-0">
-                            <img :src="mediaUrl(org.logo)" :alt="org.name" class="w-full h-full object-cover" />
+                            <img :src="org.logo" :alt="org.name" class="w-full h-full object-cover" />
                         </div>
                         <div v-else
                             class="w-20 h-20 rounded-xl bg-mun-gray-100 flex items-center justify-center flex-shrink-0 border border-mun-gray-200">
@@ -137,7 +137,7 @@
                         section</p>
                     <div v-if="org.heroImage" class="relative rounded-xl overflow-hidden mb-3"
                         style="aspect-ratio: 3/1;">
-                        <img :src="mediaUrl(org.heroImage)" alt="" class="w-full h-full object-cover" />
+                        <img :src="org.heroImage" :alt="org.name + ' hero background'" class="w-full h-full object-cover" />
                         <div
                             class="absolute inset-0 bg-gradient-to-br from-mun-blue-900/55 via-mun-blue-800/45 to-mun-blue-950/55 flex items-center justify-center">
                             <span class="text-white/60 text-sm font-medium">Hero preview</span>
@@ -159,7 +159,7 @@
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <div v-for="(photo, i) in (org.photos || [])" :key="i"
                             class="relative group aspect-[4/3] rounded-xl overflow-hidden bg-mun-gray-100">
-                            <img :src="mediaUrl(photo)" alt="" class="w-full h-full object-cover" />
+                            <img :src="photo" :alt="org.name + ' photo'" class="w-full h-full object-cover" />
                             <button @click="removeOrgPhoto(i)"
                                 class="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <XMarkIcon class="w-3.5 h-3.5" />
@@ -360,12 +360,6 @@ const form = reactive({
 
 const socialLabels = { telegram: 'Telegram', instagram: 'Instagram', facebook: 'Facebook', linkedin: 'LinkedIn', twitter: 'Twitter / X' }
 const socialPlaceholders = { telegram: 'https://t.me/yourorg', instagram: 'https://instagram.com/yourorg', facebook: 'https://facebook.com/yourorg', linkedin: 'https://linkedin.com/company/yourorg', twitter: 'https://x.com/yourorg' }
-
-const mediaUrl = (path) => {
-    if (!path) return ''
-    if (path.startsWith('http')) return path
-    return `${import.meta.env.VITE_API_URL || ''}${path}`
-}
 
 const loadOrg = async () => {
     if (!orgId.value) return
